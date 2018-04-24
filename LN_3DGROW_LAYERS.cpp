@@ -1,6 +1,9 @@
 
 // Ausf¸hren mit . ./layers border_example_resized.nii brain_maskexample_resized.nii 0
 
+
+// @ Renzo to do check the vincinity loops. the "+1" are missing and the z_dimanetions is limieted by REAN dimention????
+
 #include <stdio.h>
 #include "nifti2_io.h"
 //#include "nifti2.h"
@@ -538,7 +541,7 @@ cout << " correct for pytagoras error .... " << endl;
 	  	
 	    	for(int iy_i=max(0,(*(WMkoordy2_data   +  nxy*iz + nx*ix  + iy  ))-grow_vinc);     iy_i<min((*(WMkoordy2_data   +  nxy*iz + nx*ix  + iy  ))+grow_vinc,sizePhase); ++iy_i){
 	    	  for(int ix_i=max(0,(*(WMkoordx2_data   +  nxy*iz + nx*ix  + iy  ))-grow_vinc);   ix_i<min((*(WMkoordx2_data   +  nxy*iz + nx*ix  + iy  ))+grow_vinc,sizeRead);  ++ix_i){
-	    	   for(int iz_i=max(0,(*(WMkoordz2_data   +  nxy*iz + nx*ix  + iy  ))-grow_vinc); iz_i<min((*(WMkoordz2_data  +  nxy*iz + nx*ix  + iy  ))+grow_vinc,sizeRead);  ++iz_i){
+	    	   for(int iz_i=max(0,(*(WMkoordz2_data   +  nxy*iz + nx*ix  + iy  ))-grow_vinc); iz_i<min((*(WMkoordz2_data  +  nxy*iz + nx*ix  + iy  ))+grow_vinc,sizeSlice);  ++iz_i){
 			    if (*(nim_input_data  + nxy*iz_i + nx*ix_i  + iy_i  )  == 2){
 			 
 		  		 dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i,dX,dY,dZ); 
