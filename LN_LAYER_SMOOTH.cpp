@@ -374,6 +374,16 @@ if ( do_masking == 1 ) {
  cout << " runing also until here  5.... " << endl; 
 
 
+smoothed->scl_slope =  nim_inputfi->scl_slope ;
+
+if (nim_inputfi->scl_inter != 0 ){
+cout << " ############################################################# " << endl; 
+cout << " #############   WARNING   WANRING   WANRING  ################ " << endl; 
+cout << " ########   the NIFTI scale factor is asymmetric  ############ " << endl; 
+cout << " #############   WARNING   WANRING   WANRING  ################ " << endl; 
+cout << " ############################################################# " << endl; 
+}
+
      // output file name       
 //  const char  *fout_4="leaky_layers.nii" ;
 //  if( nifti_set_filenames(leak_layer, fout_4 , 1, 1) ) return 1;

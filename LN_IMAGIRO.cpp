@@ -144,6 +144,9 @@ int main(int argc, char * argv[])
    nim_data->data = calloc(nim_data->nvox, nim_data->nbyper);
    float  *nim_data_data = (float *) nim_data->data;
    
+   nim_data->scl_slope =  nim_data_r->scl_slope ;
+
+   
    /////////////////////////////////////////////
    /////////  fixing potential problems with different input datatypes  //////////////
    /////////////////////////////////////////////
@@ -231,6 +234,7 @@ if ( nim_layers_r->datatype == NIFTI_TYPE_INT32 ) {
 }    
 
 if ( nim_data_r->datatype == NIFTI_TYPE_FLOAT32 ) {
+cout << "Input data is float  " << endl; 
   float  *nim_data_r_data = (float *) nim_data_r->data;
   	for(int it=0; it<nrep; ++it){  
 	  for(int islice=0; islice<sizeSlice; ++islice){  
@@ -244,7 +248,8 @@ if ( nim_data_r->datatype == NIFTI_TYPE_FLOAT32 ) {
 	}
 }    
   
-if ( nim_layers_r->datatype == NIFTI_TYPE_INT16 ) {
+if ( nim_data_r->datatype == NIFTI_TYPE_INT16 ) {
+cout << "Input data is int 16  " << endl; 
   short  *nim_data_r_data = (short *) nim_data_r->data;
   	for(int it=0; it<nrep; ++it){  
 	  for(int islice=0; islice<sizeSlice; ++islice){  
@@ -258,7 +263,8 @@ if ( nim_layers_r->datatype == NIFTI_TYPE_INT16 ) {
 	}
 }    
 
-if ( nim_layers_r->datatype == NIFTI_TYPE_INT32 ) {
+if ( nim_data_r->datatype == NIFTI_TYPE_INT32 ) {
+cout << "Input data is int 32  " << endl; 
   int  *nim_data_r_data = (int *) nim_data_r->data;
   	for(int it=0; it<nrep; ++it){  
 	  for(int islice=0; islice<sizeSlice; ++islice){  
@@ -347,7 +353,7 @@ cout << " There are  " <<  columnnumber<< " columns  " << endl;
     imagiro->data = calloc(imagiro->nvox, imagiro->nbyper);
     float  *imagiro_data = (float *) imagiro->data;
     
-int nii_ok  = 4; 
+ int nii_ok  = 4; 
  nifti_nim_has_valid_dims(imagiro,nii_ok);
  nifti_nim_is_valid(imagiro, nii_ok) ;  
 
@@ -460,10 +466,23 @@ cout << "averaging all voxels in layer column " << endl;
     }     
    }
 
+///////////////////////////////////////////
+////   Taking care of scale factor if any /////
+///////////////////////////////////////////
  
+ 
+//if (nim_data_r->scl_inter == 0 ){
+imagiro->scl_slope =  nim_data_r->scl_slope ;
+imagiro->iname_offset = nim_data_r->iname_offset ; 
+//}
 
-cout << " writing out " << endl; 
- 
+if (nim_data_r->scl_inter != 0 ){
+cout << " ############################################################# " << endl; 
+cout << " #############   WARNING   WANRING   WANRING  ################ " << endl; 
+cout << " ########   the NIFTI scale factor is asymmetric  ############ " << endl; 
+cout << " #############   WARNING   WANRING   WANRING  ################ " << endl; 
+cout << " ############################################################# " << endl; 
+}
     
   const char  *fout_5="Number_of_voxels.nii" ;
   if( nifti_set_filenames(imagiro_vnr, fout_5 , 1, 1) ) return 1;
@@ -471,18 +490,11 @@ cout << " writing out " << endl;
 
 
 
-
-//  const char  *fout_3="lateral_coord.nii" ;
-//  if( nifti_set_filenames(lateralCoord, fout_3 , 1, 1) ) return 1;
-//  nifti_image_write( lateralCoord );
-
-
   string prefix = "unfolded_" ;
   string filename = (string) (data_filename) ;
   string outfilename = prefix+filename ;
   
    cout << "writing as = " << outfilename.c_str() << endl; // finfi is: char *
-
   const char  *fout_1=outfilename.c_str() ;
   if( nifti_set_filenames(imagiro, fout_1 , 1, 1) ) return 1;
   nifti_image_write( imagiro );
