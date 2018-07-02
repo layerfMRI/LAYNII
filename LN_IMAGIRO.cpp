@@ -109,7 +109,6 @@ int main(int argc, char * argv[])
    int sizeSlice = nim_layers_r->nz ; 
    int sizePhase = nim_layers_r->nx ; 
    int sizeRead = nim_layers_r->ny ; 
-   int nrep =  nim_layers_r->nt; 
    int nx =  nim_layers_r->nx;
    int nxy = nim_layers_r->nx * nim_layers_r->ny;
    int nxyz = nim_layers_r->nx * nim_layers_r->ny * nim_layers_r->nz;
@@ -117,6 +116,8 @@ int main(int argc, char * argv[])
    float dY =  nim_layers_r->pixdim[2] ; 
    float dZ =  nim_layers_r->pixdim[3] ; 
    
+   int nrep =  nim_data_r->nt; 
+
    
    if  (twodim == 1) dZ = 1000 * dZ ; 
    
@@ -132,13 +133,16 @@ int main(int argc, char * argv[])
    nim_layers->data = calloc(nim_layers->nvox, nim_layers->nbyper);
    short  *nim_layers_data = (short *) nim_layers->data;
    
-   nifti_image * nim_columns  	= nifti_copy_nim_info(nim_layers_r);
+   nifti_image * nim_columns  	= nifti_copy_nim_info(nim_column_r);
    nim_columns->datatype = NIFTI_TYPE_INT16;
    nim_columns->nbyper = sizeof(short);
    nim_columns->data = calloc(nim_columns->nvox, nim_columns->nbyper);
    short  *nim_columns_data = (short *) nim_columns->data;
+   nim_columns->scl_slope =  nim_column_r->scl_slope ;
+
    
-   nifti_image * nim_data  	= nifti_copy_nim_info(nim_layers_r);
+   
+   nifti_image * nim_data  	= nifti_copy_nim_info(nim_data_r);
    nim_data->datatype = NIFTI_TYPE_FLOAT32;
    nim_data->nbyper = sizeof(float);
    nim_data->data = calloc(nim_data->nvox, nim_data->nbyper);
@@ -153,7 +157,7 @@ int main(int argc, char * argv[])
 
 if ( nim_column_r->datatype == NIFTI_TYPE_FLOAT32 ) {
   float  *nim_column_r_data = (float *) nim_column_r->data;
-  	for(int it=0; it<nrep; ++it){  
+  	int it=0; 
 	  for(int islice=0; islice<sizeSlice; ++islice){  
 	      for(int iy=0; iy<sizePhase; ++iy){
 	        for(int ix=0; ix<sizeRead; ++ix){
@@ -161,13 +165,13 @@ if ( nim_column_r->datatype == NIFTI_TYPE_FLOAT32 ) {
            } 
 	    }
 	  }
-	}
+	
 }  
   
 
 if ( nim_column_r->datatype == NIFTI_TYPE_INT16 ) {
   short  *nim_column_r_data = (short *) nim_column_r->data;
-  	for(int it=0; it<nrep; ++it){  
+  	int it=0;
 	  for(int islice=0; islice<sizeSlice; ++islice){  
 	      for(int iy=0; iy<sizePhase; ++iy){
 	        for(int ix=0; ix<sizeRead; ++ix){
@@ -176,13 +180,13 @@ if ( nim_column_r->datatype == NIFTI_TYPE_INT16 ) {
            } 
 	    }
 	  }
-	}
+	
 }    
 
 
 if ( nim_column_r->datatype == NIFTI_TYPE_INT32 ) {
   int  *nim_column_r_data = (int *) nim_column_r->data;
-  	for(int it=0; it<nrep; ++it){  
+  	int it=0; 
 	  for(int islice=0; islice<sizeSlice; ++islice){  
 	      for(int iy=0; iy<sizePhase; ++iy){
 	        for(int ix=0; ix<sizeRead; ++ix){
@@ -190,12 +194,12 @@ if ( nim_column_r->datatype == NIFTI_TYPE_INT32 ) {
            } 
 	    }
 	  }
-	}
+	
 }    
 
 if ( nim_layers_r->datatype == NIFTI_TYPE_FLOAT32 ) {
   float  *nim_layers_r_data = (float *) nim_layers_r->data;
-  	for(int it=0; it<nrep; ++it){  
+  	int it=0; 
 	  for(int islice=0; islice<sizeSlice; ++islice){  
 	      for(int iy=0; iy<sizePhase; ++iy){
 	        for(int ix=0; ix<sizeRead; ++ix){
@@ -204,12 +208,12 @@ if ( nim_layers_r->datatype == NIFTI_TYPE_FLOAT32 ) {
            } 
 	    }
 	  }
-	}
+	
 }    
   
 if ( nim_layers_r->datatype == NIFTI_TYPE_INT16 ) {
   short  *nim_layers_r_data = (short *) nim_layers_r->data;
-  	for(int it=0; it<nrep; ++it){  
+  	int it=0; 
 	  for(int islice=0; islice<sizeSlice; ++islice){  
 	      for(int iy=0; iy<sizePhase; ++iy){
 	        for(int ix=0; ix<sizeRead; ++ix){
@@ -217,12 +221,12 @@ if ( nim_layers_r->datatype == NIFTI_TYPE_INT16 ) {
            } 
 	    }
 	  }
-	}
+	
 }    
 
 if ( nim_layers_r->datatype == NIFTI_TYPE_INT32 ) {
   int  *nim_layers_r_data = (int *) nim_layers_r->data;
-  	for(int it=0; it<nrep; ++it){  
+  	int it=0; 
 	  for(int islice=0; islice<sizeSlice; ++islice){  
 	      for(int iy=0; iy<sizePhase; ++iy){
 	        for(int ix=0; ix<sizeRead; ++ix){
@@ -230,7 +234,7 @@ if ( nim_layers_r->datatype == NIFTI_TYPE_INT32 ) {
            } 
 	    }
 	  }
-	}
+	
 }    
 
 if ( nim_data_r->datatype == NIFTI_TYPE_FLOAT32 ) {
@@ -293,7 +297,11 @@ cout << "Input data is int 32  " << endl;
   		for(int iy=0; iy<sizePhase; ++iy){
        		for(int ix=0; ix<sizeRead; ++ix){
 	 		 if (*(nim_layers_data   +  nxy*iz + nx*ix  + iy  ) > layernumber)  layernumber = *(nim_layers_data   +  nxy*iz + nx*ix  + iy) ; 
-	  		 if (*(nim_columns_data   +  nxy*iz + nx*ix  + iy  ) > columnnumber)  columnnumber = *(nim_columns_data   +  nxy*iz + nx*ix  + iy) ; 
+	  		 if (*(nim_columns_data   +  nxy*iz + nx*ix  + iy  ) > columnnumber) {
+	  		     columnnumber = *(nim_columns_data   +  nxy*iz + nx*ix  + iy) ; 
+	  		     //cout << " iz    " <<  iz << " ix " <<  ix << " iy "  <<  iy << "   " << columnnumber << "   " << nim_columns->scl_slope <<  endl; 
+
+	  		  } 
 
       		} 
    		} 
@@ -349,6 +357,8 @@ cout << " There are  " <<  columnnumber<< " columns  " << endl;
    cout << " imagiro column dim " << imagiro->nx << endl; 
    cout << " imagiro depth dim  "<< imagiro->ny << endl ; 
    cout << " imagiro layer dim  "<< imagiro->nz << endl << endl; 
+   cout << " imagiro time dim  "<< imagiro->nt << endl << endl; 
+
 
     imagiro->data = calloc(imagiro->nvox, imagiro->nbyper);
     float  *imagiro_data = (float *) imagiro->data;
@@ -415,7 +425,7 @@ cout << "calculating the number of voxels per layer column " << endl;
 ////   averaging all voxels in layer\column /////
 ///////////////////////////////////////////
 cout << "averaging all voxels in layer column " << endl; 
-
+ for(int it=0; it<nrep; ++it){  
    for(int iz=0; iz<sizeSlice; ++iz){  
     for(int iy=0; iy<sizePhase; ++iy){
       for(int ix=0; ix<sizeRead; ++ix){
@@ -423,18 +433,18 @@ cout << "averaging all voxels in layer column " << endl;
          layer_zi  =  *(nim_layers_data    +  nxy*iz + nx*ix  + iy)-1 ; 
          column_yi =  *(nim_columns_data   +  nxy*iz + nx*ix  + iy)-1 ; 
          depth_xi  = iz ; 
-         value_ofinput_data =  *(nim_data_data   +  nxy*iz + nx*ix  + iy) / *(imagiro_vnr_data  + nxy_imagiro*layer_zi + nx_imagiro*depth_xi  + column_yi)  ; 
+         value_ofinput_data =  *(nim_data_data + nxyz *it   +  nxy*iz + nx*ix  + iy) / *(imagiro_vnr_data  + nxy_imagiro*layer_zi + nx_imagiro*depth_xi  + column_yi)  ; 
 			//cout << "value_ofinput_data  " << value_ofinput_data<< endl;
-         *(imagiro_data  + nxy_imagiro*layer_zi + nx_imagiro*depth_xi  + column_yi) = *(imagiro_data  + nxy_imagiro*layer_zi + nx_imagiro*depth_xi  + column_yi) + value_ofinput_data ;
+         *(imagiro_data + nxyz_imagiro*it  + nxy_imagiro*layer_zi + nx_imagiro*depth_xi  + column_yi) = *(imagiro_data + nxyz_imagiro*it + nxy_imagiro*layer_zi + nx_imagiro*depth_xi  + column_yi) + value_ofinput_data ;
 		}
       }
     }     
    }
- 
+ }
  ///////////////////////////////////////////
 ////   fixing wholes /////
 ///////////////////////////////////////////
- cout << "fixing wholes  " << endl; 
+ cout << "fixing wholes  " <<  nrep << endl; 
  int vinc = 2; //VINCINITY
  float value_to_fill = 0 ; // AVERAGE VALUE IN VINCINITY 
  int number_of_vinces = 0 ;  // NUMBER OF VOXELS IN VINCINITY THAT ARE NOT ZERO
@@ -445,6 +455,9 @@ cout << "averaging all voxels in layer column " << endl;
       
         //cout << iz << "   " <<  ix << "   " << iy << endl;
 		if (*(imagiro_vnr_data  + nxy_imagiro*iz + nx_imagiro*ix  + iy) == 0) {
+		 //cout << "  iz  " << iz  << "  ix  " << ix  <<"  iy  " << iy  << endl;
+
+		   for(int it=0; it<nrep; ++it){  
 			 value_to_fill = 0 ;  
 			 number_of_vinces = 0 ; 
 			 
@@ -453,14 +466,15 @@ cout << "averaging all voxels in layer column " << endl;
 	     	  for(int iz_i=max(0,iz-vinc); iz_i<min(iz+vinc+1,sizeLayer_imagiro); ++iz_i){
 			  	if (*(imagiro_vnr_data  + nxy_imagiro*iz_i + nx_imagiro*ix_i  + iy_i  ) != 0 ){
 		 			number_of_vinces = number_of_vinces +1 ; 
-		  			value_to_fill = (float) value_to_fill + *(imagiro_data  + nxy_imagiro*iz_i + nx_imagiro*ix_i  + iy_i  ) ; 
+		  			value_to_fill = (float) value_to_fill + *(imagiro_data + nxyz_imagiro*it  + nxy_imagiro*iz_i + nx_imagiro*ix_i  + iy_i  ) ; 
 		  			//cout << "value_to_fill" << value_to_fill<< endl;
 		  		}
 			  }   
 			 }  
 	  	    }
 			
-		   *(imagiro_data  + nxy_imagiro*iz + nx_imagiro*ix  + iy)	= value_to_fill/ (float) number_of_vinces ; 
+		    *(imagiro_data + nxyz_imagiro*it + nxy_imagiro*iz + nx_imagiro*ix  + iy)	= value_to_fill/ (float) number_of_vinces ; 
+		   }
 		}
      }
     }     

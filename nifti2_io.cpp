@@ -1,4 +1,6 @@
 #define _NIFTI2_IO_C_
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 #include "nifti2_io.h"   /* typedefs, prototypes, macros, etc. */
 
