@@ -230,15 +230,20 @@ cout << " FWHM_val " <<  FWHM_val<<  endl;
 
  cout << " smoothing in dimension " << direction_i << endl ; 
 
+ cout << " timestep ... " << flush ; 
+
+
 if (direction_i == 1 ) {
+ for(int it=0; it<nrep; ++it){  
+   cout << it << "...." << flush ;
 	for(int iz=0; iz<sizeSlice; ++iz){  
       for(int iy=0; iy<sizePhase; ++iy){
         for(int ix=0; ix<sizeRead-0; ++ix){
-          *(gausweight_data  + nxy*iz + nx*ix  + iy  )  = 0 ; 
+          *(gausweight_data + nxyz *it + nxy*iz + nx*ix  + iy  )  = 0 ; 
 		  //*(smoothed_data    + nxy*iz + nx*ix  + iy  )  = 0 ; 
 		  
 	      			for(int ix_i=max(0,ix-vinc); ix_i<min(ix+vinc+1,sizeRead); ++ix_i){
-	      			  if ( *(nim_inputf_data  + nxy*iz + nx*ix_i  + iy  ) != 0 ) {
+	      			  if ( *(nim_inputf_data + nxyz *it + nxy*iz + nx*ix_i  + iy  ) != 0 ) {
 		  				dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy,(float)iz,dX,dY,dZ); 
 		  				//cout << "debug  4 " <<  gaus(dist_i ,FWHM_val ) <<   endl; 
 		  			    //cout << "debug  5 " <<  dist_i  <<   endl; 
@@ -246,8 +251,8 @@ if (direction_i == 1 ) {
 						//if ( *(nim_input_data   +  nxy*iz + nx*ix  + iy  )  == 3 ) cout << "debug  4b " << endl; 
 
 							//dummy = *(layer_data  + nxy*iz_i + nx*ix_i  + iy_i  ); 
-		  					*(smoothed_data    + nxy*iz + nx*ix  + iy  ) = *(smoothed_data    + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data  + nxy*iz + nx*ix_i  + iy  ) * gaus(dist_i ,FWHM_val ) ;
-		    				*(gausweight_data  + nxy*iz + nx*ix  + iy  ) = *(gausweight_data  + nxy*iz + nx*ix  + iy  ) + gaus(dist_i ,FWHM_val ) ; 
+		  					*(smoothed_data   + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(smoothed_data   + nxyz *it + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data + nxyz *it + nxy*iz + nx*ix_i  + iy  ) * gaus(dist_i ,FWHM_val ) ;
+		    				*(gausweight_data + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(gausweight_data + nxyz *it + nxy*iz + nx*ix  + iy  ) + gaus(dist_i ,FWHM_val ) ; 
 							
 			  		  }	
 			  	  }	
@@ -256,17 +261,20 @@ if (direction_i == 1 ) {
         }
       }
     }
+  }  
 }
 
 if (direction_i == 2 ) {
+ for(int it=0; it<nrep; ++it){  
+   cout << it << "...." << flush ;
 	for(int iz=0; iz<sizeSlice; ++iz){  
       for(int iy=0; iy<sizePhase; ++iy){
         for(int ix=0; ix<sizeRead-0; ++ix){
-          *(gausweight_data  + nxy*iz + nx*ix  + iy  )  = 0 ; 
+          *(gausweight_data + nxyz *it + nxy*iz + nx*ix  + iy  )  = 0 ; 
 		  //*(smoothed_data    + nxy*iz + nx*ix  + iy  )  = 0 ; 
 		  
 	      			for(int iy_i=max(0,iy-vinc); iy_i<min(iy+vinc+1,sizePhase); ++iy_i){
-	      			  if ( *(nim_inputf_data  + nxy*iz + nx*ix  + iy_i  ) != 0 ) {
+	      			  if ( *(nim_inputf_data + nxyz *it + nxy*iz + nx*ix  + iy_i  ) != 0 ) {
 		  				dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix,(float)iy_i,(float)iz,dX,dY,dZ); 
 		  				//cout << "debug  4 " <<  gaus(dist_i ,FWHM_val ) <<   endl; 
 		  			    //cout << "debug  5 " <<  dist_i  <<   endl; 
@@ -274,8 +282,8 @@ if (direction_i == 2 ) {
 						//if ( *(nim_input_data   +  nxy*iz + nx*ix  + iy  )  == 3 ) cout << "debug  4b " << endl; 
 
 							//dummy = *(layer_data  + nxy*iz_i + nx*ix_i  + iy_i  ); 
-		  					*(smoothed_data    + nxy*iz + nx*ix  + iy  ) = *(smoothed_data    + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data  + nxy*iz + nx*ix  + iy_i  ) * gaus(dist_i ,FWHM_val ) ;
-		    				*(gausweight_data  + nxy*iz + nx*ix  + iy  ) = *(gausweight_data  + nxy*iz + nx*ix  + iy  ) + gaus(dist_i ,FWHM_val ) ; 
+		  					*(smoothed_data   + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(smoothed_data   + nxyz *it + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data + nxyz *it + nxy*iz + nx*ix  + iy_i  ) * gaus(dist_i ,FWHM_val ) ;
+		    				*(gausweight_data + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(gausweight_data + nxyz *it + nxy*iz + nx*ix  + iy  ) + gaus(dist_i ,FWHM_val ) ; 
 							
 			  		  }	
 			  	  }	
@@ -284,17 +292,20 @@ if (direction_i == 2 ) {
         }
       }
     }
+  }  
 }
 
 if (direction_i == 3 ) {
-	for(int iz=0; iz<sizeSlice; ++iz){  
+ for(int it=0; it<nrep; ++it){  
+   cout << it << "...." << flush ;
+   	for(int iz=0; iz<sizeSlice; ++iz){  
       for(int iy=0; iy<sizePhase; ++iy){
         for(int ix=0; ix<sizeRead-0; ++ix){
-          *(gausweight_data  + nxy*iz + nx*ix  + iy  )  = 0 ; 
+          *(gausweight_data + nxyz *it  + nxy*iz + nx*ix  + iy  )  = 0 ; 
 		  //*(smoothed_data    + nxy*iz + nx*ix  + iy  )  = 0 ; 
 		  
 	      			for(int iz_i=max(0,iz-vinc); iz_i<min(iz+vinc+1,sizeSlice); ++iz_i){
-	      			  if ( *(nim_inputf_data  + nxy*iz_i + nx*ix  + iy  ) != 0 ) {
+	      			  if ( *(nim_inputf_data + nxyz *it  + nxy*iz_i + nx*ix  + iy  ) != 0 ) {
 		  				dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix,(float)iy,(float)iz_i,dX,dY,dZ); 
 		  				//cout << "debug  4 " <<  gaus(dist_i ,FWHM_val ) <<   endl; 
 		  			    //cout << "debug  5 " <<  dist_i  <<   endl; 
@@ -302,9 +313,9 @@ if (direction_i == 3 ) {
 						//if ( *(nim_input_data   +  nxy*iz + nx*ix  + iy  )  == 3 ) cout << "debug  4b " << endl; 
 
 							//dummy = *(layer_data  + nxy*iz_i + nx*ix_i  + iy_i  ); 
-							if ( *(nim_inputf_data  + nxy*iz_i + nx*ix  + iy  ) == 0 ) cout << *(nim_inputf_data  + nxy*iz_i + nx*ix  + iy  ) << endl;
-		  					*(smoothed_data    + nxy*iz + nx*ix  + iy  ) = *(smoothed_data    + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data  + nxy*iz_i + nx*ix  + iy  ) * gaus(dist_i ,FWHM_val ) ;
-		    				*(gausweight_data  + nxy*iz + nx*ix  + iy  ) = *(gausweight_data  + nxy*iz + nx*ix  + iy  ) + gaus(dist_i ,FWHM_val ) ; 
+							if ( *(nim_inputf_data + nxyz *it  + nxy*iz_i + nx*ix  + iy  ) == 0 ) cout << *(nim_inputf_data + nxyz *it  + nxy*iz_i + nx*ix  + iy  ) << endl;
+		  					*(smoothed_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) = *(smoothed_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data + nxyz *it  + nxy*iz_i + nx*ix  + iy  ) * gaus(dist_i ,FWHM_val ) ;
+		    				*(gausweight_data + nxyz *it  + nxy*iz + nx*ix  + iy  ) = *(gausweight_data + nxyz *it  + nxy*iz + nx*ix  + iy  ) + gaus(dist_i ,FWHM_val ) ; 
 							
 			  		  }	
 			  	  }	
@@ -313,21 +324,25 @@ if (direction_i == 3 ) {
         }
       }
     }
+  }  
 }
+
+
+cout << endl; 
 
 ///////////////////////////////////
 //// correcting for edge error  /////
 ///////////////////////////////////
-
-for(int iz=0; iz<sizeSlice; ++iz){  
+for(int it=0; it<nrep; ++it){  
+  for(int iz=0; iz<sizeSlice; ++iz){  
       for(int iy=0; iy<sizePhase; ++iy){
         for(int ix=0; ix<sizeRead-0; ++ix){
-		  					*(smoothed_data    + nxy*iz + nx*ix  + iy  ) = *(smoothed_data    + nxy*iz + nx*ix  + iy  ) / *(gausweight_data  + nxy*iz + nx*ix  + iy  );							
+		  					*(smoothed_data    + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(smoothed_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) / *(gausweight_data  + nxyz *it + nxy*iz + nx*ix  + iy  );							
         }
       }
     }
-
- cout << " runing also until here  5.... " << endl; 
+}
+ cout << " runing also until here  " << endl; 
 
 
 smoothed->scl_slope =  nim_inputfi->scl_slope ;
