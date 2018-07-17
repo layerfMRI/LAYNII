@@ -57,3 +57,9 @@ Usage of My_nii_read.cpp
 
 For more information see: https://layerfmri.com/2017/11/30/using-a-standalone-nii-i-o-in-c/ 
 
+Comment on GSL
+======
+It seems that GSL does not have the fit option automatically included. 
+If there is an error when compiling about gsl/gsl_fit, consider installing the dev-package:
+sudo apt-get install libgsl0-dev
+
