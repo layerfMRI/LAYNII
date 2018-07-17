@@ -256,7 +256,7 @@ cout << "bis hier 2 " << endl;
 // Reduce mask to contain only Areas close to the curface. 
 cout << " select GM regions .... " << endl; 
 
-int vinc = 80; // This is the distance from every voxel that the algorythm is applied on. Just to make it faster and not loop over all voxels.
+int vinc = 700; // This is the distance from every voxel that the algorythm is applied on. Just to make it faster and not loop over all voxels.
 
 
 float dist_i = 0.; 
