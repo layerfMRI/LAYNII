@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string>
-#include <gsl/gsl_fit.h>
 #include <gsl/gsl_multifit.h>
 #include <gsl/gsl_statistics_double.h>
 using namespace std;
@@ -227,10 +226,10 @@ int main(int argc, char * argv[])
 
    
     nifti_image * equi_dist_layers  = nifti_copy_nim_info(nim_input);
-	equi_dist_layers->datatype = NIFTI_TYPE_INT32;
-	equi_dist_layers->nbyper = sizeof(int);
+	equi_dist_layers->datatype = NIFTI_TYPE_INT16;
+	equi_dist_layers->nbyper = sizeof(short);
     equi_dist_layers->data = calloc(equi_dist_layers->nvox, equi_dist_layers->nbyper);
-    int  *equi_dist_layers_data = (int *) equi_dist_layers->data;
+    short  *equi_dist_layers_data = (short *) equi_dist_layers->data;
 
    //nifti_image * equi_dist_layers = nifti_image_read(fin, 1);
    //short  *equi_dist_layers_data = (short *) equi_dist_layers->data;
@@ -256,7 +255,7 @@ cout << "bis hier 2 " << endl;
 // Reduce mask to contain only Areas close to the curface. 
 cout << " select GM regions .... " << endl; 
 
-int vinc = 700; // This is the distance from every voxel that the algorythm is applied on. Just to make it faster and not loop over all voxels.
+int vinc = 40; // This is the distance from every voxel that the algorythm is applied on. Just to make it faster and not loop over all voxels.
 
 
 float dist_i = 0.; 

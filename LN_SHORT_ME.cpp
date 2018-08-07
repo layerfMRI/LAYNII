@@ -12,7 +12,6 @@
 #include <iostream>
 #include <string>
 #include <gsl/gsl_fit.h>
-#include <gsl/gsl_multifit.h>
 #include <gsl/gsl_statistics_double.h>
 using namespace std;
 

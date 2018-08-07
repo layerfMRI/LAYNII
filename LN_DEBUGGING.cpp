@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string>
-#include <gsl/gsl_fit.h>
 #include <gsl/gsl_multifit.h>
 #include <gsl/gsl_statistics_double.h>
 using namespace std;
@@ -75,7 +74,7 @@ int main(int argc, char * argv[])
    int nxy = nim_input->nx * nim_input->ny;
    int nxyz = nim_input->nx * nim_input->ny * nim_input->nz;
 
-  // cout << sizeSlice << " slices    " <<  sizePhase << " PhaseSteps     " <<  sizeRead << " Read steps    " <<  nrep << " timesteps "  << endl; 
+ cout << sizeSlice << " slices    " <<  sizePhase << " PhaseSteps     " <<  sizeRead << " Read steps    " <<  nrep << " timesteps "  << endl; 
 
 
 	// get access to data of nim_input 
@@ -99,6 +98,21 @@ int main(int argc, char * argv[])
 
 
 if ( nim_input->datatype == NIFTI_TYPE_FLOAT32 ) {
+    float  *nim_2_data = (float *) nim_2->data;
+    cout << " datatye 1  " << nim_2->datatype << endl;
+	for(int it=0; it<nrep; ++it){  
+	  for(int islice=0; islice<sizeSlice; ++islice){  
+	      for(int iy=0; iy<sizePhase; ++iy){
+	        for(int ix=0; ix<sizeRead; ++ix){
+        		  *(nim_5_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = (float) (*(nim_2_data  + nxyz *it +  nxy*islice + nx*ix  + iy  )) ;
+	      }
+	    }
+	  }
+	}
+  }  
+  
+  
+ if ( nim_input->datatype == NIFTI_TYPE_FLOAT32 ) {
     float  *nim_2_data = (float *) nim_2->data;
     cout << " datatye 1  " << nim_2->datatype << endl;
 	for(int it=0; it<nrep; ++it){  

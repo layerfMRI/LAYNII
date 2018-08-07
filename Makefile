@@ -18,7 +18,13 @@ OBJS	   	= nifti2_io.o $(MISC_OBJS)
 TOOLS 	   	= nifti_tool nifti1_tool nifti2_tool
 
 # include your future program below: EXAMPLES   	= My_nii_read    My_future_program_name
-EXAMPLES   	= My_nii_read LN_SNR_int_corr LN_FAsim LN_NOISEME LN_GROW_LAYERS LN_3DGROW_LAYERS LN_DEBUGGING LN_GFACTOR LN_LEAKY_LAYERS LN_LAYER_SMOOTH LN_3DCOLUMNS LN_SHORT_ME LN_FAsim LN_FIX_RIM LN_FLOAT_ME LN_IMAGIRO LN_DIRECT_SMOOTH LN_RAGRUG
+EXAMPLES   	= 	My_nii_read 		LN_SNR_int_corr 	LN_FAsim LN_NOISEME 	LN_GROW_LAYERS \
+				LN_3DGROW_LAYERS 	LN_DEBUGGING 		LN_GFACTOR 				LN_LEAKY_LAYERS \
+				LN_LAYER_SMOOTH 	LN_3DCOLUMNS 		LN_SHORT_ME 			LN_FAsim \
+				LN_FIX_RIM 			LN_FLOAT_ME 		LN_IMAGIRO 				LN_DIRECT_SMOOTH \
+				LN_RAGRUG			LN_CORREL2FILES		LN_EXTREMETR			LN_BOCO\
+				LN_TRIAL
+
 # main targets (primary is nifti_tool, for now)
 nifti_tool: nifti_tool.o nifti_tool.h nifti2objs
 	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LLIBS)
@@ -79,7 +85,20 @@ LN_DIRECT_SMOOTH: LN_DIRECT_SMOOTH.o nifti2objs
 	
 LN_RAGRUG: LN_RAGRUG.o nifti2objs
 	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LLIBS)
+	
+LN_CORREL2FILES: LN_CORREL2FILES.o nifti2objs
+	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LLIBS)
 
+LN_EXTREMETR: LN_EXTREMETR.o nifti2objs
+	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LLIBS)
+	
+LN_BOCO: LN_BOCO.o nifti2objs
+	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LLIBS)
+	
+LN_TRIAL: LN_TRIAL.o nifti2objs
+	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LLIBS)
+	
+	
 clean:
 	$(RM) *.o $(TOOLS) $(EXAMPLES)
 
