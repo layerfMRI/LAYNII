@@ -31,7 +31,7 @@ int show_help( void )
       "    set output filenames and write a NIfTI-2 dataset, all via the\n"
       "    standard NIfTI C library.\n"
       "\n"
-      "    basic usage: LN_GROW_LAYERS -rim rim.nii \n"
+      "    basic usage: LN_GROW_LAYERS -rim rim.nii -N 21 \n"
       "\n"
       "\n"
       "   note that the rim.nii file always needs to be in datatype SHORT  \n"
@@ -41,6 +41,7 @@ int show_help( void )
       "       -help               : show this help\n"
       "       -disp_float_example : show some voxel's data\n"
       "       -rim  border      : specify input dataset\n"
+      "		  -N  20			  : Optional number of layers, default is 20. in Visual cortex you might want oto use less. \n"
       "\n");
    return 0;
 }
@@ -50,7 +51,7 @@ int main(int argc, char * argv[])
 
    nifti_image * nim_input=NULL;
    char        * fin=NULL, * fout=NULL;
-   int          ac, disp_float_eg=0;
+   int          ac, disp_float_eg=0, Nlayer = 20;
    if( argc < 2 ) return show_help();   // typing '-help' is sooo much work 
 
    // process user options: 4 are valid presently 
@@ -68,6 +69,13 @@ int main(int argc, char * argv[])
          }
          fin = argv[ac];  // no string copy, just pointer assignment 
       }
+      else if( ! strcmp(argv[ac], "-N") ) {
+        if( ++ac >= argc ) {
+            //fprintf(stderr, " I am using 20 layers as default ");
+            return 1;
+         }
+         Nlayer = atof(argv[ac]);  // no string copy, just pointer assignment 
+      }
       else {
          fprintf(stderr,"** invalid option, '%s'\n", argv[ac]);
          return 1;
@@ -82,6 +90,7 @@ int main(int argc, char * argv[])
       return 2;
    }
    
+cout << " I am using "  <<  Nlayer << " Layers " << endl; 
 
    // get dimsions of input 
    int sizeSlice = nim_input->nz ; 
@@ -267,7 +276,7 @@ float dist_max = 0.;
 float dist_p1 = 0.;
 
 
-int number_of_layers = 20 ; 
+int number_of_layers = Nlayer ; 
 
 
 cout << " start growing  from WM .... " << endl; 
@@ -540,7 +549,7 @@ for(int islice=0; islice<sizeSlice; ++islice){
             iy_f    = (float)iy;  
 
             // cout << " rix_f,iy_f,GMK2_f,GMK3_f " <<  "   "  <<  ix_f <<  "   "  <<iy_f <<  "   "  <<GMK2_f <<  "   "  <<*(GMkoord2_data + nxy*islice + nx*ix + iy)<< endl; 
-            *(equi_dist_layers_data  +  nxy*islice + nx*ix  + iy  ) =  19 * (1- dist((float)ix,(float)iy,GMK2_f,GMK3_f )/ (dist((float)ix,(float)iy,GMK2_f,GMK3_f) + dist((float)ix,(float)iy,WMK2_f,WMK3_f) )) + 2  ;
+            *(equi_dist_layers_data  +  nxy*islice + nx*ix  + iy  ) =  (Nlayer-1) * (1- dist((float)ix,(float)iy,GMK2_f,GMK3_f )/ (dist((float)ix,(float)iy,GMK2_f,GMK3_f) + dist((float)ix,(float)iy,WMK2_f,WMK3_f) )) + 2  ;
             //*(equi_dist_layers_data  +  nxy*islice + nx*ix  + iy  ) =  100 * dist(ix_f,iy_f,GMK2_f,GMK3_f ) ;
 
             	}
@@ -556,7 +565,7 @@ for(int islice=0; islice<sizeSlice; ++islice){
       for(int iy=0; iy<sizePhase; ++iy){
         for(int ix=0; ix<sizeRead-0; ++ix){
 		if (*(nim_input_data  + nxy*islice + nx*ix  + iy  ) == 1 && *(equi_dist_layers_data  +  nxy*islice + nx*ix  + iy  ) == 0  ){
-	  		*(equi_dist_layers_data  +  nxy*islice + nx*ix  + iy  ) = 21 ;
+	  		*(equi_dist_layers_data  +  nxy*islice + nx*ix  + iy  ) = Nlayer+1 ;
             	}
 		if (*(nim_input_data  + nxy*islice + nx*ix  + iy  ) == 2 && *(equi_dist_layers_data  +  nxy*islice + nx*ix  + iy  ) == 0  ){
 	  		*(equi_dist_layers_data  +  nxy*islice + nx*ix  + iy  ) = 1 ;
@@ -572,7 +581,7 @@ for(int islice=0; islice<sizeSlice; ++islice){
 
 
      // output file name       
-  const char  *fout_4="equi_dist_layers.nii" ;
+  const char  *fout_4="layers.nii" ;
   if( nifti_set_filenames(equi_dist_layers, fout_4 , 1, 1) ) return 1;
   nifti_image_write( equi_dist_layers );
 

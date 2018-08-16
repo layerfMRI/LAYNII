@@ -162,7 +162,7 @@ if ( nim_file_1i->datatype == NIFTI_TYPE_FLOAT32 ) {
 	  for(int islice=0; islice<sizeSlice; ++islice){  
 	      for(int iy=0; iy<sizePhase; ++iy){
 	        for(int ix=0; ix<sizeRead; ++ix){
-        		 *(triav_file_data  + nxyz *(it%trialdur) +  nxy*islice + nx*ix  + iy  ) =  (*(triav_file_data  + nxyz *(it%trialdur) +  nxy*islice + nx*ix  + iy  )) +  (*(nim_file_1_data  + nxyz *it +  nxy*islice + nx*ix  + iy  )) ;	
+        		 *(triav_file_data  + nxyz *(it%trialdur) +  nxy*islice + nx*ix  + iy  ) =  (*(triav_file_data  + nxyz *(it%trialdur) +  nxy*islice + nx*ix  + iy  )) +  (*(nim_file_1_data  + nxyz *it +  nxy*islice + nx*ix  + iy  )) /numberofTrials;	
            } 
 	    }
 	  }

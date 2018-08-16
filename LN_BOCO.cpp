@@ -27,7 +27,9 @@ int show_help( void )
       "    It basically does the division of nulled and not nulled imaged \n"
       "\n"
       "\n"
-      "    basic usage: LN_BOCO -Nulled Nulled.nii -BOLD BOLD.nii \n"
+      "    basic usage: LN_BOCO -Nulled Nulled_intemp.nii -BOLD BOLD_intemp.nii \n"
+      "    basic usage: LN_BOCO -Nulled Nulled_intemp.nii -BOLD BOLD_intemp.nii -shift \n"
+      "    basic usage: LN_BOCO -Nulled Nulled_intemp.nii -BOLD BOLD_intemp.nii -trialBOCO 24 \n"
       "\n"
       "\n"
       "\n"
@@ -36,6 +38,8 @@ int show_help( void )
       "       -help               : show this help\n"
       "       -Nulled 			  : Nulled (VASO) time series that needs to be BOLD corrected \n"
       "       -BOLD  	          : Reference BOLD time series that does not have a VASO contrast\n"
+      "		  -shift			  : Optional,  estimate the correlation of BOLD and VASO for themoral shifts. \n"
+      "		  -trialBOCO		  : First average trials and then do the BOLD correction. The parameter is the trial duration in TRs. \n"
       "\n"
       "\n"
       "   Here it is assumed that BOLD and VASO refer to the double TR: \n"
@@ -54,7 +58,8 @@ int main(int argc, char * argv[])
 
    //nifti_image * nim_input=NULL;
    char        * fin_1=NULL, * fin_2=NULL ;
-   int          ac, disp_float_eg=0;
+   int          ac, disp_float_eg=0, shift= 0;
+   int 			trialdur=0 ;
    if( argc < 2 ) return show_help();   // typing '-help' is sooo much work 
 
    // process user options: 4 are valid presently 
@@ -75,6 +80,17 @@ int main(int argc, char * argv[])
             return 1;
          }
          fin_2 = argv[ac];  // no string copy, just pointer assignment 
+      }
+      else if( ! strcmp(argv[ac], "-trialBOCO") ) {
+        if( ++ac >= argc ) {
+            fprintf(stderr, "** missing argument for -trialBOCO\n");
+            return 1;
+         }
+         trialdur = atof(argv[ac]);  // no string copy, just pointer assignment 
+      }
+      else if( ! strcmp(argv[ac], "-shift") ) {
+         shift = 1;
+         cout << " I will do a correlation analysis with temporal shifts"  << endl; 
       }
       else {
          fprintf(stderr,"** invalid option, '%s'\n", argv[ac]);
@@ -97,6 +113,7 @@ int main(int argc, char * argv[])
       fprintf(stderr,"** failed to read NIfTI image from '%s'\n", fin_2);
       return 2;
    }
+   
    
 
    // get dimsions of input 
@@ -239,6 +256,8 @@ if ( nim_file_2i->datatype == NIFTI_TYPE_FLOAT32 ) {
 	    }
 	  }
 
+
+if (shift == 1) {
     nifti_image * correl_file  		= nifti_copy_nim_info(nim_file_1);
     correl_file->nt 				= 7	; 
     correl_file->nvox 				= nim_file_1->nvox / nrep *7 ; 
@@ -247,8 +266,8 @@ if ( nim_file_2i->datatype == NIFTI_TYPE_FLOAT32 ) {
     correl_file->data 				= calloc(correl_file->nvox, correl_file->nbyper);
     float  *correl_file_data 		= (float *) correl_file->data;
 
-double vec_file1[nrep]  ;
-double vec_file2[nrep]  ;
+	double vec_file1[nrep]  ;
+	double vec_file2[nrep]  ;
 
     for(int shift=-3; shift<=3; ++shift){  
     
@@ -309,21 +328,90 @@ double vec_file2[nrep]  ;
 	  }
 
 
-
-
-
-
- cout << " runing also until here  5.... " << endl; 
-
   string prefix = "correlated_" ;
   string filename_1 = (string) (fin_1) ;
   string outfilename = prefix+filename_1 ;
-  
+
    cout << "writing as = " << outfilename.c_str() << endl; // finfi is: char *
 
   const char  *fout_1=outfilename.c_str() ;
   if( nifti_set_filenames(correl_file, fout_1 , 1, 1) ) return 1;
   nifti_image_write( correl_file );
+
+} // shift loop closed
+
+
+
+if (trialdur!=0) {
+
+cout << " I will also do the BOLD correction after the trial average " << endl; 
+
+cout << " Trial duration is " <<trialdur << " this means there are " << (float)nrep/(float)trialdur <<  " trials recorted here " << endl; 
+   
+   int numberofTrials = nrep/trialdur ; 
+   // Trial averave file
+    nifti_image * triav_file    = nifti_copy_nim_info(nim_file_1);
+    triav_file->nt 				= trialdur	; 
+    triav_file->nvox 			= nim_file_1->nvox / nrep * trialdur; 
+    triav_file->datatype 		= NIFTI_TYPE_FLOAT32; 
+    triav_file->nbyper 			= sizeof(float);
+    triav_file->data 			= calloc(triav_file->nvox, triav_file->nbyper);
+    float  *triav_file_data 	= (float *) triav_file->data;
+    
+    float AV_Nulled[trialdur] ;
+    float AV_BOLD[trialdur]   ; 
+
+    
+    
+    
+	  for(int islice=0; islice<sizeSlice; ++islice){  
+	      for(int iy=0; iy<sizePhase; ++iy){
+	        for(int ix=0; ix<sizeRead; ++ix){
+	              for(int it=0; it<trialdur; ++it){  
+					AV_Nulled[it] = 0 ;
+					AV_BOLD  [it] = 0 ;
+				  }  
+	           	  for(int it=0; it<trialdur*numberofTrials; ++it){  
+        		  		AV_Nulled[it%trialdur] = AV_Nulled[it%trialdur] + (*(nim_file_1_data  + nxyz *(it) +  nxy*islice + nx*ix  + iy  ))/numberofTrials ;	
+        		  		AV_BOLD[it%trialdur]   = AV_BOLD[it%trialdur]   + (*(nim_file_2_data  + nxyz *(it) +  nxy*islice + nx*ix  + iy  ))/numberofTrials ;	
+			      }         
+			      
+			      for(int it=0; it<trialdur; ++it){  
+			        *(triav_file_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = AV_Nulled[it]/AV_BOLD[it] ;
+				  } 
+           } 
+	    }
+	  }
+	
+     // clean VASO values that are unrealistic
+    for(int islice=0; islice<sizeSlice; ++islice){  
+	   for(int iy=0; iy<sizePhase; ++iy){
+	        for(int ix=0; ix<sizeRead; ++ix){
+	        	for(int it=0;  it<trialdur; ++it){  
+	
+	            	if (*(triav_file_data + nxyz*it + nxy*islice + nx*ix  + iy  ) <= 0) {
+	            		*(triav_file_data + nxyz*it + nxy*islice + nx*ix  + iy  ) = 0 ;
+	            		}
+	            	if (*(triav_file_data + nxyz*it + nxy*islice + nx*ix  + iy  ) >= 2) {
+	            		*(triav_file_data + nxyz*it + nxy*islice + nx*ix  + iy  ) = 2 ;
+	            		}
+
+	            }
+        	}	
+	    }
+	  }
+
+
+  const char  *fout_trial="VASO_trialAV_LN.nii" ;
+  if( nifti_set_filenames(triav_file, fout_trial , 1, 1) ) return 1;
+  nifti_image_write( triav_file );
+
+
+}// Trial Average loop closed
+ cout << " runing also until here  5.... " << endl; 
+
+
+
 
   const char  *fout_5="VASO_LN.nii" ;
   if( nifti_set_filenames(boco_vaso, fout_5 , 1, 1) ) return 1;
