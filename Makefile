@@ -23,7 +23,7 @@ EXAMPLES   	= 	My_nii_read 		LN_SNR_int_corr 	LN_FAsim LN_NOISEME 	LN_GROW_LAYER
 				LN_LAYER_SMOOTH 	LN_3DCOLUMNS 		LN_SHORT_ME 			LN_FAsim \
 				LN_FIX_RIM 			LN_FLOAT_ME 		LN_IMAGIRO 				LN_DIRECT_SMOOTH \
 				LN_RAGRUG			LN_CORREL2FILES		LN_EXTREMETR			LN_BOCO\
-				LN_TRIAL			LN_ZOOM
+				LN_TRIAL			LN_ZOOM				LN_SMOOTH_RIM 
 
 # main targets (primary is nifti_tool, for now)
 nifti_tool: nifti_tool.o nifti_tool.h nifti2objs
@@ -101,7 +101,8 @@ LN_TRIAL: LN_TRIAL.o nifti2objs
 LN_ZOOM: LN_ZOOM.o nifti2objs
 	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LLIBS)
 	
-	
+LN_SMOOTH_RIM: LN_SMOOTH_RIM.o nifti2objs
+	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LLIBS)
 	
 clean:
 	$(RM) *.o $(TOOLS) $(EXAMPLES)

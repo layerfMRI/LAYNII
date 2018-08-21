@@ -26,7 +26,7 @@ using namespace std;
 int show_help( void )
 {
    printf(
-      "LN_NOISEME: short exmample of LAyering\n"
+      "LN_3DGROW_LAYERS: short exmample of LAyering\n"
       "\n"
       "    This program is to demonstrate how to read a NIfTI-2 dataset,\n"
       "    set output filenames and write a NIfTI-2 dataset, all via the\n"
