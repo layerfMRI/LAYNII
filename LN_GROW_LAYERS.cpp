@@ -42,13 +42,16 @@ int show_help( void )
       "       -help               : show this help\n"
       "       -rim    border      : specify input dataset\n"
       "       -vinc  number       : size of vicinity, default is 40. \n"
-      "								  This is the maximum thickness of \n"
-      "								  the cortex in units of voxels. \n"
-      "								  the smaller the number the faster the program \n"
-      "		  -N  number		  : Optional number of layers, default is 20.  \n"
-      "								  in Visual cortex you might want to use less. \n"
-      " 							  the maximum accuracy is 1/100 for now. \n"
-      "		  -threeD			  : do the layer colculations in 3D, default is 2D \n"
+      "	                             This is the maximum thickness of \n"
+      "	                             the cortex in units of voxels. \n"
+      "	                             the smaller the number the faster the program \n"
+      "       -N  number          : Optional number of layers, default is 20.  \n"
+      "	                             in Visual cortex you might want to use less. \n"
+      "	                             the maximum accuracy is 1/100 for now. \n"
+      "      -threeD              : do the layer colculations in 3D, default is 2D \n"
+      "      -thin                : optional extra option, when the distance between \n"
+      "                               layers is less than the voxel thickness \n"
+      "                               Insub this is 4 U \n"
       "\n");
    return 0;
 }
@@ -58,7 +61,7 @@ int main(int argc, char * argv[])
 
    nifti_image * nim_input_i=NULL;
    char        * fin=NULL, * fout=NULL;
-   int          ac, disp_float_eg=0, Nlayer_real = 20 , vinc_int = 50, threeD = 0  ;
+   int          ac, disp_float_eg=0, Nlayer_real = 20 , vinc_int = 50, threeD = 0 , thinn_option = 0 ;
    if( argc < 2 ) return show_help();   // typing '-help' is sooo much work 
 
    // process user options: 4 are valid presently 
@@ -93,6 +96,10 @@ int main(int argc, char * argv[])
       else if( ! strcmp(argv[ac], "-threeD") ) {
          fprintf(stderr, " Layer calculation will be done in 3D\n ");
          threeD = 1;  // no string copy, just pointer assignment 
+      }
+      else if( ! strcmp(argv[ac], "-thin") ) {
+         fprintf(stderr, " I correct for extra thin layers \n ");
+         thinn_option = 1;  // no string copy, just pointer assignment 
       }
       else {
          fprintf(stderr,"** invalid option, '%s'\n", argv[ac]);
@@ -1163,7 +1170,8 @@ for(int islice=0; islice<sizeSlice; ++islice){
     }
     
     
-   for(int iz=0; iz<sizeSlice; ++iz){  
+ if (thinn_option == 0) {
+  for(int iz=0; iz<sizeSlice; ++iz){  
       for(int iy=0; iy<sizePhase; ++iy){
         for(int ix=0; ix<sizeRead-0; ++ix){
 		   if (*(nim_input_data  + nxy*iz + nx*ix  + iy  ) != 0  ){
@@ -1171,7 +1179,41 @@ for(int islice=0; islice<sizeSlice; ++islice){
            }
         }
       }
-    }   
+    }  
+ 
+ }  
+  
+    
+    
+ if (thinn_option == 1) {
+  Nlayer_real = Nlayer_real + 2;
+  for(int iz=0; iz<sizeSlice; ++iz){  
+      for(int iy=0; iy<sizePhase; ++iy){
+        for(int ix=0; ix<sizeRead-0; ++ix){
+		   if (*(nim_input_data  + nxy*iz + nx*ix  + iy  ) != 0  ){
+	  		    *(equi_dist_layers_data + nxy*iz + nx*ix + iy ) = (int)(  (double)*(equi_dist_layers_data + nxy*iz + nx*ix + iy )* (double) (Nlayer_real-1) /( (double)(Nlayer) )   + 1.5  ) ;
+           }
+        }
+      }
+    }  
+ 
+   for(int iz=0; iz<sizeSlice; ++iz){  
+      for(int iy=0; iy<sizePhase; ++iy){
+        for(int ix=0; ix<sizeRead-0; ++ix){
+		   if ( *(equi_dist_layers_data + nxy*iz + nx*ix + iy ) >= 2 && *(equi_dist_layers_data + nxy*iz + nx*ix + iy ) < Nlayer_real ){
+	  		    *(equi_dist_layers_data + nxy*iz + nx*ix + iy ) =  *(equi_dist_layers_data + nxy*iz + nx*ix + iy ) - 1 ;
+           }
+           if ( *(equi_dist_layers_data + nxy*iz + nx*ix + iy ) == Nlayer_real ){
+	  		    *(equi_dist_layers_data + nxy*iz + nx*ix + iy ) =  *(equi_dist_layers_data + nxy*iz + nx*ix + iy ) - 2 ;
+           }
+        }
+      }
+    } 
+ 
+ }  
+ 
+
+ 
  cout << " runing also until here  4.5... " << endl; 
 
 //equi_dist_layers.autowrite("equi_dist_layers.nii", wopts, &prot);
