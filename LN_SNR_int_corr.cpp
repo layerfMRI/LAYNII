@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string>
-#include <gsl/gsl_multifit.h>
+//#include <gsl/gsl_multifit.h>
 #include <gsl/gsl_statistics_double.h>
 
 
