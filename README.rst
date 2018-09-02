@@ -46,9 +46,14 @@ Usage of My_nii_read.cpp
 
     git clone https://github.com/layerfMRI/laynii
     
+2.) go into subfolder::
+
+    cd laynii
+    
+    
 2.) compile it with::
 
-    make My_nii_read
+    make all
     
 3.) execute it with::
 
@@ -59,7 +64,9 @@ For more information see: https://layerfmri.com/2017/11/30/using-a-standalone-ni
 
 Comment on GSL
 ======
+Parts of LAYNII depend on GSL.
 It seems that GSL does not have the fit option automatically included. 
 If there is an error when compiling about gsl/gsl_fit, consider installing the dev-package:
 sudo apt-get install libgsl0-dev
+Update 180902: The fit include has been removed.
 
