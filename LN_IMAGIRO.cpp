@@ -346,8 +346,12 @@ cout << " There are  " <<  columnnumber<< " columns  " << endl;
    float dX_imagiro =  imagiro->pixdim[1]; 
    float dY_imagiro =  imagiro->pixdim[2]; 
    float dZ_imagiro =  imagiro->pixdim[3]; 
-   nifti_update_dims_from_array(imagiro) ; 
    
+      cout << " imagiro layer dim a "<< imagiro->nz << endl; 
+
+   //nifti_update_dims_from_array(imagiro) ; 
+      cout << " imagiro layer dim b "<< imagiro->nz << endl; 
+
  //  cout << imagiro->pixdim[1] << endl; 
  //  cout << imagiro->pixdim[2] << endl; 
  //  cout << imagiro->pixdim[3] << endl; 
@@ -355,8 +359,8 @@ cout << " There are  " <<  columnnumber<< " columns  " << endl;
    
    cout << " imagiro column dim " << imagiro->nx << endl; 
    cout << " imagiro depth dim  "<< imagiro->ny << endl ; 
-   cout << " imagiro layer dim  "<< imagiro->nz << endl << endl; 
-   cout << " imagiro time dim  "<< imagiro->nt << endl << endl; 
+   cout << " imagiro layer dim  "<< imagiro->nz << endl; 
+   cout << " imagiro time dim  "<< imagiro->nt << endl ; 
 
 
     imagiro->data = calloc(imagiro->nvox, imagiro->nbyper);
@@ -482,7 +486,8 @@ cout << "averaging all voxels in layer column " << endl;
 ///////////////////////////////////////////
 ////   Taking care of scale factor if any /////
 ///////////////////////////////////////////
- 
+  cout << "writing out 1  "  << endl; 
+
  
 //if (nim_data_r->scl_inter == 0 ){
 imagiro->scl_slope =  nim_data_r->scl_slope ;
@@ -496,11 +501,10 @@ cout << " ########   the NIFTI scale factor is asymmetric  ############ " << end
 cout << " #############   WARNING   WANRING   WANRING  ################ " << endl; 
 cout << " ############################################################# " << endl; 
 }
-    
-  const char  *fout_5="Number_of_voxels.nii" ;
-  if( nifti_set_filenames(imagiro_vnr, fout_5 , 1, 1) ) return 1;
-  nifti_image_write( imagiro_vnr );
 
+
+
+ cout << "writing out 3  "  << endl; 
 
 
   string prefix = "unfolded_" ;
@@ -513,7 +517,11 @@ cout << " ############################################################# " << end
   nifti_image_write( imagiro );
   
 
-
+ cout << "writing out 2  "  << endl; 
+    
+  const char  *fout_5="Number_of_voxels.nii" ;
+  if( nifti_set_filenames(imagiro_vnr, fout_5 , 1, 1) ) return 1;
+  nifti_image_write( imagiro_vnr );
 
 
   return 0;
