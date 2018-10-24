@@ -21,26 +21,29 @@ using namespace std;
 int show_help( void )
 {
    printf(
-      "LN_COLUMNAR_DIST : This program calculates cortical distances (a.k.a. columnar structures) based on the GM geometryn"
+      "LN_COLUMNAR_DIST : This program calculates cortical distances (a.k.a. columnar structures) based on the GM geometry"
       "\n"
       "   the layer nii file and the landmarks nii file should have the same dimensions  \n"
       "\n"
-      "    basic usage: LN_3DCOLUMNS -layer_file equi_dist_layers.nii -landmarks landmarks.nii \n"
+      "    basic usage: LN_COLUMNAR_DIST -layer_file layers.nii -landmarks landmarks.nii \n"
       "\n"
       "\n"
       "   This program now supports INT16, INT32 and FLOAT23 \n"
 
       "\n"
-      "       -help               	: show this help\n"
-      "       -layer_file     		: nii file that contains layer or column masks \n"
+      "       -help                 : show this help\n"
+      "       -layer_file           : nii file that contains layer or column masks \n"
       "       -landmarks            : nii file with landmarks (use value one as origin )  \n"
-      "	                              Landmarks should be at least 4 voxels thick\n"
-      "       -twodim 		     	: optional argument to run in 2 Dim only \n"
+      "                                 Landmarks should be at least 4 voxels thick\n"
+      "       -twodim               : optional argument to run in 2 Dim only \n"
+      "                                 this will not really make it faster, though \n"
       "       -vinc                 : maximal length of cortical distance\n"
-      "                              bigger values will take longer but span a \n"
-      "	                             larger cortical area (default is 40)  \n"
-
-
+      "                                 bigger values will take longer but span a \n"
+      "                                 larger cortical area (default is 40)  \n"
+      "       -Ncolumns             : optional parameter for the number of columns\n"
+      "                                 smaller values will result in thick columns \n"
+      "       -verbose             : optional parameter to write out all the intermediate \n"
+      "                                steps of the algorithm (e.g. for debugging) \n"
       "\n");
    return 0;
 }
@@ -49,7 +52,7 @@ int main(int argc, char * argv[])
 {
 
    char       * layer_filename=NULL, * fout=NULL, * landmarks_filename=NULL ;
-   int          ac, twodim=0, do_masking=0, vinc_max = 40 ; 
+   int          ac, twodim=0, do_masking=0, vinc_max = 40, Ncolumns = 0, verbose = 0  ; 
    if( argc < 3 ) return show_help();   // typing '-help' is sooo much work 
 
    // process user options: 4 are valid presently 
@@ -81,6 +84,17 @@ int main(int argc, char * argv[])
             return 1;
          }
          vinc_max = atof(argv[ac]);  // no string copy, just pointer assignment 
+      }
+      else if( ! strcmp(argv[ac], "-Ncolumns") ) {
+        if( ++ac >= argc ) {
+            fprintf(stderr, "** missing argument for -Ncolumns\n");
+            return 1;
+         }
+         Ncolumns = atof(argv[ac]);  // no string copy, just pointer assignment 
+      }
+      else if( ! strcmp(argv[ac], "-verbose") ) {
+         verbose = 1;
+         cout << " I will give you everything I have, happy debugging"  << endl; 
       }
       else {
          fprintf(stderr,"** invalid option, '%s'\n", argv[ac]);
@@ -304,6 +318,7 @@ float x1g = 0.;
 float y1g = 0.;
 float z1g = 0.;
 
+float min_val = 0.;
 float dist_min2 = 0.;
 float dist_i = 0.; 
 float dist_p1 = 0.;
@@ -315,9 +330,9 @@ float dist (float x1, float y1, float z1, float x2, float y2, float z2, float dX
 
 
 
-///////////////////////////////////
-////   Growing from Center  /////
-///////////////////////////////////
+///////////////////////////////////////////////
+////   Growing from Center cross columns  /////
+///////////////////////////////////////////////
 cout << " growing from center " << endl; 
 
 
@@ -395,18 +410,17 @@ cout << endl <<  " growing is done " << flush ;
 
 
 
-
-cout << " writing out " << endl; 
-
-  const char  *fout_5="collumnar_distance.nii" ;
+if (verbose == 1 ) {
+  cout << " writing out " << endl; 
+  const char  *fout_5="coordinates_1_path.nii" ;
   if( nifti_set_filenames(growfromCenter, fout_5 , 1, 1) ) return 1;
   nifti_image_write( growfromCenter );
+}
 
 
-
-///////////////////////////////////////////
-////   smooth columns  /////
-//cout << " smooth columns " << endl; 
+///////////////////////////////////////////    In the future this should be done onlu within connected areas, 
+////   smooth columns  ////////////////////    right now there might be a problem, when the center of two GM 
+//cout << " smooth columns " << endl; /////    ribbons is closer than 5 voxels (vinc_sm)
 ///////////////////////////////////////////
 
 float gaus (float distance, float sigma) ;
@@ -426,7 +440,7 @@ float  *gausweight_data = (float *) gausweight->data;
 
 //float kernal_size = 10; // corresponds to one voxel sice. 
 int  FWHM_val = 1 ; 
-int vinc_sm =  max( (float)(1.) , (float)(2 * FWHM_val/dX )); // if voxel is too far away, I ignore it. 
+int vinc_sm =  5; // if voxel is too far away, I ignore it. 
 dist_i = 0.;
 cout << "       vinc_sm " <<  vinc_sm<<  endl; 
 cout << "      FWHM_val " <<  FWHM_val<<  endl; 
@@ -478,6 +492,12 @@ cout << "     here 2 " <<  endl;
       }
     }
 
+if (verbose == 1 ) {
+  const char  *fout_6="coordinates_2_path_smooth.nii" ;
+  if( nifti_set_filenames(growfromCenter, fout_6 , 1, 1) ) return 1;
+  nifti_image_write( growfromCenter );
+}
+
 /////////////////////////////////////////////  This is not perfect yet, because it has only 4 directions to grow thus ther might be orientation biases.
 ////   extending columns across layers  /////
 /////////////////////////////////////////////
@@ -496,7 +516,7 @@ hairy_brain_dist->data = calloc(hairy_brain_dist->nvox, hairy_brain_dist->nbyper
 float  *hairy_brain_dist_data = (float *) hairy_brain_dist->data;
 
 dist_min2 = 10000. ; // this is an upper limit of the cortical thickness
-int vinc_thickness = 13 ; // this is the area the algorithm looks for the closest middel elayer
+int vinc_thickness = 30 ; // this is the area the algorithm looks for the closest middele layer. The only problem, when this is too big is the longer calculation time. 
 int vinc_steps = 1 ; // this is step size that neigbouring GM voxels need to be to be classified as one side of the GM bank
 int cloasest_coord = 0. ;
 int there_is_close_noigbour = 0;
@@ -505,97 +525,116 @@ float average_val = 0 ;
 
 cout << " crowing "<<vinc_thickness <<  " iteration aross layers " << flush ; 
 
-for (int iiteration = 0 ; iiteration < vinc_thickness ; ++iiteration ){
-cout << " "<<iiteration  << flush ; 
+int vinc_steps_g = 1; 
+int vinc_sm_g = 25; 
+int pref_ratio = 0 ;
 
-   for(int iz=0; iz<sizeSlice; ++iz){  
-    for(int iy=0; iy<sizePhase; ++iy){
-      for(int ix=0; ix<sizeRead; ++ix){
-		*(hairy_brain_data  + nxy*iz + nx*ix  + iy) =  0 ; 
+/// for estimation of time
+int nvoxels_to_go_across = 0; 
+int running_index = 0 ; 
+    for(int iz=0; iz<sizeSlice; ++iz){  
+      for(int iy=0; iy<sizePhase; ++iy){
+        for(int ix=0; ix<sizeRead; ++ix){
+         if (*(nim_layers_data  + nxy*iz + nx*ix  + iy) > 1 && *(nim_layers_data  + nxy*iz + nx*ix  + iy) < layernumber-1 ) nvoxels_to_go_across++;
+        }
       }
-    }     
-   }
+    }
+    
+      
+    for(int iz=0; iz<sizeSlice; ++iz){  
+      for(int iy=0; iy<sizePhase; ++iy){
+        for(int ix=0; ix<sizeRead; ++ix){
+         if (*(nim_layers_data  + nxy*iz + nx*ix  + iy) > 1 && *(nim_layers_data  + nxy*iz + nx*ix  + iy) < layernumber-1 ) {
+    
+         running_index ++ ; 
+         if ( (running_index*100)/nvoxels_to_go_across != pref_ratio ) {
+         	 cout << (running_index*100)/nvoxels_to_go_across <<  "% " << flush ; 
+         	 pref_ratio = (running_index*100)/nvoxels_to_go_across ; 
+         }	 
+         ///////////////////////////////////////////////////////
+	      // find area that is not from the other sulcus 
+	      //////////////////////////////////////////////////////
+	      
+	      //PREPARATEION OF DUMMY VINSINITY FILE, restting it with zeroes 
+	      
+	      	 for(int iz_i=max(0,iz-vinc_sm_g-vinc_steps); iz_i<=min(iz+vinc_sm_g+vinc_steps,sizeSlice); ++iz_i){
+	    		for(int iy_i=max(0,iy-vinc_sm_g-vinc_steps); iy_i<=min(iy+vinc_sm_g+vinc_steps,sizePhase); ++iy_i){
+	      			for(int ix_i=max(0,ix-vinc_sm_g-vinc_steps); ix_i<=min(ix+vinc_sm_g+vinc_steps,sizeRead); ++ix_i){	      			  
+	      				*(hairy_brain_data  + nxy*iz_i + nx*ix_i  + iy_i) = 0 ;	      			  
+	      	       }
+	      	    }
+	          }	
+	      min_val = 0; 
+	       
+	     //Iteration loop that determines a local patch of connected voxels, exlcudid covels from opposite GM bank. 
+	     // THIS loop taked forever. 
+	      *(hairy_brain_data  + nxy*iz + nx*ix  + iy) = 1 ;
+	      for (int K_ = 0 ; K_ < vinc_sm_g ; K_++){
+	      
+	       for(int iz_ii=max(0,iz-vinc_sm_g); iz_ii<=min(iz+vinc_sm_g,sizeSlice); ++iz_ii){
+	    		for(int iy_ii=max(0,iy-vinc_sm_g); iy_ii<=min(iy+vinc_sm_g,sizePhase); ++iy_ii){
+	      			for(int ix_ii=max(0,ix-vinc_sm_g); ix_ii<=min(ix+vinc_sm_g,sizeRead); ++ix_ii){
+					      if (*(hairy_brain_data  + nxy*iz_ii + nx*ix_ii  + iy_ii) == 1 ) {
+					       for(int iz_i=max(0,iz_ii-vinc_steps); iz_i<=min(iz_ii+vinc_steps,sizeSlice); ++iz_i){
+					    		for(int iy_i=max(0,iy_ii-vinc_steps); iy_i<=min(iy_ii+vinc_steps,sizePhase); ++iy_i){
+					      			for(int ix_i=max(0,ix_ii-vinc_steps); ix_i<=min(ix_ii+vinc_steps,sizeRead); ++ix_i){
+					      			  if (dist((float)ix_ii,(float)iy_ii,(float)iz_ii,(float)ix_i,(float)iy_i,(float)iz_i,1,1,1) <= 1  && *(nim_layers_data  + nxy*iz_i + nx*ix_i  + iy_i) > 1  && *(nim_layers_data  + nxy*iz_i + nx*ix_i  + iy_i) < layernumber-1) { 
+					      				*(hairy_brain_data  + nxy*iz_i + nx*ix_i  + iy_i) = 1 ; 
+					      			  }	
+				 	      	        }
+					      	    }
+				           }	
+		  	              }     
+    	             }
+	      	      }
+	         }	    
+	      }
+
+	    dist_min2 = 10000.;
+	    x1g = 0;
+	    y1g = 0;
+	    z1g = 0;
+
+	   	// only grow into areas that are GM and that have not been gown into, yet .... and it should stop as soon as it hits tie border
+	    	for(int iy_i=max(0,iy-vinc_sm_g); iy_i<=min(iy+vinc_sm_g,sizePhase); ++iy_i){
+	     	 for(int ix_i=max(0,ix-vinc_sm_g); ix_i<=min(ix+vinc_sm_g,sizeRead); ++ix_i){
+	     	  for(int iz_i=max(0,iz-vinc_sm_g); iz_i<=min(iz+vinc_sm_g,sizeSlice); ++iz_i){
+	     	  	dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i, dX, dY, dZ); 
+
+	     	  
+			  	if (*(hairy_brain_data  + nxy*iz_i + nx*ix_i  + iy_i) == 1 && dist_i < dist_min2 && *(growfromCenter_data + nxy*iz_i + nx*ix_i  + iy_i  ) > 0 ){
+			    		dist_min2 = dist_i ; 
+			    		x1g = ix_i;
+			    		y1g = iy_i;
+			    		z1g = iz_i;
+			    		dist_p1 = dist_min2; 
+			    		min_val = *(growfromCenter_data + nxy*iz_i + nx*ix_i  + iy_i  ) ;
+			 	}   
+			 }  
+	  	    }
+	  	   }
+
+        *(growfromCenter_thick_data  + nxy*iz + nx*ix  + iy) = min_val; 
+	   
+	 }
+    }
+  }
+}
+cout <<  endl;  // to close the online output
+
+if (verbose == 1 ) {
+  const char  *fout_7="coordinates_3_ thick.nii" ;
+  if( nifti_set_filenames(growfromCenter_thick, fout_7 , 1, 1) ) return 1;
+  nifti_image_write( growfromCenter_thick );
+}
 
 
-   for(int iz=0; iz<sizeSlice; ++iz){  
-    for(int iy=0; iy<sizePhase; ++iy){
-      for(int ix=0; ix<sizeRead; ++ix){
-
-	  	
-		if ( *(growfromCenter_data  + nxy*iz + nx*ix  + iy) > 0  ) {
-		*(growfromCenter_thick_data  + nxy*iz + nx*ix  + iy) =  *(growfromCenter_data  + nxy*iz + nx*ix  + iy) ; 
-		
-		  for(int   iz_i=max(0,iz-vinc_steps); iz_i<=min(iz+vinc_steps,sizeSlice); ++iz_i){
- 	       for(int  iy_i=max(0,iy-vinc_steps); iy_i<=min(iy+vinc_steps,sizePhase); ++iy_i){
-	     	for(int ix_i=max(0,ix-vinc_steps); ix_i<=min(ix+vinc_steps,sizeRead ); ++ix_i){
-	     	   if ( *(growfromCenter_data  + nxy*iz_i + nx*ix_i  + iy_i) == 0  && *(nim_layers_data  + nxy*iz_i + nx*ix_i  + iy_i) > 1  && *(nim_layers_data  + nxy*iz_i + nx*ix_i  + iy_i) < layernumber-1 ) {
-	     	    if (dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i,1,1,1) <= 1) {
-	     	    	*(hairy_brain_data  + nxy*iz_i + nx*ix_i  + iy_i) = *(hairy_brain_data  + nxy*iz_i + nx*ix_i  + iy_i) + 1; 
-	     	    }
-	     	   }
-	     	} 
-		   } 		
-		  }
-		  
-		
-		 
-	    } 
-
-		 
-	  } 
-  	 } 		
-	}
-	
-	
-  for(int iz=0; iz<sizeSlice; ++iz){  
-    for(int iy=0; iy<sizePhase; ++iy){
-      for(int ix=0; ix<sizeRead; ++ix){
-
-	  	
-		if ( *(growfromCenter_data  + nxy*iz + nx*ix  + iy) > 0  ) {
-		//*(growfromCenter_thick_data  + nxy*iz + nx*ix  + iy) =  *(growfromCenter_data  + nxy*iz + nx*ix  + iy) ; 
-		
-	
-        for(int   iz_i=max(0,iz-vinc_steps); iz_i<=min(iz+vinc_steps,sizeSlice); ++iz_i){
- 	       for(int  iy_i=max(0,iy-vinc_steps); iy_i<=min(iy+vinc_steps,sizePhase); ++iy_i){
-	     	for(int ix_i=max(0,ix-vinc_steps); ix_i<=min(ix+vinc_steps,sizeRead ); ++ix_i){
-	     	   if ( *(growfromCenter_data  + nxy*iz_i + nx*ix_i  + iy_i) == 0 && *(nim_layers_data  + nxy*iz_i + nx*ix_i  + iy_i) > 1  && *(nim_layers_data  + nxy*iz_i + nx*ix_i  + iy_i) < layernumber-1 ) {
-	     	   	if (dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i,1,1,1) <= 1) { 
-	     	   		 *(growfromCenter_thick_data  + nxy*iz_i + nx*ix_i  + iy_i) =  *(growfromCenter_thick_data  + nxy*iz_i + nx*ix_i  + iy_i)+ *(growfromCenter_data  + nxy*iz + nx*ix  + iy) / *(hairy_brain_data  + nxy*iz_i + nx*ix_i  + iy_i) ;
-	     	    }
-	     	   }
-	     	} 
-		   } 		
-		  }	
-		  
-		  
-		 
-	    } 
-
-		 
-	  } 
-  	 } 		
-	}	
-	
-	
-   for(int iz=0; iz<sizeSlice; ++iz){  
-    for(int iy=0; iy<sizePhase; ++iy){
-      for(int ix=0; ix<sizeRead; ++ix){
-		*(growfromCenter_data  + nxy*iz + nx*ix  + iy) =  *(growfromCenter_thick_data  + nxy*iz + nx*ix  + iy) ; 
-      }
-    }     
-   }
-	
-		  
- } // GROWING itterations are done
-
-
-cout << endl; 
-
-
-///////////////////////////////////////////
-////   smooth columns  /////
-///////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+////   smooth columns within the think cortex.                 //////
+////   This smoothing is done to correct for Pytagoras errors  //////
+////   This smoothing is within GM banks only                  //////
+////   (which makes it slow)                                   //////
+/////////////////////////////////////////////////////////////////////
 
 cout << " smoothing the thick cortex now  " << endl; 
 
@@ -638,9 +677,9 @@ cout << "  starting extended now  " <<  endl;
 	      *(hairy_brain_data  + nxy*iz + nx*ix  + iy) = 1 ;
 	      for (int K_ = 0 ; K_ < vinc_sm ; K_++){
 	      
-	       for(int iz_ii=max(0,iz-vinc_steps); iz_ii<=min(iz+vinc_steps,sizeSlice); ++iz_ii){
-	    		for(int iy_ii=max(0,iy-vinc_steps); iy_ii<=min(iy+vinc_steps,sizePhase); ++iy_ii){
-	      			for(int ix_ii=max(0,ix-vinc_steps); ix_ii<=min(ix+vinc_steps,sizeRead); ++ix_ii){
+	       for(int iz_ii=max(0,iz-vinc_sm); iz_ii<=min(iz+vinc_sm,sizeSlice); ++iz_ii){
+	    		for(int iy_ii=max(0,iy-vinc_sm); iy_ii<=min(iy+vinc_sm,sizePhase); ++iy_ii){
+	      			for(int ix_ii=max(0,ix-vinc_sm); ix_ii<=min(ix+vinc_sm,sizeRead); ++ix_ii){
 					      if (*(hairy_brain_data  + nxy*iz_ii + nx*ix_ii  + iy_ii) == 1 ) {
 					       for(int iz_i=max(0,iz_ii-vinc_steps); iz_i<=min(iz_ii+vinc_steps,sizeSlice); ++iz_i){
 					    		for(int iy_i=max(0,iy_ii-vinc_steps); iy_i<=min(iy_ii+vinc_steps,sizePhase); ++iy_i){
@@ -656,8 +695,9 @@ cout << "  starting extended now  " <<  endl;
 	      	      }
 	           }	    
 	      }
-	      
-	      
+	     
+	     
+	     /// NOW I am applying the smoothing within each layer and within the local patch 	      
 		    int layernumber_i =  *(nim_layers_data  +  nxy*iz + nx*ix  + iy ) ; 
 		  
 			   for(int iz_i=max(0,iz-vinc_sm); iz_i<=min(iz+vinc_sm,sizeSlice); ++iz_i){
@@ -665,10 +705,6 @@ cout << "  starting extended now  " <<  endl;
 	      			for(int ix_i=max(0,ix-vinc_sm); ix_i<=min(ix+vinc_sm,sizeRead); ++ix_i){
 	      			  if ( *(hairy_brain_data  + nxy*iz_i + nx*ix_i  + iy_i) == 1 && abs((int) *(nim_layers_data   +  nxy*iz_i + nx*ix_i  + iy_i  ) - layernumber_i ) < 2 && *(growfromCenter_thick_data  + nxy*iz_i + nx*ix_i  + iy_i) > 0 ){
 		  				dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i,dX,dY,dZ); 
-		  				//cout << "debug  4 " <<  gaus(dist_i ,FWHM_val ) <<   endl; 
-		  			    //cout << "debug  5 " <<  dist_i  <<   endl; 
-						//if ( *(nim_input_data   +  nxy*iz + nx*ix  + iy  )  == 3 ) cout << "debug  4b " << endl; 
-						//dummy = *(layer_data  + nxy*iz_i + nx*ix_i  + iy_i  ); 
 		  				*(smoothed_data    + nxy*iz + nx*ix  + iy  ) = *(smoothed_data    + nxy*iz + nx*ix  + iy  ) + *(growfromCenter_thick_data  + nxy*iz_i + nx*ix_i  + iy_i) * gaus(dist_i ,FWHM_val ) ;
 		    			*(gausweight_data  + nxy*iz + nx*ix  + iy  ) = *(gausweight_data  + nxy*iz + nx*ix  + iy  ) + gaus(dist_i ,FWHM_val ) ; 
 
@@ -696,218 +732,126 @@ cout << "  extended now  " <<  endl;
     }
 
 
- // const char  *fout_8="smoothed_thick_columns.nii" ;
- // if( nifti_set_filenames(smoothed, fout_8 , 1, 1) ) return 1;
- // nifti_image_write( smoothed );
+cout << "  smoothing done  " <<  endl; 
 
+if (verbose == 1 ) {
+  const char  *fout_9="coordinates_4_thick_smoothed.nii" ;
+  if( nifti_set_filenames(growfromCenter_thick, fout_9 , 1, 1) ) return 1;
+  nifti_image_write( growfromCenter_thick );
+}
 
- 	
-/*
-   for(int iz=0; iz<sizeSlice; ++iz){  
-    for(int iy=0; iy<sizePhase; ++iy){
-      for(int ix=0; ix<sizeRead; ++ix){
-		*(hairy_brain_dist_data  + nxy*iz + nx*ix  + iy) =  0 ; 
+  ///////////////////////////////////////////////////////
+  // Grow final outer rim, I could not fill this earlier
+  // because it would have resulted in leakage from 
+  // the opposite back. 
+  // Thus I always left a safety corridor, which is filled in now. 
+  //////////////////////////////////////////////////////
+ // 
+int vinc_rim = 2 ; 
+
+    for(int iz=0; iz<sizeSlice; ++iz){  
+      for(int iy=0; iy<sizePhase; ++iy){
+        for(int ix=0; ix<sizeRead; ++ix){
+			*(hairy_brain_data  + nxy*iz + nx*ix  + iy) =  *(growfromCenter_thick_data    + nxy*iz + nx*ix  + iy  )  ; 
+		   
+        }
       }
-    }     
-   }
+    }
 
-// *(nim_layers_data  + nxy*iz + nx*ix  + iy) > 0
-
-   for(int iz=0; iz<sizeSlice; ++iz){  
+for(int iz=0; iz<sizeSlice; ++iz){  
     for(int iy=0; iy<sizePhase; ++iy){
       for(int ix=0; ix<sizeRead; ++ix){
-	  	dist_min2 = 10000.;
+       if (*(nim_layers_data   +  nxy*iz + nx*ix  + iy  ) > 0 && *(growfromCenter_thick_data + nxy*iz + nx*ix  + iy  ) == 0){
+
 	  	
-		if ( *(growfromCenter_data  + nxy*iz + nx*ix  + iy) > 0 ) {
-		
-		  for(int   iz_i=max(0,iz-vinc_thickness); iz_i<=min(iz+vinc_thickness,sizeSlice); ++iz_i){
- 	       for(int  iy_i=max(0,iy-vinc_thickness); iy_i<=min(iy+vinc_thickness,sizePhase); ++iy_i){
-	     	for(int ix_i=max(0,ix-vinc_thickness); ix_i<=min(ix+vinc_thickness,sizeRead ); ++ix_i){
-	     		*(hairy_brain_dist_data  + nxy*iz_i + nx*ix_i  + iy_i) =  0 ;
-	     	} 
-		   } 		
-		  }
-		  *(hairy_brain_dist_data  + nxy*iz + nx*ix  + iy) =  1 ;
-		  
-		  for (int iiteration = 0 ; iiteration < vinc_thickness*2 ; ++ iiteration){
-	         for(int   iz_i=max(0,iz-vinc_thickness); iz_i<=min(iz+vinc_thickness,sizeSlice); ++iz_i){
- 	          for(int  iy_i=max(0,iy-vinc_thickness); iy_i<=min(iy+vinc_thickness,sizePhase); ++iy_i){
-	     	   for(int ix_i=max(0,ix-vinc_thickness); ix_i<=min(ix+vinc_thickness,sizeRead ); ++ix_i){
-	     	   
-	     	      if (*(hairy_brain_dist_data  + nxy*iz_i + nx*ix_i  + iy_i)  == 1  && *(nim_layers_data  + nxy*iz_i + nx*ix_i  + iy_i) > 1  && *(nim_layers_data  + nxy*iz_i + nx*ix_i  + iy_i) < layernumber-1){		 		
-	     	  		 for(int   iz_ii=max(0,iz_i-vinc_steps); iz_ii<=min(iz_i+vinc_steps,sizeSlice); ++iz_ii){
- 	           			for(int  iy_ii=max(0,iy_i-vinc_steps); iy_ii<=min(iy_i+vinc_steps,sizePhase); ++iy_ii){
-	     	    			for(int ix_ii=max(0,ix_i-vinc_steps); ix_ii<=min(ix_i+vinc_steps,sizeRead ); ++ix_ii){
-	     	    			     if ( *(nim_layers_data  + nxy*iz_ii + nx*ix_ii  + iy_ii) > 1  && *(nim_layers_data  + nxy*iz_ii + nx*ix_ii  + iy_ii) < layernumber-1){
-			    					*(hairy_brain_dist_data  + nxy*iz_ii + nx*ix_ii  + iy_ii)  = 1  ;
-			    				 }	
-							}	
-						}
-					 }		
-				   }	
-				   
-
-	  	 	   }
-	  	      } 
-	  	     }
-		  }
-
-          dist_min2 = 10000. ;
-      	  for(int   iz_i=max(0,iz-vinc_thickness); iz_i<=min(iz+vinc_thickness,sizeSlice); ++iz_i){
- 	       for(int  iy_i=max(0,iy-vinc_thickness); iy_i<=min(iy+vinc_thickness,sizePhase); ++iy_i){
-	     	for(int ix_i=max(0,ix-vinc_thickness); ix_i<=min(ix+vinc_thickness,sizeRead ); ++ix_i){
-	     	
-	     	  if (*(hairy_brain_dist_data  + nxy*iz_i + nx*ix_i  + iy_i)  == 1){
-	     	   dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i,dX,dY,dZ); 
-	     	     if ( dist_i < dist_min2 ) {
-	     		  *(growfromCenter_data  + nxy*iz_i + nx*ix_i  + iy_i) =  *(growfromCenter_data  + nxy*iz + nx*ix  + iy) ;
-	     		  dist_min2 = dist_i ; 
-	     		 } 
-	     	  }
-	     	} 
-		   } 		
-		  }
-
-	   }
-      }
-    }     
-   }
-
- // const char  *fout_7="collumnar_distance_thick.nii" ;
- // if( nifti_set_filenames(growfromCenter, fout_7 , 1, 1) ) return 1;
- // nifti_image_write( growfromCenter );
-
- // const char  *fout_7="thick_ribbon.nii" ;
- // if( nifti_set_filenames(hairy_brain, fout_7 , 1, 1) ) return 1;
-  //nifti_image_write( hairy_brain );
-
-
-//  const char  *fout_8="thick_ribbon_smoothed.nii" ;
-//  if( nifti_set_filenames(hairy_brain, fout_8 , 1, 1) ) return 1;
-//  nifti_image_write( hairy_brain );
-
-*/
-
-/*
-///////////////////////////////////
-////   Growing from as thick cortex  /////
-///////////////////////////////////
-cout << " growing from center with thick cortex " << endl; 
-
-int grow_vinc_thick = 1 ;
-int vinc_max_thick = 17 ; 
-int grow_vinc_area_thick = 1 ;
-
-
-
-    for(int iz=0; iz<sizeSlice; ++iz){  
-      for(int iy=0; iy<sizePhase; ++iy){
-        for(int ix=0; ix<sizeRead-0; ++ix){
-	 	  if (*(growfromCenter_data  + nxy*iz + nx*ix  + iy  ) > 0) {  //defining seed at center landmark
-			*(growfromCenter_thick_data  + nxy*iz + nx*ix  + iy  ) = 1; 
-		  }
-        }
-      }
-    }
-
-
-  for (int grow_i = 1 ; grow_i < vinc_max_thick ; grow_i++ ){
-    for(int iz=0; iz<sizeSlice; ++iz){  
-      for(int iy=0; iy<sizePhase; ++iy){
-        for(int ix=0; ix<sizeRead-0; ++ix){
-
-
+	    dist_min2 = 10000.;
+	    x1g = 0;
+	    y1g = 0;
+	    z1g = 0;
+	    
+	    min_val = 0; 
 	  
-	   if (  *(nim_layers_data  + nxy*iz + nx*ix  + iy) > 0 && *(nim_layers_data  + nxy*iz + nx*ix  + iy) < layernumber && *(growfromCenter_thick_data  + nxy*iz + nx*ix  + iy  ) == grow_i && *(hairy_brain_data  + nxy*iz + nx*ix  + iy  ) > 0){
 	   	// only grow into areas that are GM and that have not been gown into, yet .... and it should stop as soon as it hits tie border
-	    	int iz_i=iz ; 
-	    	//int stopme = 0 ; 
-	    	
-	     	 for(int ix_i=max(0,ix-grow_vinc_area_thick); ix_i<min(ix+grow_vinc_area_thick+1,sizeRead); ++ix_i){
-	     	  for(int iy_i=max(0,iy-grow_vinc_area_thick); iy_i<min(iy+grow_vinc_area_thick+1,sizePhase); ++iy_i){
-	     	    dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i, dX, dY, dZ); 
-				//if ( *(nim_layers_data  + nxy*iz_i + nx*ix_i  + iy_i) == layernumber ) stopme = 1;
-			  	if (dist_i <= (dY+dX)/2. && *(growfromCenter_thick_data  + nxy*iz_i + nx*ix_i  + iy_i  ) == 0   && *(nim_layers_data  + nxy*iz_i + nx*ix_i  + iy_i) < layernumber  && *(nim_layers_data  + nxy*iz_i + nx*ix_i  + iy_i) >0 && *(hairy_brain_data  + nxy*iz + nx*ix  + iy  ) > 0 ){
-			  		*(growfromCenter_thick_data  + nxy*iz_i + nx*ix_i  + iy_i  ) = grow_i+1 ;
+	    	for(int iy_i=max(0,iy-vinc_rim); iy_i<=min(iy+vinc_rim,sizePhase); ++iy_i){
+	     	 for(int ix_i=max(0,ix-vinc_rim); ix_i<=min(ix+vinc_rim,sizeRead); ++ix_i){
+	     	  for(int iz_i=max(0,iz-vinc_rim); iz_i<=min(iz+vinc_rim,sizeSlice); ++iz_i){
+	     	  	dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i, dX, dY, dZ); 
+	     	  
+			  	if ( dist_i < dist_min2 && *(nim_layers_data   +  nxy*iz_i + nx*ix_i  + iy_i  ) > 0 && *(growfromCenter_thick_data + nxy*iz_i + nx*ix_i  + iy_i  ) > 0 ){
+			    		dist_min2 = dist_i ; 
+			    		x1g = ix_i;
+			    		y1g = iy_i;
+			    		z1g = iz_i;
+			    		dist_p1 = dist_min2; 
+			    		min_val = *(growfromCenter_thick_data + nxy*iz_i + nx*ix_i  + iy_i  ) ;
 			 	}   
-			}  
-	  	 
-	  	}
-		
-		
-		
-		//cout << " ix   "  << ix << " iy   "  << iy  << "    " << *(WMkoord0_data  + nxy*islice + nx*(int)x1g  + (int)y1g  )<< endl; 
-	   }
-	   
-
-        }
-      }
-    }
- }
-
-
-    for(int iz=0; iz<sizeSlice; ++iz){  
-      for(int iy=0; iy<sizePhase; ++iy){
-        for(int ix=0; ix<sizeRead-0; ++ix){  
-	      if ( ( *(nim_layers_data  + nxy*iz + nx*ix  + iy) == layernumber-1 || *(nim_layers_data  + nxy*iz + nx*ix  + iy) == layernumber-2 ) && *(growfromCenter_thick_data  + nxy*iz + nx*ix  + iy  ) > 0 ){
-	   	// only grow into areas that are GM and that have not been gown into, yet .... and it should stop as soon as it hits tie border
-	    	for(int iy_i=max(0,iy-grow_vinc_area_thick); iy_i<min(iy+grow_vinc_area_thick+1,sizePhase); ++iy_i){
-	     	 for(int ix_i=max(0,ix-grow_vinc_area_thick); ix_i<min(ix+grow_vinc_area_thick+1,sizeRead); ++ix_i){
-	     	  int iz_i=iz;
-	     	  dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i, dX, dY, dZ); 
-
-			  	if ( dist_i <= (dY+dX)/2. &&  *(nim_landmarks_data  + nxy*iz_i + nx*ix_i  + iy_i) > 0 ){
-			  		*(growfromCenter_thick_data  + nxy*iz_i + nx*ix_i  + iy_i  ) = *(growfromCenter_thick_data  + nxy*iz + nx*ix  + iy  ) ;
-			 	}   
-			  
-	  	     }
+			 }  
 	  	    }
-	     }
-        }
+	  	   }
+
+        *(hairy_brain_data  + nxy*iz + nx*ix  + iy) = min_val; 
       }
-    }
-*/
+    } 
+  } 		
+}	
 
- // const char  *fout_6="growfromCenter_thick.nii" ;
- // if( nifti_set_filenames(growfromCenter_thick, fout_6 , 1, 1) ) return 1;
- // nifti_image_write( growfromCenter_thick );
-  
- 
-
-
-///////////////////////////////////////////
-////         clean up hairy brain  /////
-///////////////////////////////////////////
-cout << " clean up hairy brain " << endl; 
-/*
-    for(int iz=0; iz<sizeSlice; ++iz){  
-      for(int iy=0; iy<sizePhase; ++iy){
-        for(int ix=0; ix<sizeRead-0; ++ix){
-           if( *(growfromCenter_thick_data + nxy*iz + nx*ix  + iy  ) == 0 || *(hairy_brain_data  + nxy*iz + nx*ix  + iy  ) == 0) {
-		     *(hairy_brain_data  + nxy*iz + nx*ix  + iy  ) = 0 ;
-			}
-       }
-      }
-    }
-*/
-  const char  *fout_3="hairy_brain.nii" ;
+if (verbose == 1 ) {
+  const char  *fout_3="coordinates_5_extended.nii" ;
   if( nifti_set_filenames(hairy_brain, fout_3 , 1, 1) ) return 1;
   nifti_image_write( hairy_brain );
+}
 
+  ///////////////////////////////////////////////////////
+  // resample the number of columns to the user given value 
+  //////////////////////////////////////////////////////
+  if (Ncolumns >0 )  { 
+  cout << " as you wish I am resampling the  number of columns " << endl;
 
-  const char  *fout_2="growfromCenter_thick.nii" ;
-  if( nifti_set_filenames(growfromCenter_thick, fout_2 , 1, 1) ) return 1;
-  nifti_image_write( growfromCenter_thick );
-
-
-
-
-
+    int max_columns = 0 ;
+    int min_columns = 100000000 ;
+    
+    for(int iz=0; iz<sizeSlice; ++iz){
+        for(int iy=0; iy<sizePhase; ++iy){
+            for(int ix=0; ix<sizeRead-0; ++ix){
+                if(*(hairy_brain_data  + nxy*iz + nx*ix  + iy  ) >  0) {
+                    if((int)*(hairy_brain_data  + nxy*iz + nx*ix  + iy  ) >  max_columns) max_columns = (int) *(hairy_brain_data  + nxy*iz + nx*ix  + iy  )  ;
+                    if((int)*(hairy_brain_data  + nxy*iz + nx*ix  + iy  ) <  min_columns) min_columns = (int) *(hairy_brain_data  + nxy*iz + nx*ix  + iy  )  ;
+                    
+                }
+            }
+        }
+    }
+    
+    
+    
+    cout << " max and min are "  << max_columns << "   " << min_columns << endl;
+    for(int iz=0; iz<sizeSlice; ++iz){
+        for(int iy=0; iy<sizePhase; ++iy){
+            for(int ix=0; ix<sizeRead-0; ++ix){
+                if(*(hairy_brain_data  + nxy*iz + nx*ix  + iy  ) >  0) {
+                    *(hairy_brain_data  + nxy*iz + nx*ix  + iy  )  =  ( *(hairy_brain_data  + nxy*iz + nx*ix  + iy  ) - (short)min_columns ) * (short)(Ncolumns-1)/(short)(max_columns-min_columns) +1 ;
+                    
+                }
+            }
+        }
+    }
+  }  
+  
+  
+  
+  const char  *fout_4="coordinates_final.nii" ;
+  if( nifti_set_filenames(hairy_brain, fout_4 , 1, 1) ) return 1;
+  nifti_image_write( hairy_brain );
+  
+  
+  
 
   return 0;
 }
 
 
+
+  
 
 
   float dist (float x1, float y1, float z1, float x2, float y2, float z2, float dX, float dY, float dZ ) {
