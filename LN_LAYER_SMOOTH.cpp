@@ -26,20 +26,24 @@ int show_help( void )
       "    This program is designet smooth data within layer or columns ,\n"
       "    In order to avoid smoothing across masks a crawler smoothed only across connected voxels ,\n"
       "\n"
-      "    basic usage: LN_LAYER_SMOOTH -layer_file equi_dist_layers.nii -input activity_map.nii -FWHM 1 \n"
+      "    basic usage: LN_LAYER_SMOOTH -layer_file layers.nii -input activity_map.nii -FWHM 1 \n"
       "\n"
       "\n"
       "   This program now supports INT16, INT32 and FLOAT23 \n"
 
       "\n"
-      "       -help               	: show this help\n"
-      "       -layer_file     		: nii file that contains layer or column masks \n"
-      "       -input 		     	: nii file that should be smoothed. it should have same dimentions as layer file\n"
-      "       -FWHM 		     	: the amount of smoothing in mm\n"
-      "       -twodim 		     	: optional argument to do smoothing in 2 Dim only \n"
-      "       -mask 		     	: optional argument to mask activity outside of layers \n"
-
-
+      "       -help                 : show this help\n"
+      "       -layer_file           : nii file that contains layer or column masks \n"
+      "       -input                : nii file that should be smoothed. it should have same dimentions as layer file\n"
+      "       -FWHM                 : the amount of smoothing in mm\n"
+      "       -twodim               : optional argument to do smoothing in 2 Dim only \n"
+      "       -mask                 : optional argument to mask activity outside of layers \n"
+      "       -sulctouch            : optional argument that does not allow smoothing across sucli \n"
+      "                               this is necessary, when you do very heavy smoothing well bevond\n"
+      "                               the spatial scale of the cortical thickness, or heavy cuvature\n"
+      "                               it will make things things slower \n"
+      "                               Note, that this is best done with not too manny layers,  \n"
+      "                               otherwise a single layer has wholes and is not connected.  \n"
       "\n");
    return 0;
 }
@@ -48,7 +52,7 @@ int main(int argc, char * argv[])
 {
 
    char       * fmaski=NULL, * fout=NULL, * finfi=NULL ;
-   int          ac, twodim=0, do_masking=0; 
+   int          ac, twodim=0, do_masking=0 , sulctouch = 0 ; 
    float 		FWHM_val=0 ;
    if( argc < 3 ) return show_help();   // typing '-help' is sooo much work 
 
@@ -80,11 +84,15 @@ int main(int argc, char * argv[])
       }
       else if( ! strcmp(argv[ac], "-twodim") ) {
          twodim = 1;
-         cout << " I will do smoothing only in 2D"  << endl; 
+         cout << "I will do smoothing only in 2D"  << endl; 
       }
+      else if( ! strcmp(argv[ac], "-sulctouch") ) {
+         sulctouch = 1;
+         cout << "I will not smooth across sluci, this might make it longer though"  << endl; 
+      } 
      else if( ! strcmp(argv[ac], "-mask") ) {
          do_masking = 1;
-         cout << " I will set every to zero outside the layers"  << endl; 
+         cout << "I will set every thing to zero outside the layers (masking option)"  << endl; 
       }
       else {
          fprintf(stderr,"** invalid option, '%s'\n", argv[ac]);
@@ -135,7 +143,7 @@ int main(int argc, char * argv[])
    nim_inputf->data = calloc(nim_inputf->nvox, nim_inputf->nbyper);
    float  *nim_inputf_data = (float *) nim_inputf->data;
    
-   nifti_image * nim_mask  	= nifti_copy_nim_info(nim_inputfi);
+   nifti_image * nim_mask  	= nifti_copy_nim_info(nim_maski);
    nim_mask->datatype = NIFTI_TYPE_INT32;
    nim_mask->nbyper = sizeof(int);
    nim_mask->data = calloc(nim_mask->nvox, nim_mask->nbyper);
@@ -239,30 +247,18 @@ if ( nim_maski->datatype == NIFTI_TYPE_INT32 ) {
     
     nifti_image * smoothed  	= nifti_copy_nim_info(nim_inputf);
     nifti_image * gausweight  	= nifti_copy_nim_info(nim_inputf);
-//    nifti_image * layer  		= nifti_copy_nim_info(nim_input);
-//    nifti_image * leak_layer  	= nifti_copy_nim_info(nim_input);
-
 
     smoothed->datatype 		= NIFTI_TYPE_FLOAT32; 
 	gausweight->datatype 	= NIFTI_TYPE_FLOAT32;
-//	layer->datatype 		= NIFTI_TYPE_FLOAT32;
-//	leak_layer->datatype 	= NIFTI_TYPE_FLOAT32;
 
     smoothed->nbyper 		= sizeof(float);
 	gausweight->nbyper 		= sizeof(float);
-//	layer->nbyper 			= sizeof(float);
-//	leak_layer->nbyper 		= sizeof(float);
 
     smoothed->data = calloc(smoothed->nvox, smoothed->nbyper);
     gausweight->data = calloc(gausweight->nvox, gausweight->nbyper);
-//    layer->data = calloc(layer->nvox, layer->nbyper);
-//    leak_layer->data = calloc(leak_layer->nvox, leak_layer->nbyper);
 
     float  *smoothed_data = (float *) smoothed->data;
     float  *gausweight_data = (float *) gausweight->data;    
-//    float  *layer_data = (float *) layer->data;
-//    float  *leak_layer_data = (float *) leak_layer->data;
-
 
 
 float dist (float x1, float y1, float z1, float x2, float y2, float z2,float dX, float dY, float dZ) ; 
@@ -304,10 +300,14 @@ cout << " There are  " <<  layernumber<< " layers/masks to smooth within  " << e
 ///////////////////////////////////
 //cout << " DEBUG " <<   dist(1.,1.,1.,1.,2.,1.,dX,dY,dZ) << endl; 
 
- cout << " smoothing in layer   " << flush ; 
+
+if (sulctouch == 0 ){
+
+ cout << " smoothing in layer not considering sulci  " << flush ; 
+
 
  for(int layernumber_i=1; layernumber_i<=layernumber; ++layernumber_i){  
- cout << "  " <<  layernumber_i << flush ; 
+ cout << "\r  " <<  layernumber_i << " of  " << layernumber<<  flush ; 
 
 	for(int iz=0; iz<sizeSlice; ++iz){  
       for(int iy=0; iy<sizePhase; ++iy){
@@ -317,26 +317,21 @@ cout << " There are  " <<  layernumber<< " layers/masks to smooth within  " << e
 		  
 	     if (*(nim_mask_data   +  nxy*iz + nx*ix  + iy  )  == layernumber_i ){
 		
-			for(int iz_i=max(0,iz-vinc); iz_i<min(iz+vinc+1,sizeRead); ++iz_i){
-	    		for(int iy_i=max(0,iy-vinc); iy_i<min(iy+vinc+1,sizePhase); ++iy_i){
-	      			for(int ix_i=max(0,ix-vinc); ix_i<min(ix+vinc+1,sizeRead); ++ix_i){
+			for(int iz_i=max(0,iz-vinc); iz_i<min(iz+vinc+1,sizeSlice-1); ++iz_i){
+	    		for(int iy_i=max(0,iy-vinc); iy_i<min(iy+vinc+1,sizePhase-1); ++iy_i){
+	      			for(int ix_i=max(0,ix-vinc); ix_i<min(ix+vinc+1,sizeRead-1); ++ix_i){
 	      			  if (*(nim_mask_data   +  nxy*iz_i + nx*ix_i  + iy_i  )  == layernumber_i ){
 		  				dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i,dX,dY,dZ); 
 		  				//cout << "debug  4 " <<  gaus(dist_i ,FWHM_val ) <<   endl; 
 		  			    //cout << "debug  5 " <<  dist_i  <<   endl; 
-
 						//if ( *(nim_input_data   +  nxy*iz + nx*ix  + iy  )  == 3 ) cout << "debug  4b " << endl; 
-
 							//dummy = *(layer_data  + nxy*iz_i + nx*ix_i  + iy_i  ); 
 		  					*(smoothed_data    + nxy*iz + nx*ix  + iy  ) = *(smoothed_data    + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data  + nxy*iz_i + nx*ix_i  + iy_i  ) * gaus(dist_i ,FWHM_val ) ;
-		    				*(gausweight_data  + nxy*iz + nx*ix  + iy  ) = *(gausweight_data  + nxy*iz + nx*ix  + iy  ) + gaus(dist_i ,FWHM_val ) ; 
-							
-			  			
+		    				*(gausweight_data  + nxy*iz + nx*ix  + iy  ) = *(gausweight_data  + nxy*iz + nx*ix  + iy  ) + gaus(dist_i ,FWHM_val ) ;   			
 			  		  }	
 		            }	  
 	      	    }
 	       }
-
 	       if (*(gausweight_data  + nxy*iz + nx*ix  + iy  ) > 0 ) *(smoothed_data    + nxy*iz + nx*ix  + iy  )  = *(smoothed_data    + nxy*iz + nx*ix  + iy  )/ *(gausweight_data  + nxy*iz + nx*ix  + iy  );
 	     }
 	     
@@ -347,9 +342,174 @@ cout << " There are  " <<  layernumber<< " layers/masks to smooth within  " << e
         }
       }
     }
-}
+  }// for layer loop closed
+  
+   cout << endl; 
 
- cout << endl; 
+  
+}// if loop closed
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////
+//////// if requested I do the smoothing only within connected layers ///////////
+///////////////////////////////////////////////////////////////////////////////// 
+
+if (sulctouch == 1 ){
+
+// allocating local connected vincinity file
+    nifti_image * hairy_brain  	= nifti_copy_nim_info(nim_mask);
+    hairy_brain->datatype 		= NIFTI_TYPE_INT32; 
+	hairy_brain->nbyper 		= sizeof(int);
+    hairy_brain->data 			= calloc(hairy_brain->nvox, hairy_brain->nbyper);
+    int  *hairy_brain_data 		= (int *) hairy_brain->data;
+    hairy_brain->scl_slope   	= 1.; 
+ 
+   int vinc_steps = 1; 
+ 
+// making sure I am cooking in a clean kitchen
+
+   for(int iz=0; iz<sizeSlice; ++iz){  
+      for(int iy=0; iy<sizePhase; ++iy){
+        for(int ix=0; ix<sizeRead-0; ++ix){
+		  *(smoothed_data    + nxy*iz + nx*ix  + iy  )  = 0 ; 
+        }
+      }
+    }
+
+vinc = max(1.,2. * FWHM_val/dX ); // if voxel is too far away, I ignore it. 
+int layernumber_i  = 0 ; // running index
+cout << " vinc " <<  vinc<<  endl; 
+cout << " FWHM_val " <<  FWHM_val<<  endl; 
+cout << " starting within sulucal smoothing now  " <<  endl; 
+
+
+
+/// for estimation of time
+int nvoxels_to_go_across = 0; 
+int running_index = 0 ; 
+int pref_ratio = 0 ;
+
+    for(int iz=0; iz<sizeSlice; ++iz){  
+      for(int iy=0; iy<sizePhase; ++iy){
+        for(int ix=0; ix<sizeRead; ++ix){
+         if (*(nim_mask_data  + nxy*iz + nx*ix  + iy) > 1 ) nvoxels_to_go_across++;
+        }
+      }
+    }
+    
+
+
+	     // cout << "  here 1" << endl;     
+
+
+	for(int iz=0; iz<sizeSlice; ++iz){  
+      for(int iy=0; iy<sizePhase; ++iy){
+        for(int ix=0; ix<sizeRead-0; ++ix){		  
+	      if(*(nim_mask_data +  nxy*iz + nx*ix  + iy  )  > 0  ){
+	        running_index ++ ; 
+            if ((running_index*100)/nvoxels_to_go_across != pref_ratio ) {
+         	   cout << "\r "<<(running_index*100)/nvoxels_to_go_across <<  "% " << flush ; 
+         	   pref_ratio = (running_index*100)/nvoxels_to_go_across ; 
+            }	
+	      
+	      
+	      	layernumber_i =  *(nim_mask_data  +  nxy*iz + nx*ix  + iy ) ; 
+	        *(gausweight_data  + nxy*iz + nx*ix  + iy  )  = 0 ; 
+
+	      ///////////////////////////////////////////////////////
+	      // find area that is not from the other sulcus 
+	      //////////////////////////////////////////////////////
+	      
+	      //PREPARATEION OF DUMMY VINSINITY FILE
+	      
+	      	     // cout << "  here 2" << endl;     
+
+
+	      	 for(int iz_i=max(0,iz-vinc-vinc_steps); iz_i<=min(iz+vinc+vinc_steps,sizeSlice-1); ++iz_i){
+	    		for(int iy_i=max(0,iy-vinc-vinc_steps); iy_i<=min(iy+vinc+vinc_steps,sizePhase-1); ++iy_i){
+	      			for(int ix_i=max(0,ix-vinc-vinc_steps); ix_i<=min(ix+vinc+vinc_steps,sizeRead-1); ++ix_i){	      			  
+	      				//cout <<  iz_i << " " << iy_i << "  " << ix_i << "  " <<  sizeSlice-1 << " " << sizePhase-1 << "  " << sizePhase-1 << "  " << endl;  
+
+	      				*(hairy_brain_data  + nxy*iz_i + nx*ix_i  + iy_i) = 0 ;	  
+	      				  			  
+	      	       }
+	      	    }
+	          }	
+	      //cout << "  here " << endl;     
+	      *(hairy_brain_data  + nxy*iz + nx*ix  + iy) = 1 ;
+	      
+	      // growoeing into neigbouring voxels. 
+	      for (int K_ = 0 ; K_ < vinc ; K_++){
+	       for(int iz_ii=max(0,iz-vinc); iz_ii<=min(iz+vinc,sizeSlice-1); ++iz_ii){
+	    		for(int iy_ii=max(0,iy-vinc); iy_ii<=min(iy+vinc,sizePhase-1); ++iy_ii){
+	      			for(int ix_ii=max(0,ix-vinc); ix_ii<=min(ix+vinc,sizeRead-1); ++ix_ii){
+					      if (*(hairy_brain_data  + nxy*iz_ii + nx*ix_ii  + iy_ii) == 1 ) {
+					       for(int iz_i=max(0,iz_ii-vinc_steps); iz_i<=min(iz_ii+vinc_steps,sizeSlice-1); ++iz_i){
+					    		for(int iy_i=max(0,iy_ii-vinc_steps); iy_i<=min(iy_ii+vinc_steps,sizePhase-1); ++iy_i){
+					      			for(int ix_i=max(0,ix_ii-vinc_steps); ix_i<=min(ix_ii+vinc_steps,sizeRead-1); ++ix_i){
+					      			  if (dist((float)ix_ii,(float)iy_ii,(float)iz_ii,(float)ix_i,(float)iy_i,(float)iz_i,1,1,1) <= 1.74  && *(nim_mask_data  + nxy*iz_i + nx*ix_i  + iy_i) == layernumber_i) { 
+					      				*(hairy_brain_data  + nxy*iz_i + nx*ix_i  + iy_i) = 1 ; 
+					      			  }	
+				 	      	        }
+					      	    }
+				           }	
+		  	              }     
+    	             }
+	      	      }
+	           }	    
+	      }
+	     
+	     /// NOW I am applying the smoothing within each layer and within the local patch 	      
+		  
+			   for(int iz_i=max(0,iz-vinc); iz_i<=min(iz+vinc,sizeSlice-1); ++iz_i){
+	    		for(int iy_i=max(0,iy-vinc); iy_i<=min(iy+vinc,sizePhase-1); ++iy_i){
+	      			for(int ix_i=max(0,ix-vinc); ix_i<=min(ix+vinc,sizeRead-1); ++ix_i){
+	      			  if ( *(hairy_brain_data  + nxy*iz_i + nx*ix_i  + iy_i) == 1){
+		  				dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i,dX,dY,dZ); 
+		  				*(smoothed_data    + nxy*iz + nx*ix  + iy  ) = *(smoothed_data    + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data  + nxy*iz_i + nx*ix_i  + iy_i) * gaus(dist_i ,FWHM_val ) ;
+		    			*(gausweight_data  + nxy*iz + nx*ix  + iy  ) = *(gausweight_data  + nxy*iz + nx*ix  + iy  ) + gaus(dist_i ,FWHM_val ) ; 
+
+			  		  }	
+		            }	  
+	      	    }
+	          }
+	       if (*(gausweight_data  + nxy*iz + nx*ix  + iy  ) > 0 ) *(smoothed_data    + nxy*iz + nx*ix  + iy  )  = *(smoothed_data    + nxy*iz + nx*ix  + iy  )/ *(gausweight_data  + nxy*iz + nx*ix  + iy  );
+	     
+	     
+	     
+	     } /// if scope  if (*(nim_mask_data +  nxy*iz + nx*ix  + iy  )  > 0  ){ closed
+	     
+        }
+      }
+    }
+
+
+
+ 
+//    for(int iz=0; iz<sizeSlice; ++iz){  
+//      for(int iy=0; iy<sizePhase; ++iy){
+//        for(int ix=0; ix<sizeRead; ++ix){
+//           if(*(nim_inputf_data  + nxy*iz + nx*ix  + iy) > 0) {
+//			*(nim_inputf_data  + nxy*iz + nx*ix  + iy) =  *(smoothed_data + nxy*iz + nx*ix  + iy  )  ; 
+//		   }
+//        }
+//      }
+//    }
+
+
+
+  const char  *fout_3="hairy_brain.nii" ;
+  if( nifti_set_filenames(hairy_brain, fout_3 , 1, 1) ) return 1;
+  nifti_image_write( hairy_brain );
+
+
+}
+cout << "  smoothing done  " <<  endl; 
+
+
+
 
 
 ///////////////////////////////////
@@ -370,10 +530,11 @@ if ( do_masking == 1 ) {
 	}
 } 
 
- cout << " runing also until here  5.... " << endl; 
+//cout << " runing also until here  5.... " << endl; 
+//cout << " slope " << smoothed->scl_slope << " " << nim_inputfi->scl_slope  << endl; 
 
+smoothed->scl_slope =  nim_inputfi->scl_slope  ;
 
-smoothed->scl_slope =  nim_inputfi->scl_slope ;
 
 if (nim_inputfi->scl_inter != 0 ){
 cout << " ############################################################# " << endl; 
@@ -382,6 +543,9 @@ cout << " ########   the NIFTI scale factor is asymmetric  ############ " << end
 cout << " #############   WARNING   WANRING   WANRING  ################ " << endl; 
 cout << " ############################################################# " << endl; 
 }
+
+
+
 
      // output file name       
 //  const char  *fout_4="leaky_layers.nii" ;

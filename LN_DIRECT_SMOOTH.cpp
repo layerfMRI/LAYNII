@@ -25,7 +25,7 @@ int show_help( void )
       "    This program is designet smooth data within layer or columns ,\n"
       "    In order to avoid smoothing across masks a crawler smoothed only across connected voxels ,\n"
       "\n"
-      "    basic usage: LN_DIRECT_SMOOTH -input activity_map.nii -FWHM 1 -direction x \n"
+      "    basic usage: LN_DIRECT_SMOOTH -input activity_map.nii -FWHM 1 -direction 1 \n"
       "\n"
       "\n"
       "   This program now supports INT16, INT32 and FLOAT23 \n"

@@ -40,18 +40,18 @@ int show_help( void )
       "    options:\n"
       "\n"
       "       -help               : show this help\n"
-      "       -rim    border      : specify input dataset\n"
+      "       -rim   border       : specify input dataset\n"
       "       -vinc  number       : size of vicinity, default is 40. \n"
       "	                             This is the maximum thickness of \n"
       "	                             the cortex in units of voxels. \n"
       "	                             the smaller the number the faster the program \n"
-      "       -N  number          : Optional number of layers, default is 20.  \n"
+      "       -N     number       : Optional number of layers, default is 20.  \n"
       "	                             in Visual cortex you might want to use less. \n"
       "	                             the maximum accuracy is 1/100 for now. \n"
-      "      -threeD              : do the layer colculations in 3D, default is 2D \n"
-      "      -thin                : optional extra option, when the distance between \n"
-      "                               layers is less than the voxel thickness \n"
-      "                               Insub this is 4 U \n"
+      "       -threeD             : do the layer colculations in 3D, default is 2D \n"
+      "       -thin               : optional extra option, when the distance between \n"
+      "	                             layers is less than the voxel thickness \n"
+      "	                             Insub this is 4 U \n"
       "\n");
    return 0;
 }
@@ -878,9 +878,9 @@ int grow_vinc = 2 ;
 	  z1g = 0;
 	   if (*(nim_input_data  + nxy*iz + nx*ix  + iy  ) ==  3  && *(growfromWM0_data  + nxy*iz + nx*ix  + iy  ) == 0 ){
 	   	//cout << " true   " << *(growfromWM0_data  + nxy*islice + nx*ix  + iy  )<< endl; 
-	    	for(int iy_i=max(0,iy-grow_vinc); iy_i<min(iy+grow_vinc,sizePhase); ++iy_i){
-	     	 for(int ix_i=max(0,ix-grow_vinc); ix_i<min(ix+grow_vinc,sizeRead); ++ix_i){
-	     	  for(int iz_i=max(0,iz-grow_vinc); iz_i<min(iz+grow_vinc,sizeRead); ++iz_i){
+	    	for(int iy_i=max(0,iy-grow_vinc); iy_i<min(iy+grow_vinc+1,sizePhase); ++iy_i){
+	     	 for(int ix_i=max(0,ix-grow_vinc); ix_i<min(ix+grow_vinc+1,sizeRead); ++ix_i){
+	     	  for(int iz_i=max(0,iz-grow_vinc); iz_i<min(iz+grow_vinc+1,sizeRead); ++iz_i){
 			  if (*(growfromWM0_data  + nxy*iz_i + nx*ix_i  + iy_i  ) == (float)grow_i){
 		 
 		  		dist_i = dist3d((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i,dX,dY,dZ); 
@@ -947,9 +947,9 @@ cout << " start growing from CSF .... " << endl;
 	  y1g = 0;
 	  z1g = 0;
 	   if (*(nim_input_data  + nxy*iz + nx*ix  + iy  ) == 3  && *(growfromGM0_data  + nxy*iz + nx*ix  + iy  )  == 0 ){
-	   for(int iz_i=max(0,iz-grow_vinc); iz_i<min(iz+grow_vinc,sizeRead); ++iz_i){
-	    for(int iy_i=max(0,iy-grow_vinc); iy_i<min(iy+grow_vinc,sizePhase); ++iy_i){
-	      for(int ix_i=max(0,ix-grow_vinc); ix_i<min(ix+grow_vinc,sizeRead); ++ix_i){
+	   for(int iz_i=max(0,iz-grow_vinc); iz_i<min(iz+grow_vinc+1,sizeRead); ++iz_i){
+	    for(int iy_i=max(0,iy-grow_vinc); iy_i<min(iy+grow_vinc+1,sizePhase); ++iy_i){
+	      for(int ix_i=max(0,ix-grow_vinc); ix_i<min(ix+grow_vinc+1,sizeRead); ++ix_i){
 	      	
 		     if (*(growfromGM0_data  + nxy*iz_i + nx*ix_i  + iy_i  )  == (float)grow_i){
 		 
@@ -1010,9 +1010,9 @@ cout << " correct for pytagoras error .... " << endl;
 	  	y1g = 0;
 	  	z1g = 0;
 	  	
-	    	for(int iy_i=max(0,(*(WMkoordy2_data   +  nxy*iz + nx*ix  + iy  ))-grow_vinc);     iy_i<min((*(WMkoordy2_data   +  nxy*iz + nx*ix  + iy  ))+grow_vinc,sizePhase); ++iy_i){
-	    	  for(int ix_i=max(0,(*(WMkoordx2_data   +  nxy*iz + nx*ix  + iy  ))-grow_vinc);   ix_i<min((*(WMkoordx2_data   +  nxy*iz + nx*ix  + iy  ))+grow_vinc,sizeRead);  ++ix_i){
-	    	   for(int iz_i=max(0,(*(WMkoordz2_data   +  nxy*iz + nx*ix  + iy  ))-grow_vinc); iz_i<min((*(WMkoordz2_data  +  nxy*iz + nx*ix  + iy  ))+grow_vinc,sizeSlice);  ++iz_i){
+	    	for(int iy_i=max(0,(*(WMkoordy2_data   +  nxy*iz + nx*ix  + iy  ))-grow_vinc);     iy_i<min((*(WMkoordy2_data   +  nxy*iz + nx*ix  + iy  ))+grow_vinc+1,sizePhase); ++iy_i){
+	    	  for(int ix_i=max(0,(*(WMkoordx2_data   +  nxy*iz + nx*ix  + iy  ))-grow_vinc);   ix_i<min((*(WMkoordx2_data   +  nxy*iz + nx*ix  + iy  ))+grow_vinc+1,sizeRead);  ++ix_i){
+	    	   for(int iz_i=max(0,(*(WMkoordz2_data   +  nxy*iz + nx*ix  + iy  ))-grow_vinc); iz_i<min((*(WMkoordz2_data  +  nxy*iz + nx*ix  + iy  ))+grow_vinc+1,sizeSlice);  ++iz_i){
 			    if (*(nim_input_data  + nxy*iz_i + nx*ix_i  + iy_i  )  == 2){
 			 
 		  		 dist_i = dist3d((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i,dX,dY,dZ); 
@@ -1075,9 +1075,9 @@ cout << " runing also until here .... " << endl;
 	  	z1g = 0;
 
 
-	    	for(int iy_i=max(0,(*(GMkoordy2_data    +  nxy*iz + nx*ix  + iy  ))-grow_vinc);   iy_i<min((*(GMkoordy2_data  +  nxy*iz + nx*ix  + iy  ))+grow_vinc,sizePhase); ++iy_i){
-	    	  for(int ix_i=max(0,(*(GMkoordx2_data  +  nxy*iz + nx*ix  + iy  ))-grow_vinc);   ix_i<min((*(GMkoordx2_data  +  nxy*iz + nx*ix  + iy  ))+grow_vinc,sizeRead);  ++ix_i){
-	           for(int iz_i=max(0,(*(GMkoordz2_data  +  nxy*iz + nx*ix  + iy  ))-grow_vinc); iz_i<min((*(GMkoordz2_data +  nxy*iz + nx*ix  + iy  ))+grow_vinc,sizeRead);  ++iz_i){
+	    	for(int iy_i=max(0,(*(GMkoordy2_data    +  nxy*iz + nx*ix  + iy  ))-grow_vinc);   iy_i<min((*(GMkoordy2_data  +  nxy*iz + nx*ix  + iy  ))+grow_vinc+1,sizePhase); ++iy_i){
+	    	  for(int ix_i=max(0,(*(GMkoordx2_data  +  nxy*iz + nx*ix  + iy  ))-grow_vinc);   ix_i<min((*(GMkoordx2_data  +  nxy*iz + nx*ix  + iy  ))+grow_vinc+1,sizeRead);  ++ix_i){
+	           for(int iz_i=max(0,(*(GMkoordz2_data  +  nxy*iz + nx*ix  + iy  ))-grow_vinc); iz_i<min((*(GMkoordz2_data +  nxy*iz + nx*ix  + iy  ))+grow_vinc+1,sizeRead);  ++iz_i){
 
 			   	if (*(nim_input_data  + nxy*iz_i + nx*ix_i  + iy_i  )  == 1){
 			 

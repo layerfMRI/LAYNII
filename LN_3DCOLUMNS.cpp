@@ -24,7 +24,7 @@ int show_help( void )
            "\n"
            "   the layer nii file and the landmarks nii file should have the same dimensions  \n"
            "\n"
-           "    basic usage: LN_3DCOLUMNS -layer_file equi_dist_layers.nii -landmarks landmarks.nii \n"
+           "    basic usage: LN_3DCOLUMNS -layer_file layers.nii -landmarks landmarks.nii \n"
            "\n"
            "\n"
            "   This program now supports INT16, INT32 and FLOAT23 \n"
@@ -32,14 +32,13 @@ int show_help( void )
            "\n"
            "       -help                   : show this help\n"
            "       -layer_file             : nii file that contains layer or column masks \n"
-           "       -landmarks             : nii file with landmarks 1,2,3 (1 is in the center 2and3 are the borders \n"
-           "                                : Landmarks should be at least 4 voxels thick\n"
-           "       -twodim                  : optional argument to run in 2 Dim only \n"
-           "       -mask                  : optional argument to mask activity outside of layers \n"
-           "       -vinc                  : number of columns \n"
+           "       -landmarks              : nii file with landmarks 1,2,3 (1 is in the center 2and3 are the borders \n"
+           "                               : Landmarks should be at least 4 voxels thick\n"
+           "       -twodim                 : optional argument to run in 2 Dim only \n"
+           "       -mask                   : optional argument to mask activity outside of layers \n"
+           "       -vinc                   : number of columns \n"
            "       -jiajiaoption           : include CSF. only do this if you two sides of the sulcus are not touching  \n"
 
-           
            
            "\n");
     return 0;

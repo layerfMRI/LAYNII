@@ -350,10 +350,10 @@ cout << " growing from center " << endl;
     }
 
 
-cout << " crowing "<<vinc_max <<  " iteration " << flush ; 
+cout << "crowing "<<vinc_max <<  " iteration " << flush ; 
 
   for (int grow_i = 1 ; grow_i < vinc_max ; grow_i++ ){
-		cout << grow_i <<  " " << flush ; 
+		cout <<"\r" << grow_i <<  " " << flush ; 
 
 
     for(int iz=0; iz<sizeSlice; ++iz){  
@@ -368,9 +368,9 @@ cout << " crowing "<<vinc_max <<  " iteration " << flush ;
 	  
 	   if ( abs((int) (*(nim_layers_data  + nxy*iz + nx*ix  + iy) - layernumber/2 )) < 2 && *(growfromCenter_data  + nxy*iz + nx*ix  + iy  ) == 0  && *(nim_landmarks_data  + nxy*iz + nx*ix  + iy) < 2){
 	   	// only grow into areas that are GM and that have not been gown into, yet .... and it should stop as soon as it hits tie border
-	    	for(int iy_i=max(0,iy-grow_vinc_area); iy_i<min(iy+grow_vinc_area+1,sizePhase); ++iy_i){
-	     	 for(int ix_i=max(0,ix-grow_vinc_area); ix_i<min(ix+grow_vinc_area+1,sizeRead); ++ix_i){
-	     	  for(int iz_i=max(0,iz-grow_vinc_area); iz_i<min(iz+grow_vinc_area+1,sizeSlice); ++iz_i){
+	    	for(int iy_i=max(0,iy-grow_vinc_area); iy_i<=min(iy+grow_vinc_area,sizePhase-1); ++iy_i){
+	     	 for(int ix_i=max(0,ix-grow_vinc_area); ix_i<=min(ix+grow_vinc_area,sizeRead-1); ++ix_i){
+	     	  for(int iz_i=max(0,iz-grow_vinc_area); iz_i<=min(iz+grow_vinc_area,sizeSlice-1); ++iz_i){
 	     	  	dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i, dX, dY, dZ); 
 
 	     	  
@@ -456,9 +456,9 @@ cout << "     here 2 " <<  endl;
 		  
 	     if (*(growfromCenter_data   +  nxy*iz + nx*ix  + iy  )  > 0 ){
 		
-			for(int iz_i=max(0,iz-vinc_sm); iz_i<min(iz+vinc_sm+1,sizeSlice); ++iz_i){
-	    		for(int iy_i=max(0,iy-vinc_sm); iy_i<min(iy+vinc_sm+1,sizePhase); ++iy_i){
-	      			for(int ix_i=max(0,ix-vinc_sm); ix_i<min(ix+vinc_sm+1,sizeRead); ++ix_i){
+			for(int iz_i=max(0,iz-vinc_sm); iz_i<=min(iz+vinc_sm,sizeSlice-1); ++iz_i){
+	    		for(int iy_i=max(0,iy-vinc_sm); iy_i<=min(iy+vinc_sm,sizePhase-1); ++iy_i){
+	      			for(int ix_i=max(0,ix-vinc_sm); ix_i<=min(ix+vinc_sm,sizeRead-1); ++ix_i){
 	      			  if (*(growfromCenter_data   +  nxy*iz_i + nx*ix_i  + iy_i  )  > 0 ){
 		  				dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i,dX,dY,dZ); 
 		  				//cout << "debug  4 " <<  gaus(dist_i ,FWHM_val ) <<   endl; 
@@ -548,7 +548,7 @@ int running_index = 0 ;
     
          running_index ++ ; 
          if ( (running_index*100)/nvoxels_to_go_across != pref_ratio ) {
-         	 cout << (running_index*100)/nvoxels_to_go_across <<  "% " << flush ; 
+         	 cout <<"\r" <<  (running_index*100)/nvoxels_to_go_across <<  "% " << flush ; 
          	 pref_ratio = (running_index*100)/nvoxels_to_go_across ; 
          }	 
          ///////////////////////////////////////////////////////
@@ -557,9 +557,9 @@ int running_index = 0 ;
 	      
 	      //PREPARATEION OF DUMMY VINSINITY FILE, restting it with zeroes 
 	      
-	      	 for(int iz_i=max(0,iz-vinc_sm_g-vinc_steps); iz_i<=min(iz+vinc_sm_g+vinc_steps,sizeSlice); ++iz_i){
-	    		for(int iy_i=max(0,iy-vinc_sm_g-vinc_steps); iy_i<=min(iy+vinc_sm_g+vinc_steps,sizePhase); ++iy_i){
-	      			for(int ix_i=max(0,ix-vinc_sm_g-vinc_steps); ix_i<=min(ix+vinc_sm_g+vinc_steps,sizeRead); ++ix_i){	      			  
+	      	 for(int iz_i=max(0,iz-vinc_sm_g-vinc_steps); iz_i<=min(iz+vinc_sm_g+vinc_steps,sizeSlice-1); ++iz_i){
+	    		for(int iy_i=max(0,iy-vinc_sm_g-vinc_steps); iy_i<=min(iy+vinc_sm_g+vinc_steps,sizePhase-1); ++iy_i){
+	      			for(int ix_i=max(0,ix-vinc_sm_g-vinc_steps); ix_i<=min(ix+vinc_sm_g+vinc_steps,sizeRead-1); ++ix_i){	      			  
 	      				*(hairy_brain_data  + nxy*iz_i + nx*ix_i  + iy_i) = 0 ;	      			  
 	      	       }
 	      	    }
@@ -571,13 +571,13 @@ int running_index = 0 ;
 	      *(hairy_brain_data  + nxy*iz + nx*ix  + iy) = 1 ;
 	      for (int K_ = 0 ; K_ < vinc_sm_g ; K_++){
 	      
-	       for(int iz_ii=max(0,iz-vinc_sm_g); iz_ii<=min(iz+vinc_sm_g,sizeSlice); ++iz_ii){
-	    		for(int iy_ii=max(0,iy-vinc_sm_g); iy_ii<=min(iy+vinc_sm_g,sizePhase); ++iy_ii){
-	      			for(int ix_ii=max(0,ix-vinc_sm_g); ix_ii<=min(ix+vinc_sm_g,sizeRead); ++ix_ii){
+	       for(int iz_ii=max(0,iz-vinc_sm_g); iz_ii<=min(iz+vinc_sm_g,sizeSlice-1); ++iz_ii){
+	    		for(int iy_ii=max(0,iy-vinc_sm_g); iy_ii<=min(iy+vinc_sm_g,sizePhase-1); ++iy_ii){
+	      			for(int ix_ii=max(0,ix-vinc_sm_g); ix_ii<=min(ix+vinc_sm_g,sizeRead-1); ++ix_ii){
 					      if (*(hairy_brain_data  + nxy*iz_ii + nx*ix_ii  + iy_ii) == 1 ) {
-					       for(int iz_i=max(0,iz_ii-vinc_steps); iz_i<=min(iz_ii+vinc_steps,sizeSlice); ++iz_i){
-					    		for(int iy_i=max(0,iy_ii-vinc_steps); iy_i<=min(iy_ii+vinc_steps,sizePhase); ++iy_i){
-					      			for(int ix_i=max(0,ix_ii-vinc_steps); ix_i<=min(ix_ii+vinc_steps,sizeRead); ++ix_i){
+					       for(int iz_i=max(0,iz_ii-vinc_steps); iz_i<=min(iz_ii+vinc_steps,sizeSlice-1); ++iz_i){
+					    		for(int iy_i=max(0,iy_ii-vinc_steps); iy_i<=min(iy_ii+vinc_steps,sizePhase-1); ++iy_i){
+					      			for(int ix_i=max(0,ix_ii-vinc_steps); ix_i<=min(ix_ii+vinc_steps,sizeRead-1); ++ix_i){
 					      			  if (dist((float)ix_ii,(float)iy_ii,(float)iz_ii,(float)ix_i,(float)iy_i,(float)iz_i,1,1,1) <= 1  && *(nim_layers_data  + nxy*iz_i + nx*ix_i  + iy_i) > 1  && *(nim_layers_data  + nxy*iz_i + nx*ix_i  + iy_i) < layernumber-1) { 
 					      				*(hairy_brain_data  + nxy*iz_i + nx*ix_i  + iy_i) = 1 ; 
 					      			  }	
@@ -596,9 +596,9 @@ int running_index = 0 ;
 	    z1g = 0;
 
 	   	// only grow into areas that are GM and that have not been gown into, yet .... and it should stop as soon as it hits tie border
-	    	for(int iy_i=max(0,iy-vinc_sm_g); iy_i<=min(iy+vinc_sm_g,sizePhase); ++iy_i){
-	     	 for(int ix_i=max(0,ix-vinc_sm_g); ix_i<=min(ix+vinc_sm_g,sizeRead); ++ix_i){
-	     	  for(int iz_i=max(0,iz-vinc_sm_g); iz_i<=min(iz+vinc_sm_g,sizeSlice); ++iz_i){
+	    	for(int iy_i=max(0,iy-vinc_sm_g); iy_i<=min(iy+vinc_sm_g,sizePhase-1); ++iy_i){
+	     	 for(int ix_i=max(0,ix-vinc_sm_g); ix_i<=min(ix+vinc_sm_g,sizeRead-1); ++ix_i){
+	     	  for(int iz_i=max(0,iz-vinc_sm_g); iz_i<=min(iz+vinc_sm_g,sizeSlice-1); ++iz_i){
 	     	  	dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i, dX, dY, dZ); 
 
 	     	  
@@ -667,9 +667,9 @@ cout << "  starting extended now  " <<  endl;
 	      
 	      //PREPARATEION OF DUMMY VINSINITY FILE
 	      
-	      	 for(int iz_i=max(0,iz-vinc_sm-vinc_steps); iz_i<=min(iz+vinc_sm+vinc_steps,sizeSlice); ++iz_i){
-	    		for(int iy_i=max(0,iy-vinc_sm-vinc_steps); iy_i<=min(iy+vinc_sm+vinc_steps,sizePhase); ++iy_i){
-	      			for(int ix_i=max(0,ix-vinc_sm-vinc_steps); ix_i<=min(ix+vinc_sm+vinc_steps,sizeRead); ++ix_i){	      			  
+	      	 for(int iz_i=max(0,iz-vinc_sm-vinc_steps); iz_i<=min(iz+vinc_sm+vinc_steps,sizeSlice-1); ++iz_i){
+	    		for(int iy_i=max(0,iy-vinc_sm-vinc_steps); iy_i<=min(iy+vinc_sm+vinc_steps,sizePhase-1); ++iy_i){
+	      			for(int ix_i=max(0,ix-vinc_sm-vinc_steps); ix_i<=min(ix+vinc_sm+vinc_steps,sizeRead-1); ++ix_i){	      			  
 	      				*(hairy_brain_data  + nxy*iz_i + nx*ix_i  + iy_i) = 0 ;	      			  
 	      	       }
 	      	    }
@@ -677,13 +677,13 @@ cout << "  starting extended now  " <<  endl;
 	      *(hairy_brain_data  + nxy*iz + nx*ix  + iy) = 1 ;
 	      for (int K_ = 0 ; K_ < vinc_sm ; K_++){
 	      
-	       for(int iz_ii=max(0,iz-vinc_sm); iz_ii<=min(iz+vinc_sm,sizeSlice); ++iz_ii){
-	    		for(int iy_ii=max(0,iy-vinc_sm); iy_ii<=min(iy+vinc_sm,sizePhase); ++iy_ii){
-	      			for(int ix_ii=max(0,ix-vinc_sm); ix_ii<=min(ix+vinc_sm,sizeRead); ++ix_ii){
+	       for(int iz_ii=max(0,iz-vinc_sm); iz_ii<=min(iz+vinc_sm,sizeSlice-1); ++iz_ii){
+	    		for(int iy_ii=max(0,iy-vinc_sm); iy_ii<=min(iy+vinc_sm,sizePhase-1); ++iy_ii){
+	      			for(int ix_ii=max(0,ix-vinc_sm); ix_ii<=min(ix+vinc_sm,sizeRead-1); ++ix_ii){
 					      if (*(hairy_brain_data  + nxy*iz_ii + nx*ix_ii  + iy_ii) == 1 ) {
-					       for(int iz_i=max(0,iz_ii-vinc_steps); iz_i<=min(iz_ii+vinc_steps,sizeSlice); ++iz_i){
-					    		for(int iy_i=max(0,iy_ii-vinc_steps); iy_i<=min(iy_ii+vinc_steps,sizePhase); ++iy_i){
-					      			for(int ix_i=max(0,ix_ii-vinc_steps); ix_i<=min(ix_ii+vinc_steps,sizeRead); ++ix_i){
+					       for(int iz_i=max(0,iz_ii-vinc_steps); iz_i<=min(iz_ii+vinc_steps,sizeSlice-1); ++iz_i){
+					    		for(int iy_i=max(0,iy_ii-vinc_steps); iy_i<=min(iy_ii+vinc_steps,sizePhase-1); ++iy_i){
+					      			for(int ix_i=max(0,ix_ii-vinc_steps); ix_i<=min(ix_ii+vinc_steps,sizeRead-1); ++ix_i){
 					      			  if (dist((float)ix_ii,(float)iy_ii,(float)iz_ii,(float)ix_i,(float)iy_i,(float)iz_i,1,1,1) <= 1  && *(nim_layers_data  + nxy*iz_i + nx*ix_i  + iy_i) > 1  && *(nim_layers_data  + nxy*iz_i + nx*ix_i  + iy_i) < layernumber-1) { 
 					      				*(hairy_brain_data  + nxy*iz_i + nx*ix_i  + iy_i) = 1 ; 
 					      			  }	
@@ -700,9 +700,9 @@ cout << "  starting extended now  " <<  endl;
 	     /// NOW I am applying the smoothing within each layer and within the local patch 	      
 		    int layernumber_i =  *(nim_layers_data  +  nxy*iz + nx*ix  + iy ) ; 
 		  
-			   for(int iz_i=max(0,iz-vinc_sm); iz_i<=min(iz+vinc_sm,sizeSlice); ++iz_i){
-	    		for(int iy_i=max(0,iy-vinc_sm); iy_i<=min(iy+vinc_sm,sizePhase); ++iy_i){
-	      			for(int ix_i=max(0,ix-vinc_sm); ix_i<=min(ix+vinc_sm,sizeRead); ++ix_i){
+			   for(int iz_i=max(0,iz-vinc_sm); iz_i<=min(iz+vinc_sm,sizeSlice-1); ++iz_i){
+	    		for(int iy_i=max(0,iy-vinc_sm); iy_i<=min(iy+vinc_sm,sizePhase-1); ++iy_i){
+	      			for(int ix_i=max(0,ix-vinc_sm); ix_i<=min(ix+vinc_sm,sizeRead-1); ++ix_i){
 	      			  if ( *(hairy_brain_data  + nxy*iz_i + nx*ix_i  + iy_i) == 1 && abs((int) *(nim_layers_data   +  nxy*iz_i + nx*ix_i  + iy_i  ) - layernumber_i ) < 2 && *(growfromCenter_thick_data  + nxy*iz_i + nx*ix_i  + iy_i) > 0 ){
 		  				dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i,dX,dY,dZ); 
 		  				*(smoothed_data    + nxy*iz + nx*ix  + iy  ) = *(smoothed_data    + nxy*iz + nx*ix  + iy  ) + *(growfromCenter_thick_data  + nxy*iz_i + nx*ix_i  + iy_i) * gaus(dist_i ,FWHM_val ) ;
@@ -772,9 +772,9 @@ for(int iz=0; iz<sizeSlice; ++iz){
 	    min_val = 0; 
 	  
 	   	// only grow into areas that are GM and that have not been gown into, yet .... and it should stop as soon as it hits tie border
-	    	for(int iy_i=max(0,iy-vinc_rim); iy_i<=min(iy+vinc_rim,sizePhase); ++iy_i){
-	     	 for(int ix_i=max(0,ix-vinc_rim); ix_i<=min(ix+vinc_rim,sizeRead); ++ix_i){
-	     	  for(int iz_i=max(0,iz-vinc_rim); iz_i<=min(iz+vinc_rim,sizeSlice); ++iz_i){
+	    	for(int iy_i=max(0,iy-vinc_rim); iy_i<=min(iy+vinc_rim,sizePhase-1); ++iy_i){
+	     	 for(int ix_i=max(0,ix-vinc_rim); ix_i<=min(ix+vinc_rim,sizeRead-1); ++ix_i){
+	     	  for(int iz_i=max(0,iz-vinc_rim); iz_i<=min(iz+vinc_rim,sizeSlice-1); ++iz_i){
 	     	  	dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i, dX, dY, dZ); 
 	     	  
 			  	if ( dist_i < dist_min2 && *(nim_layers_data   +  nxy*iz_i + nx*ix_i  + iy_i  ) > 0 && *(growfromCenter_thick_data + nxy*iz_i + nx*ix_i  + iy_i  ) > 0 ){
