@@ -94,7 +94,7 @@ int main(int argc, char * argv[])
       }
       else if( ! strcmp(argv[ac], "-direction") ) {
          if( ++ac >= argc ) {
-            fprintf(stderr, "** missing argument for -input\n");
+            fprintf(stderr, "** missing argument for -direction\n");
             return 1;
          }
          direction_int = atof(argv[ac]);  // no string copy, just pointer assignment 
@@ -102,7 +102,7 @@ int main(int argc, char * argv[])
       }
       else if( ! strcmp(argv[ac], "-grappa") ) {
          if( ++ac >= argc ) {
-            fprintf(stderr, "** missing argument for -input\n");
+            fprintf(stderr, "** missing argument for -grappa\n");
             return 1;
          }
          grappa_int = atof(argv[ac]);  // no string copy, just pointer assignment 
@@ -110,7 +110,7 @@ int main(int argc, char * argv[])
       }
       else if( ! strcmp(argv[ac], "-cutoff") ) {
          if( ++ac >= argc ) {
-            fprintf(stderr, "** missing argument for -input\n");
+            fprintf(stderr, "** missing argument for -cutoff\n");
             return 1;
          }
          cutoff = atof(argv[ac]);  // no string copy, just pointer assignment 
@@ -132,7 +132,7 @@ int main(int argc, char * argv[])
    
 
    // get dimsions of input 
-   int sizeSlice = nim_input->nz ; 
+   int sizeSlice = nim_input->nz  ; 
    int sizePhase = nim_input->nx ; 
    int sizeRead = nim_input->ny ; 
    int nrep =  nim_input->nt; 
@@ -141,6 +141,13 @@ int main(int argc, char * argv[])
    int nxyz = nim_input->nx * nim_input->ny * nim_input->nz;
 
    cout << sizeSlice << " slices    " <<  sizePhase << " PhaseSteps     " <<  sizeRead << " Read steps    " <<  nrep << " timesteps "  << endl; 
+   //cout << sizePhase %grappa_int  << " mod    "  << endl; 
+   
+   if (direction_int == 0 ) sizePhase = sizePhase - (sizePhase %grappa_int) ; 
+   if (direction_int == 1 ) sizeRead  = sizeRead  - (sizeRead  %grappa_int) ; 
+   if (direction_int == 2 ) sizeSlice = sizeSlice - (sizeSlice %grappa_int) ; 
+
+   
 
 
    if( !fout ) { fprintf(stderr, "-- no output requested \n"); return 0; }
@@ -198,6 +205,9 @@ int main(int argc, char * argv[])
     }
   }
   
+  const char  *fout_7="binary.nii" ;
+  if( nifti_set_filenames(binary, fout_7 , 1, 1) ) return 1;
+  nifti_image_write( binary );  
   
 // Setting initial condition
 for(int timestep=0; timestep<nrep; ++timestep){
@@ -227,12 +237,12 @@ if (direction_int == 0 ){
    }
   }
 // completing dataset to full slice 
- for(int grappa_seg=0; grappa_seg<grappa_int; ++grappa_seg){
+ for(int grappa_seg=1; grappa_seg<grappa_int; ++grappa_seg){
   for(int timestep=0; timestep<nrep; ++timestep){
     for(int islice=0; islice<sizeSlice; ++islice){
       for(int iy=0; iy<sizePhase/grappa_int; ++iy){
         for(int ix=0; ix<sizeRead; ++ix ){
-        		*(gfactormap_data + nxyz*timestep + nxy*islice + nx*ix  + iy+ grappa_seg*sizePhase/grappa_int  ) =   *(gfactormap_data + nxyz*timestep + nxy*islice + nx*ix  + iy  )   ;  
+        		*(gfactormap_data + nxyz*timestep + nxy*islice + nx*ix  + iy+ grappa_seg*sizePhase/grappa_int  ) = *(gfactormap_data + nxyz*timestep + nxy*islice + nx*ix  + iy  )   ;  
         }  
       } 
     }
@@ -299,7 +309,16 @@ if (direction_int == 2 ){
  }
 
 
-
+for(int timestep=0; timestep<nrep; ++timestep){
+    for(int islice=0; islice<sizeSlice; ++islice){
+      for(int iy=0; iy<sizePhase; ++iy){
+        for(int ix=0; ix<sizeRead; ++ix ){
+        		*(gfactormap_data + nxyz*timestep + nxy*islice + nx*ix  + iy ) =  *(binary_data + nxyz*timestep + nxy*islice + nx*ix  + iy) *  *(gfactormap_data + nxyz*timestep + nxy*islice + nx*ix  + iy  )   ;  
+        }  
+      } 
+    }
+   }
+  
 
  for(int timestep=0; timestep<nrep; ++timestep){
     for(int islice=0; islice<sizeSlice; ++islice){

@@ -36,10 +36,10 @@ int show_help( void )
       "    options:\n"
       "\n"
       "       -help               : show this help\n"
-      "       -Nulled 			  : Nulled (VASO) time series that needs to be BOLD corrected \n"
-      "       -BOLD  	          : Reference BOLD time series that does not have a VASO contrast\n"
-      "		  -shift			  : Optional,  estimate the correlation of BOLD and VASO for themoral shifts. \n"
-      "		  -trialBOCO		  : First average trials and then do the BOLD correction. The parameter is the trial duration in TRs. \n"
+      "       -Nulled             : Nulled (VASO) time series that needs to be BOLD corrected \n"
+      "       -BOLD               : Reference BOLD time series that does not have a VASO contrast\n"
+      "       -shift              : Optional,  estimate the correlation of BOLD and VASO for themoral shifts. \n"
+      "       -trialBOCO          : First average trials and then do the BOLD correction. The parameter is the trial duration in TRs. \n"
       "\n"
       "\n"
       "   Here it is assumed that BOLD and VASO refer to the double TR: \n"
@@ -47,7 +47,7 @@ int show_help( void )
 	  "   3dUpsample -overwrite  -datum short -prefix BOLD_intemp.nii   -n 2 -input   BOLD.nii  \n"
       "\n"
       "\n"
-      " Here I assume that they have the same spatio temporal dimensions \n"
+      "Here I assume that they have the same spatio temporal dimensions \n"
       "\n"
       "\n");
    return 0;
