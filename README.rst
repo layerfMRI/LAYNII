@@ -68,12 +68,12 @@ Parts of LAYNII depend on GSL, thus you should have it installed:
 
 Linux ::
 
-sudo apt-get install libgsl0-dev
+    sudo apt-get install libgsl0-dev
 
 
 Mac::
 
 
-brew install gsl
+    brew install gsl
 
 
