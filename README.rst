@@ -63,8 +63,12 @@ For more information see: https://layerfmri.com/2017/11/30/using-a-standalone-ni
 
 Comment on GSL
 ======
-Parts of LAYNII depend on GSL, thus you should have it installed
+Parts of LAYNII depend on GSL, thus you should have it installed:
+
+
 Linux : sudo apt-get install libgsl0-dev
+
+
 Mac: brew install gsl
 
 
