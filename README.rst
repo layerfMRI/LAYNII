@@ -66,9 +66,14 @@ Comment on GSL
 Parts of LAYNII depend on GSL, thus you should have it installed:
 
 
-Linux : sudo apt-get install libgsl0-dev
+Linux ::
+
+sudo apt-get install libgsl0-dev
 
 
-Mac: brew install gsl
+Mac::
+
+
+brew install gsl
 
 
