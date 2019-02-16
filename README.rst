@@ -1,6 +1,7 @@
 .. -*- mode: rst -*-
 
 Tutorials on layering, layer-smoothing, columnar anlysis here: https://layerfmri.com/category/code/
+This project is licensed under BSD-3-Clause
 
 .. image:: https://layerfmri.files.wordpress.com/2018/01/sensory_motor_grid.png
     :width: 18px
