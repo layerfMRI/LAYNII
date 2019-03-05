@@ -25,7 +25,7 @@ using namespace std;
 int show_help( void )
 {
    printf(
-      "LN_GROW_Layers: short exmample of LAyering\n"
+      "LN_GROW_Layers: short exmample of Layering\n"
       "\n"
       "    This program calculates the layers based on GM and CSF border line rims files \n"
       "    set output filenames and write a NIfTI-2 dataset, all via the\n"
@@ -52,6 +52,8 @@ int show_help( void )
       "       -thin               : optional extra option, when the distance between \n"
       "	                             layers is less than the voxel thickness \n"
       "	                             Insub this is 4 U \n"
+      "	                             This deals with missing layers next to the inner \n"
+      "	                             most and outer most layers \n"
       "\n");
    return 0;
 }
@@ -61,7 +63,7 @@ int main(int argc, char * argv[])
 
    nifti_image * nim_input_i=NULL;
    char        * fin=NULL, * fout=NULL;
-   int          ac, disp_float_eg=0, Nlayer_real = 20 , vinc_int = 50, threeD = 0 , thinn_option = 0 ;
+   int          ac, disp_float_eg=0, Nlayer_real = 20 , vinc_int = 50, threeD = 0 , thinn_option = 0 , centroid_option = 0  ;
    if( argc < 2 ) return show_help();   // typing '-help' is sooo much work 
 
    // process user options: 4 are valid presently 
@@ -84,7 +86,7 @@ int main(int argc, char * argv[])
             //fprintf(stderr, " I am using 20 layers as default ");
             return 1;
          }
-         Nlayer_real = atof(argv[ac]);  // no string copy, just pointer assignment 
+         Nlayer_real = atof(argv[ac]);  // no string copy, just pointer assignment
       }
       else if( ! strcmp(argv[ac], "-vinc") ) {
         if( ++ac >= argc ) {
@@ -101,6 +103,10 @@ int main(int argc, char * argv[])
          fprintf(stderr, " I correct for extra thin layers \n ");
          thinn_option = 1;  // no string copy, just pointer assignment 
       }
+      else if( ! strcmp(argv[ac], "-centroid") ) {
+         fprintf(stderr, " I will write out another file with the centroid depth\n ");
+         centroid_option = 1;  // no string copy, just pointer assignment 
+      }
       else {
          fprintf(stderr,"** invalid option, '%s'\n", argv[ac]);
          return 1;
@@ -115,8 +121,10 @@ int main(int argc, char * argv[])
       return 2;
    }
    
-cout << " I am using "  <<  Nlayer_real << " Layers " << endl; 
-   int Nlayer = 100 ; // this is an interim number that will be scaled later
+cout << " I am using "  <<  Nlayer_real << " Layers " << endl;
+   if (Nlayer_real > 1000) cout << "#################" << endl << " STOP STOP STOP, why would you want more than 1000 layers? I cant let you do that -> change limits in course code " << endl <<  "########" << endl;
+
+   int Nlayer = 1000 ; // this is an interim number that will be scaled later
    // get dimsions of input 
    int sizeSlice = nim_input_i->nz ; 
    int sizePhase = nim_input_i->nx ; 
@@ -339,8 +347,6 @@ float dist_max = 0.;
 float dist_p1 = 0.;
 
 
-int number_of_layers = Nlayer ; 
-
 
 cout << " start growing  from WM .... " << endl; 
 
@@ -533,7 +539,7 @@ cout << " correct for pytagoras error .... " << endl;
     }
  }
 
-cout << " runing until here .... " << endl; 
+//cout << " runing until here .... " << endl; 
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -552,7 +558,7 @@ cout << " runing until here .... " << endl;
       }
     }
 
-cout << " runing also until here .... " << endl; 
+//cout << " runing also until here .... " << endl; 
 
 
 
@@ -589,7 +595,7 @@ cout << " runing also until here .... " << endl;
     }
  }
 
-cout << " runing also until here 3 .... " << endl; 
+//cout << " runing also until here 3 .... " << endl; 
 
 int   GMK2_i, GMK3_i, WMK2_i, WMK3_i ; 
 float GMK2_f, GMK3_f, WMK2_f, WMK3_f, ix_f, iy_f ; 
@@ -772,7 +778,7 @@ float z3g = 0.;
 
 float dist3d (float x1, float y1, float z1, float x2, float y2, float z2,float dX, float dY, float dZ) ; 
 
-cout << "bis hier 2 " << endl; 
+//cout << "bis hier 2 " << endl; 
 
 
 // Reduce mask to contain only Areas close to the curface. 
@@ -789,7 +795,6 @@ float dist_min3 = 0.;
 float dist_max = 0.;
 float dist_p1 = 0.;
 
-int number_of_layers = Nlayer ; 
 
 
 cout << " start growing  from WM .... " << endl; 
@@ -1145,16 +1150,21 @@ for(int iz=0; iz<sizeSlice; ++iz){
       }
     }
 
- cout << " runing also until here  4.... " << endl; 
+ //cout << " runing also until here  4.... " << endl; 
 
 
 
 
 } // 3Ddim layer calculation is closed. 
+ 
 
- cout << " runing also until here  4.... " << endl; 
 
-// Cleaning negative layers and layers ov more than 20
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+///// Cleaning negative layers and layers ov more than cutoff                                /////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 
 
 for(int islice=0; islice<sizeSlice; ++islice){  
       for(int iy=0; iy<sizePhase; ++iy){
@@ -1170,6 +1180,47 @@ for(int islice=0; islice<sizeSlice; ++islice){
     }
     
     
+
+  
+ 
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
+	///// write out centroid location of layers                /////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	if (centroid_option == 1) {
+		cout << "Writing ctntroid file " << endl; 
+		
+		nifti_image * centroid  = nifti_copy_nim_info(nim_input);
+		centroid->datatype = NIFTI_TYPE_FLOAT32;
+		centroid->nbyper = sizeof(float);
+		centroid->data = calloc(centroid->nvox, centroid->nbyper);
+		float  *centroid_data = (float *) centroid->data;
+        float coord = 0.0 ; 
+		for(int iz=0; iz<sizeSlice; ++iz){  
+		 for(int iy=0; iy<sizePhase; ++iy){
+		  for(int ix=0; ix<sizeRead-0; ++ix){
+		   if (*(nim_input_data  + nxy*iz + nx*ix  + iy  ) != 0  ){
+			   coord = (float)(  (double)*(equi_dist_layers_data + nxy*iz + nx*ix + iy ) /( (double)(Nlayer) ) ) ;
+			   if (coord >= 0 && coord <= 1 ) { // taking care of lfoar rounding errors 
+	  		    *(centroid_data + nxy*iz + nx*ix + iy ) = coord ; 
+	  		   }
+	  		   if (coord < 0 ) { // taking care of lfoar rounding errors 
+	  		    *(centroid_data + nxy*iz + nx*ix + iy ) = 0.0 ; 
+	  		   } 
+	  		   if (coord > 1 ) { // taking care of lfoar rounding errors 
+	  		    *(centroid_data + nxy*iz + nx*ix + iy ) = 1.0 ; 
+	  		   } 	  		   
+           }
+          }
+         }
+		}  
+    
+    
+		const char  *fout_1="centroid_coord.nii" ;
+		if( nifti_set_filenames(centroid, fout_1 , 1, 1) ) return 1;
+		nifti_image_write( centroid );
+	} // centroid option os closed   
+    
+    
  if (thinn_option == 0) {
   for(int iz=0; iz<sizeSlice; ++iz){  
       for(int iy=0; iy<sizePhase; ++iy){
@@ -1182,7 +1233,6 @@ for(int islice=0; islice<sizeSlice; ++islice){
     }  
  
  }  
-  
     
     
  if (thinn_option == 1) {
@@ -1214,11 +1264,11 @@ for(int islice=0; islice<sizeSlice; ++islice){
  
 
  
- cout << " runing also until here  4.5... " << endl; 
+ //cout << " runing also until here  4.5... " << endl; 
 
 //equi_dist_layers.autowrite("equi_dist_layers.nii", wopts, &prot);
 
- cout << " runing also until here  5.... " << endl; 
+ //cout << " runing also until here  5.... " << endl; 
 
 
      // output file name       
