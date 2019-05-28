@@ -335,7 +335,7 @@ int pref_ratio = 0 ;
 /////////////////////////
 ////SMOOTHING LOOP  /////
 /////////////////////////
- cout << " Big smoothing loop is done now" << endl ; 
+ cout << " Big smoothing loop is beeing done now" << endl ; 
 
 
 
