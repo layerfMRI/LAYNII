@@ -173,18 +173,18 @@ if ( nim_file_1i->datatype == NIFTI_TYPE_INT16 ) {
 	}
 }    
 
-if ( nim_file_1i->datatype == NIFTI_TYPE_FLOAT32 ) {
-  float  *nim_file_1i_data = (float *) nim_file_1i->data;
-  	for(int it=0; it<nrep; ++it){  
-	  for(int islice=0; islice<sizeSlice; ++islice){  
-	      for(int iy=0; iy<sizePhase; ++iy){
-	        for(int ix=0; ix<sizeRead; ++ix){
-        		 *(nim_file_1_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = (float) (*(nim_file_1i_data  + nxyz *it +  nxy*islice + nx*ix  + iy  )) ;	
-           } 
-	    }
-	  }
-	}
-}  
+//if ( nim_file_1i->datatype == NIFTI_TYPE_FLOAT32 ) {
+//  float  *nim_file_1i_data = (float *) nim_file_1i->data;
+//  	for(int it=0; it<nrep; ++it){  
+//	  for(int islice=0; islice<sizeSlice; ++islice){  
+//	      for(int iy=0; iy<sizePhase; ++iy){
+//	        for(int ix=0; ix<sizeRead; ++ix){
+//      		 *(nim_file_1_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = (float) (*(nim_file_1i_data  + nxyz *it +  nxy*islice + nx*ix  + iy  )) ;	
+//           } 
+//	    }
+//	  }
+//	}
+//}  
   
 
 if ( nim_file_2i->datatype == NIFTI_TYPE_INT16 ) {
