@@ -230,6 +230,7 @@ if ( nim_file_1i->datatype == NIFTI_TYPE_INT16 ) {
 		vec_file2[it] = 0 ;
 	}
   
+  //cout << " number of voxerls"  <<nxyz << endl; 
   // Mean time course of everything
      for(int islice=0; islice<sizeSlice; ++islice){  
 	    for(int iy=0; iy<sizePhase; ++iy){
@@ -237,20 +238,21 @@ if ( nim_file_1i->datatype == NIFTI_TYPE_INT16 ) {
 
 	          	for(int it=0; it<nrep; ++it){ 
 					vec_file1[it] = vec_file1[it] + (double) *(nim_file_1_data  + nxyz*it + nxy*islice + nx*ix  + iy  ) / nxyz;
+					//if (  *(nim_file_1_data  + nxyz*it + nxy*islice + nx*ix  + iy  ) / nxyz  > 10000) cout << " I am wierd " << endl;  
 				}
 	        } 
 	    }
 	  }         
 
-    // voxel wise corelation to mean of everything
+  // voxel wise corelation to mean of everything
      for(int islice=0; islice<sizeSlice; ++islice){  
 	    for(int iy=0; iy<sizePhase; ++iy){
 	        for(int ix=0; ix<sizeRead; ++ix){
-	          	for(int it=0; it<nrep; ++it){ 
+	          	for(int it=0; it<nrep; ++it)   { 
 					vec_file2[it] = (double) *(nim_file_1_data  + nxyz*it + nxy*islice + nx*ix  + iy  ) ;
 				}
 				
-				*(conc_file_data  + nxyz*0 + nxy*islice + nx*ix  + iy  ) =  gsl_stats_correlation(vec_file1,1,vec_file2,1,nrep) ; 
+				*(conc_file_data  + nxyz*0 + nxy*islice + nx*ix  + iy  ) = gsl_stats_correlation(vec_file1,1,vec_file2,1,nrep) ; 
 	        } 
 	    }
 	  }  

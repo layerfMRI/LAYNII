@@ -27,7 +27,7 @@ int show_help( void )
       "    This program is motivated by Eli Merriam comparing in hunting down voxels that out of phase for VASO and BOLD      \n"
       "\n"
       "\n"
-      "    basic usage: LN_CORREL2FILES -file1 file1.nii -file2 file1.nii \n"
+      "    basic usage: LN_CORREL2FILES -file1 file1.nii -file2 file2.nii \n"
       "\n"
       "\n"
       "\n"

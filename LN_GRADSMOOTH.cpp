@@ -26,7 +26,7 @@ int show_help( void )
       "    This program is designet smooth data within layer or columns ,\n"
       "    In order to avoid smoothing across masks a crawler smoothed only across connected voxels ,\n"
       "\n"
-      "    basic usage: LN_GRADSMOOTH -gradfile gradfile.nii -input activity_map.nii -FWHM 1 -within  \n"
+      "    basic usage: LN_GRADSMOOTH -gradfile gradfile.nii -input activity_map.nii -FWHM 1 -within  -selectivity 0.1 \n"
       "\n"
       "\n"
       "   This program now supports INT16, INT32 and FLOAT23 \n"

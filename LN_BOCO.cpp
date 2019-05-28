@@ -358,6 +358,15 @@ cout << " Trial duration is " <<trialdur << " this means there are " << (float)n
     triav_file->data 			= calloc(triav_file->nvox, triav_file->nbyper);
     float  *triav_file_data 	= (float *) triav_file->data;
     
+    
+    nifti_image * triav_B_file  = nifti_copy_nim_info(nim_file_1);
+    triav_B_file->nt 			= trialdur	; 
+    triav_B_file->nvox 			= nim_file_1->nvox / nrep * trialdur; 
+    triav_B_file->datatype 		= NIFTI_TYPE_FLOAT32; 
+    triav_B_file->nbyper 		= sizeof(float);
+    triav_B_file->data 			= calloc(triav_B_file->nvox, triav_B_file->nbyper);
+    float  *triav_B_file_data 	= (float *) triav_B_file->data;
+    
     float AV_Nulled[trialdur] ;
     float AV_BOLD[trialdur]   ; 
 
@@ -377,7 +386,9 @@ cout << " Trial duration is " <<trialdur << " this means there are " << (float)n
 			      }         
 			      
 			      for(int it=0; it<trialdur; ++it){  
-			        *(triav_file_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = AV_Nulled[it]/AV_BOLD[it] ;
+			        *(triav_file_data    + nxyz *it +  nxy*islice + nx*ix  + iy  ) = AV_Nulled[it]/AV_BOLD[it] ;
+			        *(triav_B_file_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = AV_BOLD[it] ;
+
 				  } 
            } 
 	    }
@@ -405,6 +416,10 @@ cout << " Trial duration is " <<trialdur << " this means there are " << (float)n
   const char  *fout_trial="VASO_trialAV_LN.nii" ;
   if( nifti_set_filenames(triav_file, fout_trial , 1, 1) ) return 1;
   nifti_image_write( triav_file );
+
+  const char  *fout_trial_BOLD="BOLD_trialAV_LN.nii" ;
+  if( nifti_set_filenames(triav_B_file, fout_trial_BOLD , 1, 1) ) return 1;
+  nifti_image_write( triav_B_file );
 
 
 }// Trial Average loop closed
