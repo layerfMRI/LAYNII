@@ -157,7 +157,7 @@ int main(int argc, char * argv[])
    /////////  and translate them to the datatime I like best  //////////////
    /////////////////////////////////////////////////////////////////////////
 
-if ( nim_inputfi_1->datatype == NIFTI_TYPE_FLOAT32 ) {
+if ( nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ||  nim_inputfi_3->datatype ==  NIFTI_TYPE_INT32 ) {
   float  *nim_inputfi_1_data = (float *) nim_inputfi_1->data;
   	for(int it=0; it<nrep; ++it){  
 	  for(int islice=0; islice<sizeSlice; ++islice){  
@@ -170,7 +170,7 @@ if ( nim_inputfi_1->datatype == NIFTI_TYPE_FLOAT32 ) {
 	}
 }  
 
-if ( nim_inputfi_1->datatype == NIFTI_TYPE_INT16 ) {
+if ( nim_inputfi_3->datatype == NIFTI_TYPE_INT16 || nim_inputfi_3->datatype == DT_UINT16 ) {
   short  *nim_inputfi_1_data = (short *) nim_inputfi_1->data;
   	for(int it=0; it<nrep; ++it){  
 	  for(int islice=0; islice<sizeSlice; ++islice){  
@@ -183,18 +183,6 @@ if ( nim_inputfi_1->datatype == NIFTI_TYPE_INT16 ) {
 	}
 }    
 
-if ( nim_inputfi_1->datatype == NIFTI_TYPE_INT32 ) {
-  int  *nim_inputfi_1_data = (int *) nim_inputfi_1->data;
-  	for(int it=0; it<nrep; ++it){  
-	  for(int islice=0; islice<sizeSlice; ++islice){  
-	      for(int iy=0; iy<sizePhase; ++iy){
-	        for(int ix=0; ix<sizeRead; ++ix){
-        		 *(nim_inv1_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = (float) (*(nim_inputfi_1_data  + nxyz *it +  nxy*islice + nx*ix  + iy  )) ;	
-           } 
-	    }
-	  }
-	}
-}    
 
 
 	// write out some stuff that might be good to know, if you want to debug
@@ -222,7 +210,7 @@ if ( nim_inputfi_1->datatype == NIFTI_TYPE_INT32 ) {
    /////////////////////////////////////////////////////////////////////////
 
 
-if ( nim_inputfi_2->datatype == NIFTI_TYPE_FLOAT32 ) {
+if ( nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ||  nim_inputfi_3->datatype ==  NIFTI_TYPE_INT32 ) {
   float  *nim_inputfi_2_data = (float *) nim_inputfi_2->data;
   	for(int it=0; it<nrep; ++it){  
 	  for(int islice=0; islice<sizeSlice; ++islice){  
@@ -235,7 +223,7 @@ if ( nim_inputfi_2->datatype == NIFTI_TYPE_FLOAT32 ) {
 	}
 }  
 
-if ( nim_inputfi_2->datatype == NIFTI_TYPE_INT16 ) {
+if ( nim_inputfi_3->datatype == NIFTI_TYPE_INT16 || nim_inputfi_3->datatype == DT_UINT16 ) {
   short  *nim_inputfi_2_data = (short *) nim_inputfi_2->data;
   	for(int it=0; it<nrep; ++it){  
 	  for(int islice=0; islice<sizeSlice; ++islice){  
@@ -248,18 +236,6 @@ if ( nim_inputfi_2->datatype == NIFTI_TYPE_INT16 ) {
 	}
 }    
 
-if ( nim_inputfi_2->datatype == NIFTI_TYPE_INT32 ) {
-  int  *nim_inputfi_2_data = (int *) nim_inputfi_2->data;
-  	for(int it=0; it<nrep; ++it){  
-	  for(int islice=0; islice<sizeSlice; ++islice){  
-	      for(int iy=0; iy<sizePhase; ++iy){
-	        for(int ix=0; ix<sizeRead; ++ix){
-        		 *(nim_inv2_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = (float) (*(nim_inputfi_2_data  + nxyz *it +  nxy*islice + nx*ix  + iy  )) ;	
-           } 
-	    }
-	  }
-	}
-}    
 	
    /////////////////////////////////////////////////////////////////////////
    /////////  LOADING UNI  ////////////////////////////////////////////////
@@ -277,7 +253,7 @@ if ( nim_inputfi_2->datatype == NIFTI_TYPE_INT32 ) {
    /////////////////////////////////////////////////////////////////////////
 
 
-if ( nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ) {
+if ( nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ||  nim_inputfi_3->datatype ==  NIFTI_TYPE_INT32 ) {
   float  *nim_inputfi_3_data = (float *) nim_inputfi_3->data;
   	for(int it=0; it<nrep; ++it){  
 	  for(int islice=0; islice<sizeSlice; ++islice){  
@@ -290,7 +266,7 @@ if ( nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ) {
 	}
 }  
 
-if ( nim_inputfi_3->datatype == NIFTI_TYPE_INT16 ) {
+if ( nim_inputfi_3->datatype == NIFTI_TYPE_INT16 || nim_inputfi_3->datatype == DT_UINT16 ) {
   short  *nim_inputfi_3_data = (short *) nim_inputfi_3->data;
   	for(int it=0; it<nrep; ++it){  
 	  for(int islice=0; islice<sizeSlice; ++islice){  
@@ -303,18 +279,7 @@ if ( nim_inputfi_3->datatype == NIFTI_TYPE_INT16 ) {
 	}
 }    
 
-if ( nim_inputfi_3->datatype == NIFTI_TYPE_INT32 ) {
-  int  *nim_inputfi_3_data = (int *) nim_inputfi_3->data;
-  	for(int it=0; it<nrep; ++it){  
-	  for(int islice=0; islice<sizeSlice; ++islice){  
-	      for(int iy=0; iy<sizePhase; ++iy){
-	        for(int ix=0; ix<sizeRead; ++ix){
-        		 *(nim_uni_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = (float) (*(nim_inputfi_3_data  + nxyz *it +  nxy*islice + nx*ix  + iy  )) ;	
-           } 
-	    }
-	  }
-	}
-}    
+
 	
 /////////////////////////////////////////////
 ////   MAKE allocating necessary files  /////
