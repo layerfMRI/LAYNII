@@ -39,7 +39,9 @@ int show_help( void )
       "       -input                : nii file that should be smoothed. it should have same dimentions as layer file\n"
       "       -FWHM                 : the amount of smoothing in mm\n"
       "       -twodim               : optional argument to do smoothing in 2 Dim only \n"
-      "       -mask                 : optional argument to mask activity outside of layers \n"
+      "       -mask                 : optional argument to mask activity outside a mask input file \n"
+      "                               it requres a seperate file\n"
+      "                               this option can speak up the process\n"
       "       -within               : optional argument that determines that smoothing should happen \n"
       "                               within similar values, not across different values\n"
       "       -acros                : optional argument that determines that smoothing should happen \n"
@@ -65,7 +67,7 @@ int show_help( void )
 int main(int argc, char * argv[])
 {
 
-   char       * fmaski=NULL, * fout=NULL, * finfi=NULL ;
+   char       * fmaski=NULL, * fout=NULL, * finfi=NULL,  * froii=NULL ;
    int          ac, twodim=0, do_masking=0 , within = 0 , acros = 0  ; 
    float 		FWHM_val=0, selectivity=0.1  ;
    if( argc < 3 ) return show_help();   // typing '-help' is sooo much work 
@@ -109,8 +111,15 @@ int main(int argc, char * argv[])
          cout << "I will across different values"  << endl; 
       } 
      else if( ! strcmp(argv[ac], "-mask") ) {
+		 if( ++ac >= argc ) {
+            fprintf(stderr, "** missing argument for -mask\n");
+            return 1;
+         }
+         froii = argv[ac];  // no string copy, just pointer assignment 
          do_masking = 1;
          cout << "I will set every thing to zero outside the layers (masking option)"  << endl; 
+         
+
       }
      else if( ! strcmp(argv[ac], "-selectivity") ) {
         if( ++ac >= argc ) {
@@ -140,6 +149,8 @@ int main(int argc, char * argv[])
       fprintf(stderr,"** failed to read layer NIfTI image from '%s'\n", fmaski);
       return 2;
    }
+   
+
    
    if (acros + within !=1) {
    	  cout << " I don't know what to do to smooth within or across similar values, please decide when one it should be " << endl;
@@ -181,7 +192,12 @@ int main(int argc, char * argv[])
    nim_mask->data = calloc(nim_mask->nvox, nim_mask->nbyper);
    float  *nim_mask_data = (float *) nim_mask->data;
    
-   
+   nifti_image * nim_roi  	= nifti_copy_nim_info(nim_maski);
+   nim_roi->datatype = NIFTI_TYPE_FLOAT32;
+   nim_roi->nbyper = sizeof(float);
+   nim_roi->data = calloc(nim_roi->nvox, nim_roi->nbyper);
+   float  *nim_roi_data = (float *) nim_roi->data; 
+ 
    /////////////////////////////////////////////////////////////////////////
    /////////  fixing potential problems with different input datatypes /////
    /////////  here, I am loading them in their native datatype /////////////
@@ -260,7 +276,44 @@ if ( nim_maski->datatype == NIFTI_TYPE_INT32 ) {
            } 
 	    }
 	  }
-}    
+}   
+
+if ( do_masking == 1 ) {
+	
+	
+            // read input dataset, including data 
+         nifti_image * nim_roii = nifti_image_read(froii, 1);
+         if( !nim_roii ) {
+           fprintf(stderr,"** failed to read layer NIfTI image from '%s'\n", froii);
+           return 2;
+         }	
+
+ if ( nim_roii->datatype == NIFTI_TYPE_FLOAT32 ||  nim_roii->datatype ==  NIFTI_TYPE_INT32 ) {
+  float  *nim_roii_data = (float *) nim_roii->data;
+  	for(int it=0; it<nrep; ++it){  
+	  for(int islice=0; islice<sizeSlice; ++islice){  
+	      for(int iy=0; iy<sizePhase; ++iy){
+	        for(int ix=0; ix<sizeRead; ++ix){
+        		 *(nim_roi_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = (float) (*(nim_roii_data  + nxyz *it +  nxy*islice + nx*ix  + iy  )) ;	
+           } 
+	    }
+	  }
+	}
+ }  
+
+ if ( nim_roii->datatype == NIFTI_TYPE_INT16 || nim_roii->datatype == DT_UINT16 ) {
+  short  *nim_roii_data = (short *) nim_roii->data;
+  	for(int it=0; it<nrep; ++it){  
+	  for(int islice=0; islice<sizeSlice; ++islice){  
+	      for(int iy=0; iy<sizePhase; ++iy){
+	        for(int ix=0; ix<sizeRead; ++ix){
+        		 *(nim_roi_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = (float) (*(nim_roii_data  + nxyz *it +  nxy*islice + nx*ix  + iy  )) ;	
+           } 
+	    }
+	  }
+	}
+ }    
+}
 	// write out some stuff that might be good to know, if you want to debug
    cout << sizeSlice << " slices    " <<  sizePhase << " PhaseSteps     " <<  sizeRead << " Read steps    " <<  nrep << " timesteps "  << endl; 
    cout << " Voxel size    " <<  dX << " x " <<  dY << " x "  <<  dZ  << endl; 
@@ -294,6 +347,16 @@ if ( nim_maski->datatype == NIFTI_TYPE_INT32 ) {
 //    debug->nbyper 			= sizeof(float);
 //    debug->data 			= calloc(debug->nvox, debug->nbyper);
 //    float  *debug_data 		= (float *) debug->data;
+    
+ //   if ( do_masking == 1 ) {
+//	  for(int islice=0; islice<sizeSlice; ++islice){  
+//	      for(int iy=0; iy<sizePhase; ++iy){
+//	        for(int ix=0; ix<sizeRead; ++ix){
+  //      		 	*(debug_data +  nxy*islice + nx*ix  + iy  ) = 0; 
+//           } 
+//	    }
+//	  }
+//    }   
 
 
 float dist (float x1, float y1, float z1, float x2, float y2, float z2,float dX, float dY, float dZ) ; 
@@ -325,12 +388,27 @@ float  value_dist = 0;
 
 
 /// for estimation and out put of program process and how much longer it will take.
-int nvoxels_to_go_across = sizeSlice * sizePhase * sizeRead; 
-int running_index = 0 ; 
-int pref_ratio = 0 ;
+ int nvoxels_to_go_across = sizeSlice * sizePhase * sizeRead; 
+ int running_index = 0 ; 
+ int pref_ratio = 0 ;
 
+if (sizeSlice * sizePhase * sizeRead > 32767) cout << " the number of voxels is bigger than the range of int the time estimation will be wrong " << endl; 
 
-
+if ( do_masking == 1 ) {
+	nvoxels_to_go_across = 0; 
+	  for(int islice=0; islice<sizeSlice; ++islice){  
+	      for(int iy=0; iy<sizePhase; ++iy){
+	        for(int ix=0; ix<sizeRead; ++ix){
+	          if (*(nim_roi_data  +  nxy*islice + nx*ix  + iy  ) > 0 ) {
+        		 nvoxels_to_go_across = nvoxels_to_go_across +1 ;
+        	  }	 
+           } 
+	    }
+	  }
+}
+ 
+ 
+ cout << " The number of voxels to go across = "<< nvoxels_to_go_across << endl ; 
 
 /////////////////////////
 ////SMOOTHING LOOP  /////
@@ -342,6 +420,7 @@ int pref_ratio = 0 ;
 	for(int iz=0; iz<sizeSlice; ++iz){  
       for(int iy=0; iy<sizePhase; ++iy){
         for(int ix=0; ix<sizeRead; ++ix){
+		 if ( !( !(*(nim_roi_data  +  nxy*iz + nx*ix  + iy  ) > 0) && (do_masking == 1)  ) ) {
          //if (iz==sizeSlice/2 && iy == sizePhase/2-4 && ix == sizeRead/2-4 ) { // debug loop open
          
            // this is to write out how many more voxels I have to go through. 
@@ -410,7 +489,7 @@ int pref_ratio = 0 ;
 	     //if (*(nim_mask_data   +  nxy*iz + nx*ix  + iy  )  <= 0 )	     	*(smoothed_data    + nxy*iz + nx*ix  + iy  ) =  *(nim_inputf_data  + nxy*iz + nx*ix  + iy  ) ;
 	    
 	     //}//debug loop closed
-	     
+	     }
         }
       }
     }
@@ -420,12 +499,13 @@ int pref_ratio = 0 ;
 
 // I am not sure if there is a case there masking makes sense? 
 // I just leave it in. 
+/*
 if ( do_masking == 1 ) {
   	for(int it=0; it<nrep; ++it){  
 	  for(int islice=0; islice<sizeSlice; ++islice){  
 	      for(int iy=0; iy<sizePhase; ++iy){
 	        for(int ix=0; ix<sizeRead; ++ix){
-	          if (*(nim_mask_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) == 0 ) {
+	          if (*(nim_mask_data +  nxy*islice + nx*ix  + iy  ) == 0 ) {
         		 *(smoothed_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = 0 ;	
         	  }	 
            } 
@@ -433,7 +513,7 @@ if ( do_masking == 1 ) {
 	  }
 	}
 } 
-
+*/
 //cout << " runing also until here  5.... " << endl; 
 //cout << " slope " << smoothed->scl_slope << " " << nim_inputfi->scl_slope  << endl; 
 
