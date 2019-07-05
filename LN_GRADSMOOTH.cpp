@@ -204,7 +204,7 @@ int main(int argc, char * argv[])
    /////////  and translate them to the datatime I like best  //////////////
    /////////////////////////////////////////////////////////////////////////
 
-if ( nim_inputfi->datatype == NIFTI_TYPE_FLOAT32 ) {
+if ( nim_inputfi->datatype == NIFTI_TYPE_FLOAT32 ||  nim_inputfi->datatype == NIFTI_TYPE_INT32 ) {
   float  *nim_inputfi_data = (float *) nim_inputfi->data;
   	for(int it=0; it<nrep; ++it){  
 	  for(int islice=0; islice<sizeSlice; ++islice){  
@@ -218,7 +218,7 @@ if ( nim_inputfi->datatype == NIFTI_TYPE_FLOAT32 ) {
 }  
   
 
-if ( nim_inputfi->datatype == NIFTI_TYPE_INT16 ) {
+if ( nim_inputfi->datatype == NIFTI_TYPE_INT16 || nim_inputfi->datatype == DT_UINT16 ) {
   short  *nim_inputfi_data = (short *) nim_inputfi->data;
   	for(int it=0; it<nrep; ++it){  
 	  for(int islice=0; islice<sizeSlice; ++islice){  
@@ -231,9 +231,8 @@ if ( nim_inputfi->datatype == NIFTI_TYPE_INT16 ) {
 	}
 }    
 
-
-if ( nim_inputfi->datatype == NIFTI_TYPE_INT32 ) {
-  int  *nim_inputfi_data = (int *) nim_inputfi->data;
+if ( nim_inputfi->datatype == DT_FLOAT64 || nim_inputfi->datatype == NIFTI_TYPE_FLOAT64 ) {
+  double  *nim_inputfi_data = (double *) nim_inputfi->data;
   	for(int it=0; it<nrep; ++it){  
 	  for(int islice=0; islice<sizeSlice; ++islice){  
 	      for(int iy=0; iy<sizePhase; ++iy){
@@ -245,7 +244,8 @@ if ( nim_inputfi->datatype == NIFTI_TYPE_INT32 ) {
 	}
 }    
 
-if ( nim_maski->datatype == NIFTI_TYPE_FLOAT32 ) {
+
+if ( nim_maski->datatype == NIFTI_TYPE_FLOAT32 || nim_maski->datatype == NIFTI_TYPE_INT32  ) {
   float  *nim_maski_data = (float *) nim_maski->data;
 	  for(int islice=0; islice<sizeSlice; ++islice){  
 	      for(int iy=0; iy<sizePhase; ++iy){
@@ -256,7 +256,7 @@ if ( nim_maski->datatype == NIFTI_TYPE_FLOAT32 ) {
 	  }
 }    
   
-if ( nim_maski->datatype == NIFTI_TYPE_INT16 ) {
+if ( nim_maski->datatype == NIFTI_TYPE_INT16 || nim_maski->datatype ==  DT_UINT16) {
   short  *nim_maski_data = (short *) nim_maski->data;
 	  for(int islice=0; islice<sizeSlice; ++islice){  
 	      for(int iy=0; iy<sizePhase; ++iy){
@@ -267,8 +267,8 @@ if ( nim_maski->datatype == NIFTI_TYPE_INT16 ) {
 	  }
 }    
 
-if ( nim_maski->datatype == NIFTI_TYPE_INT32 ) {
-  int  *nim_maski_data = (int *) nim_maski->data;
+if ( nim_maski->datatype == DT_FLOAT64 || nim_maski->datatype ==  NIFTI_TYPE_FLOAT64) {
+  double  *nim_maski_data = (double *) nim_maski->data;
 	  for(int islice=0; islice<sizeSlice; ++islice){  
 	      for(int iy=0; iy<sizePhase; ++iy){
 	        for(int ix=0; ix<sizeRead; ++ix){
@@ -276,7 +276,8 @@ if ( nim_maski->datatype == NIFTI_TYPE_INT32 ) {
            } 
 	    }
 	  }
-}   
+}    
+
 
 if ( do_masking == 1 ) {
 	

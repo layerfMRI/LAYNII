@@ -247,8 +247,8 @@ if ( nim_file_2i->datatype == NIFTI_TYPE_FLOAT32 ) {
 	            	if (*(boco_vaso_data + nxyz*it + nxy*islice + nx*ix  + iy  ) <= 0) {
 	            		*(boco_vaso_data + nxyz*it + nxy*islice + nx*ix  + iy  ) = 0 ;
 	            		}
-	            	if (*(boco_vaso_data + nxyz*it + nxy*islice + nx*ix  + iy  ) >= 2) {
-	            		*(boco_vaso_data + nxyz*it + nxy*islice + nx*ix  + iy  ) = 2 ;
+	            	if (*(boco_vaso_data + nxyz*it + nxy*islice + nx*ix  + iy  ) >= 5) {
+	            		*(boco_vaso_data + nxyz*it + nxy*islice + nx*ix  + iy  ) = 5 ;
 	            		}
 
 	            }
