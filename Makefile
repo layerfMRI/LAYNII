@@ -25,7 +25,7 @@ EXAMPLES   	= 	My_nii_read 		LN_SNR_int_corr 	LN_FAsim LN_NOISEME 	LN_GROW_LAYER
 				LN_RAGRUG			LN_CORREL2FILES		LN_EXTREMETR			LN_BOCO\
 				LN_TRIAL			LN_ZOOM				LN_SMOOTH_RIM 			LN_COLUMNAR_DIST \
 				LN_GRADSMOOTH		LN_SKEW 			LN_INTPRO				LN_TEMPSMOOTH \
-				LN_MP2RAGE_DNOISE 
+				LN_MP2RAGE_DNOISE 	LN_PHYSIO_PARS 
 				
 # main targets (primary is nifti_tool, for now)
 nifti_tool: nifti_tool.o nifti_tool.h nifti2objs
@@ -122,6 +122,9 @@ LN_TEMPSMOOTH: LN_TEMPSMOOTH.o nifti2objs
 	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LLIBS)
 	
 LN_MP2RAGE_DNOISE: LN_MP2RAGE_DNOISE.o nifti2objs
+	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LLIBS)
+	
+LN_PHYSIO_PARS: LN_PHYSIO_PARS.o nifti2objs
 	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LLIBS)
 	
 clean:
