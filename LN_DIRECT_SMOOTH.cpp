@@ -34,7 +34,8 @@ int show_help( void )
       "       -help               	: show this help\n"
       "       -input 		     	: nii file that should be smoothed. it should have same dimentions as layer file\n"
       "       -FWHM 		     	: the amount of smoothing in units of voxels\n"
-      "       -laurenzian 		    : use Laurenzian smoothing, default is Gaussian \n"
+      "       -laurenzian 		    : use Laurenzian smoothing, default is Gaussian only for division images\n"
+      "                               LN_DIRECT_SMOOTH -input bico_VASO.Mean.nii -FWHM 0.5 -direction 3 -laurenzian \n:"
       "       -direction 		    : argument to specify direction 1 for x, 2 for y or 3 for z \n"
 
 
@@ -412,7 +413,16 @@ cout << " ############################################################# " << end
   float laur (float distance, float sigma) {
 	  // note, for consistency with GAUSs sigma, I am using a scaled versioin of the FWHM
 	 // sigma = sigma / sqrt(2 * log (2) ) ; 
-    return 1./(3.141592 * sigma) * 1 /(1+ distance*distance/(sigma*sigma)) ;
+	 float result = 0 ;  
+	 if ((int)distance%2 == 0 ) {
+		//sigma = 2 * sigma ;  
+		result = 1*  1./(3.141592 * sigma) * 1 /(1+ distance*distance/(sigma*sigma)) ;
+	 }
+	 if ((int)distance%2 == 1 ) { 
+		//sigma = 2 * sigma ;  
+		result = 1.6 *  1./(3.141592 * sigma) * 1 /(1+ distance*distance/(sigma*sigma)) ;
+	 }
+	 return result ; 
     // return 1/3.141592  * 1/ ((distance)*(distance) + (0.5*sigma)*(0.5*sigma)) ; 
   }
   
