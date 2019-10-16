@@ -37,7 +37,7 @@ int show_help( void )
       "       -laurenzian 		    : use Laurenzian smoothing, default is Gaussian only for division images\n"
       "                               LN_DIRECT_SMOOTH -input bico_VASO.Mean.nii -FWHM 0.5 -direction 3 -laurenzian \n:"
       "       -direction 		    : argument to specify direction 1 for x, 2 for y or 3 for z \n"
-
+      "       -Anonymous_sri        : You know what you did  (no FWHM)/n" 
 
       "\n");
    return 0;
@@ -47,8 +47,8 @@ int main(int argc, char * argv[])
 {
 
    char       * fout=NULL, * finfi=NULL ;
-   int          ac, direction_i=0, do_laurenz = 0 ; 
-   float 		FWHM_val=0 ;
+   int          ac, direction_i=0, do_laurenz = 0 , do_gauss = 0, do_sri = 0 ; 
+   float 		FWHM_val=10 , strength = 1;
    if( argc < 3 ) return show_help();   // typing '-help' is sooo much work 
 
    // process user options: 4 are valid presently 
@@ -80,6 +80,15 @@ int main(int argc, char * argv[])
       else if( ! strcmp(argv[ac], "-laurenzian") ) {
          do_laurenz = 1;  
          fprintf(stderr, "I will not use Gaussian smoothing but Laurenzian smoothing");
+      }
+      else if( ! strcmp(argv[ac], "-Anonymous_sri") ) {
+        if( ++ac >= argc ) {
+            fprintf(stderr, "** missing argument for -Anonymous_sri\n");
+            //return 1;
+         }
+         do_sri = 1;  
+         strength = atof(argv[ac]);  // no string copy, just pointer assignment 
+         fprintf(stderr, "Yes Sri I am doing you ");
       }
       else {
          fprintf(stderr,"** invalid option, '%s'\n", argv[ac]);
@@ -216,6 +225,8 @@ if (nim_inputfi->datatype == DT_FLOAT64 || nim_inputfi->datatype == NIFTI_TYPE_F
 float dist (float x1, float y1, float z1, float x2, float y2, float z2,float dX, float dY, float dZ) ; 
 float gaus (float distance, float sigma) ;
 float laur (float distance, float sigma) ;
+float ASLFt (float distance, float strength) ; 
+
 
 cout << "debug  2 " << endl; 
 
@@ -228,6 +239,16 @@ cout << " vinc " <<  vinc<<  endl;
 cout << " FWHM_val " <<  FWHM_val<<  endl; 
 
 
+if (do_sri == 0 && do_laurenz == 0 ) do_gauss = 1 ; 
+
+if (do_sri == 1 ) {
+	
+	cout << " no FWHM_val is used       Strength is " <<  strength<<  endl; 
+}
+//cout << " no FWHM_val is used       Strength is " <<  strength<<  endl; 
+
+
+
 ///////////////////////////////////
 ////SMOOTHING LOOP  /////
 ///////////////////////////////////
@@ -237,6 +258,8 @@ cout << " FWHM_val " <<  FWHM_val<<  endl;
 
  cout << " timestep ... " << flush ; 
 
+
+ for (int i = 0 ; i<5 ;  i++ ) cout <<   ASLFt(i ,strength ) << "     " << endl ; 
 
 if (direction_i == 1 ) {
  for(int it=0; it<nrep; ++it){  
@@ -251,7 +274,7 @@ if (direction_i == 1 ) {
 	      			  if ( *(nim_inputf_data + nxyz *it + nxy*iz + nx*ix_i  + iy  ) != 0 ) {
 		  				dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy,(float)iz,dX,dY,dZ); 
 
-						    if (do_laurenz == 0 ) {
+						    if (do_gauss == 1 ) {
 								*(smoothed_data   + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(smoothed_data   + nxyz *it + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data + nxyz *it + nxy*iz + nx*ix_i  + iy  ) * gaus(dist_i ,FWHM_val ) ;
 								*(gausweight_data + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(gausweight_data + nxyz *it + nxy*iz + nx*ix  + iy  ) + gaus(dist_i ,FWHM_val ) ; 
 							}
@@ -259,6 +282,11 @@ if (direction_i == 1 ) {
 								*(smoothed_data   + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(smoothed_data   + nxyz *it + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data + nxyz *it + nxy*iz + nx*ix_i  + iy  ) * laur(dist_i ,FWHM_val ) ;
 								*(gausweight_data + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(gausweight_data + nxyz *it + nxy*iz + nx*ix  + iy  ) + laur(dist_i ,FWHM_val ) ; 
 							}
+							if (do_sri == 1 ) {
+								*(smoothed_data   + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(smoothed_data   + nxyz *it + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data + nxyz *it + nxy*iz + nx*ix_i  + iy  ) * ASLFt(dist_i ,strength ) ;
+								*(gausweight_data + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(gausweight_data + nxyz *it + nxy*iz + nx*ix  + iy  ) +  ASLFt(dist_i ,strength ) ; 
+							}
+							
 			  		  }	
 			  	  }	
 
@@ -282,14 +310,18 @@ if (direction_i == 2 ) {
 	      			  if ( *(nim_inputf_data + nxyz *it + nxy*iz + nx*ix  + iy_i  ) != 0 ) {
 		  				dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix,(float)iy_i,(float)iz,dX,dY,dZ); 
 
-							if (do_laurenz == 0 ) {
+							if (do_gauss == 1  ) {
 								*(smoothed_data   + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(smoothed_data   + nxyz *it + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data + nxyz *it + nxy*iz + nx*ix  + iy_i  ) * gaus(dist_i ,FWHM_val ) ;
 								*(gausweight_data + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(gausweight_data + nxyz *it + nxy*iz + nx*ix  + iy  ) + gaus(dist_i ,FWHM_val ) ; 
 							}
 							if (do_laurenz == 1 ) {
 								*(smoothed_data   + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(smoothed_data   + nxyz *it + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data + nxyz *it + nxy*iz + nx*ix  + iy_i  ) * laur(dist_i ,FWHM_val ) ;
 								*(gausweight_data + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(gausweight_data + nxyz *it + nxy*iz + nx*ix  + iy  ) + laur(dist_i ,FWHM_val ) ; 
-							}							
+							}
+							if (do_sri == 1 ) {
+								*(smoothed_data   + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(smoothed_data   + nxyz *it + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data + nxyz *it + nxy*iz + nx*ix  + iy_i  ) * ASLFt(dist_i ,strength ) ;
+								*(gausweight_data + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(gausweight_data + nxyz *it + nxy*iz + nx*ix  + iy  ) + ASLFt(dist_i ,strength ) ; 						}
+														
 			  		  }	
 			  	  }	
 
@@ -317,7 +349,7 @@ if (direction_i == 3 ) {
 							
 							
 							
-							if (do_laurenz == 0 ) {
+							if (do_gauss == 1  ) {
 								*(smoothed_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) = *(smoothed_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data + nxyz *it  + nxy*iz_i + nx*ix  + iy  ) * gaus(dist_i ,FWHM_val ) ;
 								*(gausweight_data + nxyz *it  + nxy*iz + nx*ix  + iy  ) = *(gausweight_data + nxyz *it  + nxy*iz + nx*ix  + iy  ) + gaus(dist_i ,FWHM_val ) ; 
 							}
@@ -325,6 +357,12 @@ if (direction_i == 3 ) {
 								*(smoothed_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) = *(smoothed_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data + nxyz *it  + nxy*iz_i + nx*ix  + iy  ) * laur(dist_i ,FWHM_val ) ;
 								*(gausweight_data + nxyz *it  + nxy*iz + nx*ix  + iy  ) = *(gausweight_data + nxyz *it  + nxy*iz + nx*ix  + iy  ) + laur(dist_i ,FWHM_val ) ; 
 							}
+							if (do_sri == 1 ) {
+								*(smoothed_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) = *(smoothed_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data + nxyz *it  + nxy*iz_i + nx*ix  + iy  ) * ASLFt(dist_i ,strength )  ;
+								*(gausweight_data + nxyz *it  + nxy*iz + nx*ix  + iy  ) = *(gausweight_data + nxyz *it  + nxy*iz + nx*ix  + iy  ) + ASLFt(dist_i ,strength )  ; 
+
+							}
+							
 														
 			  		  }	
 			  	  }	
@@ -346,7 +384,7 @@ for(int it=0; it<nrep; ++it){
   for(int iz=0; iz<sizeSlice; ++iz){  
       for(int iy=0; iy<sizePhase; ++iy){
         for(int ix=0; ix<sizeRead-0; ++ix){
-		  					*(smoothed_data    + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(smoothed_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) / *(gausweight_data  + nxyz *it + nxy*iz + nx*ix  + iy  );							
+		  					*(smoothed_data    + nxyz *it + nxy*iz + nx*ix  + iy  ) = *(smoothed_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) /  *(gausweight_data  + nxyz *it + nxy*iz + nx*ix  + iy  ) ;							
         }
       }
     }
@@ -425,5 +463,21 @@ cout << " ############################################################# " << end
 	 return result ; 
     // return 1/3.141592  * 1/ ((distance)*(distance) + (0.5*sigma)*(0.5*sigma)) ; 
   }
-  
+    
+  float ASLFt (float distance, float strength) {
+	  float value ; 
+    if (distance >= 4.0 )  value = 0.0 ;
+	if (distance <= 4.0 )  value = 0.0245 ; 
+	if (distance <= 3.0 )  value = 0.024 ; 
+	if (distance <= 2.0 )  value = 0.06 ; 
+	if (distance <= 1.0 )  value = 0.18 ; 
+	if (distance == 0.0 )  value = 1.0 ;
 
+
+
+
+
+    return value * strength;
+  }
+  
+  
