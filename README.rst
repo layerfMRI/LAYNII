@@ -4,6 +4,9 @@ LAYNII version 1.0.0
 Tutorials on layering, layer-smoothing, columnar analysis here: https://layerfmri.com/category/code/
 This project is licensed under BSD-3-Clause
 
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3514298.svg
+   :target: https://doi.org/10.5281/zenodo.3514298
+
 .. image:: https://layerfmri.files.wordpress.com/2018/01/sensory_motor_grid.png
     :width: 18px
     :target: https://layerfmri.files.wordpress.com/2018/01/sensory_motor_grid.png

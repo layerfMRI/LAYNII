@@ -139,7 +139,7 @@ int main(int argc, char * argv[])
    // allocating an additional nii 
    nifti_image * nim_output1 = nifti_image_read(fin, 1);
    float  *nim_output1_data = (float *) nim_output1->data;
-   nim_output1->dim[4] = 1 ;  
+   nim_output1->dim[4] = nrep ;  
    nifti_update_dims_from_array(nim_output1);   // changing according sizes nt etc. 
 
 
@@ -194,6 +194,8 @@ double_t arb_pdf_num(int N_rand, double (*pFunc)(double), double_t lower, double
 	double_t binwidth = (upper - lower)/(double_t)N_rand;
 	double_t integral = 0.0 ;
 	double_t rand_num = rand()/(double_t)RAND_MAX;
+	//rand_num = rand()/(double_t)RAND_MAX;
+	//rand_num = rand()/(double_t)RAND_MAX;
 	int i;
 	
 	for (i = 0; integral < rand_num ; i++){
