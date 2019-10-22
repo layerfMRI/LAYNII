@@ -153,7 +153,15 @@ cout << " I am using "  <<  Nlayer_real << " Layers " << endl;
    
 
 	
-if ( nim_input_i->datatype == NIFTI_TYPE_FLOAT32 ) {
+
+
+ /////////////////////////////////////////////////////////////////////////
+   /////////  fixing potential problems with different input datatypes /////
+   /////////  here, I am loading them in their native datatype /////////////
+   /////////  and translate them to the datatime I like best  //////////////
+   /////////////////////////////////////////////////////////////////////////
+
+if ( nim_input_i->datatype == NIFTI_TYPE_FLOAT32 ||  nim_input_i->datatype ==  NIFTI_TYPE_INT32 ) {
   float  *nim_input_i_data = (float *) nim_input_i->data;
   	for(int it=0; it<nrep; ++it){  
 	  for(int islice=0; islice<sizeSlice; ++islice){  
@@ -166,20 +174,7 @@ if ( nim_input_i->datatype == NIFTI_TYPE_FLOAT32 ) {
 	}
 }  
 
-if ( nim_input_i->datatype == NIFTI_TYPE_FLOAT64 ) {
-  double  *nim_input_i_data = (double *) nim_input_i->data;
-  	for(int it=0; it<nrep; ++it){  
-	  for(int islice=0; islice<sizeSlice; ++islice){  
-	      for(int iy=0; iy<sizePhase; ++iy){
-	        for(int ix=0; ix<sizeRead; ++ix){
-        		 *(nim_input_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = (short) (*(nim_input_i_data  + nxyz *it +  nxy*islice + nx*ix  + iy  )) ;	
-           } 
-	    }
-	  }
-	}
-}  
-
-if ( nim_input_i->datatype == NIFTI_TYPE_INT16 ) {
+if ( nim_input_i->datatype == NIFTI_TYPE_INT16 || nim_input_i->datatype == DT_UINT16 ) {
   short  *nim_input_i_data = (short *) nim_input_i->data;
   	for(int it=0; it<nrep; ++it){  
 	  for(int islice=0; islice<sizeSlice; ++islice){  
@@ -192,7 +187,7 @@ if ( nim_input_i->datatype == NIFTI_TYPE_INT16 ) {
 	}
 }    
 
-    
+
    
     nifti_image * equi_dist_layers  = nifti_copy_nim_info(nim_input);
 	equi_dist_layers->datatype = NIFTI_TYPE_INT16;
