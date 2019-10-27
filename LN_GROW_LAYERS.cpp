@@ -174,6 +174,20 @@ if ( nim_input_i->datatype == NIFTI_TYPE_FLOAT32 ||  nim_input_i->datatype ==  N
 	}
 }  
 
+
+if ( nim_input_i->datatype == NIFTI_TYPE_FLOAT64 ||  nim_input_i->datatype ==  NIFTI_TYPE_INT64 ) {
+  double  *nim_input_i_data = (double *) nim_input_i->data;
+  	for(int it=0; it<nrep; ++it){  
+	  for(int islice=0; islice<sizeSlice; ++islice){  
+	      for(int iy=0; iy<sizePhase; ++iy){
+	        for(int ix=0; ix<sizeRead; ++ix){
+        		 *(nim_input_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = (short) (*(nim_input_i_data  + nxyz *it +  nxy*islice + nx*ix  + iy  )) ;	
+           } 
+	    }
+	  }
+	}
+}  
+
 if ( nim_input_i->datatype == NIFTI_TYPE_INT16 || nim_input_i->datatype == DT_UINT16 ) {
   short  *nim_input_i_data = (short *) nim_input_i->data;
   	for(int it=0; it<nrep; ++it){  
