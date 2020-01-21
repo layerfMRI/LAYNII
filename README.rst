@@ -75,7 +75,7 @@ Comment on makefile and compiler
 ======
 Some users seemed to have a compiler installed that does not match the CPU architecture. In those cases it can be easyer to ignore the makefile and compile the programs one by one with g++
 
-copy-paste the following::
+copy-paste the following into your terminal instead in setp 3::
 
 	g++    -c -o nifti2_io.o nifti2_io.cpp
 	g++    -c -o nifticdf.o nifticdf.cpp
