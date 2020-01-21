@@ -10,7 +10,12 @@
 #include <iostream>
 #include <string>
 //#include <gsl/gsl_multifit.h>
-#include <gsl/gsl_statistics_double.h>
+//#include <gsl/gsl_statistics_double.h>
+
+#include "./renzo_stat.cpp"
+#include "renzo_stat.h"
+
+
 using namespace std;
 
 #define PI 3.14159265; 
@@ -453,8 +458,8 @@ if ( do_masking == 1 ) {
 	       
 		  // the standard deviation of the sinal valued in the vicinity, 
 		  // this is necessary to normalice how many voxels are contributing to the local smoothing. 
-		  grad_stdev = (float )  gsl_stats_sd (vec1, 1, NvoxInVinc); 
-
+		  //grad_stdev = (float )  gsl_stats_sd (vec1, 1, NvoxInVinc); 
+		  grad_stdev = (float ) ren_stdev (vec1, NvoxInVinc); 
 		
 			for(int iz_i=max(0,iz-vinc); iz_i<=min(iz+vinc,sizeSlice-1); ++iz_i){
 	    		for(int iy_i=max(0,iy-vinc); iy_i<=min(iy+vinc,sizePhase-1); ++iy_i){

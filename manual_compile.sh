@@ -1,81 +1,5 @@
-.. -*- mode: rst -*-
+#!/bin/bash
 
-LAYNII version 1.0.0
-Tutorials on layering, layer-smoothing, columnar analysis here: https://layerfmri.com/category/code/
-This project is licensed under BSD-3-Clause
-
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3514298.svg
-   :target: https://doi.org/10.5281/zenodo.3514298
-
-.. image:: https://layerfmri.files.wordpress.com/2018/01/sensory_motor_grid.png
-    :width: 18px
-    :target: https://layerfmri.files.wordpress.com/2018/01/sensory_motor_grid.png
-    :alt: example image with layers and columns
-
-    
-This is set of standalone layer-fMRI C++ programs that do not have any other dependencies. 
-
-
-Bob Cox and Rick Reynolds wrote few a nii I/O that I recommend. The original version is in the AFNI sources. 
-I collected all the necessary files and adapted them for my taste. All the necessary files are::
-
-    nifti1_io.cpp
-    nifti2.h
-    nifti2_io.h
-    nifti_tool.h
-    nifticdf.h
-    znzlib.h
-    nifti1.h
-    nifti1_io.h
-    nifti2_io.cpp
-    nifti_tool.cpp
-    nifticdf.cpp
-    znzlib.cpp
-    
-Using linking those allows you to use nii_datatype and load nii files in your own C++ program with the function
-
-
-    nifti_image * nim=NULL;
-    nim = nifti_image_read(filename, 1);
-
-Example
-======
-
-My_nii_read.cpp
-
-It reads in a nii file, accesses the data, manipulates the individual voxels writes out the manipulated data as nii
-
-
-Usage of My_nii_read.cpp
-1.) download the all the files with from github E.g. with the command::
-
-    git clone https://github.com/layerfMRI/laynii
-    
-2.) go into subfolder::
-
-    cd laynii
-    
-3.) compile it with::
-
-    make all
-    
-4.) execute it with::
-
-   ./LN_NOISEME -input input_example.nii -output Noised.nii -variance 0.4445 
-
-
-For more information see: https://layerfmri.com/2017/11/30/using-a-standalone-nii-i-o-in-c/ 
-
-Comment on GSL
-======
-Previous versions of LAYNII depend on GSL. I heared yout complaints and removed it. 
-
-
-Comment on makefile and compiler 
-======
-Some users seemed to have a compiler installed that does not match the CPU architecture. In those cases it can be easyer to ignore the makefile and compile the programs one by one with g++
-
-::
 g++    -c -o nifti2_io.o nifti2_io.cpp
 g++    -c -o nifticdf.o nifticdf.cpp
 g++    -c -o znzlib.o znzlib.cpp
@@ -135,5 +59,3 @@ g++    -c -o LN_MP2RAGE_DNOISE.o LN_MP2RAGE_DNOISE.cpp
 g++  -o LN_MP2RAGE_DNOISE -Wall -pedantic -DHAVE_ZLIB -I.  LN_MP2RAGE_DNOISE.o nifti2_io.o nifticdf.o znzlib.o 
 g++    -c -o LN_PHYSIO_PARS.o LN_PHYSIO_PARS.cpp
 g++  -o LN_PHYSIO_PARS -Wall -pedantic -DHAVE_ZLIB -I.  LN_PHYSIO_PARS.o nifti2_io.o nifticdf.o znzlib.o 
-
-

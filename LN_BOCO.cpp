@@ -12,7 +12,11 @@
 #include <iostream>
 #include <string>
 //#include <gsl/gsl_multifit.h>
-#include <gsl/gsl_statistics_double.h>
+//#include <gsl/gsl_statistics_double.h>
+
+#include "./renzo_stat.cpp"
+#include "renzo_stat.h"
+
 using namespace std;
 
 #define PI 3.14159265; 
@@ -285,7 +289,7 @@ if (shift == 1) {
 					vec_file1[it] = *(boco_vaso_data  + nxyz*it + nxy*islice + nx*ix  + iy  );
 	        		vec_file2[it] = *(nim_file_2_data + nxyz*it + nxy*islice + nx*ix  + iy  );
 	            }
-        		*(correl_file_data + + nxyz*(shift+3) + nxy*islice + nx*ix  + iy  ) =  gsl_stats_correlation(vec_file1,1,vec_file2,1,nrep)  ;	
+        		*(correl_file_data + + nxyz*(shift+3) + nxy*islice + nx*ix  + iy  ) = ren_correl(vec_file1 , vec_file2 ,  nrep) ;	
            } 
 	    }
 	  }

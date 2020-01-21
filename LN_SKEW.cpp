@@ -12,7 +12,13 @@
 #include <iostream>
 #include <string>
 //#include <gsl/gsl_multifit.h>
-#include <gsl/gsl_statistics_double.h>
+//#include <gsl/gsl_statistics_double.h>
+
+#include "./renzo_stat.cpp"
+#include "renzo_stat.h"
+
+
+
 using namespace std;
 
 #define PI 3.14159265; 
@@ -175,9 +181,9 @@ if ( nim_file_1i->datatype == NIFTI_TYPE_INT16 ) {
 					vec_file1[it] = (double) *(nim_file_1_data  + nxyz*it + nxy*islice + nx*ix  + iy  );
 					}
 	            
-	            *(skew_file_data + nxyz*0 + nxy*islice + nx*ix  + iy  ) =  gsl_stats_skew(vec_file1,1,nrep);
-	            *(autoc_file_data+ nxyz*0 + nxy*islice + nx*ix  + iy  ) =  gsl_stats_lag1_autocorrelation(vec_file1,1,nrep);
-	            *(kurt_file_data + nxyz*0 + nxy*islice + nx*ix  + iy  ) =  gsl_stats_kurtosis(vec_file1,1,nrep);
+	            *(skew_file_data + nxyz*0 + nxy*islice + nx*ix  + iy  ) = ren_skew(vec_file1,nrep); // gsl_stats_skew(vec_file1,1,nrep);
+	            *(autoc_file_data+ nxyz*0 + nxy*islice + nx*ix  + iy  ) = ren_autocor(vec_file1,nrep); // gsl_stats_lag1_autocorrelation(vec_file1,1,nrep);
+	            *(kurt_file_data + nxyz*0 + nxy*islice + nx*ix  + iy  ) = ren_kurt(vec_file1,nrep); // gsl_stats_kurtosis(vec_file1,1,nrep);
 	            //gsl_stats_skew                (const double data[], size_t stride, size_t n)
 	            //gsl_stats_kurtosis            (const double data[], size_t stride, size_t n)
 	            //gsl_stats_lag1_autocorrelation(const double data[], const size_t stride, const size_t n)
@@ -252,7 +258,7 @@ if ( nim_file_1i->datatype == NIFTI_TYPE_INT16 ) {
 					vec_file2[it] = (double) *(nim_file_1_data  + nxyz*it + nxy*islice + nx*ix  + iy  ) ;
 				}
 				
-				*(conc_file_data  + nxyz*0 + nxy*islice + nx*ix  + iy  ) = gsl_stats_correlation(vec_file1,1,vec_file2,1,nrep) ; 
+				*(conc_file_data  + nxyz*0 + nxy*islice + nx*ix  + iy  ) = ren_correl(vec_file1 , vec_file2 ,  nrep) ; 
 	        } 
 	    }
 	  }  
