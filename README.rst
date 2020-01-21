@@ -77,12 +77,12 @@ Some users seemed to have a compiler installed that does not match the CPU archi
 
 copy-paste the following::
 
-g++    -c -o nifti2_io.o nifti2_io.cpp
-g++    -c -o nifticdf.o nifticdf.cpp
-g++    -c -o znzlib.o znzlib.cpp
-g++    -c -o LN_FAsim.o LN_FAsim.cpp
-g++  -o LN_FAsim -Wall -pedantic -DHAVE_ZLIB -I.  LN_FAsim.o nifti2_io.o nifticdf.o znzlib.o 
-g++    -c -o LN_NOISEME.o LN_NOISEME.cpp
+	g++    -c -o nifti2_io.o nifti2_io.cpp
+	g++    -c -o nifticdf.o nifticdf.cpp
+	g++    -c -o znzlib.o znzlib.cpp
+	g++    -c -o LN_FAsim.o LN_FAsim.cpp
+	g++  -o LN_FAsim -Wall -pedantic -DHAVE_ZLIB -I.  LN_FAsim.o nifti2_io.o nifticdf.o znzlib.o 	
+	g++    -c -o LN_NOISEME.o LN_NOISEME.cpp
 g++  -o LN_NOISEME -Wall -pedantic -DHAVE_ZLIB -I.  LN_NOISEME.o nifti2_io.o nifticdf.o znzlib.o 
 g++    -c -o LN_GROW_LAYERS.o LN_GROW_LAYERS.cpp
 g++  -o LN_GROW_LAYERS -Wall -pedantic -DHAVE_ZLIB -I.  LN_GROW_LAYERS.o nifti2_io.o nifticdf.o znzlib.o 
