@@ -41,12 +41,12 @@ Using linking those allows you to use nii_datatype and load nii files in your ow
 Example
 ======
 
-My_nii_read.cpp
+LN_NOISEME.cpp
 
-It reads in a nii file, accesses the data, manipulates the individual voxels writes out the manipulated data as nii
+It reads in a nii file, accesses the data, manipulates the individual voxels, and writes out the manipulated data as nii
 
 
-Usage of My_nii_read.cpp
+Usage of LN_NOISEME.cpp
 1.) download the all the files with from github E.g. with the command::
 
     git clone https://github.com/layerfMRI/laynii
