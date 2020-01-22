@@ -62,7 +62,7 @@ All you need is a terminal and a C++ compiler.
 
 1.) On Linux g++ is natively inluded. 
 
-2.) On Mac, it will be enabled automatically as part of the "comand line developer tools" as soon as you type "g++" into the terminal. Alternatively, you can also use Xcode
+2.) On Mac, it will be enabled automatically as part of the "comandline developer tools" as soon as you type "g++" into the terminal. Alternatively, you can also use Xcode.
 
 3.) On Windows, a C++ compiler needs to be installed manually. E.g. with https://cygwin.com/ (I followed the instructions here: https://www.youtube.com/watch?v=DAlS4hF_PbY)
 
