@@ -66,6 +66,17 @@ Usage of LN_NOISEME.cpp
 
 For more information see: https://layerfmri.com/2017/11/30/using-a-standalone-nii-i-o-in-c/ 
 
+Comment on cross-platform compatibility
+======
+Since January 2020, all remaining dependencies have been removed and LAYNII can be compiled on LINUX, MAC, and WINDOWS.
+All you need is a terminal and a C++ compiler.
+
+1.) On Linux g++ is natively inluded. 
+
+2.) On Mac, it will be enabled automatically as part of the "comand line developer tools" as soon as you type "g++" into the terminal. Alternatively, you can also use Xcode
+
+3.) On Windows, a C++ compiler needs to be installed manually. E.g. with https://cygwin.com/ (I followed the instructions here: https://www.youtube.com/watch?v=DAlS4hF_PbY)
+
 Comment on GSL
 ======
 Previous versions of LAYNII depend on GSL. I heared yout complaints and removed it. 
@@ -73,7 +84,7 @@ Previous versions of LAYNII depend on GSL. I heared yout complaints and removed 
 
 Comment on makefile and compiler 
 ======
-Some users seemed to have a compiler installed that does not match the CPU architecture. In those cases it can be easyer to ignore the makefile and compile the programs one by one with g++
+Some users seemed to have a compiler installed that does not match the actual CPU architecture of the computer. In those cases it can be easyer to compile the programs one by one with g++, just
 
 copy-paste the following into your terminal instead in setp 3::
 
