@@ -19,18 +19,12 @@ This is set of standalone layer-fMRI C++ programs that do not have any other dep
 Bob Cox and Rick Reynolds wrote few a nii I/O that I recommend. The original version is in the AFNI sources. 
 I collected all the necessary files and adapted them for my taste. All the necessary files are::
 
-    nifti1_io.cpp
-    nifti2.h
-    nifti2_io.h
-    nifti_tool.h
-    nifticdf.h
-    znzlib.h
-    nifti1.h
-    nifti1_io.h
     nifti2_io.cpp
-    nifti_tool.cpp
+    nifti2_io.h
     nifticdf.cpp
+    nifticdf.h
     znzlib.cpp
+    znzlib.h
     
 Using linking those allows you to use nii_datatype and load nii files in your own C++ program with the function
 
