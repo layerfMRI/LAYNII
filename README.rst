@@ -1,6 +1,9 @@
 .. -*- mode: rst -*-
 
 LAYNII version 1.0.0
+The main purpose of this software suit is to provide layering tools that are not (yet) included in the major other fMRI analysis softwre packages. 
+Most used programns are: **LN_3DGROW_LAYERS** to generate layermasks based on CSF and WM border lines, **LN_LAYER_SMOOTH** for layer-specific spatial smoothing, and **LN_BOCO** for BOLD correction in VASO. 
+
 Tutorials on layering, layer-smoothing, columnar analysis here: https://layerfmri.com/category/code/
 This project is licensed under BSD-3-Clause
 
@@ -13,19 +16,10 @@ This project is licensed under BSD-3-Clause
     :alt: example image with layers and columns
 
     
-This is set of standalone layer-fMRI C++ programs that do not have any other dependencies. 
+This is set of standalone layer-fMRI C++ programs that do not have any other dependencies, beyond a C++ compiler. 
 
 
-Bob Cox and Rick Reynolds wrote few a nii I/O that I recommend. The original version is in the AFNI sources. 
-I collected all the necessary files and adapted them for my taste. All the necessary files are::
-
-    nifti2_io.cpp
-    nifti2_io.h
-    nifticdf.cpp
-    nifticdf.h
-    znzlib.cpp
-    znzlib.h
-    
+In order to read and write nii data, I used code that was originally developed from Bob Cox and Rick Reynolds and adapted it for ths use here.
 
 Example
 ======
