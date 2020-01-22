@@ -26,11 +26,6 @@ I collected all the necessary files and adapted them for my taste. All the neces
     znzlib.cpp
     znzlib.h
     
-Using linking those allows you to use nii_datatype and load nii files in your own C++ program with the function
-
-
-    nifti_image * nim=NULL;
-    nim = nifti_image_read(filename, 1);
 
 Example
 ======
