@@ -12,7 +12,7 @@ Most used programs are:
 * ``LN_LAYER_SMOOTH`` for layer-specific spatial smoothing.
 * ``LN_BOCO`` for BOLD correction in VASO. 
 
-Tutorials on layering, layer-smoothing, columnar analysis here: https://layerfmri.com/category/code/
+Tutorials on layering, layer-smoothing, columnar analysis are here: https://layerfmri.com/category/code/
 
 .. image:: https://layerfmri.files.wordpress.com/2018/01/sensory_motor_grid.png
     :scale: 50%
@@ -23,18 +23,15 @@ Tutorials on layering, layer-smoothing, columnar analysis here: https://layerfmr
     
 This is set of standalone layer-fMRI C++ programs that do not have any other dependencies, beyond a C++ compiler. 
 
-In order to read and write Nifti (.nii) data, I used code that was originally developed from Bob Cox and Rick Reynolds and adapted it for ths use here.
+In order to read and write Nifti (.nii) data, I used code that was originally developed from Bob Cox and Rick Reynolds and adapted it for using here.
 
 
 Example
 ======
 
-``LN_NOISEME.cpp``
+``LN_NOISEME.cpp`` reads in a nii file, accesses the data, manipulates the individual voxels, and writes out the manipulated data as nii.
 
-It reads in a nii file, accesses the data, manipulates the individual voxels, and writes out the manipulated data as nii
-
-
-Usage of LN_NOISEME.cpp
+Usage of ``LN_NOISEME.cpp``:
 
 1. Download the all the files with from github E.g. with the command::
 
