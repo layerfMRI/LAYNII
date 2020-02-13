@@ -34,12 +34,13 @@ int show_help(void) {
     "\n"
     "    This program supports INT16, INT32 and FLOAT32 \n"
     "\n"
-    "        -help : show this help\n"
-    "        -INV1 : (Mandatory) First inversion time nifti (.nii)\n"
-    "        -INV2 : (Mandatory) Second inversion time nifti (.nii)\n"
+    "        -help : Show this help\n"
+    "        -INV1 : First inversion time nifti (.nii)\n"
+    "        -INV2 : Second inversion time nifti (.nii)\n"
     "        -UNI  : MP2RAGE UNI image nifti (.nii).\n"
-    "                Expecting SIEMENS values betweeb 0-4094. \n"
+    "                Expecting SIEMENS values betweeb 0-4095. \n"
     "        -beta value : Regularization term. Default is 0.2.\n"
+    "        -output: (Optional) Custom output name."
     "\n");
     return 0;
 }
@@ -47,8 +48,9 @@ int show_help(void) {
 int main(int argc, char * argv[]) {
     float SIEMENS_f = 4095.0;
 
-    char *fmaski = NULL, *fout = NULL, *finfi_1 = NULL, *finfi_2 = NULL, *finfi_3 = NULL;
-    int ac , do_gaus = 0;
+    char *fmaski = NULL, *fout = NULL, *finfi_1 = NULL, *finfi_2 = NULL;
+    char *finfi_3 = NULL;
+    int ac, custom_output = 0;
     float beta = 0.2;
     if (argc < 3) return show_help();  // Typing '-help' is sooo much work
 
@@ -57,30 +59,37 @@ int main(int argc, char * argv[]) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
         } else if (!strcmp(argv[ac], "-beta")) {
-            if ( ++ac >= argc ) {
+            if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -betan");
                 return 1;
             }
             beta = atof(argv[ac]);  // No string copy, just pointer assignment
             // cout << " I will do gaussian temporal smoothing " << endl;
         } else if (!strcmp(argv[ac], "-INV1")) {
-            if ( ++ac >= argc ) {
+            if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -input\n");
                 return 1;
             }
             finfi_1 = argv[ac];  // no string copy, just pointer assignment
         } else if (!strcmp(argv[ac], "-INV2")) {
-            if ( ++ac >= argc ) {
+            if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -input\n");
                 return 1;
             }
             finfi_2 = argv[ac];  // no string copy, just pointer assignment
         } else if (!strcmp(argv[ac], "-UNI")) {
-            if ( ++ac >= argc ) {
+            if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -input\n");
                 return 1;
             }
             finfi_3 = argv[ac];  // no string copy, just pointer assignment
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -input\n");
+                return 1;
+            }
+            custom_output = 1;
+            fout = argv[ac];  // no string copy, just pointer assignment
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -171,8 +180,8 @@ int main(int argc, char * argv[]) {
 
     // Write out some stuff that might be good to know, if you want to debug
     cout << sizeSlice << " slices    " <<  sizePhase << " PhaseSteps     " <<  sizeRead << " Read steps    " <<  nrep << " timesteps "  << endl;
-    cout << " Voxel size    " << dX << " x " << dY << " x "  << dZ << endl;
-    cout << " datatye 1 = " << nim_inputfi_1->datatype << endl;
+    cout << "  Voxel size = " << dX << " x " << dY << " x " << dZ << endl;
+    cout << "  Datatype 1 = " << nim_inputfi_1->datatype << endl;
 
     //////////////////
     // LOADING INV2 //
@@ -255,8 +264,8 @@ int main(int argc, char * argv[]) {
     /////////////////////////////////////
     // MAKE allocating necessary files //
     /////////////////////////////////////
-    nifti_image * phaseerror  = nifti_copy_nim_info(nim_inv1);
-    nifti_image * dddenoised  = nifti_copy_nim_info(nim_inv1);
+    nifti_image * phaseerror = nifti_copy_nim_info(nim_inv1);
+    nifti_image * dddenoised = nifti_copy_nim_info(nim_inv1);
     phaseerror->datatype = NIFTI_TYPE_FLOAT32;
     dddenoised->datatype = NIFTI_TYPE_FLOAT32;
     phaseerror->nbyper = sizeof(float);
@@ -342,16 +351,24 @@ int main(int argc, char * argv[]) {
         cout << " ########################################## " << endl;
     }
 
-    string prefix = "denoised_";
-    string filename = (string) (finfi_3);
-    string outfilename = prefix+filename;
-
-    cout << "writing as = " << outfilename.c_str() << endl;  // finfi is: char*
-
-    const char *fout_1 = outfilename.c_str();
-    if (nifti_set_filenames(dddenoised, fout_1 , 1, 1)) {
-        return 1;
+    if (custom_output == 1) {
+        string outfilename = (string) (fout);
+        cout << "  Writing output as = " << outfilename.c_str() << endl;
+        const char *fout_1 = outfilename.c_str();
+        if (nifti_set_filenames(dddenoised, fout_1 , 1, 1)) {
+            return 1;
+        }
+    } else {
+        string prefix = "denoised_";
+        string filename = (string) (finfi_3);
+        string outfilename = prefix+filename;
+        cout << "  Writing output as = " << outfilename.c_str() << endl;
+        const char *fout_1 = outfilename.c_str();
+        if (nifti_set_filenames(dddenoised, fout_1 , 1, 1)) {
+            return 1;
+        }
     }
+
     nifti_image_write(dddenoised);
 
     const char *fout_2 = "Border_enhance.nii";
