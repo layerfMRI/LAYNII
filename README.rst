@@ -51,11 +51,11 @@ Usage of ``LN_NOISEME.cpp``:
 
 5. If you want to use LAYNII from anytwhere in you system, you still need to set the paths::
 
-On Linux add the following to your ~/.bashrc
+On Linux add the following to your ~/.bashrc::
 
    export PATH="PathToTheLaynioFolder:$PATH"
 
-On Mac add the following to your ~/.bash_profile or ~/.profile
+On Mac add the following to your ~/.bash_profile or ~/.profile::
 
    export PATH="PathToTheLaynioFolder:$PATH"
 
