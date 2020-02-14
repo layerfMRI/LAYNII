@@ -1,75 +1,78 @@
 .. -*- mode: rst -*-
 
-LAYNII version 1.0.0
-The main purpose of this software suit is to provide layering tools that are not (yet) included in the major other fMRI analysis softwre packages. 
-Most used programns are: **LN_3DGROW_LAYERS** to generate layermasks based on CSF and WM border lines, **LN_LAYER_SMOOTH** for layer-specific spatial smoothing, and **LN_BOCO** for BOLD correction in VASO. 
-
-Tutorials on layering, layer-smoothing, columnar analysis here: https://layerfmri.com/category/code/
-This project is licensed under BSD-3-Clause
-
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3514298.svg
    :target: https://doi.org/10.5281/zenodo.3514298
 
+LAYNII version 1.0.0
+======
+The main purpose of this software suit is to provide layering tools that are not (yet) included in the major other fMRI analysis software packages. 
+Most used programs are:
+
+* ``LN_3DGROW_LAYERS`` to generate layermasks based on CSF and WM border lines.
+* ``LN_LAYER_SMOOTH`` for layer-specific spatial smoothing.
+* ``LN_BOCO`` for BOLD correction in VASO. 
+
+Tutorials on layering, layer-smoothing, columnar analysis are here: https://layerfmri.com/category/code/
+
 .. image:: https://layerfmri.files.wordpress.com/2018/01/sensory_motor_grid.png
-    :width: 18px
+    :scale: 50%
+    :align: center 
     :target: https://layerfmri.files.wordpress.com/2018/01/sensory_motor_grid.png
     :alt: example image with layers and columns
 
     
 This is set of standalone layer-fMRI C++ programs that do not have any other dependencies, beyond a C++ compiler. 
 
+In order to read and write Nifti (.nii) data, I used code that was originally developed from Bob Cox and Rick Reynolds and adapted it for using here.
 
-In order to read and write nii data, I used code that was originally developed from Bob Cox and Rick Reynolds and adapted it for ths use here.
 
 Example
 ======
 
-LN_NOISEME.cpp
+``LN_NOISEME.cpp`` reads in a nii file, accesses the data, manipulates the individual voxels, and writes out the manipulated data as nii.
 
-It reads in a nii file, accesses the data, manipulates the individual voxels, and writes out the manipulated data as nii
+Usage of ``LN_NOISEME.cpp``:
 
-
-Usage of LN_NOISEME.cpp
-1.) download the all the files with from github E.g. with the command::
+1. Download the all the files with from github E.g. with the command::
 
     git clone https://github.com/layerfMRI/laynii
     
-2.) go into subfolder::
+2. Go into subfolder::
 
     cd laynii
     
-3.) compile it with::
+3. Compile it with::
 
     make all
     
-4.) execute it with::
+4. Execute it with::
 
    ./LN_NOISEME -input input_example.nii -output Noised.nii -variance 0.4445 
 
 
 For more information see: https://layerfmri.com/2017/11/30/using-a-standalone-nii-i-o-in-c/ 
 
+
 Comment on cross-platform compatibility
 ======
 Since January 2020, all remaining dependencies have been removed and LAYNII can be compiled on LINUX, MAC, and WINDOWS.
 All you need is a terminal and a C++ compiler.
 
-1.) On Linux g++ is natively inluded. 
+1. On Linux g++ is natively inluded. 
 
-2.) On Mac, it will be enabled automatically as part of the "comandline developer tools" as soon as you type "g++" into the terminal. Alternatively, you can also use Xcode.
+2. On Mac, it will be enabled automatically as part of the "comandline developer tools" as soon as you type "g++" into the terminal. Alternatively, you can also use Xcode.
 
-3.) On Windows, a C++ compiler needs to be installed manually. E.g. with https://cygwin.com/ (I followed the instructions here: https://www.youtube.com/watch?v=DAlS4hF_PbY)
+3. On Windows, a C++ compiler needs to be installed manually. E.g. with https://cygwin.com/ (I followed the instructions here: https://www.youtube.com/watch?v=DAlS4hF_PbY)
+
 
 Comment on GSL
 ======
-Previous versions of LAYNII depend on GSL. I heared yout complaints and removed it. 
+Previous versions of LAYNII depend on GSL. I heard your complaints and removed it. 
 
 
 Comment on makefile and compiler 
 ======
-Some users seemed to have a compiler installed that does not match the actual CPU architecture of the computer. In those cases it can be easyer to compile the programs one by one with g++, just
-
-copy-paste the following into your terminal instead in setp 3::
+Some users seemed to have a compiler installed that does not match the actual CPU architecture of the computer. In those cases it can be easier to compile the programs one by one with g++. Copy-paste the following into your terminal instead in Step 3::
 
 	g++    -c -o nifti2_io.o nifti2_io.cpp
 	g++    -c -o nifticdf.o nifticdf.cpp
@@ -131,4 +134,6 @@ copy-paste the following into your terminal instead in setp 3::
 	g++    -c -o LN_PHYSIO_PARS.o LN_PHYSIO_PARS.cpp
 	g++  -o LN_PHYSIO_PARS -Wall -pedantic -DHAVE_ZLIB -I.  LN_PHYSIO_PARS.o nifti2_io.o nifticdf.o znzlib.o 
 
-
+License
+======
+This project is licensed under BSD-3-Clause.
