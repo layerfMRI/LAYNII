@@ -1,8 +1,6 @@
 
-// Ausfahren mit . ./layers border_example_resized.nii brain_maskexample_resized.nii 0
-
-// TODO(Renzo): check the vincinity loops. the "+1" are missing and
-// the z_dimanesions is limited by REAN dimension????
+// TODO(@Renzo): Check the vincinity loops. the "+1" are missing and
+// the z_dimensions is limited by REAN dimension????
 
 #include <stdio.h>
 #include <math.h>
@@ -29,19 +27,18 @@ int show_help(void) {
     "    set output filenames and write a NIfTI-2 dataset. All via the\n"
     "    standard NIfTI C library.\n"
     "\n"
+    "Usage:\n"
+    "    LN_3DGROW_LAYERS -rim rim.nii \n"
     "\n"
-    "    Basic usage: LN_3DGROW_LAYERS -rim rim.nii \n"
+    "Options:\n"
+    "    -help               : Show this help. \n"
+    "    -disp_float_example : Show some voxel's data.\n"
+    "    -rim  border        : Specify input dataset.\n"
     "\n"
-    "\n"
-    "    NOTE1: rim.nii file always needs to be in datatype INT16.  \n"
-    "    NOTE2: This is 3D. Hence rim.nii file should be dmsmooth in all \n"
-    "           three dimension.\n"
-    "\n"
-    "    Options:\n"
-    "\n"
-    "        -help               : Show this help\n"
-    "        -disp_float_example : Show some voxel's data\n"
-    "        -rim  border        : Specify input dataset\n"
+    "Notes:\n"
+    "    - rim.nii file always needs to be in datatype INT16. \n"
+    "    - This is 3D. Hence rim.nii file should be dmsmooth in all \n"
+    "      three dimensions.\n"
     "\n");
     return 0;
 }
