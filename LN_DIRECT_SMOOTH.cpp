@@ -18,10 +18,11 @@ using namespace std;
 
 int show_help(void) {
     printf(
-    "LN_DIRECT_SMOOTH : Smoothing in specific directions only. This program \n"
-    "                   smooths data within layer or columns. In order to \n"
-    "                   avoid smoothing across masks a crawler smooths only \n"
-    "                   across connected voxels.\n"
+    "LN_DIRECT_SMOOTH : Smoothing in specific directions only.\n"
+    "\n"
+    "    This program smooths data within layer or columns. In order to\n"
+    "    avoid smoothing across masks a crawler smooths only across connected "
+    "    voxels.\n"
     "\n"
     "Usage:\n"
     "    LN_DIRECT_SMOOTH -input activity_map.nii -FWHM 1 -direction 1 \n"
@@ -81,7 +82,7 @@ int main(int argc, char * argv[]) {
             }
             do_sri = 1;
             strength = atof(argv[ac]);  // Pointer assignment, no string copy.
-            fprintf(stderr, "Yes Sri I am doing you ");
+            fprintf(stderr, "Yes Sri I am doing you.");
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -164,7 +165,7 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    cout << sizeSlice << " Slices    " << sizePhase << " PhaseSteps     " << sizeRead << " Read steps    " << nrep << " timesteps " << endl;
+    cout << sizeSlice << " Slices | " << sizePhase << " PhaseSteps | " << sizeRead << " Read steps | " << nrep << " Timesteps " << endl;
     cout << "  Voxel size = " << dX << " x " << dY << " x " << dZ << endl;
     cout << "  Datatype 1 = " << nim_inputf->datatype << endl;
 
@@ -404,11 +405,11 @@ float laur (float distance, float sigma) {
     // sigma = sigma / sqrt(2 * log (2));
     float result = 0;
     if ((int)distance%2 == 0) {
-        //sigma = 2 * sigma;
+        // sigma = 2 * sigma;
         result = 1 * 1. / (3.141592 * sigma) * 1 /(1 + distance * distance / (sigma * sigma));
     }
     if ((int)distance%2 == 1) {
-        //sigma = 2 * sigma;
+        // sigma = 2 * sigma;
         result = 1.6 * 1. / (3.141592 * sigma) * 1 / (1 + distance * distance / (sigma * sigma));
     }
 return result;
