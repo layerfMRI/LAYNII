@@ -54,6 +54,8 @@ int show_help( void )
       "	                             Insub this is 4 U \n"
       "	                             This deals with missing layers next to the inner \n"
       "	                             most and outer most layers \n"
+      "	      -debug              : if you want to see the growing of the resoective \n"
+      "	                             tissue types, it is writen out\n"
       "\n");
    return 0;
 }
@@ -63,7 +65,7 @@ int main(int argc, char * argv[])
 
    nifti_image * nim_input_i=NULL;
    char        * fin=NULL, * fout=NULL;
-   int          ac, disp_float_eg=0, Nlayer_real = 20 , vinc_int = 50, threeD = 0 , thinn_option = 0 , centroid_option = 0  ;
+   int          ac, disp_float_eg=0, Nlayer_real = 20 , vinc_int = 50, threeD = 0 , thinn_option = 0 , centroid_option = 0 , debug = 0  ;
    if( argc < 2 ) return show_help();   // typing '-help' is sooo much work 
 
    // process user options: 4 are valid presently 
@@ -98,6 +100,10 @@ int main(int argc, char * argv[])
       else if( ! strcmp(argv[ac], "-threeD") ) {
          fprintf(stderr, " Layer calculation will be done in 3D\n ");
          threeD = 1;  // no string copy, just pointer assignment 
+      }
+      else if( ! strcmp(argv[ac], "-debug") ) {
+         fprintf(stderr, " writing out growing fields\n ");
+         debug = 1;  // no string copy, just pointer assignment 
       }
       else if( ! strcmp(argv[ac], "-thin") ) {
          fprintf(stderr, " I correct for extra thin layers \n ");
@@ -635,6 +641,17 @@ for(int islice=0; islice<sizeSlice; ++islice){
       }
     }
 
+ if (debug > 0 ) {
+  const char  *fout_5="debug_WM.nii" ;
+  if( nifti_set_filenames(growfromWM1, fout_5 , 1, 1) ) return 1;
+  nifti_image_write( growfromWM1 );
+  
+  const char  *fout_6="debug_GM.nii" ;
+  if( nifti_set_filenames(growfromGM1, fout_6 , 1, 1) ) return 1;
+  nifti_image_write( growfromGM1 );
+  
+}
+
 } // 2Dim layer calculation is closed. 
 
 
@@ -1161,7 +1178,15 @@ for(int iz=0; iz<sizeSlice; ++iz){
 
  //cout << " runing also until here  4.... " << endl; 
 
-
+ if (debug > 0 ) {
+  const char  *fout_5="debug_WM.nii" ;
+  if( nifti_set_filenames(growfromWM1, fout_5 , 1, 1) ) return 1;
+  nifti_image_write( growfromWM1 );
+  
+  const char  *fout_6="debug_GM.nii" ;
+  if( nifti_set_filenames(growfromGM1, fout_6 , 1, 1) ) return 1;
+  nifti_image_write( growfromGM1 );
+}
 
 
 } // 3Ddim layer calculation is closed. 
@@ -1285,13 +1310,7 @@ for(int islice=0; islice<sizeSlice; ++islice){
   if( nifti_set_filenames(equi_dist_layers, fout_4 , 1, 1) ) return 1;
   nifti_image_write( equi_dist_layers );
 
- // const char  *fout_5="debug_ing.nii" ;
- // if( nifti_set_filenames(growfromWM0, fout_5 , 1, 1) ) return 1;
- // nifti_image_write( growfromWM0 );
-  
- // const char  *fout_6="kootrGM.nii" ;
- // if( nifti_set_filenames(GMkoord2, fout_6 , 1, 1) ) return 1;
- // nifti_image_write( GMkoord2 );
+
 
  // koord.autowrite("koordinaten.nii", wopts, &prot);
   return 0;
