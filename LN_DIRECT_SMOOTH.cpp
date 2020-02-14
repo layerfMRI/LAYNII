@@ -32,7 +32,7 @@ int show_help(void) {
     "    -help          : Show this help.\n"
     "    -input         : Nifti (.nii) file that will be smoothed. It \n"
     "                     should have same dimensions as layer file.\n"
-    "    -FWHM             : Amount of smoothing in units of voxels.\n"
+    "    -FWHM          : Amount of smoothing in units of voxels.\n"
     "    -laurenzian    : Use Laurenzian smoothing. Default is Gaussian \n"
     "                   : only for division images.\n"
     "    -direction     : Axis of smoothing. 1 for x, 2 for y or 3 for z. \n"
