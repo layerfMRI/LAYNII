@@ -67,41 +67,25 @@ int main(int argc, char * argv[]) {
             // cout << " I will do gaussian temporal smoothing " << endl;
         } else if (!strcmp(argv[ac], "-INV1")) {
             if (++ac >= argc) {
-<<<<<<< HEAD
-                fprintf(stderr, "** missing argument for -input\n");
-=======
                 fprintf(stderr, "** missing argument for -INV1\n");
->>>>>>> master
                 return 1;
             }
             finfi_1 = argv[ac];  // no string copy, just pointer assignment
         } else if (!strcmp(argv[ac], "-INV2")) {
             if (++ac >= argc) {
-<<<<<<< HEAD
-                fprintf(stderr, "** missing argument for -input\n");
-=======
                 fprintf(stderr, "** missing argument for -INV2\n");
->>>>>>> master
                 return 1;
             }
             finfi_2 = argv[ac];  // no string copy, just pointer assignment
         } else if (!strcmp(argv[ac], "-UNI")) {
             if (++ac >= argc) {
-<<<<<<< HEAD
-                fprintf(stderr, "** missing argument for -input\n");
-=======
                 fprintf(stderr, "** missing argument for -UNI\n");
->>>>>>> master
                 return 1;
             }
             finfi_3 = argv[ac];  // no string copy, just pointer assignment
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
-<<<<<<< HEAD
-                fprintf(stderr, "** missing argument for -input\n");
-=======
                 fprintf(stderr, "** missing argument for -output\n");
->>>>>>> master
                 return 1;
             }
             custom_output = 1;
