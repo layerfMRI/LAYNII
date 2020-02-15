@@ -40,25 +40,25 @@ make all
 ```
 5. If you want to use LAYNII from anytwhere in you system, you still need to set the paths::
 
-    - On Linux add the following to your ~/.bashrc::
+- On Linux add the following to your ~/.bashrc::
 ```
 export PATH="PathToTheLaynioFolder:$PATH"
 ```
-    - On Mac add the following to your ~/.bash_profile or ~/.profile::
+- On Mac add the following to your ~/.bash_profile or ~/.profile::
 ```
-   export PATH="PathToTheLaynioFolder:$PATH"
+export PATH="PathToTheLaynioFolder:$PATH"
 ```
-    - On Windows, you can set paths as follows:
-        - On desktop, right-click the very bottom-left corner of the screen to get the Power User Task Menu.
-        - From the Power User Task Menu, click System.
-        - In the Settings window, scroll down to the related settings section.
-        - Click the System info link.
-        - In the System window, click the Advanced system settings link in the left navigation pane.
-        - In the System Properties window, click on the Advanced tab
-        - Then click the Environment Variables button near the bottom of that tab.
-        - In the Environment Variables window, highlight the Path variable in the System variables section and click the Edit button.
-        - Add or modify the path lines with the paths you want the computer to access. Each different directory is separated with a semicolon, as shown below.
-        - There you can add the path to your LAYNII folder
+- On Windows, you can set paths as follows:
+    - On desktop, right-click the very bottom-left corner of the screen to get the Power User Task Menu.
+    - From the Power User Task Menu, click System.
+    - In the Settings window, scroll down to the related settings section.
+    - Click the System info link.
+    - In the System window, click the Advanced system settings link in the left navigation pane.
+    - In the System Properties window, click on the Advanced tab
+    - Then click the Environment Variables button near the bottom of that tab.
+    - In the Environment Variables window, highlight the Path variable in the System variables section and click the Edit button.
+    - Add or modify the path lines with the paths you want the computer to access. Each different directory is separated with a semicolon, as shown below.
+    - There you can add the path to your LAYNII folder
 
 For more information see [this blog post](https://layerfmri.com/2017/11/30/using-a-standalone-nii-i-o-in-c/).
 
