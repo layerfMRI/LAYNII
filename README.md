@@ -39,25 +39,28 @@ For example `LN_NOISEME.cpp` reads in a nii file, accesses the data, manipulates
 ### Using LAYNII from a anywhere in your system
 If you want to use LAYNII from anytwhere in your system, you still need to set the paths::
 
-- On Linux add the following to your ~/.bashrc::
+### On Linux
+Add the following to your `.bashrc`:
 ```
 export PATH="/path/to/LAYNII:$PATH"
 ```
-- On Mac add the following to your ~/.bash_profile or ~/.profile::
+### On Mac
+Add the following to your `.bash_profile` or `.profile`:
 ```
 export PATH="/path/to/LAYNII:$PATH"
 ```
-- On Windows, you can set paths as follows:
-    1. On desktop, right-click the very bottom-left corner of the screen to get the Power User Task Menu.
-    2. From the Power User Task Menu, click System.
-    3. In the Settings window, scroll down to the related settings section.
-    4. Click the System info link.
-    5. In the System window, click the Advanced system settings link in the left navigation pane.
-    6. In the System Properties window, click on the Advanced tab
-    7. Then click the Environment Variables button near the bottom of that tab.
-    8. In the Environment Variables window, highlight the Path variable in the System variables section and click the Edit button.
-    9. Add or modify the path lines with the paths you want the computer to access. Each different directory is separated with a semicolon, as shown below.
-    10. There you can add the path to your LAYNII folder
+### On Windows
+You can set paths as follows:
+1. On desktop, right-click the very bottom-left corner of the screen to get the Power User Task Menu.
+2. From the Power User Task Menu, click System.
+3. In the Settings window, scroll down to the related settings section.
+4. Click the System info link.
+5. In the System window, click the Advanced system settings link in the left navigation pane.
+6. In the System Properties window, click on the Advanced tab
+7. Then click the Environment Variables button near the bottom of that tab.
+8. In the Environment Variables window, highlight the Path variable in the System variables section and click the Edit button.
+9. Add or modify the path lines with the paths you want the computer to access. Each different directory is separated with a semicolon, as shown below.
+10. There you can add the path to your LAYNII folder
 
 For more information see [this blog post](https://layerfmri.com/2017/11/30/using-a-standalone-nii-i-o-in-c/).
 
