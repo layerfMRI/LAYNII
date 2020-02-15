@@ -1,7 +1,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3514298.svg)](https://doi.org/10.5281/zenodo.3514298)
 
 # LAYNII
-<img src="https://layerfmri.files.wordpress.com/2018/01/sensory_motor_grid.png" width=220 align="right" />
+<img src="https://layerfmri.files.wordpress.com/2018/01/sensory_motor_grid.png" width=350 align="right" />
 
 This is a package of standalone layer-fMRI C++ programs that depends only on a C++ compiler. The main purpose of this package is to provide layer-analysis software that are not (yet) included in the other major MRI analysis software.
 
