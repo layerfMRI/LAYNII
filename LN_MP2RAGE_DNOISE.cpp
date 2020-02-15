@@ -19,7 +19,7 @@ using namespace std;
 
 int show_help(void) {
     printf(
-    "LN_MP2RAGE_DNOISE : Denoising MP2RAGE data\n"
+    "LN_MP2RAGE_DNOISE : Denoising MP2RAGE data.\n"
     "\n"
     "    This program removes some of the background noise in MP2RAGE, \n"
     "    UNI images to make themn look like MPRAGE images. This is done \n"
@@ -28,19 +28,19 @@ int show_help(void) {
     "    Brain Imaging and Morphometry at 7T Using MP2RAGE. PLoS ONE 9(6): \n"
     "    e99676. <doi:10.1371/journal.pone.0099676> \n"
     "\n"
+    "Usage:\n"
+    "    LN_MP2RAGE_DNOISE -INV1 INV1.nii -INV2 INV2.nii -UNI UNI.nii -beta 0.2\n"
     "\n"
-    "    Basic usage: LN_MP2RAGE_DNOISE -INV1 INV1.nii -INV2 INV2.nii -UNI UNI.nii -beta 0.2\n"
+    "Options\n"
+    "    -help       : Show this help.\n"
+    "    -INV1       : Nifti (.nii) file of the first inversion time.\n"
+    "    -INV2       : Nifti (.nii) file of the second inversion time.\n"
+    "    -UNI        : Nifti (.nii) of MP2RAGE UNI. Expecting SIEMENS \n"
+    "                  values between 0-4095. \n"
+    "    -beta value : Regularization term. Default is 0.2.\n"
+    "    -output     : (Optional) Custom output name. \n"
     "\n"
-    "\n"
-    "    This program supports INT16, INT32 and FLOAT32 \n"
-    "\n"
-    "        -help : Show this help\n"
-    "        -INV1 : First inversion time nifti (.nii)\n"
-    "        -INV2 : Second inversion time nifti (.nii)\n"
-    "        -UNI  : MP2RAGE UNI image nifti (.nii).\n"
-    "                Expecting SIEMENS values betweeb 0-4095. \n"
-    "        -beta value : Regularization term. Default is 0.2.\n"
-    "        -output: (Optional) Custom output name."
+    "Note: This program supports INT16, INT32 and FLOAT32. \n"
     "\n");
     return 0;
 }
