@@ -1,17 +1,11 @@
+
 // PhysioParse.cpp : Program to parse Siemens Physiolog files files.
-// The data is written into a tab seperated text file with a the name provided on the command line
-// 
-// This is larely taken from the idea discussion boars. Thus, I belive the fist version is from Peter Kochunov
-// 
-//  
+// The data is written into a tab seperated text file with a the name provided
+// on the command line
+//
+// Note: This is larely taken from the idea discussion boards. Thus, I belive
+// the fist version is from Peter Kochunov.
 
-
-
-
-
-
-
-//#include "stdafx.h" // Enable for Microsoft compilers, disable for linux and mac
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
@@ -19,229 +13,198 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+//#include "stdafx.h" // Enable for Microsoft compilers, disable for linux and mac
 
 using namespace std;
 
-enum PhysioMethod
-{
-	METHOD_NONE = 0x01,
-	METHOD_TRIGGERING = 0x02,
-	METHOD_GATING = 0x04,
-	METHOD_RETROGATING = 0x08,
-	METHOD_SOPE = 0x10,
-	METHOD_ALL = 0x1E
+enum PhysioMethod {
+    METHOD_NONE = 0x01,
+    METHOD_TRIGGERING = 0x02,
+    METHOD_GATING = 0x04,
+    METHOD_RETROGATING = 0x08,
+    METHOD_SOPE = 0x10,
+    METHOD_ALL = 0x1E
 };
 
-enum ArrhythmiaDetection
-{
-	AD_NONE = 0x01,
-	AD_TIMEBASED = 0x02,
-	AD_PATTERNBASED = 0x04
+enum ArrhythmiaDetection {
+    AD_NONE = 0x01,
+    AD_TIMEBASED = 0x02,
+    AD_PATTERNBASED = 0x04
 };
 
-enum PhysioSignal
-{
-	SIGNAL_NONE = 0x01,
-	SIGNAL_EKG = 0x02,
-	SIGNAL_PULSE = 0x04,
-	SIGNAL_EXT = 0x08,
-	SIGNAL_CARDIAC = 0x0E, /* the sequence usually takes this */
-	SIGNAL_RESPIRATION = 0x10,
-	SIGNAL_ALL = 0x1E,
+enum PhysioSignal {
+    SIGNAL_NONE = 0x01,
+    SIGNAL_EKG = 0x02,
+    SIGNAL_PULSE = 0x04,
+    SIGNAL_EXT = 0x08,
+    SIGNAL_CARDIAC = 0x0E,  // the sequence usually takes this
+    SIGNAL_RESPIRATION = 0x10,
+    SIGNAL_ALL = 0x1E,
 };
 
 #define DELTAT 0.0025f
 
-
-int show_help( void )
-{
-   printf(
-      "LN_PHYSIO_PARS: short program that pases SIEMENS physio logs\n"
-      "\n"
-      "    This program takes SIEMENS physio files ,\n"
-      "    ECGlog_*.ecg\n"
-      "    EXTlog_*.ext\n"
-      "    Pulslog_*.puls\n"
-      "    Resplog_*.resp\n"
-      "    and parses them into txt files that \n"
-      "    can be used in RETRIOCOR \n"
-      "\n"
-      "    basic usage: LN_PHYSIO_PARS input.puls output.txt  \n"
-      "\n"
-      "\n");
-   return 0;
+int show_help(void) {
+    printf(
+    "LN_PHYSIO_PARS: Parse SIEMENS physiology logs.\n"
+    "\n"
+    "    This program takes SIEMENS physio files (ECGlog_*.ecg, \n"
+    "    EXTlog_*.ext, Pulslog_*.puls, Resplog_*.resp) and parses them into \n"
+    "    txt files that can be used in RETROICOR.\n"
+    "\n"
+    "Usage:\n"
+    "    LN_PHYSIO_PARS input.puls output.txt \n"
+    "\n");
+    return 0;
 }
 
+int main(int argc, char* argv[]) {
+    if (argc != 3) {
+        // cerr << "No file on command line\n";
+        // cerr << "Provide the input file (Siemens log file) and the output file (Tab separted log file)\n";
+        show_help();
+        return 1;
+    }
 
-
-int main(int argc, char* argv[])
-{
-	if ( argc != 3 )
-	{
-		//cerr << "No file on command line\n";
-		//cerr << "Provide the name of the input file (Siemens log file) and the output file (Tab separted log file)\n";
-		
-		
-		show_help();
-
-		return 1;
-	}
-
-	// get file from command line
-	ifstream pfile(argv[1]);
-	if (pfile.bad())
-    {
+    // Get file from command line.
+    ifstream pfile(argv[1]);
+    if (pfile.bad()) {
         // Dump the contents of the file to cout.
         cout << "Cannot open file\n";
         pfile.close();
-		return 1;
+        return 1;
     }
 
-	// read header
-	int pMethod;
-	pfile >> pMethod;
-	cerr<<"Method ="<<pMethod<<endl;
-	int ArrDect;
-	pfile >> ArrDect;
-	cerr<<"Detection of Arrytmia ="<<ArrDect<<endl;
-	int SigSource;
-	pfile >> SigSource;
+    // Read header
+    int pMethod;
+    pfile >> pMethod;
+    cerr << "Method =" << pMethod << endl;
+    int ArrDect;
+    pfile >> ArrDect;
+    cerr << "Detection of Arrhythmia =" << ArrDect << endl;
+    int SigSource;
+    pfile >> SigSource;
 
-	int GateOpen,GateClose;
-	pfile >> GateOpen;
-	pfile >> GateClose;
-	cerr<<" Opening file "<<argv[1]<<endl; 
-	// find out how long the file is. Parse to ECG in file at end of data
-	long cnt=0;
-	int input;
-	do
-	{
-		pfile >> input;
-	//	cerr<<cnt<<","<<input<<",";
-		++cnt;
-	}
-	
-	while ( input != 5003 || pfile.eof() );
+    int GateOpen, GateClose;
+    pfile >> GateOpen;
+    pfile >> GateClose;
+    cerr << " Opening file =" << argv[1] << endl;
+    // Find out how long the file is. Parse to ECG in file at end of data
+    long cnt = 0;
+    int input;
+    do {
+        pfile >> input;
+        // cerr << cnt << "," << input << ",";
+        ++cnt;
+    }
 
-	pfile.close();
-	cerr<<" The file is "<<cnt<<" lines long\n";
-	// now we know how long it is reopen and get data
-	pfile.open(argv[1],ios::in);
+    while (input != 5003 || pfile.eof());
 
-	// skip header
-	for ( int i=0 ; i<5 ; ++i )
-		pfile >> input;
+    pfile.close();
+    cerr << "  The file is " << cnt << " lines long\n";
+    // Now we know how long it is reopen and get data
+    pfile.open(argv[1],ios::in);
 
-	// allocate for two interleved sets of data
-	int n=cnt/2;
-	int *pWform1,*pWform2;
-	int *pTrigOn,*pTrigOff;
-	int *pTrigCnt;
-	float *pFreq;
+    // Skip header
+    for (int i = 0; i < 5; ++i)
+        pfile >> input;
 
-	pWform1 = new int[n];
-	pWform2 = new int[n];
-	pTrigOn = new int[n];
-	pTrigOff = new int[n];
-	pTrigCnt = new int[n];
-	pFreq = new float[n];
+    // Allocate for two interleaved sets of data
+    int n = cnt / 2;
+    int *pWform1, *pWform2;
+    int *pTrigOn, *pTrigOff;
+    int *pTrigCnt;
+    float *pFreq;
 
-	// fill up the array
-	int cnt2=0;
-	int ntrig=0;
-	int inval;
-	for ( int i=0 ; i<n ; ++i )
-	{
-		//  zero the trigger on/off signals
-		pTrigOn[i] = pTrigOff[i] = 0;
-		// get values from file
+    pWform1 = new int[n];
+    pWform2 = new int[n];
+    pTrigOn = new int[n];
+    pTrigOff = new int[n];
+    pTrigCnt = new int[n];
+    pFreq = new float[n];
 
-		// get first data channel
-		pfile >> inval;
-		if ( inval == 5000 ) // trigger on
-		{
-			pTrigOn[i] = 500;
-			pTrigCnt[ntrig++] = cnt2;
-			pfile >> inval;	// get next data value
-		}
-		else if ( inval == 6000 ) // trigger off
-		{
-			pTrigOff[i] = 600;
-			pfile >> inval;	// get next data value
-		}
-		else if ( inval == 5003 ) // end of data
-		{
-			break;
-		}
-		pWform1[i] = inval;
+    // fill up the array
+    int cnt2 = 0;
+    int ntrig = 0;
+    int inval;
+    for (int i = 0; i < n; ++i) {
+        // Zero the trigger on/off signals
+        pTrigOn[i] = pTrigOff[i] = 0;
+        // Get values from file
 
-		// get second data channel
-		pfile >> inval;
-		if ( inval == 5000 ) // trigger on
-		{
-			pTrigOn[i] = 500;
-			pTrigCnt[ntrig++] = cnt2;
-			pfile >> inval;	// get next data value
-		}
-		else if ( inval == 6000 ) // trigger off
-		{
-			pTrigOff[i] = 600;
-			pfile >> inval;	// get next data value
-		}
-		else if ( inval == 5003 ) // end of data
-		{
-			break;
-		}
-		pWform2[i] = inval;
+        // Get first data channel
+        pfile >> inval;
+        if (inval == 5000) {  // Trigger on
+            pTrigOn[i] = 500;
+            pTrigCnt[ntrig++] = cnt2;
+            pfile >> inval;  // Get next data value
+        } else if (inval == 6000)  {  // Trigger off
+            pTrigOff[i] = 600;
+            pfile >> inval;  // Get next data value
+        } else if (inval == 5003)  {  // End of data
+            break;
+        }
+        pWform1[i] = inval;
 
-		// subtract offsets
-		pWform1[i] -= 10240; // it seems that the big values come first
-		pWform2[i] -= 2048;  // if random then it could be checked for automatically
+        // Get second data channel
+        pfile >> inval;
+        if (inval == 5000) {  // Trigger on
+            pTrigOn[i] = 500;
+            pTrigCnt[ntrig++] = cnt2;
+            pfile >> inval;  // Get next data value
+        } else if (inval == 6000) {  // Trigger off
+            pTrigOff[i] = 600;
+            pfile >> inval;  // Get next data value
+        } else if (inval == 5003) {  // End of data
+            break;
+        }
+        pWform2[i] = inval;
 
-		++cnt2;
-	}
+        // Subtract offsets
+        pWform1[i] -= 10240;  // It seems that the big values come first
+        pWform2[i] -= 2048;   // If random then it can be checked for automatically
 
-	pfile.close();
+        ++cnt2;
+    }
 
-	// calculate frequency from triggers
+    pfile.close();
 
-	// zero up to first trigger
-	for ( int j=0 ; j<pTrigCnt[0] ; ++j )
-		pFreq[j] = 0;
+    // Calculate frequency from triggers
 
-	// calculate frequency between trigger pulses
-	for ( int i=0 ; i<ntrig-1 ; ++i )
-	{
-		float freq = 1.0f/((pTrigCnt[i+1] - pTrigCnt[i])*DELTAT);
-		for ( int j=pTrigCnt[i] ; j<pTrigCnt[i+1] ; ++j )
-			pFreq[j] = freq;
-	}
+    // Zero up to first trigger
+    for (int j = 0; j < pTrigCnt[0]; ++j)
+        pFreq[j] = 0;
 
-	// frequency before first trigger same as first interval
-	for ( int j=0 ; j<pTrigCnt[0] ; ++j )
-		pFreq[j] = pFreq[pTrigCnt[0]];
+    // calculate frequency between trigger pulses
+    for (int i = 0; i < ntrig-1; ++i) {
+        float freq = 1.0f/((pTrigCnt[i+1] - pTrigCnt[i])*DELTAT);
+        for (int j = pTrigCnt[i]; j < pTrigCnt[i+1]; ++j)
+            pFreq[j] = freq;
+    }
 
-	// frequency after last trigger same as last interval
-	for ( int j=pTrigCnt[ntrig-1] ; j<cnt2 ; ++j )
-		pFreq[j] = pFreq[pTrigCnt[ntrig-1]-1];
+    // Frequency before first trigger same as first interval
+    for (int j = 0; j < pTrigCnt[0]; ++j)
+        pFreq[j] = pFreq[pTrigCnt[0]];
 
-	// create an output file name from input file name
-	string outname=argv[2];
+    // Frequency after last trigger same as last interval
+    for (int j = pTrigCnt[ntrig - 1]; j < cnt2; ++j)
+        pFreq[j] = pFreq[pTrigCnt[ntrig - 1] - 1];
 
-	// write data to tab seperated file
-	ofstream tfile(outname.c_str(),ios::out);
+    // Create an output file name from input file name
+    string outname = argv[2];
 
-	// header
-	tfile << "Time\tChan1\tChan2\tTrigOn\tTrigOff\tFreq\n";
-	for ( int i=0 ; i<cnt2 ; ++i )
-	{
-		float t = i*DELTAT;
-		tfile << t << '\t' << pWform1[i] << '\t' << pWform2[i] << '\t' << pTrigOn[i] <<
-			'\t' << pTrigOff[i] << '\t' << pFreq[i] << endl;
-	}
+    // Write data to tab seperated file
+    ofstream tfile(outname.c_str(), ios::out);
 
-	tfile.close();
+    // Header
+    tfile << "Time\tChan1\tChan2\tTrigOn\tTrigOff\tFreq\n";
+    for (int i = 0; i < cnt2; ++i) {
+        float t = i * DELTAT;
+        tfile << t << '\t' << pWform1[i] << '\t' << pWform2[i] << '\t' << pTrigOn[i] <<
+            '\t' << pTrigOff[i] << '\t' << pFreq[i] << endl;
+    }
 
-	return 0;
+    tfile.close();
+    cout << "Finished." << endl;
+    return 0;
 }
-
