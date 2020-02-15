@@ -14,12 +14,7 @@ Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri
 
 **Note:** In order to read and write Nifti (.nii) data, I used code that was originally developed from Bob Cox and Rick Reynolds and adapted it for using here.
 
-## Example
-
-``LN_NOISEME.cpp`` reads in a nii file, accesses the data, manipulates the individual voxels, and writes out the manipulated data as nii.
-
-Usage of ``LN_NOISEME.cpp``:
-
+## Installation
 1. Download the all the files with from github E.g. with the command::
 ```
 git clone https://github.com/layerfMRI/laynii
@@ -34,11 +29,15 @@ cd laynii
 ```
 make all
 ```
-4. Execute it with::
+
+## Usage example
+For example `LN_NOISEME.cpp` reads in a nii file, accesses the data, manipulates the individual voxels, and writes out the manipulated data as nii. To use `LN_NOISEME.cpp`, `cd` to LAYNII folder and execute the following command in your commandline:
 ```
 ./LN_NOISEME -input input_example.nii -output Noised.nii -variance 0.4445
 ```
-5. If you want to use LAYNII from anytwhere in you system, you still need to set the paths::
+
+### Using LAYNII from a anywhere in your system
+If you want to use LAYNII from anytwhere in your system, you still need to set the paths::
 
 - On Linux add the following to your ~/.bashrc::
 ```
@@ -71,10 +70,8 @@ Since January 2020, all remaining dependencies have been removed and LAYNII can 
 
 3. On Windows, a C++ compiler needs to be installed manually. For example with [cygwin](https://cygwin.com/). I followed the instructions in this [video](https://www.youtube.com/watch?v=DAlS4hF_PbY).
 
-
 ## Comment on GSL
 Previous versions of LAYNII depend on GSL. I heard your complaints and removed it.
-
 
 ## Comment on makefile and compiler
 Some users seemed to have a compiler installed that does not match the actual CPU architecture of the computer. In those cases it can be easier to compile the programs one by one with g++. Copy-paste the following into your terminal instead in Step 3::
