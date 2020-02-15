@@ -13,7 +13,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-//#include "stdafx.h" // Enable for Microsoft compilers, disable for linux and mac
+// #include "stdafx.h" // Enable for Microsoft compilers, disable for linux and mac
 
 using namespace std;
 

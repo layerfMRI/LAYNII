@@ -1,21 +1,5 @@
 
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <iostream>
-#include <string>
-#include "nifti2_io.h"
-// #include "nifti2.h"
-// #include "nifti1.h"
-// #include "nifticdf.h"
-// #include "nifti_tool.h"
-// #include< gsl/gsl_multifit.h>
-// #include< gsl/gsl_statistics_double.h>
-using namespace std;
-
-#define PI 3.14159265;
-
-// #include "utils.hpp"
+#include "src/common.h"
 
 int show_help(void) {
     printf(

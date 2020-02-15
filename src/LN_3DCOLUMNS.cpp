@@ -1,16 +1,7 @@
 
 // TODO(@Faruk): Test after cosmetics (need layers.nii from Renzo)
 
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <iostream>
-#include <string>
-#include "nifti2_io.h"
-// #include "nifti2.h"
-// #include "nifti1.h"
-// #include "nifticdf.h"
-// #include "nifti_tool.h"
+#include "src/common.h"
 
 using namespace std;
 

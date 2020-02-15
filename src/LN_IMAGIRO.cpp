@@ -1,41 +1,25 @@
 
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <iostream>
-#include <string>
-#include "nifti2_io.h"
-// #include "nifti2.h"
-// #include "nifti1.h"
-// #include "nifticdf.h"
-// #include "nifti_tool.h"
-// #include < gsl/gsl_multifit.h>
-// #include < gsl/gsl_statistics_double.h>
-using namespace std;
-
-#define PI 3.14159265;
-
-// #include "utils.hpp"
+#include "./common.h"
 
 int show_help(void) {
     printf(
- "LN_IMAGIRO : This program does the opposite of ORIGAMI. It unfolds stuff.\n"
- "\n"
- "    Generates a 3D matrix of columns and layers.\n"
- "\n"
- "Usage:\n"
- "    LN_IMAGIRO -layer_file equi_dist_layers.nii -column_file columnar_coordinated.nii -data data2unfold.nii\n"
- "\n"
- "Options:\n"
- "   -help         : Show this help.\n"
- "   -layer_file   : Nifti (.nii) file that contains layer.\n"
- "   -columns_file : Nifti (.nii) file that contains columns.\n"
- "   -data         : Data that will be unfolded.\n"
- "\n"
- "Notes:\n"
- "    - All inputs should have the same dimensions.\n"
- "    - This program now supports INT16, INT32 and FLOAT32.\n"
- "\n");
+     "LN_IMAGIRO : This program does the opposite of ORIGAMI. It unfolds stuff.\n"
+     "\n"
+     "    Generates a 3D matrix of columns and layers.\n"
+     "\n"
+     "Usage:\n"
+     "    LN_IMAGIRO -layer_file equi_dist_layers.nii -column_file columnar_coordinated.nii -data data2unfold.nii\n"
+     "\n"
+     "Options:\n"
+     "   -help         : Show this help.\n"
+     "   -layer_file   : Nifti (.nii) file that contains layer.\n"
+     "   -columns_file : Nifti (.nii) file that contains columns.\n"
+     "   -data         : Data that will be unfolded.\n"
+     "\n"
+     "Notes:\n"
+     "    - All inputs should have the same dimensions.\n"
+     "    - This program now supports INT16, INT32 and FLOAT32.\n"
+     "\n");
     return 0;
 }
 

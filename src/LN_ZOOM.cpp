@@ -3,24 +3,7 @@
 // `** ERROR: nifti_image_write_hdr_img: no image data`
 // Also seems to give the same error in the old version. Check with Renzo.
 
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <iostream>
-#include <string>
-#include "nifti2_io.h"
-// #include "nifti2.h"
-// #include "nifti1.h"
-// #include "nifticdf.h"
-// #include "nifti_tool.h"
-// #include <gsl/gsl_multifit.h>
-// #include <gsl/gsl_statistics_double.h>
-
-using namespace std;
-
-#define PI 3.14159265;
-
-// #include "utils.hpp"
+#include "./common.h"
 
 int show_help(void) {
     printf(
