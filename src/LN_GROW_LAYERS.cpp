@@ -171,6 +171,19 @@ int main(int argc, char * argv[]) {
         }
     }
 
+    if (nim_input_i->datatype == NIFTI_TYPE_INT8 || nim_input_i->datatype == DT_UINT8) {
+        int8_t* nim_input_i_data = (int8_t*) nim_input_i->data;
+        for (int it = 0; it < nrep; ++it) {
+            for (int islice = 0; islice < sizeSlice; ++islice) {
+                for (int iy = 0; iy < sizePhase; ++iy) {
+                    for (int ix=0; ix < sizeRead; ++ix) {
+                        *(nim_input_data + nxyz * it + nxy * islice + nx*ix + iy) = (int8_t) (*(nim_input_i_data + nxyz * it + nxy * islice + nx * ix + iy));
+                    }
+                }
+            }
+        }
+
+    }
     nifti_image * equi_dist_layers = nifti_copy_nim_info(nim_input);
     equi_dist_layers->datatype = NIFTI_TYPE_INT16;
     equi_dist_layers->nbyper = sizeof(short);
@@ -426,6 +439,17 @@ int main(int argc, char * argv[]) {
             }
         }
 
+        if (debug > 0) {
+            const char* fout_5 = "debug_WM_pre_pytagoras.nii";
+            if (nifti_set_filenames(growfromWM1, fout_5, 1, 1)) return 1;
+            nifti_image_write(growfromWM1);
+
+            const char* fout_6 = "debug_GM_pre_pytagoras.nii";
+            if (nifti_set_filenames(growfromGM1, fout_6, 1, 1)) return 1;
+            nifti_image_write(growfromGM1);
+
+        }
+
         ////////////////////////////////////////////////////
         // Wabble across neighbouring voxels of closest WM //
         // to account for Pytagoras errors /////////////////
@@ -526,7 +550,7 @@ int main(int argc, char * argv[]) {
             for (int iy = 0; iy < sizePhase; ++iy) {
                 for (int ix = 0; ix < sizeRead-0; ++ix) {
                     if (*(nim_input_data + nxy * islice + nx * ix + iy) == 3) {
-                        // Equi_dist_layers(0, islice, iy, ix) = 19 * (1- dist((float)ix, (float)iy, (float)GMkoord(2, islice, iy, ix) , (float)GMkoord(3, islice, iy, ix)    )/ (dist((float)ix, (float)iy, (float)GMkoord(2, islice, iy, ix)    , (float)GMkoord(3, islice, iy, ix)    ) + dist((float)ix, (float)iy, (float)WMkoord(2, islice, iy, ix)        , (float)WMkoord(3, islice, iy, ix) ))) + 2  ;
+                        // Equi_dist_layers(0, islice, iy, ix) = 19 * (1- dist((float)ix, (float)iy, (float)GMkoord(2, islice, iy, ix) , (float)GMkoord(3, islice, iy, ix) )/ (dist((float)ix, (float)iy, (float)GMkoord(2, islice, iy, ix)    , (float)GMkoord(3, islice, iy, ix) ) + dist((float)ix, (float)iy, (float)WMkoord(2, islice, iy, ix)        , (float)WMkoord(3, islice, iy, ix)))) + 2  ;
 
                         GMK2_i = *(GMkoord2_data + nxy * islice + nx * ix + iy);
                         GMK3_i = *(GMkoord3_data + nxy * islice + nx * ix + iy);
@@ -980,7 +1004,7 @@ int main(int argc, char * argv[]) {
             for (int iy = 0; iy < sizePhase; ++iy) {
                 for (int ix = 0; ix < sizeRead-0; ++ix) {
                     if (*(nim_input_data + nxy * iz + nx * ix + iy) == 3) {
-                        // Equi_dist_layers(0, iz, iy, ix) = 19 * (1- dist((float)ix, (float)iy, (float)GMkoord(2, iz, iy, ix) , (float)GMkoord(3, iz, iy, ix)    )/ (dist((float)ix, (float)iy, (float)GMkoord(2, iz, iy, ix)    , (float)GMkoord(3, iz, iy, ix)    ) + dist((float)ix, (float)iy, (float)WMkoord(2, iz, iy, ix)        , (float)WMkoord(3, iz, iy, ix) ))) + 2  ;
+                        // Equi_dist_layers(0, iz, iy, ix) = 19 * (1- dist((float)ix, (float)iy, (float)GMkoord(2, iz, iy, ix) , (float)GMkoord(3, iz, iy, ix) )/ (dist((float)ix, (float)iy, (float)GMkoord(2, iz, iy, ix)    , (float)GMkoord(3, iz, iy, ix) ) + dist((float)ix, (float)iy, (float)WMkoord(2, iz, iy, ix)        , (float)WMkoord(3, iz, iy, ix)))) + 2  ;
 
                         GMK2_i = *(GMkoordx2_data + nxy * iz + nx * ix + iy);
                         GMK3_i = *(GMkoordy2_data + nxy * iz + nx * ix + iy);
@@ -1135,8 +1159,8 @@ float dist2d(float x1, float y1, float x2, float y2) {
 float dist3d(float x1, float y1, float z1, float x2, float y2, float z2,
              float dX, float dY, float dZ) {
     return sqrt((x1 - x2) * (x1 - x2) * dX * dX
-                + (y1 - y2) * (y1 - y2) * dY * dY
-                + (z1 - z2) * (z1 - z2) * dZ * dZ);
+            + (y1 - y2) * (y1 - y2) * dY * dY
+            + (z1 - z2) * (z1 - z2) * dZ * dZ);
 }
 
 float angle(float a, float b, float c) {
