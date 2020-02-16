@@ -30,11 +30,11 @@ int show_help(void) {
     return 0;
 }
 
-int main(int argc, char * argv[]) {
+int main(int argc, char* argv[]) {
     float SIEMENS_f = 4095.0;
 
-    char *fmaski = NULL, *fout = NULL, *finfi_1 = NULL, *finfi_2 = NULL;
-    char *finfi_3 = NULL;
+    char* fmaski = NULL, *fout = NULL, *finfi_1 = NULL, *finfi_2 = NULL;
+    char* finfi_3 = NULL;
     int ac, custom_output = 0;
     float beta = 0.2;
     if (argc < 3) return show_help();  // Typing '-help' is sooo much work
@@ -95,18 +95,18 @@ int main(int argc, char * argv[]) {
     }
 
     // Read input dataset, including data
-    nifti_image * nim_inputfi_1 = nifti_image_read(finfi_1, 1);
-    if ( !nim_inputfi_1 ) {
+    nifti_image* nim_inputfi_1 = nifti_image_read(finfi_1, 1);
+    if (!nim_inputfi_1 ) {
         fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", finfi_1);
         return 2;
     }
-    nifti_image * nim_inputfi_2 = nifti_image_read(finfi_2, 1);
-    if ( !nim_inputfi_2 ) {
+    nifti_image* nim_inputfi_2 = nifti_image_read(finfi_2, 1);
+    if (!nim_inputfi_2 ) {
         fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", finfi_2);
         return 2;
     }
-    nifti_image * nim_inputfi_3 = nifti_image_read(finfi_3, 1);
-    if ( !nim_inputfi_3 ) {
+    nifti_image* nim_inputfi_3 = nifti_image_read(finfi_3, 1);
+    if (!nim_inputfi_3 ) {
         fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", finfi_3);
         return 2;
     }
@@ -115,18 +115,18 @@ int main(int argc, char * argv[]) {
     int sizeSlice = nim_inputfi_1->nz;
     int sizePhase = nim_inputfi_1->nx;
     int sizeRead = nim_inputfi_1->ny;
-    int nrep =  nim_inputfi_1->nt;
-    int nx =  nim_inputfi_1->nx;
+    int nrep = nim_inputfi_1->nt;
+    int nx = nim_inputfi_1->nx;
     int nxy = nim_inputfi_1->nx * nim_inputfi_1->ny;
     int nxyz = nim_inputfi_1->nx * nim_inputfi_1->ny * nim_inputfi_1->nz;
-    float dX =  nim_inputfi_1->pixdim[1];
-    float dY =  nim_inputfi_1->pixdim[2];
-    float dZ =  nim_inputfi_1->pixdim[3];
+    float dX = nim_inputfi_1->pixdim[1];
+    float dY = nim_inputfi_1->pixdim[2];
+    float dZ = nim_inputfi_1->pixdim[3];
 
     //////////////////
     // LOADING INV1 //
     //////////////////
-    nifti_image * nim_inv1 = nifti_copy_nim_info(nim_inputfi_1);
+    nifti_image* nim_inv1 = nifti_copy_nim_info(nim_inputfi_1);
     nim_inv1->datatype = NIFTI_TYPE_FLOAT32;
     nim_inv1->nbyper = sizeof(float);
     nim_inv1->data = calloc(nim_inv1->nvox, nim_inv1->nbyper);
@@ -137,8 +137,8 @@ int main(int argc, char * argv[]) {
     // here, I am loading them in their native datatype //////////
     // and translate them to the datatime I like best ////////////
     //////////////////////////////////////////////////////////////
-    if ( nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ||  nim_inputfi_3->datatype ==  NIFTI_TYPE_INT32 ) {
-        float* nim_inputfi_1_data = static_cast<float *>(nim_inputfi_1->data);
+    if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ||  nim_inputfi_3->datatype == NIFTI_TYPE_INT32 ) {
+        float* nim_inputfi_1_data = static_cast<float*>(nim_inputfi_1->data);
         for (int it = 0; it < nrep; ++it) {
             for (int islice = 0; islice < sizeSlice; ++islice) {
                 for (int iy = 0; iy < sizePhase; ++iy) {
@@ -164,8 +164,8 @@ int main(int argc, char * argv[]) {
     }
 
     // Write out some stuff that might be good to know, if you want to debug
-    cout << sizeSlice << " Slices | " <<  sizePhase << " Phase_steps | "
-         <<  sizeRead << " Read_steps | " <<  nrep << " Time_steps "  << endl;
+    cout << sizeSlice << " Slices | " << sizePhase << " Phase_steps | "
+         << sizeRead << " Read_steps | " << nrep << " Time_steps " << endl;
 
     cout << "  Voxel size = " << dX << " x " << dY << " x " << dZ << endl;
     cout << "  Datatype 1 = " << nim_inputfi_1->datatype << endl;
@@ -173,18 +173,18 @@ int main(int argc, char * argv[]) {
     //////////////////
     // LOADING INV2 //
     //////////////////
-    nifti_image * nim_inv2 = nifti_copy_nim_info(nim_inputfi_2);
+    nifti_image* nim_inv2 = nifti_copy_nim_info(nim_inputfi_2);
     nim_inv2->datatype = NIFTI_TYPE_FLOAT32;
     nim_inv2->nbyper = sizeof(float);
     nim_inv2->data = calloc(nim_inv2->nvox, nim_inv2->nbyper);
-    float *nim_inv2_data = (float *) nim_inv2->data;
+    float*nim_inv2_data = (float*) nim_inv2->data;
 
     //////////////////////////////////////////////////////////////
     // Fixing potential problems with different input datatypes //
     // again /////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////
-    if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 || nim_inputfi_3->datatype ==  NIFTI_TYPE_INT32) {
-        float* nim_inputfi_2_data = static_cast<float *>(nim_inputfi_2->data);
+    if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 || nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
+        float* nim_inputfi_2_data = static_cast<float*>(nim_inputfi_2->data);
         for (int it = 0; it < nrep; ++it) {
             for (int islice = 0; islice < sizeSlice; ++islice) {
                 for (int iy = 0; iy < sizePhase; ++iy) {
@@ -251,19 +251,19 @@ int main(int argc, char * argv[]) {
     /////////////////////////////////////
     // MAKE allocating necessary files //
     /////////////////////////////////////
-    nifti_image * phaseerror = nifti_copy_nim_info(nim_inv1);
-    nifti_image * dddenoised = nifti_copy_nim_info(nim_inv1);
+    nifti_image* phaseerror = nifti_copy_nim_info(nim_inv1);
+    nifti_image* dddenoised = nifti_copy_nim_info(nim_inv1);
     phaseerror->datatype = NIFTI_TYPE_FLOAT32;
     dddenoised->datatype = NIFTI_TYPE_FLOAT32;
     phaseerror->nbyper = sizeof(float);
     dddenoised->nbyper = sizeof(float);
     phaseerror->data = calloc(phaseerror->nvox, phaseerror->nbyper);
     dddenoised->data = calloc(dddenoised->nvox, dddenoised->nbyper);
-    float* phaseerror_data = static_cast<float *>(phaseerror->data);
-    float* dddenoised_data = static_cast<float *>(dddenoised->data);
+    float* phaseerror_data = static_cast<float*>(phaseerror->data);
+    float* dddenoised_data = static_cast<float*>(dddenoised->data);
 
-    nifti_image * uni1  = nifti_copy_nim_info(nim_inv1);
-    nifti_image * uni2  = nifti_copy_nim_info(nim_inv1);
+    nifti_image* uni1  = nifti_copy_nim_info(nim_inv1);
+    nifti_image* uni2  = nifti_copy_nim_info(nim_inv1);
     uni1->datatype = NIFTI_TYPE_FLOAT32;
     uni2->datatype = NIFTI_TYPE_FLOAT32;
     uni1->nbyper = sizeof(float);
@@ -287,7 +287,7 @@ int main(int argc, char * argv[]) {
 
     float uni1val_calc = 0;
     float uni2val_calc = 0;
-    float denoised_wrong =  0;
+    float denoised_wrong = 0;
 
     for (int it = 0; it < nrep; ++it) {
         for (int iz = 0; iz < sizeSlice; ++iz) {
@@ -304,8 +304,8 @@ int main(int argc, char * argv[]) {
                     // sign_ = unival; //  *(nim_uni_data    + nxyz *it + nxy*iz + nx*ix  + iy  ) / *(phaseerror_data    + nxyz *it + nxy*iz + nx*ix  + iy  );
                     // if (sign_ <= 0 ) *(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) = -1 * *(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + iy  );
 
-                    // denoised_wrong = ( *(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) *  *(nim_inv2_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) -beta ) / ( *(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) *  *(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) + *(nim_inv2_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) *  *(nim_inv2_data   + nxyz *it  + nxy*iz + nx*ix  + iy  )  + 2. * beta );
-                    // denoised_wrong = ( denoised_wrong +0.5 ) * SIEMENS_f;
+                    // denoised_wrong = (*(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) *  *(nim_inv2_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) -beta ) / (*(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) *  *(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) + *(nim_inv2_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) *  *(nim_inv2_data   + nxyz *it  + nxy*iz + nx*ix  + iy  )  + 2. * beta );
+                    // denoised_wrong = (denoised_wrong +0.5 ) * SIEMENS_f;
                     *(phaseerror_data + nxyz * it + nxy * iz + nx * ix + iy) = wrong_unival;
 
                     uni1val_calc = inv2val * (1 / (2 * unival) + sqrt(1 / (4 * unival * unival) - 1));
@@ -340,8 +340,7 @@ int main(int argc, char * argv[]) {
 
     if (custom_output == 1) {
         string outfilename = (string) (fout);
-        log_output(outfilename);
-        // cout << "  Writing output as:\n    " << outfilename.c_str() << endl;
+        cout << "  Writing output as:\n    " << outfilename.c_str() << endl;
         const char* fout_1 = outfilename.c_str();
         if (nifti_set_filenames(dddenoised, fout_1, 1, 1)) {
             return 1;
@@ -351,7 +350,7 @@ int main(int argc, char * argv[]) {
         string filename = (string) (finfi_3);
         string outfilename = prefix+filename;
         cout << "  Writing output as:\n    " << outfilename.c_str() << endl;
-        const char *fout_1 = outfilename.c_str();
+        const char* fout_1 = outfilename.c_str();
         if (nifti_set_filenames(dddenoised, fout_1, 1, 1)) {
             return 1;
         }
@@ -359,7 +358,7 @@ int main(int argc, char * argv[]) {
 
     nifti_image_write(dddenoised);
 
-    const char *fout_2 = "Border_enhance.nii";
+    const char* fout_2 = "Border_enhance.nii";
     if (nifti_set_filenames(phaseerror, fout_2, 1, 1)) {
         return 1;
     }
