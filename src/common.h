@@ -19,5 +19,3 @@ using namespace std;
 #define PI 3.14159265;
 
 // #include "utils.hpp"
-
-#include "./renzo_stat.h"
