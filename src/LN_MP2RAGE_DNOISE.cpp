@@ -140,20 +140,20 @@ int main(int argc, char* argv[]) {
     if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ||
         nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
         float* nim_inputfi_1_data = static_cast<float*>(nim_inputfi_1->data);
-        FOR_EACH_VOXEL
+        FOR_EACH_VOXEL_TZYX
             *(nim_inv1_data + VOXEL_ID) =
                 static_cast<float>(*(nim_inputfi_1_data + VOXEL_ID));
-        END_FOR_EACH_VOXEL
+        END_FOR_EACH_VOXEL_TZYX
     }
 
     if (nim_inputfi_3->datatype == NIFTI_TYPE_INT16 ||
         nim_inputfi_3->datatype == DT_UINT16) {
         int16_t* nim_inputfi_1_data =
             static_cast<int16_t*>(nim_inputfi_1->data);
-        FOR_EACH_VOXEL
+        FOR_EACH_VOXEL_TZYX
             *(nim_inv1_data + VOXEL_ID) =
                 static_cast<float>(*(nim_inputfi_1_data + VOXEL_ID));
-        END_FOR_EACH_VOXEL
+        END_FOR_EACH_VOXEL_TZYX
     }
 
     // Write out some stuff that might be good to know, if you want to debug
@@ -179,20 +179,20 @@ int main(int argc, char* argv[]) {
     if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ||
         nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
         float* nim_inputfi_2_data = static_cast<float*>(nim_inputfi_2->data);
-        FOR_EACH_VOXEL
+        FOR_EACH_VOXEL_TZYX
             *(nim_inv2_data + nxyz * t +  nxy * z + nx * x + y) =
                 static_cast<float>(*(nim_inputfi_2_data + VOXEL_ID));
-        END_FOR_EACH_VOXEL
+        END_FOR_EACH_VOXEL_TZYX
     }
 
     if (nim_inputfi_3->datatype == NIFTI_TYPE_INT16 ||
         nim_inputfi_3->datatype == DT_UINT16) {
         int16_t* nim_inputfi_2_data =
             static_cast<int16_t*>(nim_inputfi_2->data);
-        FOR_EACH_VOXEL
+        FOR_EACH_VOXEL_TZYX
             *(nim_inv2_data + VOXEL_ID) =
                 static_cast<float>(*(nim_inputfi_2_data + VOXEL_ID));
-        END_FOR_EACH_VOXEL
+        END_FOR_EACH_VOXEL_TZYX
     }
 
     /////////////////
@@ -210,20 +210,20 @@ int main(int argc, char* argv[]) {
     if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ||
         nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
         float* nim_inputfi_3_data = static_cast<float*>(nim_inputfi_3->data);
-        FOR_EACH_VOXEL
+        FOR_EACH_VOXEL_TZYX
             *(nim_uni_data + VOXEL_ID) =
             static_cast<float>(*(nim_inputfi_3_data + VOXEL_ID));
-        END_FOR_EACH_VOXEL
+        END_FOR_EACH_VOXEL_TZYX
     }
 
     if (nim_inputfi_3->datatype == NIFTI_TYPE_INT16 ||
         nim_inputfi_3->datatype == DT_UINT16) {
         int16_t* nim_inputfi_3_data =
             static_cast<int16_t*>(nim_inputfi_3->data);
-        FOR_EACH_VOXEL
+        FOR_EACH_VOXEL_TZYX
             *(nim_uni_data + VOXEL_ID) =
                 static_cast<float>(*(nim_inputfi_3_data + VOXEL_ID));
-        END_FOR_EACH_VOXEL
+        END_FOR_EACH_VOXEL_TZYX
     }
 
     /////////////////////////////////////
@@ -270,7 +270,7 @@ int main(int argc, char* argv[]) {
     /////////////////////////////////////////////////////////
     // Scaling UNI to range of -0.5 to 0.5 as in the paper //
     /////////////////////////////////////////////////////////
-    FOR_EACH_VOXEL
+    FOR_EACH_VOXEL_TZYX
         unival = (*(nim_uni_data + VOXEL_ID) - SIEMENS_f * 0.5) / SIEMENS_f;
         // inv1val = *(nim_inv1_data + VOXEL_ID);
         inv2val = *(nim_inv2_data + VOXEL_ID);
@@ -300,7 +300,7 @@ int main(int argc, char* argv[]) {
         // *(phaseerror_data + VOXEL_ID) = unival;
 
         *(dddenoised_data + VOXEL_ID) = ((uni1val_calc * inv2val - beta) / (uni1val_calc * uni1val_calc + inv2val * inv2val + 2. * beta) + 0.5) * SIEMENS_f;
-    END_FOR_EACH_VOXEL
+    END_FOR_EACH_VOXEL_TZYX
 
     dddenoised->scl_slope = nim_uni->scl_slope;
 
