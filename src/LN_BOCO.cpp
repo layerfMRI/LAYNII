@@ -21,11 +21,11 @@ int show_help(void) {
     "    -trialBOCO : First average trials and then do the BOLD correction. \n"
     "                 The parameter is the trial duration in TRs.\n"
     "\n"
-    "Note: Here it is assumed that BOLD and VASO refer to the double TR: \n"
-    "      3dUpsample -overwrite -datum short -prefix Nulled_intemp.nii -n 2 -input Nulled.nii \n"
-    "      3dUpsample -overwrite -datum short -prefix BOLD_intemp.nii -n 2 -input BOLD.nii \n"
-    "\n"
-    "Note: Here I assume that they have the same spatiotemporal dimensions. \n"
+    "Notes:\n"
+    "    - Here it is assumed that BOLD and VASO refer to the double TR: \n"
+    "        3dUpsample -overwrite -datum short -prefix Nulled_intemp.nii -n 2 -input Nulled.nii \n"
+    "        3dUpsample -overwrite -datum short -prefix BOLD_intemp.nii -n 2 -input BOLD.nii \n"
+    "    - Here I assume that they have the same spatiotemporal dimensions. \n"
     "\n");
     return 0;
 }
