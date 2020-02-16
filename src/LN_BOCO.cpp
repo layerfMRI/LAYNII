@@ -96,25 +96,25 @@ int main(int argc, char * argv[]) {
     log_nifti_descriptives(nim_file_2i);
 
     // Get dimensions of input
-    int size_x = nim_file_1i->nx;  // phase
-    int size_y = nim_file_1i->ny;  // read
-    int size_z = nim_file_1i->nz;  // slice
-    int size_t = nim_file_1i->nt;  // time
-    int nx = nim_file_1i->nx;
-    int nxy = nim_file_1i->nx * nim_file_1i->ny;
-    int nxyz = nim_file_1i->nx * nim_file_1i->ny * nim_file_1i->nz;
+    const int size_x = nim_file_1i->nx;  // phase
+    const int size_y = nim_file_1i->ny;  // read
+    const int size_z = nim_file_1i->nz;  // slice
+    const int size_t = nim_file_1i->nt;  // time
+    const int nx = nim_file_1i->nx;
+    const int nxy = nim_file_1i->nx * nim_file_1i->ny;
+    const int nxyz = nim_file_1i->nx * nim_file_1i->ny * nim_file_1i->nz;
 
     nifti_image* nim_file_1 = nifti_copy_nim_info(nim_file_1i);
     nim_file_1->datatype = NIFTI_TYPE_FLOAT32;
     nim_file_1->nbyper = sizeof(float);
     nim_file_1->data = calloc(nim_file_1->nvox, nim_file_1->nbyper);
-    float* nim_file_1_data = (float*) nim_file_1->data;
+    float* nim_file_1_data = static_cast<float*>(nim_file_1->data);
 
     nifti_image* nim_file_2 = nifti_copy_nim_info(nim_file_1i);
     nim_file_2->datatype = NIFTI_TYPE_FLOAT32;
     nim_file_2->nbyper = sizeof(float);
     nim_file_2->data = calloc(nim_file_2->nvox, nim_file_2->nbyper);
-    float* nim_file_2_data = (float*) nim_file_2->data;
+    float* nim_file_2_data = static_cast<float*>(nim_file_2->data);
 
     //////////////////////////////////////////////////////////////
     // Fixing potential problems with different input datatypes //
@@ -128,20 +128,22 @@ int main(int argc, char * argv[]) {
             for (int iz = 0; iz < size_z; ++iz) {
                 for (int iy=0; iy < size_x; ++iy) {
                     for (int ix = 0; ix < size_y; ++ix) {
-                        *(nim_file_1_data + VOXEL_ID) = (float) (*(nim_file_1i_data + VOXEL_ID));
+                        *(nim_file_1_data + VOXEL_ID) =
+                            static_cast<float>(*(nim_file_1i_data + VOXEL_ID));
                     }
                 }
             }
         }
     }
     if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
-        float  *nim_file_1i_data = (float*) nim_file_1i->data;
+        float  *nim_file_1i_data = static_cast<float*>(nim_file_1i->data);
         for (int it = 0; it < size_t; ++it) {
             for (int iz = 0; iz < size_z; ++iz) {
                 // TODO(Faruk): `i!y! < size_!x!` looks susp.
                 for (int iy = 0; iy < size_x; ++iy) {
                     for (int ix = 0; ix < size_y; ++ix) {
-                        *(nim_file_1_data + VOXEL_ID) = (float) (*(nim_file_1i_data + VOXEL_ID));
+                        *(nim_file_1_data + VOXEL_ID) =
+                            static_cast<float>(*(nim_file_1i_data + VOXEL_ID));
                     }
                 }
             }
@@ -153,19 +155,21 @@ int main(int argc, char * argv[]) {
             for (int iz = 0; iz < size_z; ++iz) {
                 for (int iy = 0; iy < size_x; ++iy) {
                     for (int ix = 0; ix < size_y; ++ix) {
-                        *(nim_file_2_data + VOXEL_ID) = (float) (*(nim_file_2i_data + VOXEL_ID));
+                        *(nim_file_2_data + VOXEL_ID) =
+                            static_cast<float>(*(nim_file_2i_data + VOXEL_ID));
                     }
                 }
             }
         }
     }
     if (nim_file_2i->datatype == NIFTI_TYPE_FLOAT32) {
-        float* nim_file_2i_data = (float*) nim_file_2i->data;
+        float* nim_file_2i_data = static_cast<float*>(nim_file_2i->data);
         for (int it = 0; it < size_t; ++it) {
             for (int iz = 0; iz < size_z; ++iz) {
                 for (int iy = 0; iy < size_x; ++iy) {
                     for (int ix = 0; ix < size_y; ++ix) {
-                        *(nim_file_2_data + VOXEL_ID) = (float) (*(nim_file_2i_data + VOXEL_ID));
+                        *(nim_file_2_data + VOXEL_ID) =
+                            static_cast<float>(*(nim_file_2i_data + VOXEL_ID));
                     }
                 }
             }
@@ -174,19 +178,20 @@ int main(int argc, char * argv[]) {
 
     // ========================================================================
 
-    float current_vaso = 0;
+    // float current_vaso = 0;
     nifti_image* boco_vaso = nifti_copy_nim_info(nim_file_1);
     boco_vaso->datatype = NIFTI_TYPE_FLOAT32;
     boco_vaso->nbyper = sizeof(float);
     boco_vaso->data = calloc(boco_vaso->nvox, boco_vaso->nbyper);
-    float  *boco_vaso_data = (float*) boco_vaso->data;
+    float  *boco_vaso_data = static_cast<float*>(boco_vaso->data);
 
     // AVERAGE across Trials
     for (int iz = 0; iz < size_z; ++iz) {
         for (int iy = 0; iy < size_x; ++iy) {
             for (int ix = 0; ix < size_y; ++ix) {
                 for (int it = 0; it < size_t; ++it) {
-                    *(boco_vaso_data + VOXEL_ID) = *(nim_file_1_data + VOXEL_ID) / (*(nim_file_2_data + VOXEL_ID));
+                    *(boco_vaso_data + VOXEL_ID) = *(nim_file_1_data + VOXEL_ID)
+                        / (*(nim_file_2_data + VOXEL_ID));
                 }
             }
         }
@@ -213,7 +218,7 @@ int main(int argc, char * argv[]) {
         correl_file->datatype = NIFTI_TYPE_FLOAT32;
         correl_file->nbyper = sizeof(float);
         correl_file->data = calloc(correl_file->nvox, correl_file->nbyper);
-        float* correl_file_data = (float*) correl_file->data;
+        float* correl_file_data = static_cast<float*>(correl_file->data);
 
         double vec_file1[size_t];
         double vec_file2[size_t];
@@ -224,7 +229,10 @@ int main(int argc, char * argv[]) {
                 for (int iy = 0; iy < size_x; ++iy) {
                     for (int ix = 0; ix < size_y; ++ix) {
                         for (int it = 3; it < size_t-3; ++it) {
-                            *(boco_vaso_data + VOXEL_ID) = *(nim_file_1_data + VOXEL_ID) / (*(nim_file_2_data + nxyz * (it + shift) + nxy * iz + nx * ix + iy));
+                            *(boco_vaso_data + VOXEL_ID) =
+                                *(nim_file_1_data + VOXEL_ID)
+                                / (*(nim_file_2_data + nxyz * (it + shift)
+                                     + nxy * iz + nx * ix + iy));
                         }
                         for (int it = 0; it < size_t; ++it) {
                             vec_file1[it] = *(boco_vaso_data + VOXEL_ID);
@@ -240,7 +248,9 @@ int main(int argc, char * argv[]) {
             for (int iy = 0; iy < size_x; ++iy) {
                 for (int ix = 0; ix < size_y; ++ix) {
                     for (int it = 0; it < size_t; ++it) {
-                        *(boco_vaso_data + VOXEL_ID) = *(nim_file_1_data + VOXEL_ID) / (*(nim_file_2_data + VOXEL_ID));
+                        *(boco_vaso_data + VOXEL_ID) =
+                            *(nim_file_1_data + VOXEL_ID)
+                            / (*(nim_file_2_data + VOXEL_ID));
                     }
                 }
             }
@@ -275,8 +285,10 @@ int main(int argc, char * argv[]) {
     }  // shift loop closed
 
     if (trialdur != 0) {
-        cout << "  Also do the BOLD correction after the trial average." << endl;
-        cout << "  Trial duration is " <<trialdur << ". This means there are " << (float)size_t/(float)trialdur <<  " trials recorded here." << endl;
+        cout << "  Also do BOLD correction after trial average." << endl;
+        cout << "  Trial duration is " << trialdur << ". This means there are "
+             << static_cast<float>(size_t)/static_cast<float>(trialdur)
+             << " trials recorded here." << endl;
 
         int numberofTrials = size_t/trialdur;
         // Trial average file
@@ -286,7 +298,7 @@ int main(int argc, char * argv[]) {
         triav_file->datatype = NIFTI_TYPE_FLOAT32;
         triav_file->nbyper = sizeof(float);
         triav_file->data = calloc(triav_file->nvox, triav_file->nbyper);
-        float* triav_file_data = (float*) triav_file->data;
+        float* triav_file_data = static_cast<float*>(triav_file->data);
 
         nifti_image* triav_B_file = nifti_copy_nim_info(nim_file_1);
         triav_B_file->nt = trialdur;
@@ -294,7 +306,7 @@ int main(int argc, char * argv[]) {
         triav_B_file->datatype = NIFTI_TYPE_FLOAT32;
         triav_B_file->nbyper = sizeof(float);
         triav_B_file->data = calloc(triav_B_file->nvox, triav_B_file->nbyper);
-        float* triav_B_file_data = (float*) triav_B_file->data;
+        float* triav_B_file_data = static_cast<float*>(triav_B_file->data);
 
         float AV_Nulled[trialdur];
         float AV_BOLD[trialdur];
