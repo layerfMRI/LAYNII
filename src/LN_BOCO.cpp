@@ -123,7 +123,7 @@ int main(int argc, char * argv[]) {
     //////////////////////////////////////////////////////////////
 
     if (nim_file_1i->datatype == NIFTI_TYPE_INT16) {
-        short *nim_file_1i_data = (short *) nim_file_1i->data;
+        int16_t* nim_file_1i_data = static_cast<int16_t*>(nim_file_1i->data);
         for (int it = 0; it < size_t; ++it) {
             for (int iz = 0; iz < size_z; ++iz) {
                 for (int iy=0; iy < size_x; ++iy) {
@@ -136,7 +136,7 @@ int main(int argc, char * argv[]) {
         }
     }
     if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
-        float  *nim_file_1i_data = static_cast<float*>(nim_file_1i->data);
+        float* nim_file_1i_data = static_cast<float*>(nim_file_1i->data);
         for (int it = 0; it < size_t; ++it) {
             for (int iz = 0; iz < size_z; ++iz) {
                 // TODO(Faruk): `i!y! < size_!x!` looks susp.
@@ -150,7 +150,7 @@ int main(int argc, char * argv[]) {
         }
     }
     if (nim_file_2i->datatype == NIFTI_TYPE_INT16) {
-        short  *nim_file_2i_data = (short *) nim_file_2i->data;
+        int16_t* nim_file_2i_data = static_cast<int16_t*>(nim_file_2i->data);
         for (int it = 0; it < size_t; ++it) {
             for (int iz = 0; iz < size_z; ++iz) {
                 for (int iy = 0; iy < size_x; ++iy) {
