@@ -32,7 +32,6 @@ int show_help(void) {
 
 int main(int argc, char* argv[]) {
     float SIEMENS_f = 4095.0;
-
     char* fmaski = NULL, *fout = NULL, *finfi_1 = NULL, *finfi_2 = NULL;
     char* finfi_3 = NULL;
     int ac, custom_output = 0;
@@ -142,8 +141,8 @@ int main(int argc, char* argv[]) {
         nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
         float* nim_inputfi_1_data = static_cast<float*>(nim_inputfi_1->data);
         FOR_EACH_VOXEL
-            *(nim_inv1_data + nxyz * t + nxy * z + nx * x + y) =
-                static_cast<float>(*(nim_inputfi_1_data + nxyz * t + nxy * z + nx * x + y));
+            *(nim_inv1_data + VOXEL_ID) =
+                static_cast<float>(*(nim_inputfi_1_data + VOXEL_ID));
         END_FOR_EACH_VOXEL
     }
 
@@ -152,8 +151,8 @@ int main(int argc, char* argv[]) {
         int16_t* nim_inputfi_1_data =
             static_cast<int16_t*>(nim_inputfi_1->data);
         FOR_EACH_VOXEL
-            *(nim_inv1_data + nxyz * t + nxy * z + nx * x + y) =
-                static_cast<float>(*(nim_inputfi_1_data + nxyz * t + nxy * z + nx * x + y));
+            *(nim_inv1_data + VOXEL_ID) =
+                static_cast<float>(*(nim_inputfi_1_data + VOXEL_ID));
         END_FOR_EACH_VOXEL
     }
 
@@ -182,7 +181,7 @@ int main(int argc, char* argv[]) {
         float* nim_inputfi_2_data = static_cast<float*>(nim_inputfi_2->data);
         FOR_EACH_VOXEL
             *(nim_inv2_data + nxyz * t +  nxy * z + nx * x + y) =
-                static_cast<float>(*(nim_inputfi_2_data + nxyz * t + nxy * z + nx * x + y));
+                static_cast<float>(*(nim_inputfi_2_data + VOXEL_ID));
         END_FOR_EACH_VOXEL
     }
 
@@ -191,8 +190,8 @@ int main(int argc, char* argv[]) {
         int16_t* nim_inputfi_2_data =
             static_cast<int16_t*>(nim_inputfi_2->data);
         FOR_EACH_VOXEL
-            *(nim_inv2_data + nxyz * t + nxy * z + nx * x + y) =
-                static_cast<float>(*(nim_inputfi_2_data + nxyz * t + nxy * z + nx * x + y));
+            *(nim_inv2_data + VOXEL_ID) =
+                static_cast<float>(*(nim_inputfi_2_data + VOXEL_ID));
         END_FOR_EACH_VOXEL
     }
 
@@ -212,8 +211,8 @@ int main(int argc, char* argv[]) {
         nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
         float* nim_inputfi_3_data = static_cast<float*>(nim_inputfi_3->data);
         FOR_EACH_VOXEL
-            *(nim_uni_data + nxyz * t + nxy * z + nx * x + y) =
-                static_cast<float>(*(nim_inputfi_3_data + nxyz * t + nxy * z + nx * x + y));
+            *(nim_uni_data + VOXEL_ID) =
+            static_cast<float>(*(nim_inputfi_3_data + VOXEL_ID));
         END_FOR_EACH_VOXEL
     }
 
@@ -222,8 +221,8 @@ int main(int argc, char* argv[]) {
         int16_t* nim_inputfi_3_data =
             static_cast<int16_t*>(nim_inputfi_3->data);
         FOR_EACH_VOXEL
-            *(nim_uni_data + nxyz * t + nxy * z + nx * x + y) =
-                static_cast<float>(*(nim_inputfi_3_data + nxyz * t + nxy * z + nx * x + y));
+            *(nim_uni_data + VOXEL_ID) =
+                static_cast<float>(*(nim_inputfi_3_data + VOXEL_ID));
         END_FOR_EACH_VOXEL
     }
 
@@ -272,20 +271,20 @@ int main(int argc, char* argv[]) {
     // Scaling UNI to range of -0.5 to 0.5 as in the paper //
     /////////////////////////////////////////////////////////
     FOR_EACH_VOXEL
-        unival = (*(nim_uni_data + nxyz * t + nxy * z + nx * x + y) - SIEMENS_f * 0.5) / SIEMENS_f;
-        // inv1val = *(nim_inv1_data + nxyz * t + nxy * z + nx * x + y);
-        inv2val = *(nim_inv2_data + nxyz * t + nxy * z + nx * x + y);
-        wrong_unival = *(nim_inv1_data + nxyz * t + nxy * z + nx * x + y)* *(nim_inv2_data + nxyz * t + nxy * z + nx * x + y) / (*(nim_inv1_data + nxyz * t + nxy * z + nx * x + y)* *(nim_inv1_data + nxyz * t + nxy * z + nx * x + y) + *(nim_inv2_data + nxyz * t + nxy * z + nx * x + y)* *(nim_inv2_data + nxyz * t + nxy * z + nx * x + y));
+        unival = (*(nim_uni_data + VOXEL_ID) - SIEMENS_f * 0.5) / SIEMENS_f;
+        // inv1val = *(nim_inv1_data + VOXEL_ID);
+        inv2val = *(nim_inv2_data + VOXEL_ID);
+        wrong_unival = *(nim_inv1_data + VOXEL_ID) * *(nim_inv2_data + VOXEL_ID) / (*(nim_inv1_data + VOXEL_ID)* *(nim_inv1_data + VOXEL_ID) + *(nim_inv2_data + VOXEL_ID)* *(nim_inv2_data + VOXEL_ID));
 
         // sign_ = unival;
-        // *(nim_uni_data + nxyz * it + nxy * iz + nx * ix + y) / *(phaseerror_data + nxyz * it + nxy * iz + nx * ix + y);
+        // *(nim_uni_data + VOXEL_ID) / *(phaseerror_data + VOXEL_ID);
         // if (sign_ <= 0) {
-        //     *(nim_inv1_data + nxyz * it + nxy * iz + nx * ix + y) = -1 * *(nim_inv1_data + nxyz * it + nxy * iz + nx * ix + y);
+        //     *(nim_inv1_data + VOXEL_ID) = -1 * *(nim_inv1_data + VOXEL_ID);
         // }
 
-        // denoised_wrong = (*(nim_inv1_data + nxyz *it + nxy*iz + nx*ix + y) * *(nim_inv2_data + nxyz *it + nxy*iz + nx*ix + y) -beta) / (*(nim_inv1_data + nxyz *it + nxy*iz + nx*ix + y) * *(nim_inv1_data + nxyz *it + nxy*iz + nx*ix + y) + *(nim_inv2_data + nxyz *it + nxy*iz + nx*ix + y) * *(nim_inv2_data + nxyz *it + nxy*iz + nx*ix + y) + 2. * beta);
+        // denoised_wrong = (*(nim_inv1_data + VOXEL_ID) * *(nim_inv2_data + VOXEL_ID) - beta) / (*(nim_inv1_data + VOXEL_ID) * *(nim_inv1_data + VOXEL_ID) + *(nim_inv2_data + VOXEL_ID) * *(nim_inv2_data + VOXEL_ID) + 2. * beta);
         // denoised_wrong = (denoised_wrong +0.5) * SIEMENS_f;
-        *(phaseerror_data + nxyz * t + nxy * z + nx * x + y) = wrong_unival;
+        *(phaseerror_data + VOXEL_ID) = wrong_unival;
 
         uni1val_calc = inv2val * (1 / (2 * unival) + sqrt(1 / (4 * unival * unival) - 1));
         uni2val_calc = inv2val * (1 / (2 * unival) - sqrt(1 / (4 * unival * unival) - 1));
@@ -296,11 +295,11 @@ int main(int argc, char* argv[]) {
 
         // if (!(uni1val_calc > SIEMENS_f || uni1val_calc < SIEMENS_f)) uni1val_calc = inv1val;
 
-        // *(uni1_data + nxyz * t + nxy * z + nx * x + y) = uni1val_calc;
-        // *(uni2_data + nxyz * t + nxy * z + nx * x + y) = uni2val_calc;
-        // *(phaseerror_data + nxyz * t + nxy * z + nx * x + y) = unival;
+        // *(uni1_data + VOXEL_ID) = uni1val_calc;
+        // *(uni2_data + VOXEL_ID) = uni2val_calc;
+        // *(phaseerror_data + VOXEL_ID) = unival;
 
-        *(dddenoised_data + nxyz * t + nxy * z + nx * x + y) = ((uni1val_calc * inv2val - beta) / (uni1val_calc * uni1val_calc + inv2val * inv2val + 2. * beta) + 0.5) * SIEMENS_f;
+        *(dddenoised_data + VOXEL_ID) = ((uni1val_calc * inv2val - beta) / (uni1val_calc * uni1val_calc + inv2val * inv2val + 2. * beta) + 0.5) * SIEMENS_f;
     END_FOR_EACH_VOXEL
 
     dddenoised->scl_slope = nim_uni->scl_slope;
@@ -316,7 +315,7 @@ int main(int argc, char* argv[]) {
 
     if (custom_output == 1) {
         string outfilename = (string) (fout);
-        cout << "  Writing output as:\n    " << outfilename.c_str() << endl;
+        log_output(outfilename.c_str());
         const char* fout_1 = outfilename.c_str();
         if (nifti_set_filenames(dddenoised, fout_1, 1, 1)) {
             return 1;
@@ -325,7 +324,7 @@ int main(int argc, char* argv[]) {
         string prefix = "denoised_";
         string filename = (string) (finfi_3);
         string outfilename = prefix+filename;
-        cout << "  Writing output as:\n    " << outfilename.c_str() << endl;
+        log_output(outfilename.c_str());
         const char* fout_1 = outfilename.c_str();
         if (nifti_set_filenames(dddenoised, fout_1, 1, 1)) {
             return 1;

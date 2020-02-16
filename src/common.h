@@ -30,4 +30,5 @@ using namespace std;
                        for (int y = 0; y < size_y; y++) {\
                        for (int x = 0; x < size_x; x++) {
 #define END_FOR_EACH_VOXEL }}}}
+#define VOXEL_ID (nxyz * t + nxy * z + nx * x + y)
 // ============================================================================
