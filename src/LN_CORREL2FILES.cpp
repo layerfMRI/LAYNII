@@ -1,5 +1,6 @@
 
 #include "./common.h"
+#include "./renzo_stat.h"
 
 int show_help(void) {
     printf(

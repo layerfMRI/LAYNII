@@ -2,7 +2,6 @@
 #include "./common.h"
 #include "./renzo_stat.h"
 
-
 int show_help(void) {
     printf(
     "LN_SKEW: A program that calculates the skew of a time series.\n"
