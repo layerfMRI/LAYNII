@@ -1,5 +1,6 @@
 
 #include "./common.h"
+#include "./utils.h"
 
 int show_help(void) {
     printf(
@@ -32,8 +33,8 @@ int show_help(void) {
     return 0;
 }
 
-int main(int argc, char * argv[]) {
-    char * fmaski = NULL, *fout = NULL, * finfi = NULL;
+int main(int argc, char*  argv[]) {
+    char*  fmaski = NULL, *fout = NULL, * finfi = NULL;
     int ac, twodim = 0, do_masking = 0, sulctouch = 0;
     float FWHM_val = 0;
     if (argc < 3) return show_help();  // Typing '-help' is sooo much work
@@ -68,7 +69,7 @@ int main(int argc, char * argv[]) {
             cout << "Smooth across sluci, might take longer."  << endl;
         } else if (!strcmp(argv[ac], "-mask")) {
             do_masking = 1;
-            cout << "Set voxels to 0 outside layers (masking option)"  << endl;
+            cout << "Set voxels to zero outside layers (mask option)"  << endl;
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -82,7 +83,7 @@ int main(int argc, char * argv[]) {
     // read input dataset, including data
     nifti_image * nim_inputfi = nifti_image_read(finfi, 1);
     if (!nim_inputfi) {
-        fprintf(stderr, "** failed to read layer NIfTI image from '%s'\n", finfi);
+        fprintf(stderr, "** failed to read NIfTI from '%s'\n", finfi);
         return 2;
     }
     if (!fmaski) {
@@ -92,7 +93,7 @@ int main(int argc, char * argv[]) {
     // read input dataset, including data
     nifti_image * nim_maski = nifti_image_read(fmaski, 1);
     if (!nim_maski) {
-        fprintf(stderr, "** failed to read layer NIfTI image from '%s'\n", fmaski);
+        fprintf(stderr, "** failed to read NIfTI from '%s'\n", fmaski);
         return 2;
     }
 
@@ -129,19 +130,6 @@ int main(int argc, char * argv[]) {
     // Fixing potential problems with different input datatypes //
     //////////////////////////////////////////////////////////////
 
-    if (nim_inputfi->datatype == NIFTI_TYPE_FLOAT32) {
-        float* nim_inputfi_data = (float*) nim_inputfi->data;
-        for (int it=0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_inputf_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_inputfi_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-
     if (nim_inputfi->datatype == NIFTI_TYPE_INT16) {
         short *nim_inputfi_data = (short *) nim_inputfi->data;
         for (int it = 0; it < nrep; ++it) {
@@ -154,7 +142,6 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-
     if (nim_inputfi->datatype == NIFTI_TYPE_INT32) {
         int* nim_inputfi_data = (int*) nim_inputfi->data;
         for (int it=0; it < nrep; ++it) {
@@ -167,14 +154,13 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-
-    if (nim_maski->datatype == NIFTI_TYPE_FLOAT32) {
-        float* nim_maski_data = (float*) nim_maski->data;
-        for (int it = 0; it < nrep; ++it) {
+    if (nim_inputfi->datatype == NIFTI_TYPE_FLOAT32) {
+        float* nim_inputfi_data = (float*) nim_inputfi->data;
+        for (int it=0; it < nrep; ++it) {
             for (int islice = 0; islice < sizeSlice; ++islice) {
                 for (int iy = 0; iy < sizePhase; ++iy) {
                     for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_mask_data + nxyz * it + nxy * islice + nx * ix + iy) = (int) (*(nim_maski_data + nxyz * it + nxy * islice + nx * ix + iy));
+                        *(nim_inputf_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_inputfi_data + nxyz * it + nxy * islice + nx * ix + iy));
                     }
                 }
             }
@@ -193,7 +179,6 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-
     if (nim_maski->datatype == NIFTI_TYPE_INT32) {
         int* nim_maski_data = (int*) nim_maski->data;
         for (int it = 0; it < nrep; ++it) {
@@ -206,11 +191,21 @@ int main(int argc, char * argv[]) {
             }
         }
     }
+    if (nim_maski->datatype == NIFTI_TYPE_FLOAT32) {
+        float* nim_maski_data = (float*) nim_maski->data;
+        for (int it = 0; it < nrep; ++it) {
+            for (int islice = 0; islice < sizeSlice; ++islice) {
+                for (int iy = 0; iy < sizePhase; ++iy) {
+                    for (int ix = 0; ix < sizeRead; ++ix) {
+                        *(nim_mask_data + nxyz * it + nxy * islice + nx * ix + iy) = (int) (*(nim_maski_data + nxyz * it + nxy * islice + nx * ix + iy));
+                    }
+                }
+            }
+        }
+    }
 
-    cout << sizeSlice << " Slices | " << sizePhase << " Phase steps | " << sizeRead << " Read_steps | " << nrep << " Time_steps " << endl;
-    cout << "  Voxel size = " << dX << " x " << dY << " x "  << dZ << endl;
-    cout << "  Datatype 1 + " << nim_inputf->datatype << endl;
-    cout << "  Datatype 2 + " << nim_mask->datatype << endl;
+    log_nifti_descriptives(nim_inputf);
+    log_nifti_descriptives(nim_mask);
 
     /////////////////////////////////////
     // MAKE allocating necessary files //
@@ -231,7 +226,8 @@ int main(int argc, char * argv[]) {
     float* smoothed_data = (float*) smoothed->data;
     float* gausweight_data = (float*) gausweight->data;
 
-    float dist(float x1, float y1, float z1, float x2, float y2, float z2, float dX, float dY, float dZ);
+    float dist(float x1, float y1, float z1, float x2, float y2, float z2,
+               float dX, float dY, float dZ);
     float gaus(float distance, float sigma);
 
     cout << "  Debug 2" << endl;
@@ -255,7 +251,7 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    cout << "  There are  " << layernumber << " layers/masks to smooth within." << endl;
+    cout << "  There are " << layernumber << " layers/masks to smooth within." << endl;
 
     ///////////////////////
     // Making it integer //
@@ -425,11 +421,11 @@ int main(int argc, char * argv[]) {
         //         }
         //     }
         // }
-        const char *fout_3 = "hairy_brain.nii";
+        const char* fout_3 = "hairy_brain.nii";
         if (nifti_set_filenames(hairy_brain, fout_3, 1, 1)) return 1;
         nifti_image_write(hairy_brain);
     }
-    cout << "  Smoothing done. " <<  endl;
+    cout << "  Smoothing is done. " <<  endl;
 
     ////////////////////////////////
     // Masking if it is it wanted //
@@ -449,8 +445,8 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    // cout << " runing also until here  5.... " << endl;
-    // cout << " slope " << smoothed->scl_slope << " " << nim_inputfi->scl_slope << endl;
+    // cout << "  Running also until here  5..." << endl;
+    // cout << "  Slope " << smoothed->scl_slope << " " << nim_inputfi->scl_slope << endl;
 
     smoothed->scl_slope = nim_inputfi->scl_slope;
 
@@ -463,25 +459,24 @@ int main(int argc, char * argv[]) {
     }
 
     // Output file name
-    // const char *fout_4 = "leaky_layers.nii" ;
+    // const char* fout_4 = "leaky_layers.nii" ;
     // if (nifti_set_filenames(leak_layer, fout_4, 1, 1)) return 1;
     // nifti_image_write(leak_layer);
 
-    // const char *fout_5 = "input_file.nii" ;
+    // const char* fout_5 = "input_file.nii" ;
     // if (nifti_set_filenames(nim_inputf, fout_5, 1, 1)) return 1;
     // nifti_image_write(nim_inputf);
 
-    // const char *fout_2 = "mask.nii" ;
+    // const char* fout_2 = "mask.nii" ;
     // if (nifti_set_filenames(nim_mask, fout_2, 1, 1)) return 1;
     // nifti_image_write(nim_mask);
 
     string prefix = "smoothed_";
     string filename = (string) (finfi);
     string outfilename = prefix + filename;
+    log_output(outfilename.c_str());
 
-    cout << "  Writing as = " << outfilename.c_str() << endl;  // finfi is: char *
-
-    const char *fout_1 = outfilename.c_str();
+    const char* fout_1 = outfilename.c_str();
     if (nifti_set_filenames(smoothed, fout_1, 1, 1)) {
         return 1;
     }
@@ -490,6 +485,7 @@ int main(int argc, char * argv[]) {
     // const char  *fout_1="layer.nii" ;
     // if(nifti_set_filenames(layer, fout_1 , 1, 1)) return 1;
     // nifti_image_write(layer);
+    cout << "  Finished." << endl;
     return 0;
 }
 
