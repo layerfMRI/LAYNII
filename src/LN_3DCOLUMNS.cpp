@@ -54,10 +54,10 @@ int main(int argc, char * argv[]) {
             landmarks_filename = argv[ac];  // Assign pointer, no string copy
         } else if (!strcmp(argv[ac], "-twodim")) {
             twodim = 1;
-            cout << " I will do smoothing only in 2D" << endl;
+            cout << "Smoothing only in 2D." << endl;
         } else if (!strcmp(argv[ac], "-jiajiaoption")) {
             jiajiaoption = 1;
-            cout << " I fill not remove CSF " << endl;
+            cout << "Do not remove CSF." << endl;
         } else if (!strcmp(argv[ac], "-vinc")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -vinc\n");
@@ -66,7 +66,7 @@ int main(int argc, char * argv[]) {
             jiajiavinc_max = atof(argv[ac]);  // Assign pointer, no string copy
         } else if (!strcmp(argv[ac], "-mask")) {
             do_masking = 1;
-            cout << " I will set every to zero outside the layers" << endl;
+            cout << "Set every voxel to zero outside the layers." << endl;
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -79,14 +79,14 @@ int main(int argc, char * argv[]) {
     // Read input dataset, including data
     nifti_image * nim_landmarks_r = nifti_image_read(landmarks_filename, 1);
     if (!nim_landmarks_r) {
-        fprintf(stderr, "** failed to read layer NIfTI image from '%s'\n", landmarks_filename);
+        fprintf(stderr, "** failed to read landmarks NIfTI from '%s'\n", landmarks_filename);
         return 2;
     }
     if (!layer_filename) { fprintf(stderr, "** missing option '-layer_file'\n");  return 1; }
     // Read input dataset, including data
     nifti_image * nim_layers_r = nifti_image_read(layer_filename, 1);
     if (!nim_layers_r) {
-        fprintf(stderr, "** failed to read layer NIfTI image from '%s'\n", layer_filename);
+        fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", layer_filename);
         return 2;
     }
     // Get dimensions of input
@@ -196,24 +196,23 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    cout << " " << sizeSlice << " slices    " << sizePhase << " PhaseSteps     " << sizeRead << " Read steps    " << nrep << " timesteps " << endl;
+    cout << " " << sizeSlice << " Slices | " << sizePhase << " Phase_steps | " << sizeRead << " Read_steps | " << nrep << " Time_steps " << endl;
     cout << "  Voxel size = " << dX << " x " << dY << " x " << dZ << endl;
-    cout << "  Datatye of layers mask = " << nim_layers->datatype << endl;
-    cout << "  Datatye of landmark mask = " << nim_landmarks ->datatype << endl;
+    cout << "  Datatype of layers mask = " << nim_layers->datatype << endl;
+    cout << "  Datatype of landmark mask = " << nim_landmarks->datatype << endl;
 
     //////////////////////////////
     // Finding number of layers //
     //////////////////////////////
     int layernumber = 0;
-
     for (int iz = 0; iz < sizeSlice; ++iz) {
         for (int iy = 0; iy < sizePhase; ++iy) {
             for (int ix = 0; ix < sizeRead; ++ix) {
-                if (*(nim_layers_data + nxy * iz + nx * ix + iy) > layernumber)  layernumber = *(nim_layers_data + nxy * iz + nx * ix + iy);
+                if (*(nim_layers_data + nxy * iz + nx * ix + iy) > layernumber) layernumber = *(nim_layers_data + nxy * iz + nx * ix + iy);
             }
         }
     }
-    cout << " There are  " << layernumber<< " layers  " << endl;
+    cout << "  There are  " << layernumber<< " layers." << endl;
 
     ////////////////////////////////
     // Allocating necessary files //
@@ -363,7 +362,7 @@ int main(int argc, char * argv[]) {
     ///////////////////////
     // Growing from left //
     ///////////////////////
-    cout << " growing from left " << endl;
+    cout << "  Growing from left..." << endl;
 
     for (int iz = 0; iz < sizeSlice; ++iz) {
         for (int iy = 0; iy < sizePhase; ++iy) {
@@ -432,7 +431,7 @@ int main(int argc, char * argv[]) {
     ////////////////////////
     // Growing from Right //
     ////////////////////////
-    cout << " growing from right " << endl;
+    cout << "  Growing from right..." << endl;
 
     for (int iz = 0; iz < sizeSlice; ++iz) {
         for (int iy = 0; iy < sizePhase; ++iy) {
@@ -505,7 +504,7 @@ int main(int argc, char * argv[]) {
     //////////////////////////////////////
     // Get normalized coordinate system //
     //////////////////////////////////////
-    cout << " get normalized coordinate syste, " << endl;
+    cout << "  Getting normalized coordinate system..." << endl;
 
     for (int iz = 0; iz < sizeSlice; ++iz) {
         for (int iy = 0; iy < sizePhase; ++iy) {
@@ -546,7 +545,7 @@ int main(int argc, char * argv[]) {
     // cout << "  Smooth columns " << endl;
 
     float gaus(float distance, float sigma);
-    cout << "  Smoothing in middle layer " << endl;
+    cout << "  Smoothing in middle layer..." << endl;
 
     nifti_image * smoothed = nifti_copy_nim_info(nim_layers);
     nifti_image * gausweight = nifti_copy_nim_info(nim_layers);
@@ -560,7 +559,7 @@ int main(int argc, char * argv[]) {
     float *gausweight_data = (float *) gausweight->data;
 
     // float kernal_size = 10; // Corresponds to one voxel size.
-    int  FWHM_val = 1;
+    int FWHM_val = 1;
     int vinc_sm = max(1., 2. * FWHM_val / dX);  // Ignore if voxel is too far
     dist_i = 0.;
     cout << "  vinc_sm " << vinc_sm<< endl;
@@ -649,7 +648,7 @@ int main(int argc, char * argv[]) {
                 if (*(lateralCoord_data + nxy*iz + nx*ix + iy) > 0) {
                     // for (int iz_i = max(0, iz-vinc_thickness + 1); iz_i < min(iz + vinc_thickness + 1, sizeSlice); ++iz_i) {
                     int iz_i = iz;
-                    for (int  iy_i = max(0, iy-vinc_thickness+1); iy_i<min(iy+vinc_thickness+1, sizePhase); ++iy_i) {
+                    for (int iy_i = max(0, iy-vinc_thickness+1); iy_i<min(iy+vinc_thickness+1, sizePhase); ++iy_i) {
                         for (int ix_i = max(0, ix-vinc_thickness+1); ix_i<min(ix+vinc_thickness+1, sizeRead); ++ix_i) {
                             if (*(lateralCoord_data + nxy*iz_i + nx*ix_i + iy_i) == 0  && *(nim_layers_data + nxy*iz + nx*ix + iy) > 0 && dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ) < vinc_thickness) {
                                 dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
@@ -708,7 +707,7 @@ int main(int argc, char * argv[]) {
                     int iz_i = iz;
                     for (int iy_i = max(0, iy - vinc_sm); iy_i < min(iy + vinc_sm + 1, sizePhase); ++iy_i) {
                         for (int ix_i = max(0, ix - vinc_sm); ix_i < min(ix + vinc_sm + 1, sizeRead); ++ix_i) {
-                            if (abs((int) * (nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) - layernumber_i) < 2 && *(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) > 0) {
+                            if (abs((int) *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) - layernumber_i) < 2 && *(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) > 0) {
                                 dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                 // cout << "debug  4 " << gaus(dist_i, FWHM_val) << endl;
                                 // cout << "debug  5 " << dist_i << endl;
@@ -745,7 +744,7 @@ int main(int argc, char * argv[]) {
     //////////////////////////
     // Sparse visualisation //
     //////////////////////////
-    cout << "  Visualisation " << endl;
+    cout << "  Visualisation..." << endl;
 
     for (int iz = 0; iz < sizeSlice; ++iz) {
         for (int iy = 0; iy < sizePhase; ++iy) {
@@ -762,7 +761,7 @@ int main(int argc, char * argv[]) {
     //////////////////////////////////
     // Growing from as thick cortex //
     //////////////////////////////////
-    cout << "  Growing from center with thick cortex." << endl;
+    cout << "  Growing from center with thick cortex..." << endl;
     cout << "  Jiajia Option is on." << endl;
 
     int Jiajia_otion = 1;
@@ -810,7 +809,7 @@ int main(int argc, char * argv[]) {
         for (int grow_i = 1; grow_i < vinc_max_thick; grow_i++) {
             for (int iz = 0; iz < sizeSlice; ++iz) {
                 for (int iy = 0; iy <sizePhase; ++iy) {
-                    for (int ix = 0;  ix < sizeRead-0; ++ix) {
+                    for (int ix = 0; ix < sizeRead-0; ++ix) {
                         if ( *(nim_layers_data + nxy*iz + nx*ix + iy) > 0 && *(nim_layers_data + nxy*iz + nx*ix + iy) < layernumber && *(growfromCenter_thick_data + nxy*iz + nx*ix + iy) == grow_i && *(hairy_brain_data + nxy*iz + nx*ix + iy) > 0) {
                             // Note: Only grow into areas that are GM and that have not been gown into, yet...
                             // And it should stop as soon as it hits the border.
@@ -860,7 +859,7 @@ int main(int argc, char * argv[]) {
     /////////////////////////////
     // Clean up hairy brain /////
     /////////////////////////////
-    cout << "  Clean up hairy brain." << endl;
+    cout << "  Cleaning up hairy brain..." << endl;
     for (int iz = 0; iz < sizeSlice; ++iz) {
         for (int iy = 0; iy < sizePhase; ++iy) {
             for (int ix = 0; ix < sizeRead - 0; ++ix) {
@@ -882,8 +881,8 @@ int main(int argc, char * argv[]) {
         for (int iy = 0; iy < sizePhase; ++iy) {
             for (int ix = 0; ix < sizeRead-0; ++ix) {
                 if (*(hairy_brain_data + nxy * iz + nx * ix + iy) >  0) {
-                    if ((int) * (hairy_brain_data + nxy * iz + nx *ix + iy) > max_columns) max_columns = (int) *(hairy_brain_data + nxy * iz + nx * ix + iy);
-                    if ((int) * (hairy_brain_data + nxy * iz + nx *ix + iy) < min_columns) min_columns = (int) *(hairy_brain_data + nxy * iz + nx * ix + iy);
+                    if ((int) *(hairy_brain_data + nxy * iz + nx *ix + iy) > max_columns) max_columns = (int) *(hairy_brain_data + nxy * iz + nx * ix + iy);
+                    if ((int) *(hairy_brain_data + nxy * iz + nx *ix + iy) < min_columns) min_columns = (int) *(hairy_brain_data + nxy * iz + nx * ix + iy);
                 }
             }
         }
@@ -944,7 +943,7 @@ int main(int argc, char * argv[]) {
 }
 
 float dist(float x1, float y1, float z1, float x2, float y2, float z2,
-            float dX, float dY, float dZ) {
+           float dX, float dY, float dZ) {
     return sqrt((x1 - x2) * (x1 - x2) * dX * dX
                 + (y1 - y2) * (y1 - y2) * dY * dY
                 + (z1 - z2) * (z1 - z2) * dZ * dZ);
