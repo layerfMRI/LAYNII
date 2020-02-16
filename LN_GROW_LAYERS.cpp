@@ -207,6 +207,18 @@ if ( nim_input_i->datatype == NIFTI_TYPE_INT16 || nim_input_i->datatype == DT_UI
 	}
 }    
 
+if ( nim_input_i->datatype == NIFTI_TYPE_INT8 || nim_input_i->datatype == DT_UINT8 ) {
+  int8_t  *nim_input_i_data = (int8_t *) nim_input_i->data;
+  	for(int it=0; it<nrep; ++it){  
+	  for(int islice=0; islice<sizeSlice; ++islice){  
+	      for(int iy=0; iy<sizePhase; ++iy){
+	        for(int ix=0; ix<sizeRead; ++ix){
+        		 *(nim_input_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = (int8_t) (*(nim_input_i_data  + nxyz *it +  nxy*islice + nx*ix  + iy  )) ;	
+           } 
+	    }
+	  }
+	}
+}    
 
    
     nifti_image * equi_dist_layers  = nifti_copy_nim_info(nim_input);
@@ -502,6 +514,17 @@ cout << " start growing from CSF .... " << endl;
       }
     }
  }
+ 
+ if (debug > 0 ) {
+  const char  *fout_5="debug_WM_pre_pytagoras.nii" ;
+  if( nifti_set_filenames(growfromWM1, fout_5 , 1, 1) ) return 1;
+  nifti_image_write( growfromWM1 );
+  
+  const char  *fout_6="debug_GM_pre_pytagoras.nii" ;
+  if( nifti_set_filenames(growfromGM1, fout_6 , 1, 1) ) return 1;
+  nifti_image_write( growfromGM1 );
+  
+}
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
