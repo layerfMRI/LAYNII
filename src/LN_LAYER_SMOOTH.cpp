@@ -133,10 +133,10 @@ int main(int argc, char*  argv[]) {
     if (nim_inputfi->datatype == NIFTI_TYPE_INT16) {
         short *nim_inputfi_data = (short *) nim_inputfi->data;
         for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
+            for (int iz  = 0; iz  < sizeSlice; ++iz) {
                 for (int iy = 0; iy < sizePhase; ++iy) {
                     for (int ix=0; ix < sizeRead; ++ix) {
-                        *(nim_inputf_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_inputfi_data + nxyz * it + nxy * islice + nx * ix + iy));
+                        *(nim_inputf_data + VOXEL_ID) = (float) (*(nim_inputfi_data + VOXEL_ID));
                     }
                 }
             }
@@ -145,10 +145,10 @@ int main(int argc, char*  argv[]) {
     if (nim_inputfi->datatype == NIFTI_TYPE_INT32) {
         int* nim_inputfi_data = (int*) nim_inputfi->data;
         for (int it=0; it < nrep; ++it) {
-            for (int islice=0; islice < sizeSlice; ++islice) {
+            for (int iz =0; iz  < sizeSlice; ++iz) {
                 for (int iy=0; iy < sizePhase; ++iy) {
                     for (int ix=0; ix < sizeRead; ++ix) {
-                        *(nim_inputf_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_inputfi_data + nxyz * it + nxy * islice + nx * ix + iy));
+                        *(nim_inputf_data + VOXEL_ID) = (float) (*(nim_inputfi_data + VOXEL_ID));
                     }
                 }
             }
@@ -157,10 +157,10 @@ int main(int argc, char*  argv[]) {
     if (nim_inputfi->datatype == NIFTI_TYPE_FLOAT32) {
         float* nim_inputfi_data = (float*) nim_inputfi->data;
         for (int it=0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
+            for (int iz  = 0; iz  < sizeSlice; ++iz) {
                 for (int iy = 0; iy < sizePhase; ++iy) {
                     for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_inputf_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_inputfi_data + nxyz * it + nxy * islice + nx * ix + iy));
+                        *(nim_inputf_data + VOXEL_ID) = (float) (*(nim_inputfi_data + VOXEL_ID));
                     }
                 }
             }
@@ -170,10 +170,10 @@ int main(int argc, char*  argv[]) {
     if (nim_maski->datatype == NIFTI_TYPE_INT16) {
         short *nim_maski_data = (short *) nim_maski->data;
         for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
+            for (int iz  = 0; iz  < sizeSlice; ++iz) {
                 for (int iy = 0; iy < sizePhase; ++iy) {
                     for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_mask_data + nxyz * it + nxy * islice + nx * ix + iy) = (int) (*(nim_maski_data + nxyz * it + nxy * islice + nx * ix + iy));
+                        *(nim_mask_data + VOXEL_ID) = (int) (*(nim_maski_data + VOXEL_ID));
                     }
                 }
             }
@@ -182,10 +182,10 @@ int main(int argc, char*  argv[]) {
     if (nim_maski->datatype == NIFTI_TYPE_INT32) {
         int* nim_maski_data = (int*) nim_maski->data;
         for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
+            for (int iz  = 0; iz  < sizeSlice; ++iz) {
                 for (int iy = 0; iy < sizePhase; ++iy) {
                     for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_mask_data + nxyz * it + nxy * islice + nx * ix + iy) = (int) (*(nim_maski_data + nxyz * it + nxy * islice + nx * ix + iy));
+                        *(nim_mask_data + VOXEL_ID) = (int) (*(nim_maski_data + VOXEL_ID));
                     }
                 }
             }
@@ -194,10 +194,10 @@ int main(int argc, char*  argv[]) {
     if (nim_maski->datatype == NIFTI_TYPE_FLOAT32) {
         float* nim_maski_data = (float*) nim_maski->data;
         for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
+            for (int iz  = 0; iz  < sizeSlice; ++iz) {
                 for (int iy = 0; iy < sizePhase; ++iy) {
                     for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_mask_data + nxyz * it + nxy * islice + nx * ix + iy) = (int) (*(nim_maski_data + nxyz * it + nxy * islice + nx * ix + iy));
+                        *(nim_mask_data + VOXEL_ID) = (int) (*(nim_maski_data + VOXEL_ID));
                     }
                 }
             }
@@ -246,7 +246,7 @@ int main(int argc, char*  argv[]) {
     for (int iz = 0; iz < sizeSlice; ++iz) {
         for (int iy = 0; iy < sizePhase; ++iy) {
             for (int ix = 0; ix < sizeRead; ++ix) {
-                if (*(nim_mask_data + nxy * iz + nx * ix + iy) > layernumber) layernumber = *(nim_mask_data + nxy * iz + nx * ix + iy);
+                if (*(nim_mask_data + VOXEL_ID_3D) > layernumber) layernumber = *(nim_mask_data + VOXEL_ID_3D);
             }
         }
     }
@@ -271,8 +271,8 @@ int main(int argc, char*  argv[]) {
             for (int iz = 0; iz < sizeSlice; ++iz) {
                 for (int iy = 0; iy < sizePhase; ++iy) {
                     for (int ix = 0; ix < sizeRead - 0; ++ix) {
-                        *(gausweight_data + nxy * iz + nx * ix + iy) = 0;
-                        // *(smoothed_data + nxy * iz + nx * ix + iy) = 0;
+                        *(gausweight_data + VOXEL_ID_3D) = 0;
+                        // *(smoothed_data + VOXEL_ID_3D) = 0;
 
                         if (*(nim_mask_data + nxy*iz + nx * ix + iy) == layernumber_i) {
 
@@ -281,19 +281,19 @@ int main(int argc, char*  argv[]) {
                                     for (int ix_i = max(0, ix-vinc); ix_i < min(ix + vinc + 1, sizeRead - 1); ++ix_i) {
                                         if (*(nim_mask_data + nxy * iz_i + nx * ix_i + iy_i) == layernumber_i) {
                                             dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                            // cout << "debug  4 " << gaus(dist_i ,FWHM_val) <<   endl;
-                                            // cout << "debug  5 " << dist_i  <<   endl;
-                                            // if (*(nim_input_data + nxy * iz + nx * ix + iy) == 3) cout << "debug  4b " << endl;
-                                            // dummy = *(layer_data  + nxy*iz_i + nx*ix_i  + iy_i );
-                                            *(smoothed_data + nxy * iz + nx * ix + iy) = *(smoothed_data + nxy * iz + nx * ix + iy) + *(nim_inputf_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
-                                            *(gausweight_data + nxy * iz + nx * ix + iy) = *(gausweight_data + nxy * iz + nx * ix + iy) + gaus(dist_i, FWHM_val);
+                                            // cout << "  Debug 4 " << gaus(dist_i ,FWHM_val) <<   endl;
+                                            // cout << "  Debug 5 " << dist_i  <<   endl;
+                                            // if (*(nim_input_data + VOXEL_ID_3D) == 3) cout << "debug  4b " << endl;
+                                            // dummy = *(layer_data + nxy*iz_i + nx*ix_i + iy_i);
+                                            *(smoothed_data + VOXEL_ID_3D) = *(smoothed_data + VOXEL_ID_3D) + *(nim_inputf_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
+                                            *(gausweight_data + VOXEL_ID_3D) = *(gausweight_data + VOXEL_ID_3D) + gaus(dist_i, FWHM_val);
                                         }
                                     }
                                 }
                             }
-                            if (*(gausweight_data + nxy * iz + nx * ix + iy) > 0) *(smoothed_data + nxy * iz + nx * ix + iy) = *(smoothed_data + nxy * iz + nx * ix + iy) / *(gausweight_data + nxy * iz + nx * ix + iy);
+                            if (*(gausweight_data + VOXEL_ID_3D) > 0) *(smoothed_data + VOXEL_ID_3D) = *(smoothed_data + VOXEL_ID_3D) / *(gausweight_data + VOXEL_ID_3D);
                         }
-                        if (*(nim_mask_data + nxy * iz + nx * ix + iy) <= 0) *(smoothed_data + nxy * iz + nx * ix + iy) = *(nim_inputf_data + nxy * iz + nx * ix + iy);
+                        if (*(nim_mask_data + VOXEL_ID_3D) <= 0) *(smoothed_data + VOXEL_ID_3D) = *(nim_inputf_data + VOXEL_ID_3D);
                     }
                 }
             }
@@ -318,7 +318,7 @@ int main(int argc, char*  argv[]) {
         for (int iz = 0; iz < sizeSlice; ++iz) {
             for (int iy = 0; iy < sizePhase; ++iy) {
                 for (int ix = 0; ix < sizeRead - 0; ++ix) {
-                    *(smoothed_data + nxy * iz + nx * ix + iy) = 0;
+                    *(smoothed_data + VOXEL_ID_3D) = 0;
                 }
             }
         }
@@ -337,7 +337,9 @@ int main(int argc, char*  argv[]) {
         for (int iz = 0; iz < sizeSlice; ++iz) {
             for (int iy = 0; iy < sizePhase; ++iy) {
                 for (int ix = 0; ix < sizeRead; ++ix) {
-                    if (*(nim_mask_data + nxy * iz + nx * ix + iy) > 1) nvoxels_to_go_across++;
+                    if (*(nim_mask_data + VOXEL_ID_3D) > 1) {
+                        nvoxels_to_go_across++;
+                    }
                 }
             }
         }
@@ -346,14 +348,14 @@ int main(int argc, char*  argv[]) {
         for (int iz = 0; iz < sizeSlice; ++iz) {
             for (int iy = 0; iy < sizePhase; ++iy) {
                 for (int ix = 0; ix < sizeRead - 0; ++ix) {
-                    if (*(nim_mask_data + nxy * iz + nx * ix + iy) > 0) {
+                    if (*(nim_mask_data + VOXEL_ID_3D) > 0) {
                         running_index++;
                         if ((running_index * 100) / nvoxels_to_go_across != pref_ratio) {
                             cout << "\r " << (running_index * 100) / nvoxels_to_go_across <<  "% " << flush;
                             pref_ratio = (running_index * 100) / nvoxels_to_go_across;
                         }
-                        layernumber_i = *(nim_mask_data + nxy * iz + nx * ix + iy);
-                        *(gausweight_data + nxy * iz + nx * ix + iy) = 0;
+                        layernumber_i = *(nim_mask_data + VOXEL_ID_3D);
+                        *(gausweight_data + VOXEL_ID_3D) = 0;
 
                         /////////////////////////////////////////////////
                         // Find area that is not from the other sulcus //
@@ -366,12 +368,12 @@ int main(int argc, char*  argv[]) {
                             for (int iy_i = max(0, iy - vinc - vinc_steps); iy_i <= min(iy + vinc + vinc_steps, sizePhase - 1); ++iy_i) {
                                 for (int ix_i = max(0, ix - vinc - vinc_steps); ix_i <= min(ix + vinc + vinc_steps, sizeRead - 1); ++ix_i) {
                                     // cout << iz_i << " " << iy_i << "  " << ix_i << "  " <<  sizeSlice-1 << " " << sizePhase-1 << "  " << sizePhase-1 << "  " << endl;
-                                    *(hairy_brain_data  + nxy*iz_i + nx*ix_i  + iy_i) = 0;
+                                    *(hairy_brain_data + nxy*iz_i + nx*ix_i + iy_i) = 0;
                                 }
                             }
                         }
                         // cout << "  here " << endl;
-                        *(hairy_brain_data  + nxy*iz + nx*ix  + iy) = 1;
+                        *(hairy_brain_data + nxy*iz + nx*ix + iy) = 1;
 
                         // Growing into neigbouring voxels.
                         for (int K_= 0; K_< vinc; K_++) {
@@ -400,14 +402,14 @@ int main(int argc, char*  argv[]) {
                                 for (int ix_i = max(0, ix-vinc); ix_i <= min(ix + vinc, sizeRead - 1); ++ix_i) {
                                     if (*(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) == 1) {
                                         dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                        *(smoothed_data + nxy * iz + nx * ix + iy) = *(smoothed_data + nxy * iz + nx * ix + iy) + *(nim_inputf_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
-                                        *(gausweight_data + nxy * iz + nx * ix + iy) = *(gausweight_data + nxy * iz + nx * ix + iy) + gaus(dist_i, FWHM_val);
+                                        *(smoothed_data + VOXEL_ID_3D) = *(smoothed_data + VOXEL_ID_3D) + *(nim_inputf_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
+                                        *(gausweight_data + VOXEL_ID_3D) = *(gausweight_data + VOXEL_ID_3D) + gaus(dist_i, FWHM_val);
                                     }
                                 }
                             }
                         }
-                        if (*(gausweight_data + nxy * iz + nx * ix + iy) > 0) *(smoothed_data + nxy * iz + nx * ix + iy) = *(smoothed_data + nxy * iz + nx * ix + iy) / *(gausweight_data + nxy * iz + nx * ix + iy);
-                    } // if scope  if (*(nim_mask_data + nxy * iz + nx * ix + iy) > 0){ closed
+                        if (*(gausweight_data + VOXEL_ID_3D) > 0) *(smoothed_data + VOXEL_ID_3D) = *(smoothed_data + VOXEL_ID_3D) / *(gausweight_data + VOXEL_ID_3D);
+                    } // if scope  if (*(nim_mask_data + VOXEL_ID_3D) > 0){ closed
 
                 }
             }
@@ -415,8 +417,8 @@ int main(int argc, char*  argv[]) {
         // for(int iz=0; iz<sizeSlice; ++iz){
         //     for(int iy=0; iy<sizePhase; ++iy){
         //         for(int ix=0; ix<sizeRead; ++ix){
-        //             if(*(nim_inputf_data + nxy * iz + nx * ix + iy) > 0) {
-        //                 *(nim_inputf_data + nxy * iz + nx * ix + iy) = *(smoothed_data + nxy * iz + nx * ix + iy);
+        //             if(*(nim_inputf_data + VOXEL_ID_3D) > 0) {
+        //                 *(nim_inputf_data + VOXEL_ID_3D) = *(smoothed_data + VOXEL_ID_3D);
         //             }
         //         }
         //     }
@@ -433,11 +435,11 @@ int main(int argc, char*  argv[]) {
 
     if (do_masking == 1) {
         for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
+            for (int iz  = 0; iz  < sizeSlice; ++iz) {
                 for (int iy = 0; iy < sizePhase; ++iy) {
                     for (int ix = 0; ix < sizeRead; ++ix) {
-                        if (*(nim_mask_data + nxyz * it + nxy * islice + nx * ix + iy) == 0) {
-                            *(smoothed_data + nxyz * it + nxy * islice + nx * ix + iy) = 0;
+                        if (*(nim_mask_data + VOXEL_ID) == 0) {
+                            *(smoothed_data + VOXEL_ID) = 0;
                         }
                     }
                 }

@@ -34,12 +34,6 @@ using namespace std;
 
 // Used inside voxel loops
 #define VOXEL_ID (nxyz * it + nxy * iz + nx * ix + iy)
-
-// Loop voxels 3D (z=slices, y=read steps, x=phase steps)
-#define FOR_EACH_VOXEL_ZYX for (int iz = 0; iz < size_z; ++iz) {\
-                           for (int iy = 0; iy < size_y; ++iy) {\
-                           for (int ix = 0; ix < size_x; ++ix) {
-
-#define END_FOR_EACH_VOXEL_ZYX }}}
+#define VOXEL_ID_3D (nxy * iz + nx * ix + iy)
 
 // ============================================================================
