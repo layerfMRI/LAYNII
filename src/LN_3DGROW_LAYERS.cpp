@@ -8,7 +8,6 @@ int show_help(void) {
     printf(
     "LN_3DGROW_LAYERS: Short exmample of Layering.\n"
     "\n"
-    "\n"
     "Usage:\n"
     "    LN_3DGROW_LAYERS -rim rim.nii \n"
     "\n"
@@ -41,19 +40,19 @@ int main(int argc, char * argv[]) {
         } else if (!strcmp(argv[ac], "-rim")) {
             if ( ++ac >= argc ) {
                 fprintf(stderr, "** missing argument for -input\n");
-            return 1;
+                return 1;
             }
             fin = argv[ac];  // no string copy, just pointer assignment
         } else {
-         fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
-         return 1;
+            fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
+            return 1;
         }
     }
 
     if (!fin) {
-       fprintf(stderr, "** missing option '-rim'\n");
-       return 1;
-   }
+        fprintf(stderr, "** missing option '-rim'\n");
+        return 1;
+    }
     // Read input dataset, including data
     nim_input = nifti_image_read(fin, 1);
     if (!nim_input) {
@@ -84,7 +83,7 @@ int main(int argc, char * argv[]) {
 
     // Get access to data of nim_input
     if ( nim_input->datatype != 4 ) {
-         // nim_input->datatype = NIFTI_TYPE_INT16;
+        // nim_input->datatype = NIFTI_TYPE_INT16;
         cout << "  WRONG DATATYPE" << endl;
         cout << "  WRONG DATATYPE" << endl;
         cout << "  WRONG DATATYPE" << endl;
@@ -261,7 +260,7 @@ int main(int argc, char * argv[]) {
     float angle(float a, float b, float c);
 
     // Reduce mask to contain only Areas close to the curface.
-    cout << "  Select GM regions... " << endl;
+    cout << "  Select GM regions..." << endl;
 
     // This is the distance from every voxel that the algorythm is applied on.
     // Just to make it faster and not loop over all voxels.
@@ -277,7 +276,7 @@ int main(int argc, char * argv[]) {
 
     int number_of_layers = 20;
 
-    cout << "  Start growing from WM... " << endl;
+    cout << "  Start growing from WM..." << endl;
 
     // Setting zero
     for (int iz = 0; iz < sizeSlice; ++iz) {
@@ -295,36 +294,36 @@ int main(int argc, char * argv[]) {
     /////////////////////////
     // Closing 3D surfaces //
     /////////////////////////
-    /*
-    cout << " closing surfaces .... " << endl;
 
-    int isWMb, isCSFb, isb;
-
-    for (int iterations = 0; iterations< 100; ++iterations) {
-        for (int iz=0; iz<sizeSlice; ++iz) {
-            for (int iy=0; iy<sizePhase; ++iy) {
-                for (int ix=0; ix<sizeRead-0; ++ix) {
-                    if (*(nim_input_data  + nxy*iz + nx*ix  + iy  ) == 0) {
-                        isWMb=0;
-                        isCSFb=0;
-                        isb=0;
-                        for (int iz_i=max(0,iz-2); iz_i<min(sizeSlice,iz+2); ++iz_i) {
-                            for (int iy_i=max(0,iy-2); iy_i<min(sizePhase,iy+2); ++iy_i) {
-                                for (int ix_i=max(0,ix-2); ix_i<min(sizeRead,ix+2); ++ix_i) {
-                                    if (*(nim_input_data  + nxy*iz_i + nx*ix_i  + iy_i  ) == 3) isb = 1;
-                                    if (*(nim_input_data  + nxy*iz_i + nx*ix_i  + iy_i  ) == 1) isCSFb = 1;
-                                    if (*(nim_input_data  + nxy*iz_i + nx*ix_i  + iy_i  ) == 2) isWMb = 1;
-                                }
-                            }
-                        }
-                        if (isb == 1 && isCSFb   == 1) *(nim_input_data  + nxy*iz + nx*ix  + iy  ) = 1;
-                        if (isb == 1 &&  isWMb   == 1) *(nim_input_data  + nxy*iz + nx*ix  + iy  ) = 2;
-                        if (isCSFb == 1 && isWMb == 1) *(nim_input_data  + nxy*iz + nx*ix  + iy  ) = 0; //cout << " THIS BRAIN IS WIERD " << endl;
-                    }
-                }
-            }
-        }
-    }  */
+    // cout << " closing surfaces ...." << endl;
+    //
+    // int isWMb, isCSFb, isb;
+    //
+    // for (int iterations = 0; iterations< 100; ++iterations) {
+    //     for (int iz=0; iz<sizeSlice; ++iz) {
+    //         for (int iy=0; iy<sizePhase; ++iy) {
+    //             for (int ix=0; ix<sizeRead-0; ++ix) {
+    //                 if (*(nim_input_data  + nxy*iz + nx*ix  + iy  ) == 0) {
+    //                     isWMb=0;
+    //                     isCSFb=0;
+    //                     isb=0;
+    //                     for (int iz_i=max(0,iz-2); iz_i<min(sizeSlice,iz+2); ++iz_i) {
+    //                         for (int iy_i=max(0,iy-2); iy_i<min(sizePhase,iy+2); ++iy_i) {
+    //                             for (int ix_i=max(0,ix-2); ix_i<min(sizeRead,ix+2); ++ix_i) {
+    //                                 if (*(nim_input_data  + nxy*iz_i + nx*ix_i  + iy_i  ) == 3) isb = 1;
+    //                                 if (*(nim_input_data  + nxy*iz_i + nx*ix_i  + iy_i  ) == 1) isCSFb = 1;
+    //                                 if (*(nim_input_data  + nxy*iz_i + nx*ix_i  + iy_i  ) == 2) isWMb = 1;
+    //                             }
+    //                         }
+    //                     }
+    //                     if (isb == 1 && isCSFb   == 1) *(nim_input_data  + nxy*iz + nx*ix  + iy  ) = 1;
+    //                     if (isb == 1 &&  isWMb   == 1) *(nim_input_data  + nxy*iz + nx*ix  + iy  ) = 2;
+    //                     if (isCSFb == 1 && isWMb == 1) *(nim_input_data  + nxy*iz + nx*ix  + iy  ) = 0; //cout << " THIS BRAIN IS WIERD " << endl;
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
     //////////////////
     // Grow from WM //
@@ -352,7 +351,7 @@ int main(int argc, char * argv[]) {
                     y1g = 0;
                     z1g = 0;
                     if (*(nim_input_data + nxy * iz + nx * ix + iy) == 3 && *(growfromWM0_data + nxy * iz + nx * ix + iy) == 0) {
-                        // cout << " true   " << *(growfromWM0_data  + nxy*islice + nx*ix  + iy  )<< endl;
+                        // cout << "  True   " << *(growfromWM0_data  + nxy*islice + nx*ix  + iy  )<< endl;
                         for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc, sizePhase); ++iy_i) {
                             for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc, sizeRead); ++ix_i) {
                                 for (int iz_i = max(0, iz - grow_vinc); iz_i < min(iz + grow_vinc, sizeRead); ++iz_i) {
@@ -387,7 +386,7 @@ int main(int argc, char * argv[]) {
     ///////////////////
     // Grow from CSF //
     ///////////////////
-    cout << "  Start growing from CSF ... " << endl;
+    cout << "  Start growing from CSF ..." << endl;
     for (int iz = 0; iz < sizeSlice; ++iz) {
         for (int iy = 0; iy < sizePhase; ++iy) {
             for (int ix = 0; ix < sizeRead-0; ++ix) {
@@ -442,7 +441,7 @@ int main(int argc, char * argv[]) {
     // Wabble across neigbouring voxles of closest WM //
     // to account for Pytagoras errors /////////////////
     ////////////////////////////////////////////////////
-    cout << "  Correct for Pytagoras error... " << endl;
+    cout << "  Correct for Pytagoras error..." << endl;
     for (int iz = 0; iz < sizeSlice; ++iz) {
         for (int iy = 0; iy < sizePhase; ++iy) {
             for (int ix = 0; ix < sizeRead - 0; ++ix) {
@@ -489,7 +488,7 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    cout << "  Running until stage 1... " << endl;
+    cout << "  Running until stage 1..." << endl;
 
     //////////////////////////////////////////////////////
     // Wabble accross neigbouring voexles of closest GM //
@@ -505,7 +504,7 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    cout << "  Running until stage 2... " << endl;
+    cout << "  Running until stage 2..." << endl;
 
     for (int grow_i = 1; grow_i < vinc; grow_i++) {
         for (int iz = 0; iz < sizeSlice; ++iz) {
@@ -541,7 +540,7 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    cout << "  Running until stage 3... " << endl;
+    cout << "  Running until stage 3..." << endl;
 
     int GMK2_i, GMKz2_i, GMK3_i, WMK2_i, WMKz2_i, WMK3_i;
     float GMK2_f, GMKz2_f, GMK3_f, WMK2_f, WMKz2_f, WMK3_f, ix_f, iy_f, iz_f;
@@ -578,7 +577,7 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    cout << "  Running until stage 4... " << endl;
+    cout << "  Running until stage 4..." << endl;
 
     // Cleaning negative layers and layers ov more than 20
     for (int iz = 0; iz < sizeSlice; ++iz) {
@@ -593,20 +592,20 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    cout << "  Running until stage 4.5... " << endl;
+    cout << "  Running until stage 4.5..." << endl;
 
     // equi_dist_layers.autowrite("equi_dist_layers.nii", wopts, &prot);
-    cout << "  Running until stage 5... " << endl;
+    cout << "  Running until stage 5..." << endl;
 
     // Output file name
     const char *fout_4 = "equi_dist_layers.nii";
-    if (nifti_set_filenames(equi_dist_layers, fout_4 , 1, 1)) {
+    if (nifti_set_filenames(equi_dist_layers, fout_4, 1, 1)) {
         return 1;
     }
     nifti_image_write(equi_dist_layers);
 
     const char *fout_5 = "rim_closed.nii";
-    if (nifti_set_filenames(nim_input, fout_5 , 1, 1)) {
+    if (nifti_set_filenames(nim_input, fout_5, 1, 1)) {
         return 1;
     }
     nifti_image_write(nim_input);
