@@ -138,10 +138,10 @@ int main(int argc, char * argv[]) {
     }
     if (nim_landmarks_r->datatype == NIFTI_TYPE_INT16) {
         short  *nim_landmarks_r_data = (short *) nim_landmarks_r->data;
-        for (int it = 0; it<nrep; ++it) {
-            for (int islice = 0; islice<sizeSlice; ++islice) {
-                for (int iy = 0; iy<sizePhase; ++iy) {
-                    for (int ix = 0; ix<sizeRead; ++ix) {
+        for (int it = 0; it < nrep; ++it) {
+            for (int islice = 0; islice < sizeSlice; ++islice) {
+                for (int iy = 0; iy < sizePhase; ++iy) {
+                    for (int ix = 0; ix < sizeRead; ++ix) {
                         *(nim_landmarks_data + nxyz *it + nxy*islice + nx*ix + iy) = (float) (*(nim_landmarks_r_data + nxyz *it + nxy*islice + nx*ix + iy));
                     }
                 }
