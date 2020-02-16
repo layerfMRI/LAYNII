@@ -25,10 +25,10 @@ using namespace std;
 // NOTE: Do not put any characters after `\` for multiline defines to work.
 
 // Loop voxels 4D (t=time steps, z=slices, y=read steps, x=phase steps)
-#define FOR_EACH_VOXEL_TZYX for (int it = 0; it < size_t; it++) {\
-                            for (int iz = 0; iz < size_z; iz++) {\
-                            for (int iy = 0; iy < size_y; iy++) {\
-                            for (int ix = 0; ix < size_x; ix++) {
+#define FOR_EACH_VOXEL_TZYX for (int it = 0; it < size_t; ++it) {\
+                            for (int iz = 0; iz < size_z; ++iz) {\
+                            for (int iy = 0; iy < size_y; ++iy) {\
+                            for (int ix = 0; ix < size_x; ++ix) {
 
 #define END_FOR_EACH_VOXEL_TZYX }}}}
 
@@ -36,9 +36,9 @@ using namespace std;
 #define VOXEL_ID (nxyz * it + nxy * iz + nx * ix + iy)
 
 // Loop voxels 3D (z=slices, y=read steps, x=phase steps)
-#define FOR_EACH_VOXEL_ZYX for (int iz = 0; iz < size_z; iz++) {\
-                            for (int iy = 0; iy < size_y; iy++) {\
-                            for (int ix = 0; ix < size_x; ix++) {
+#define FOR_EACH_VOXEL_ZYX for (int iz = 0; iz < size_z; ++iz) {\
+                           for (int iy = 0; iy < size_y; ++iy) {\
+                           for (int ix = 0; ix < size_x; ++ix) {
 
 #define END_FOR_EACH_VOXEL_ZYX }}}
 
