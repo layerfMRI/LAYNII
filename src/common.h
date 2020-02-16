@@ -19,3 +19,12 @@ using namespace std;
 #define PI 3.14159265;
 
 // #include "utils.hpp"
+
+// ============================================================================
+// Preprocessor macros
+// NOTE: Do not put any characters after `\`.
+#define FOR_EACH_VOXEL for (int t = 0; t < size_t; t++) {\
+                       for (int z = 0; z < size_z; z++) {\
+                       for (int y = 0; y < size_y; y++) {\
+                       for (int x = 0; x < size_x; x++) {
+#define END_FOR_EACH_VOXEL }}}}

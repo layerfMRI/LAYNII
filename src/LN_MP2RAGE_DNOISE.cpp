@@ -96,26 +96,26 @@ int main(int argc, char* argv[]) {
 
     // Read input dataset, including data
     nifti_image* nim_inputfi_1 = nifti_image_read(finfi_1, 1);
-    if (!nim_inputfi_1 ) {
+    if (!nim_inputfi_1) {
         fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", finfi_1);
         return 2;
     }
     nifti_image* nim_inputfi_2 = nifti_image_read(finfi_2, 1);
-    if (!nim_inputfi_2 ) {
+    if (!nim_inputfi_2) {
         fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", finfi_2);
         return 2;
     }
     nifti_image* nim_inputfi_3 = nifti_image_read(finfi_3, 1);
-    if (!nim_inputfi_3 ) {
+    if (!nim_inputfi_3) {
         fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", finfi_3);
         return 2;
     }
 
     // Get dimensions of input
-    int sizeSlice = nim_inputfi_1->nz;
-    int sizePhase = nim_inputfi_1->nx;
-    int sizeRead = nim_inputfi_1->ny;
-    int nrep = nim_inputfi_1->nt;
+    int size_x = nim_inputfi_1->nx;  // phase
+    int size_y = nim_inputfi_1->ny;  // read
+    int size_z = nim_inputfi_1->nz;  // slice
+    int size_t = nim_inputfi_1->nt;  // time
     int nx = nim_inputfi_1->nx;
     int nxy = nim_inputfi_1->nx * nim_inputfi_1->ny;
     int nxyz = nim_inputfi_1->nx * nim_inputfi_1->ny * nim_inputfi_1->nz;
@@ -134,38 +134,29 @@ int main(int argc, char* argv[]) {
 
     //////////////////////////////////////////////////////////////
     // Fixing potential problems with different input datatypes //
-    // here, I am loading them in their native datatype //////////
-    // and translate them to the datatime I like best ////////////
+    // here, I am loading them in their native datatype         //
+    // and translate them to the datatime I like best           //
     //////////////////////////////////////////////////////////////
-    if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ||  nim_inputfi_3->datatype == NIFTI_TYPE_INT32 ) {
+
+    if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ||  nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
         float* nim_inputfi_1_data = static_cast<float*>(nim_inputfi_1->data);
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_inv1_data + nxyz * it + nxy * islice + nx * ix + iy  ) = (float) (*(nim_inputfi_1_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
+        FOR_EACH_VOXEL
+            *(nim_inv1_data + nxyz * t + nxy * z + nx * x + y) =
+                static_cast<float>(*(nim_inputfi_1_data + nxyz * t + nxy * z + nx * x + y));
+        END_FOR_EACH_VOXEL
     }
 
-    if (nim_inputfi_3->datatype == NIFTI_TYPE_INT16 || nim_inputfi_3->datatype == DT_UINT16 ) {
+    if (nim_inputfi_3->datatype == NIFTI_TYPE_INT16 || nim_inputfi_3->datatype == DT_UINT16) {
         int16_t* nim_inputfi_1_data = static_cast<int16_t*>(nim_inputfi_1->data);
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_inv1_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_inputfi_1_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
+        FOR_EACH_VOXEL
+            *(nim_inv1_data + nxyz * t + nxy * z + nx * x + y) =
+                static_cast<float>(*(nim_inputfi_1_data + nxyz * t + nxy * z + nx * x + y));
+        END_FOR_EACH_VOXEL
     }
 
     // Write out some stuff that might be good to know, if you want to debug
-    cout << sizeSlice << " Slices | " << sizePhase << " Phase_steps | "
-         << sizeRead << " Read_steps | " << nrep << " Time_steps " << endl;
+    cout << size_z << " Slices | " << size_x << " Phase_steps | "
+         << size_y << " Read_steps | " << size_t << " Time_steps " << endl;
 
     cout << "  Voxel size = " << dX << " x " << dY << " x " << dZ << endl;
     cout << "  Datatype 1 = " << nim_inputfi_1->datatype << endl;
@@ -185,28 +176,18 @@ int main(int argc, char* argv[]) {
     //////////////////////////////////////////////////////////////
     if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 || nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
         float* nim_inputfi_2_data = static_cast<float*>(nim_inputfi_2->data);
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_inv2_data + nxyz * it +  nxy * islice + nx * ix + iy) = (float) (*(nim_inputfi_2_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
+        FOR_EACH_VOXEL
+            *(nim_inv2_data + nxyz * t +  nxy * z + nx * x + y) =
+                static_cast<float>(*(nim_inputfi_2_data + nxyz * t + nxy * z + nx * x + y));
+        END_FOR_EACH_VOXEL
     }
 
     if (nim_inputfi_3->datatype == NIFTI_TYPE_INT16 || nim_inputfi_3->datatype == DT_UINT16) {
-        int16_t* nim_inputfi_2_data = static_cast<int16_t *>(nim_inputfi_2->data);
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix =0; ix < sizeRead; ++ix) {
-                        *(nim_inv2_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_inputfi_2_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
+        int16_t* nim_inputfi_2_data = static_cast<int16_t*>(nim_inputfi_2->data);
+        FOR_EACH_VOXEL
+            *(nim_inv2_data + nxyz * t + nxy * z + nx * x + y) =
+                static_cast<float>(*(nim_inputfi_2_data + nxyz * t + nxy * z + nx * x + y));
+        END_FOR_EACH_VOXEL
     }
 
     /////////////////
@@ -224,32 +205,22 @@ int main(int argc, char* argv[]) {
     //////////////////////////////////////////////////////////////
     if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 || nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
         float* nim_inputfi_3_data = static_cast<float*>(nim_inputfi_3->data);
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_uni_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_inputfi_3_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
+        FOR_EACH_VOXEL
+            *(nim_uni_data + nxyz * t + nxy * z + nx * x + y) =
+                static_cast<float>(*(nim_inputfi_3_data + nxyz * t + nxy * z + nx * x + y));
+        END_FOR_EACH_VOXEL
     }
 
     if (nim_inputfi_3->datatype == NIFTI_TYPE_INT16 || nim_inputfi_3->datatype == DT_UINT16) {
-        int16_t* nim_inputfi_3_data = static_cast<int16_t *>(nim_inputfi_3->data);
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_uni_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_inputfi_3_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
+        int16_t* nim_inputfi_3_data = static_cast<int16_t*>(nim_inputfi_3->data);
+        FOR_EACH_VOXEL
+            *(nim_uni_data + nxyz * t + nxy * z + nx * x + y) =
+                static_cast<float>(*(nim_inputfi_3_data + nxyz * t + nxy * z + nx * x + y));
+        END_FOR_EACH_VOXEL
     }
 
     /////////////////////////////////////
-    // MAKE allocating necessary files //
+    // Make allocating necessary files //
     /////////////////////////////////////
     nifti_image* phaseerror = nifti_copy_nim_info(nim_inv1);
     nifti_image* dddenoised = nifti_copy_nim_info(nim_inv1);
@@ -289,24 +260,24 @@ int main(int argc, char* argv[]) {
     float uni2val_calc = 0;
     float denoised_wrong = 0;
 
-    for (int it = 0; it < nrep; ++it) {
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
+    for (int t = 0; t < size_t; t++) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int y = 0; y < size_x; y++) {
+                for (int x = 0; x < size_y-0; x++) {
                     /////////////////////////////////////////////////////////
                     // Scaling UNI to range of -0.5 to 0.5 as in the paper //
                     /////////////////////////////////////////////////////////
-                    unival = (*(nim_uni_data + nxyz * it + nxy * iz + nx * ix + iy) - SIEMENS_f * 0.5 ) / SIEMENS_f;
-                    // inv1val = *(nim_inv1_data + nxyz * it + nxy * iz + nx * ix + iy);
-                    inv2val = *(nim_inv2_data + nxyz * it + nxy * iz + nx * ix + iy);
-                    wrong_unival = *(nim_inv1_data + nxyz * it + nxy * iz + nx * ix + iy)*  *(nim_inv2_data + nxyz * it + nxy * iz + nx * ix + iy) / (*(nim_inv1_data + nxyz * it + nxy * iz + nx * ix + iy)*  *(nim_inv1_data + nxyz * it + nxy * iz + nx * ix + iy) + *(nim_inv2_data + nxyz * it + nxy * iz + nx * ix + iy)*  *(nim_inv2_data + nxyz * it + nxy * iz + nx * ix + iy));
+                    unival = (*(nim_uni_data + nxyz * t + nxy * iz + nx * x + y) - SIEMENS_f * 0.5) / SIEMENS_f;
+                    // inv1val = *(nim_inv1_data + nxyz * t + nxy * iz + nx * x + y);
+                    inv2val = *(nim_inv2_data + nxyz * t + nxy * iz + nx * x + y);
+                    wrong_unival = *(nim_inv1_data + nxyz * t + nxy * iz + nx * x + y)*  *(nim_inv2_data + nxyz * t + nxy * iz + nx * x + y) / (*(nim_inv1_data + nxyz * t + nxy * iz + nx * x + y)*  *(nim_inv1_data + nxyz * t + nxy * iz + nx * x + y) + *(nim_inv2_data + nxyz * t + nxy * iz + nx * x + y)*  *(nim_inv2_data + nxyz * t + nxy * iz + nx * x + y));
 
-                    // sign_ = unival; //  *(nim_uni_data    + nxyz *it + nxy*iz + nx*ix  + iy  ) / *(phaseerror_data    + nxyz *it + nxy*iz + nx*ix  + iy  );
-                    // if (sign_ <= 0 ) *(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) = -1 * *(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + iy  );
+                    // sign_ = unival; //  *(nim_uni_data    + nxyz *it + nxy*iz + nx*ix  + y) / *(phaseerror_data    + nxyz *it + nxy*iz + nx*ix  + y);
+                    // if (sign_ <= 0) *(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + y) = -1 * *(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + y);
 
-                    // denoised_wrong = (*(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) *  *(nim_inv2_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) -beta ) / (*(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) *  *(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) + *(nim_inv2_data   + nxyz *it  + nxy*iz + nx*ix  + iy  ) *  *(nim_inv2_data   + nxyz *it  + nxy*iz + nx*ix  + iy  )  + 2. * beta );
-                    // denoised_wrong = (denoised_wrong +0.5 ) * SIEMENS_f;
-                    *(phaseerror_data + nxyz * it + nxy * iz + nx * ix + iy) = wrong_unival;
+                    // denoised_wrong = (*(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + y) *  *(nim_inv2_data   + nxyz *it  + nxy*iz + nx*ix  + y) -beta) / (*(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + y) *  *(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + y) + *(nim_inv2_data   + nxyz *it  + nxy*iz + nx*ix  + y) *  *(nim_inv2_data   + nxyz *it  + nxy*iz + nx*ix  + y)  + 2. * beta);
+                    // denoised_wrong = (denoised_wrong +0.5) * SIEMENS_f;
+                    *(phaseerror_data + nxyz * t + nxy * iz + nx * x + y) = wrong_unival;
 
                     uni1val_calc = inv2val * (1 / (2 * unival) + sqrt(1 / (4 * unival * unival) - 1));
                     uni2val_calc = inv2val * (1 / (2 * unival) - sqrt(1 / (4 * unival * unival) - 1));
@@ -317,11 +288,11 @@ int main(int argc, char* argv[]) {
 
                     // if (!(uni1val_calc > SIEMENS_f || uni1val_calc < SIEMENS_f)) uni1val_calc = inv1val;
 
-                    // *(uni1_data + nxyz * it + nxy * iz + nx * ix + iy) = uni1val_calc;
-                    // *(uni2_data + nxyz * it + nxy * iz + nx * ix + iy) = uni2val_calc;
-                    // *(phaseerror_data + nxyz * it + nxy * iz + nx * ix + iy) = unival;
+                    // *(uni1_data + nxyz * t + nxy * iz + nx * x + y) = uni1val_calc;
+                    // *(uni2_data + nxyz * t + nxy * iz + nx * x + y) = uni2val_calc;
+                    // *(phaseerror_data + nxyz * t + nxy * iz + nx * x + y) = unival;
 
-                    *(dddenoised_data + nxyz * it + nxy * iz + nx * ix + iy) = ((uni1val_calc * inv2val - beta) / (uni1val_calc * uni1val_calc + inv2val * inv2val + 2. * beta) + 0.5) * SIEMENS_f;
+                    *(dddenoised_data + nxyz * t + nxy * iz + nx * x + y) = ((uni1val_calc * inv2val - beta) / (uni1val_calc * uni1val_calc + inv2val * inv2val + 2. * beta) + 0.5) * SIEMENS_f;
                 }
             }
         }
