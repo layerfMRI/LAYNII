@@ -191,7 +191,7 @@ int main(int argc, char * argv[]) {
             for (int ix = 0; ix < size_y; ++ix) {
                 for (int it = 0; it < size_t; ++it) {
                     *(boco_vaso_data + VOXEL_ID) = *(nim_file_1_data + VOXEL_ID)
-                        / (*(nim_file_2_data + VOXEL_ID));
+                                                   / (*(nim_file_2_data + VOXEL_ID));
                 }
             }
         }
@@ -311,36 +311,44 @@ int main(int argc, char * argv[]) {
         float AV_Nulled[trialdur];
         float AV_BOLD[trialdur];
 
-        FOR_EACH_VOXEL_ZYX
-            for (int it = 0; it < trialdur; ++it) {
-                AV_Nulled[it] = 0;
-                AV_BOLD[it] = 0;
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
+                    for (int it = 0; it < trialdur; ++it) {
+                        AV_Nulled[it] = 0;
+                        AV_BOLD[it] = 0;
+                    }
+                    for (int it = 0; it < trialdur * numberofTrials; ++it) {
+                        AV_Nulled[it%trialdur] = AV_Nulled[it%trialdur]
+                                                 + (*(nim_file_1_data + VOXEL_ID)) / numberofTrials;
+                        AV_BOLD[it%trialdur] = AV_BOLD[it%trialdur]
+                                               + (*(nim_file_2_data + VOXEL_ID)) / numberofTrials;
+                    }
+                    for (int it = 0; it < trialdur; ++it) {
+                        *(triav_file_data + VOXEL_ID) = AV_Nulled[it] / AV_BOLD[it];
+                        *(triav_B_file_data + VOXEL_ID) = AV_BOLD[it];
+                    }
+                }
             }
-            for (int it = 0; it < trialdur * numberofTrials; ++it) {
-                AV_Nulled[it%trialdur] = AV_Nulled[it%trialdur]
-                    + (*(nim_file_1_data + VOXEL_ID)) / numberofTrials;
-                AV_BOLD[it%trialdur] = AV_BOLD[it%trialdur]
-                    + (*(nim_file_2_data + VOXEL_ID)) / numberofTrials;
-            }
-            for (int it = 0; it < trialdur; ++it) {
-                *(triav_file_data + VOXEL_ID) = AV_Nulled[it] / AV_BOLD[it];
-                *(triav_B_file_data + VOXEL_ID) = AV_BOLD[it];
-            }
-        END_FOR_EACH_VOXEL_ZYX
+        }
 
         // Clean VASO values that are unrealistic
-        FOR_EACH_VOXEL_ZYX
-            for (int it = 0; it < trialdur; ++it) {
-                if (*(triav_file_data + VOXEL_ID) <= 0) {
-                    *(triav_file_data + VOXEL_ID) = 0;
-                }
-                if (*(triav_file_data + VOXEL_ID) >= 2) {
-                    *(triav_file_data + VOXEL_ID) = 2;
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
+                    for (int it = 0; it < trialdur; ++it) {
+                        if (*(triav_file_data + VOXEL_ID) <= 0) {
+                            *(triav_file_data + VOXEL_ID) = 0;
+                        }
+                        if (*(triav_file_data + VOXEL_ID) >= 2) {
+                            *(triav_file_data + VOXEL_ID) = 2;
+                        }
+                    }
                 }
             }
-        END_FOR_EACH_VOXEL_ZYX
+        }
 
-        const char* fout_trial="VASO_trialAV_LN.nii";
+        const char* fout_trial = "VASO_trialAV_LN.nii";
         if (nifti_set_filenames(triav_file, fout_trial, 1, 1)) {
             return 1;
         }
