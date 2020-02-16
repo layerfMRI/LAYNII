@@ -24,13 +24,22 @@ using namespace std;
 // Preprocessor macros.
 // NOTE: Do not put any characters after `\` for multiline defines to work.
 
-// Loop voxels (t=time steps, z=slices, y=read steps, x=phase steps)
-#define FOR_EACH_VOXEL_TZYX for (int t = 0; t < size_t; t++) {\
-                            for (int z = 0; z < size_z; z++) {\
-                            for (int y = 0; y < size_y; y++) {\
-                            for (int x = 0; x < size_x; x++) {
+// Loop voxels 4D (t=time steps, z=slices, y=read steps, x=phase steps)
+#define FOR_EACH_VOXEL_TZYX for (int it = 0; it < size_t; it++) {\
+                            for (int iz = 0; iz < size_z; iz++) {\
+                            for (int iy = 0; iy < size_y; iy++) {\
+                            for (int ix = 0; ix < size_x; ix++) {
 
 #define END_FOR_EACH_VOXEL_TZYX }}}}
 
-#define VOXEL_ID (nxyz * t + nxy * z + nx * x + y)
+// Used inside voxel loops
+#define VOXEL_ID (nxyz * it + nxy * iz + nx * ix + iy)
+
+// Loop voxels 3D (z=slices, y=read steps, x=phase steps)
+#define FOR_EACH_VOXEL_ZYX for (int iz = 0; iz < size_z; iz++) {\
+                            for (int iy = 0; iy < size_y; iy++) {\
+                            for (int ix = 0; ix < size_x; ix++) {
+
+#define END_FOR_EACH_VOXEL_ZYX }}}
+
 // ============================================================================
