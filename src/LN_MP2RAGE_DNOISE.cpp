@@ -138,7 +138,8 @@ int main(int argc, char* argv[]) {
     // and translate them to the datatime I like best           //
     //////////////////////////////////////////////////////////////
 
-    if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ||  nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
+    if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ||
+        nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
         float* nim_inputfi_1_data = static_cast<float*>(nim_inputfi_1->data);
         FOR_EACH_VOXEL
             *(nim_inv1_data + nxyz * t + nxy * z + nx * x + y) =
@@ -146,8 +147,10 @@ int main(int argc, char* argv[]) {
         END_FOR_EACH_VOXEL
     }
 
-    if (nim_inputfi_3->datatype == NIFTI_TYPE_INT16 || nim_inputfi_3->datatype == DT_UINT16) {
-        int16_t* nim_inputfi_1_data = static_cast<int16_t*>(nim_inputfi_1->data);
+    if (nim_inputfi_3->datatype == NIFTI_TYPE_INT16 ||
+        nim_inputfi_3->datatype == DT_UINT16) {
+        int16_t* nim_inputfi_1_data =
+            static_cast<int16_t*>(nim_inputfi_1->data);
         FOR_EACH_VOXEL
             *(nim_inv1_data + nxyz * t + nxy * z + nx * x + y) =
                 static_cast<float>(*(nim_inputfi_1_data + nxyz * t + nxy * z + nx * x + y));
@@ -162,19 +165,20 @@ int main(int argc, char* argv[]) {
     cout << "  Datatype 1 = " << nim_inputfi_1->datatype << endl;
 
     //////////////////
-    // LOADING INV2 //
+    // Loading INV2 //
     //////////////////
     nifti_image* nim_inv2 = nifti_copy_nim_info(nim_inputfi_2);
     nim_inv2->datatype = NIFTI_TYPE_FLOAT32;
     nim_inv2->nbyper = sizeof(float);
     nim_inv2->data = calloc(nim_inv2->nvox, nim_inv2->nbyper);
-    float*nim_inv2_data = (float*) nim_inv2->data;
+    float*nim_inv2_data = static_cast<float*>(nim_inv2->data);
 
     //////////////////////////////////////////////////////////////
     // Fixing potential problems with different input datatypes //
     // again /////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////
-    if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 || nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
+    if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ||
+        nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
         float* nim_inputfi_2_data = static_cast<float*>(nim_inputfi_2->data);
         FOR_EACH_VOXEL
             *(nim_inv2_data + nxyz * t +  nxy * z + nx * x + y) =
@@ -182,8 +186,10 @@ int main(int argc, char* argv[]) {
         END_FOR_EACH_VOXEL
     }
 
-    if (nim_inputfi_3->datatype == NIFTI_TYPE_INT16 || nim_inputfi_3->datatype == DT_UINT16) {
-        int16_t* nim_inputfi_2_data = static_cast<int16_t*>(nim_inputfi_2->data);
+    if (nim_inputfi_3->datatype == NIFTI_TYPE_INT16 ||
+        nim_inputfi_3->datatype == DT_UINT16) {
+        int16_t* nim_inputfi_2_data =
+            static_cast<int16_t*>(nim_inputfi_2->data);
         FOR_EACH_VOXEL
             *(nim_inv2_data + nxyz * t + nxy * z + nx * x + y) =
                 static_cast<float>(*(nim_inputfi_2_data + nxyz * t + nxy * z + nx * x + y));
@@ -199,11 +205,11 @@ int main(int argc, char* argv[]) {
     nim_uni->data = calloc(nim_uni->nvox, nim_uni->nbyper);
     float* nim_uni_data = static_cast<float*>(nim_uni->data);
 
-    //////////////////////////////////////////////////////////////
-    // Fixing potential problems with different input datatypes //
-    // again /////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////
-    if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 || nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
+    ////////////////////////////////////////////////////////////////////
+    // Fixing potential problems with different input datatypes again //
+    ////////////////////////////////////////////////////////////////////
+    if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ||
+        nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
         float* nim_inputfi_3_data = static_cast<float*>(nim_inputfi_3->data);
         FOR_EACH_VOXEL
             *(nim_uni_data + nxyz * t + nxy * z + nx * x + y) =
@@ -211,8 +217,10 @@ int main(int argc, char* argv[]) {
         END_FOR_EACH_VOXEL
     }
 
-    if (nim_inputfi_3->datatype == NIFTI_TYPE_INT16 || nim_inputfi_3->datatype == DT_UINT16) {
-        int16_t* nim_inputfi_3_data = static_cast<int16_t*>(nim_inputfi_3->data);
+    if (nim_inputfi_3->datatype == NIFTI_TYPE_INT16 ||
+        nim_inputfi_3->datatype == DT_UINT16) {
+        int16_t* nim_inputfi_3_data =
+            static_cast<int16_t*>(nim_inputfi_3->data);
         FOR_EACH_VOXEL
             *(nim_uni_data + nxyz * t + nxy * z + nx * x + y) =
                 static_cast<float>(*(nim_inputfi_3_data + nxyz * t + nxy * z + nx * x + y));
@@ -241,62 +249,59 @@ int main(int argc, char* argv[]) {
     uni2->nbyper = sizeof(float);
     uni1->data = calloc(uni1->nvox, uni1->nbyper);
     uni2->data = calloc(uni2->nvox, uni2->nbyper);
-    float* uni1_data = static_cast<float*>(uni1->data);
-    float* uni2_data = static_cast<float*>(uni2->data);
+    // float* uni1_data = static_cast<float*>(uni1->data);
+    // float* uni2_data = static_cast<float*>(uni2->data);
 
     ///////////////////////////////////////
     // Big calculation across all voxels //
     ///////////////////////////////////////
-    float sign_ = 0;
+    // float sign_ = 0;
 
     beta = beta * SIEMENS_f;
 
     float inv2val = 0;
-    float inv1val = 0;
+    // float inv1val = 0;
     float unival = 0;
     float wrong_unival = 0;
 
     float uni1val_calc = 0;
     float uni2val_calc = 0;
-    float denoised_wrong = 0;
+    // float denoised_wrong = 0;
 
-    for (int t = 0; t < size_t; t++) {
-        for (int iz = 0; iz < size_z; ++iz) {
-            for (int y = 0; y < size_x; y++) {
-                for (int x = 0; x < size_y-0; x++) {
-                    /////////////////////////////////////////////////////////
-                    // Scaling UNI to range of -0.5 to 0.5 as in the paper //
-                    /////////////////////////////////////////////////////////
-                    unival = (*(nim_uni_data + nxyz * t + nxy * iz + nx * x + y) - SIEMENS_f * 0.5) / SIEMENS_f;
-                    // inv1val = *(nim_inv1_data + nxyz * t + nxy * iz + nx * x + y);
-                    inv2val = *(nim_inv2_data + nxyz * t + nxy * iz + nx * x + y);
-                    wrong_unival = *(nim_inv1_data + nxyz * t + nxy * iz + nx * x + y)*  *(nim_inv2_data + nxyz * t + nxy * iz + nx * x + y) / (*(nim_inv1_data + nxyz * t + nxy * iz + nx * x + y)*  *(nim_inv1_data + nxyz * t + nxy * iz + nx * x + y) + *(nim_inv2_data + nxyz * t + nxy * iz + nx * x + y)*  *(nim_inv2_data + nxyz * t + nxy * iz + nx * x + y));
+    /////////////////////////////////////////////////////////
+    // Scaling UNI to range of -0.5 to 0.5 as in the paper //
+    /////////////////////////////////////////////////////////
+    FOR_EACH_VOXEL
+        unival = (*(nim_uni_data + nxyz * t + nxy * z + nx * x + y) - SIEMENS_f * 0.5) / SIEMENS_f;
+        // inv1val = *(nim_inv1_data + nxyz * t + nxy * z + nx * x + y);
+        inv2val = *(nim_inv2_data + nxyz * t + nxy * z + nx * x + y);
+        wrong_unival = *(nim_inv1_data + nxyz * t + nxy * z + nx * x + y)* *(nim_inv2_data + nxyz * t + nxy * z + nx * x + y) / (*(nim_inv1_data + nxyz * t + nxy * z + nx * x + y)* *(nim_inv1_data + nxyz * t + nxy * z + nx * x + y) + *(nim_inv2_data + nxyz * t + nxy * z + nx * x + y)* *(nim_inv2_data + nxyz * t + nxy * z + nx * x + y));
 
-                    // sign_ = unival; //  *(nim_uni_data    + nxyz *it + nxy*iz + nx*ix  + y) / *(phaseerror_data    + nxyz *it + nxy*iz + nx*ix  + y);
-                    // if (sign_ <= 0) *(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + y) = -1 * *(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + y);
+        // sign_ = unival;
+        // *(nim_uni_data + nxyz * it + nxy * iz + nx * ix + y) / *(phaseerror_data + nxyz * it + nxy * iz + nx * ix + y);
+        // if (sign_ <= 0) {
+        //     *(nim_inv1_data + nxyz * it + nxy * iz + nx * ix + y) = -1 * *(nim_inv1_data + nxyz * it + nxy * iz + nx * ix + y);
+        // }
 
-                    // denoised_wrong = (*(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + y) *  *(nim_inv2_data   + nxyz *it  + nxy*iz + nx*ix  + y) -beta) / (*(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + y) *  *(nim_inv1_data   + nxyz *it  + nxy*iz + nx*ix  + y) + *(nim_inv2_data   + nxyz *it  + nxy*iz + nx*ix  + y) *  *(nim_inv2_data   + nxyz *it  + nxy*iz + nx*ix  + y)  + 2. * beta);
-                    // denoised_wrong = (denoised_wrong +0.5) * SIEMENS_f;
-                    *(phaseerror_data + nxyz * t + nxy * iz + nx * x + y) = wrong_unival;
+        // denoised_wrong = (*(nim_inv1_data + nxyz *it + nxy*iz + nx*ix + y) * *(nim_inv2_data + nxyz *it + nxy*iz + nx*ix + y) -beta) / (*(nim_inv1_data + nxyz *it + nxy*iz + nx*ix + y) * *(nim_inv1_data + nxyz *it + nxy*iz + nx*ix + y) + *(nim_inv2_data + nxyz *it + nxy*iz + nx*ix + y) * *(nim_inv2_data + nxyz *it + nxy*iz + nx*ix + y) + 2. * beta);
+        // denoised_wrong = (denoised_wrong +0.5) * SIEMENS_f;
+        *(phaseerror_data + nxyz * t + nxy * z + nx * x + y) = wrong_unival;
 
-                    uni1val_calc = inv2val * (1 / (2 * unival) + sqrt(1 / (4 * unival * unival) - 1));
-                    uni2val_calc = inv2val * (1 / (2 * unival) - sqrt(1 / (4 * unival * unival) - 1));
+        uni1val_calc = inv2val * (1 / (2 * unival) + sqrt(1 / (4 * unival * unival) - 1));
+        uni2val_calc = inv2val * (1 / (2 * unival) - sqrt(1 / (4 * unival * unival) - 1));
 
-                    if (unival > 0) {
-                        uni1val_calc = uni2val_calc;
-                    }
-
-                    // if (!(uni1val_calc > SIEMENS_f || uni1val_calc < SIEMENS_f)) uni1val_calc = inv1val;
-
-                    // *(uni1_data + nxyz * t + nxy * iz + nx * x + y) = uni1val_calc;
-                    // *(uni2_data + nxyz * t + nxy * iz + nx * x + y) = uni2val_calc;
-                    // *(phaseerror_data + nxyz * t + nxy * iz + nx * x + y) = unival;
-
-                    *(dddenoised_data + nxyz * t + nxy * iz + nx * x + y) = ((uni1val_calc * inv2val - beta) / (uni1val_calc * uni1val_calc + inv2val * inv2val + 2. * beta) + 0.5) * SIEMENS_f;
-                }
-            }
+        if (unival > 0) {
+            uni1val_calc = uni2val_calc;
         }
-    }
+
+        // if (!(uni1val_calc > SIEMENS_f || uni1val_calc < SIEMENS_f)) uni1val_calc = inv1val;
+
+        // *(uni1_data + nxyz * t + nxy * z + nx * x + y) = uni1val_calc;
+        // *(uni2_data + nxyz * t + nxy * z + nx * x + y) = uni2val_calc;
+        // *(phaseerror_data + nxyz * t + nxy * z + nx * x + y) = unival;
+
+        *(dddenoised_data + nxyz * t + nxy * z + nx * x + y) = ((uni1val_calc * inv2val - beta) / (uni1val_calc * uni1val_calc + inv2val * inv2val + 2. * beta) + 0.5) * SIEMENS_f;
+    END_FOR_EACH_VOXEL
 
     dddenoised->scl_slope = nim_uni->scl_slope;
 
