@@ -32,11 +32,13 @@ int show_help(void) {
 }
 
 int main(int argc, char * argv[]) {
-    // nifti_image * nim_input=NULL;
+    // nifti_image* nim_input=NULL;
     char * fin_1 = NULL, * fin_2 = NULL;
     int ac, disp_float_eg = 0, shift = 0;
     int trialdur = 0;
-    if (argc < 2) return show_help();  // Typing '-help' is sooo much work
+    if (argc < 2) {  // Typing '-help' is sooo much work
+        return show_help();
+    }
 
     // Process user options: 4 are valid presently
     for (ac = 1; ac < argc; ac++) {
@@ -47,22 +49,22 @@ int main(int argc, char * argv[]) {
                 fprintf(stderr, "** missing argument for -Nulled\n");
                 return 1;
             }
-            fin_1 = argv[ac]; // no string copy, just pointer assignment
+            fin_1 = argv[ac];
         } else if (!strcmp(argv[ac], "-BOLD")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -BOLD\n");
                 return 1;
             }
-            fin_2 = argv[ac]; // no string copy, just pointer assignment
+            fin_2 = argv[ac];
         } else if (!strcmp(argv[ac], "-trialBOCO")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -trialBOCO\n");
                 return 1;
             }
-            trialdur = atof(argv[ac]); // no string copy, just pointer assignment
+            trialdur = atof(argv[ac]);
         } else if (!strcmp(argv[ac], "-shift")) {
             shift = 1;
-            cout << " Do a correlation analysis with temporal shifts"  << endl;
+            cout << "Do a correlation analysis with temporal shifts."  << endl;
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -70,25 +72,28 @@ int main(int argc, char * argv[]) {
     }
 
     if (!fin_1) {
-        fprintf(stderr, "** missing option '-Nulled'\n");
+        fprintf(stderr, "** missing option '-Nulled'.\n");
         return 1;
-    }
-    // Read input dataset, including data
-    nifti_image * nim_file_1i = nifti_image_read(fin_1, 1);
-    if (!nim_file_1i) {
-        fprintf(stderr, "** failed to read NIfTI image from '%s'\n", fin_1);
-        return 2;
     }
     if (!fin_2) {
-        fprintf(stderr, "** missing option '-BOLD'\n");
+        fprintf(stderr, "** missing option '-BOLD'.\n");
         return 1;
     }
+
     // Read input dataset, including data
-    nifti_image * nim_file_2i = nifti_image_read(fin_2, 1);
-    if (!nim_file_2i) {
-        fprintf(stderr, "** failed to read NIfTI image from '%s'\n", fin_2);
+    nifti_image* nim_file_1i = nifti_image_read(fin_1, 1);
+    if (!nim_file_1i) {
+        fprintf(stderr, "** failed to read NIfTI from '%s'.\n", fin_1);
         return 2;
     }
+    log_nifti_descriptives(nim_file_1i);
+
+    nifti_image* nim_file_2i = nifti_image_read(fin_2, 1);
+    if (!nim_file_2i) {
+        fprintf(stderr, "** failed to read NIfTI from '%s'.\n", fin_2);
+        return 2;
+    }
+    log_nifti_descriptives(nim_file_2i);
 
     // Get dimensions of input
     int size_x = nim_file_1i->nx;  // phase
@@ -99,19 +104,17 @@ int main(int argc, char * argv[]) {
     int nxy = nim_file_1i->nx * nim_file_1i->ny;
     int nxyz = nim_file_1i->nx * nim_file_1i->ny * nim_file_1i->nz;
 
-    log_voxel_dims(size_x, size_y, size_z, size_t);
-
-    nifti_image * nim_file_1 = nifti_copy_nim_info(nim_file_1i);
+    nifti_image* nim_file_1 = nifti_copy_nim_info(nim_file_1i);
     nim_file_1->datatype = NIFTI_TYPE_FLOAT32;
     nim_file_1->nbyper = sizeof(float);
     nim_file_1->data = calloc(nim_file_1->nvox, nim_file_1->nbyper);
-    float* nim_file_1_data = (float* ) nim_file_1->data;
+    float* nim_file_1_data = (float*) nim_file_1->data;
 
-    nifti_image * nim_file_2 = nifti_copy_nim_info(nim_file_1i);
+    nifti_image* nim_file_2 = nifti_copy_nim_info(nim_file_1i);
     nim_file_2->datatype = NIFTI_TYPE_FLOAT32;
     nim_file_2->nbyper = sizeof(float);
     nim_file_2->data = calloc(nim_file_2->nvox, nim_file_2->nbyper);
-    float* nim_file_2_data = (float* ) nim_file_2->data;
+    float* nim_file_2_data = (float*) nim_file_2->data;
 
     // if (!fout) { fprintf(stderr, "-- no output requested \n"); return 0; }
     //     assign nifti_image fname/iname pair, based on output filename
@@ -119,12 +122,12 @@ int main(int argc, char * argv[]) {
     // if (nifti_set_filenames(nim_input, fout, 1, 1)) return 1;
 
     if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
-        float  *nim_file_1i_data = (float* ) nim_file_1i->data;
+        float  *nim_file_1i_data = (float*) nim_file_1i->data;
         for (int it = 0; it < size_t; ++it) {
             for (int islice = 0; islice < size_z; ++islice) {
                 for (int iy = 0; iy < size_x; ++iy) {
                     for (int ix = 0; ix < size_y; ++ix) {
-                        *(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy ) = (float) (*(nim_file_1i_data + nxyz *it + nxy * islice + nx * ix + iy));
+                        *(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz *it + nxy * islice + nx * ix + iy));
                     }
                 }
             }
@@ -143,12 +146,12 @@ int main(int argc, char * argv[]) {
         }
     }
     // if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
-    //     float* nim_file_1i_data = (float* ) nim_file_1i->data;
+    //     float* nim_file_1i_data = (float*) nim_file_1i->data;
     //     for (int it = 0; it < size_t; ++it) {
     //         for (int islice = 0; islice < size_z; ++islice) {
     //             for (int iy = 0; iy < size_x; ++iy) {
     //                 for (int ix = 0; ix < size_y; ++ix) {
-    //                     *(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy ) = (float) (*(nim_file_1i_data + nxyz * it + nxy * islice + nx * ix + iy));
+    //                     *(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz * it + nxy * islice + nx * ix + iy));
     //                 }
     //             }
     //         }
@@ -167,7 +170,7 @@ int main(int argc, char * argv[]) {
         }
     }
     if (nim_file_2i->datatype == NIFTI_TYPE_FLOAT32) {
-        float* nim_file_2i_data = (float* ) nim_file_2i->data;
+        float* nim_file_2i_data = (float*) nim_file_2i->data;
         for (int it = 0; it < size_t; ++it) {
             for (int islice = 0; islice < size_z; ++islice) {
                 for (int iy = 0; iy < size_x; ++iy) {
@@ -180,11 +183,11 @@ int main(int argc, char * argv[]) {
     }
 
     float current_vaso = 0;
-    nifti_image * boco_vaso = nifti_copy_nim_info(nim_file_1);
+    nifti_image* boco_vaso = nifti_copy_nim_info(nim_file_1);
     boco_vaso->datatype = NIFTI_TYPE_FLOAT32;
     boco_vaso->nbyper = sizeof(float);
     boco_vaso->data = calloc(boco_vaso->nvox, boco_vaso->nbyper);
-    float  *boco_vaso_data = (float* ) boco_vaso->data;
+    float  *boco_vaso_data = (float*) boco_vaso->data;
 
     // AVERAGE across Trials
     for (int islice = 0; islice < size_z; ++islice) {
@@ -212,19 +215,19 @@ int main(int argc, char * argv[]) {
         }
     }
     if (shift == 1) {
-        nifti_image * correl_file  = nifti_copy_nim_info(nim_file_1);
+        nifti_image* correl_file  = nifti_copy_nim_info(nim_file_1);
         correl_file->nt = 7;
         correl_file->nvox = nim_file_1->nvox / size_t *7;
         correl_file->datatype = NIFTI_TYPE_FLOAT32;
         correl_file->nbyper = sizeof(float);
         correl_file->data = calloc(correl_file->nvox, correl_file->nbyper);
-        float* correl_file_data = (float* ) correl_file->data;
+        float* correl_file_data = (float*) correl_file->data;
 
         double vec_file1[size_t];
         double vec_file2[size_t];
 
         for (int shift = -3; shift <= 3; ++shift) {
-            cout << " calculating shift = " << shift << endl;
+            cout << "  Calculating shift = " << shift << endl;
             for (int islice = 0; islice < size_z; ++islice) {
                 for (int iy = 0; iy < size_x; ++iy) {
                     for (int ix = 0; ix < size_y; ++ix) {
@@ -236,7 +239,7 @@ int main(int argc, char * argv[]) {
                             vec_file2[it] = *(nim_file_2_data + nxyz * it + nxy * islice + nx * ix + iy);
                         }
                         // TODO: WTF is `+ +`
-                        *(correl_file_data + +nxyz*(shift+3) + nxy*islice + nx*ix + iy ) = ren_correl(vec_file1, vec_file2,  size_t);
+                        *(correl_file_data + +nxyz*(shift+3) + nxy*islice + nx*ix + iy) = ren_correl(vec_file1, vec_file2,  size_t);
                     }
                 }
             }
@@ -259,8 +262,8 @@ int main(int argc, char * argv[]) {
                         if (*(boco_vaso_data + nxyz * it + nxy * islice + nx * ix + iy) <= 0) {
                             *(boco_vaso_data + nxyz * it + nxy * islice + nx * ix + iy) = 0;
                         }
-                        if (*(boco_vaso_data + nxyz*it + nxy*islice + nx*ix + iy ) >= 2) {
-                            *(boco_vaso_data + nxyz*it + nxy*islice + nx*ix + iy ) = 2;
+                        if (*(boco_vaso_data + nxyz*it + nxy*islice + nx*ix + iy) >= 2) {
+                            *(boco_vaso_data + nxyz*it + nxy*islice + nx*ix + iy) = 2;
                         }
                     }
                 }
@@ -270,7 +273,8 @@ int main(int argc, char * argv[]) {
         string prefix = "correlated_";
         string filename_1 = (string) (fin_1);
         string outfilename = prefix+filename_1;
-        cout << "  Writing as = " << outfilename.c_str() << endl;
+        log_output(outfilename.c_str());
+        // cout << "  Writing as = " << outfilename.c_str() << endl;
 
         const char* fout_1 = outfilename.c_str();
         if (nifti_set_filenames(correl_file, fout_1, 1, 1)) {
@@ -281,25 +285,25 @@ int main(int argc, char * argv[]) {
 
     if (trialdur != 0) {
         cout << "  Also do the BOLD correction after the trial average." << endl;
-        cout << "  Trial duration is " <<trialdur << ". This means there are " << (float)size_t/(float)trialdur <<  " trials recorted here." << endl;
+        cout << "  Trial duration is " <<trialdur << ". This means there are " << (float)size_t/(float)trialdur <<  " trials recorded here." << endl;
 
         int numberofTrials = size_t/trialdur;
         // Trial averave file
-        nifti_image * triav_file = nifti_copy_nim_info(nim_file_1);
+        nifti_image* triav_file = nifti_copy_nim_info(nim_file_1);
         triav_file->nt = trialdur;
         triav_file->nvox = nim_file_1->nvox / size_t * trialdur;
         triav_file->datatype = NIFTI_TYPE_FLOAT32;
         triav_file->nbyper = sizeof(float);
         triav_file->data = calloc(triav_file->nvox, triav_file->nbyper);
-        float* triav_file_data = (float* ) triav_file->data;
+        float* triav_file_data = (float*) triav_file->data;
 
-        nifti_image * triav_B_file = nifti_copy_nim_info(nim_file_1);
+        nifti_image* triav_B_file = nifti_copy_nim_info(nim_file_1);
         triav_B_file->nt = trialdur;
         triav_B_file->nvox = nim_file_1->nvox / size_t * trialdur;
         triav_B_file->datatype = NIFTI_TYPE_FLOAT32;
         triav_B_file->nbyper = sizeof(float);
         triav_B_file->data = calloc(triav_B_file->nvox, triav_B_file->nbyper);
-        float* triav_B_file_data = (float* ) triav_B_file->data;
+        float* triav_B_file_data = (float*) triav_B_file->data;
 
         float AV_Nulled[trialdur];
         float AV_BOLD[trialdur];
@@ -351,7 +355,7 @@ int main(int argc, char * argv[]) {
         nifti_image_write(triav_B_file);
     }  // Trial Average loop closed
 
-    cout << "  Runing also until here 5... " << endl;
+    // cout << "  Running also until here 5... " << endl;
     const char* fout_5 = "VASO_LN.nii";
     log_output(fout_5);
     if (nifti_set_filenames(boco_vaso, fout_5, 1, 1)) {

@@ -8,51 +8,13 @@ void log_output(const char* filename) {
     cout << "    " << filename << endl;
 }
 
-void log_voxel_dims(int size_x, int size_y, int size_z, int size_t) {
-    cout << size_z << " Slices | " << size_x << " Phase steps | "
-         << size_y << " Read steps | " << size_t << " Time steps " << endl;
+void log_nifti_descriptives(nifti_image* nii) {
+    // Print nifti descriptives to command line for debugging
+    cout << "  File name: " << nii->fname << endl;
+    cout << "    Image details: " << nii->nz << " Slices | " << nii->nx
+         << " Phase steps | " << nii->ny << " Read steps | " << nii->nt
+         << " Time steps " << endl;
+    cout << "    Voxel size = " << nii->pixdim[1] << " x " << nii->pixdim[2]
+         << " x " << nii->pixdim[3] << endl;
+    cout << "    Datatype = " << nii->datatype << "\n" << endl;
 }
-
-// float* typecast_voxels_float_to_float(float* nim_in, int size_x, int size_y,
-//     int size_z, int size_t) {
-//
-//     float* nim_new = NULL;
-//     int nx = size_x;
-//     int nxy = size_x * size_y;
-//     int nxyz = size_x * size_y * size_z;
-//
-//     for (int t = 0; t < size_t; ++t) {  // time
-//         for (int z = 0; z < size_z; ++z) {  // slice
-//             for (int y = 0; y < size_y; ++y) {  // phase
-//                 for (int x = 0; x < size_x; ++x) {  // read
-//                     *(nim_new + nxyz * t + nxy * z + nx * x + y) =
-//                         static_cast<float>(*(nim_in + nxyz * t
-//                             + nxy * z + nx * x + y));
-//                 }
-//             }
-//         }
-//     }
-//     return nim_new;
-// }
-//
-// float* typecast_voxels_int16_to_float(int16_t* nim_in, int size_x, int size_y,
-//     int size_z, int size_t) {
-//
-//     float* nim_new = NULL;
-//     int nx = size_x;
-//     int nxy = size_x * size_y;
-//     int nxyz = size_x * size_y * size_z;
-//
-//     for (int t = 0; t < size_t; ++t) {  // time
-//         for (int z = 0; z < size_z; ++z) {  // slice
-//             for (int y = 0; y < size_y; ++y) {  // phase
-//                 for (int x = 0; x < size_x; ++x) {  // read
-//                     *(nim_new + nxyz * t + nxy * z + nx * x + y) =
-//                         static_cast<float>(*(nim_in + nxyz * t
-//                             + nxy * z + nx * x + y));
-//                 }
-//             }
-//         }
-//     }
-//     return nim_new;
-// }

@@ -47,33 +47,33 @@ int main(int argc, char* argv[]) {
                 fprintf(stderr, "** missing argument for -betan");
                 return 1;
             }
-            beta = atof(argv[ac]);  // No string copy, just pointer assignment
+            beta = atof(argv[ac]);
             // cout << " I will do gaussian temporal smoothing " << endl;
         } else if (!strcmp(argv[ac], "-INV1")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -INV1\n");
                 return 1;
             }
-            finfi_1 = argv[ac];  // no string copy, just pointer assignment
+            finfi_1 = argv[ac];
         } else if (!strcmp(argv[ac], "-INV2")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -INV2\n");
                 return 1;
             }
-            finfi_2 = argv[ac];  // no string copy, just pointer assignment
+            finfi_2 = argv[ac];
         } else if (!strcmp(argv[ac], "-UNI")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -UNI\n");
                 return 1;
             }
-            finfi_3 = argv[ac];  // no string copy, just pointer assignment
+            finfi_3 = argv[ac];
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
                 return 1;
             }
             custom_output = 1;
-            fout = argv[ac];  // no string copy, just pointer assignment
+            fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -96,19 +96,24 @@ int main(int argc, char* argv[]) {
     // Read input dataset, including data
     nifti_image* nim_inputfi_1 = nifti_image_read(finfi_1, 1);
     if (!nim_inputfi_1) {
-        fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", finfi_1);
+        fprintf(stderr, "** failed to read NIfTI from '%s'\n", finfi_1);
         return 2;
     }
+    log_nifti_descriptives(nim_inputfi_1);
+
     nifti_image* nim_inputfi_2 = nifti_image_read(finfi_2, 1);
     if (!nim_inputfi_2) {
-        fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", finfi_2);
+        fprintf(stderr, "** failed to read NIfTI from '%s'\n", finfi_2);
         return 2;
     }
+    log_nifti_descriptives(nim_inputfi_2);
+
     nifti_image* nim_inputfi_3 = nifti_image_read(finfi_3, 1);
     if (!nim_inputfi_3) {
-        fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", finfi_3);
+        fprintf(stderr, "** failed to read NIfTI from '%s'\n", finfi_3);
         return 2;
     }
+    log_nifti_descriptives(nim_inputfi_3);
 
     // Get dimensions of input
     int size_x = nim_inputfi_1->nx;  // phase
@@ -118,9 +123,6 @@ int main(int argc, char* argv[]) {
     int nx = nim_inputfi_1->nx;
     int nxy = nim_inputfi_1->nx * nim_inputfi_1->ny;
     int nxyz = nim_inputfi_1->nx * nim_inputfi_1->ny * nim_inputfi_1->nz;
-    float dX = nim_inputfi_1->pixdim[1];
-    float dY = nim_inputfi_1->pixdim[2];
-    float dZ = nim_inputfi_1->pixdim[3];
 
     //////////////////
     // LOADING INV1 //
@@ -155,13 +157,6 @@ int main(int argc, char* argv[]) {
                 static_cast<float>(*(nim_inputfi_1_data + VOXEL_ID));
         END_FOR_EACH_VOXEL_TZYX
     }
-
-    // Write out some stuff that might be good to know, if you want to debug
-    cout << size_z << " Slices | " << size_x << " Phase_steps | "
-         << size_y << " Read_steps | " << size_t << " Time_steps " << endl;
-
-    cout << "  Voxel size = " << dX << " x " << dY << " x " << dZ << endl;
-    cout << "  Datatype 1 = " << nim_inputfi_1->datatype << endl;
 
     //////////////////
     // Loading INV2 //
