@@ -1,5 +1,5 @@
 
-#include "src/common.h"
+#include "./common.h"
 
 int show_help(void) {
     printf(

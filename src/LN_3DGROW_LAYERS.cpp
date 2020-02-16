@@ -2,7 +2,7 @@
 // TODO(@Renzo): Check the vincinity loops. the "+1" are missing and
 // the z_dimensions is limited by REAN dimension????
 
-#include "src/common.h"
+#include "./common.h"
 
 int show_help(void) {
     printf(

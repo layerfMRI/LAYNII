@@ -1,7 +1,7 @@
 
 // TODO(@Faruk): Test after cosmetics (need layers.nii from Renzo)
 
-#include "src/common.h"
+#include "./common.h"
 
 using namespace std;
 
