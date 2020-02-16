@@ -8,6 +8,11 @@ void log_output(const char* filename) {
     cout << "    " << filename << endl;
 }
 
+void log_voxel_dims(int size_x, int size_y, int size_z, int size_t) {
+    cout << size_z << " Slices | " << size_x << " Phase steps | "
+         << size_y << " Read steps | " << size_t << " Time steps " << endl;
+}
+
 // float* typecast_voxels_float_to_float(float* nim_in, int size_x, int size_y,
 //     int size_z, int size_t) {
 //
