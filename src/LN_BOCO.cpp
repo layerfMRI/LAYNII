@@ -124,10 +124,10 @@ int main(int argc, char * argv[]) {
     if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
         float  *nim_file_1i_data = (float*) nim_file_1i->data;
         for (int it = 0; it < size_t; ++it) {
-            for (int islice = 0; islice < size_z; ++islice) {
+            for (int iz = 0; iz < size_z; ++iz) {
                 for (int iy = 0; iy < size_x; ++iy) {
                     for (int ix = 0; ix < size_y; ++ix) {
-                        *(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz *it + nxy * islice + nx * ix + iy));
+                        *(nim_file_1_data + nxyz * it + nxy * iz + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz *it + nxy * iz + nx * ix + iy));
                     }
                 }
             }
@@ -136,10 +136,10 @@ int main(int argc, char * argv[]) {
     if (nim_file_1i->datatype == NIFTI_TYPE_INT16) {
         short *nim_file_1i_data = (short *) nim_file_1i->data;
         for (int it = 0; it < size_t; ++it) {
-            for (int islice = 0; islice < size_z; ++islice) {
+            for (int iz = 0; iz < size_z; ++iz) {
                 for (int iy=0; iy < size_x; ++iy) {
                     for (int ix = 0; ix < size_y; ++ix) {
-                        *(nim_file_1_data + nxyz *it + nxy * islice + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz * it + nxy * islice + nx * ix + iy));
+                        *(nim_file_1_data + nxyz *it + nxy * iz + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz * it + nxy * iz + nx * ix + iy));
                     }
                 }
             }
@@ -148,10 +148,10 @@ int main(int argc, char * argv[]) {
     // if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
     //     float* nim_file_1i_data = (float*) nim_file_1i->data;
     //     for (int it = 0; it < size_t; ++it) {
-    //         for (int islice = 0; islice < size_z; ++islice) {
+    //         for (int iz = 0; iz < size_z; ++iz) {
     //             for (int iy = 0; iy < size_x; ++iy) {
     //                 for (int ix = 0; ix < size_y; ++ix) {
-    //                     *(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz * it + nxy * islice + nx * ix + iy));
+    //                     *(nim_file_1_data + nxyz * it + nxy * iz + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz * it + nxy * iz + nx * ix + iy));
     //                 }
     //             }
     //         }
@@ -160,10 +160,10 @@ int main(int argc, char * argv[]) {
     if (nim_file_2i->datatype == NIFTI_TYPE_INT16) {
         short  *nim_file_2i_data = (short *) nim_file_2i->data;
         for (int it = 0; it < size_t; ++it) {
-            for (int islice = 0; islice < size_z; ++islice) {
+            for (int iz = 0; iz < size_z; ++iz) {
                 for (int iy = 0; iy < size_x; ++iy) {
                     for (int ix = 0; ix < size_y; ++ix) {
-                        *(nim_file_2_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_file_2i_data + nxyz * it + nxy * islice + nx * ix + iy));
+                        *(nim_file_2_data + nxyz * it + nxy * iz + nx * ix + iy) = (float) (*(nim_file_2i_data + nxyz * it + nxy * iz + nx * ix + iy));
                     }
                 }
             }
@@ -172,10 +172,10 @@ int main(int argc, char * argv[]) {
     if (nim_file_2i->datatype == NIFTI_TYPE_FLOAT32) {
         float* nim_file_2i_data = (float*) nim_file_2i->data;
         for (int it = 0; it < size_t; ++it) {
-            for (int islice = 0; islice < size_z; ++islice) {
+            for (int iz = 0; iz < size_z; ++iz) {
                 for (int iy = 0; iy < size_x; ++iy) {
                     for (int ix = 0; ix < size_y; ++ix) {
-                        *(nim_file_2_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_file_2i_data + nxyz * it + nxy * islice + nx * ix + iy));
+                        *(nim_file_2_data + nxyz * it + nxy * iz + nx * ix + iy) = (float) (*(nim_file_2i_data + nxyz * it + nxy * iz + nx * ix + iy));
                     }
                 }
             }
@@ -190,25 +190,25 @@ int main(int argc, char * argv[]) {
     float  *boco_vaso_data = (float*) boco_vaso->data;
 
     // AVERAGE across Trials
-    for (int islice = 0; islice < size_z; ++islice) {
+    for (int iz = 0; iz < size_z; ++iz) {
         for (int iy = 0; iy < size_x; ++iy) {
             for (int ix = 0; ix < size_y; ++ix) {
                 for (int it = 0; it < size_t; ++it) {
-                    *(boco_vaso_data + nxyz * it + nxy * islice + nx * ix + iy) = *(nim_file_1_data + nxyz * (it) + nxy * islice + nx * ix + iy) / (*(nim_file_2_data + nxyz * it + nxy * islice + nx * ix + iy));
+                    *(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy) = *(nim_file_1_data + nxyz * (it) + nxy * iz + nx * ix + iy) / (*(nim_file_2_data + nxyz * it + nxy * iz + nx * ix + iy));
                 }
             }
         }
     }
     // Clean VASO values that are unrealistic
-    for (int islice = 0; islice < size_z; ++islice) {
+    for (int iz = 0; iz < size_z; ++iz) {
         for (int iy = 0; iy < size_x; ++iy) {
             for (int ix=0; ix < size_y; ++ix) {
                 for (int it = 0; it < size_t; ++it) {
-                    if (*(boco_vaso_data + nxyz * it + nxy * islice + nx * ix + iy) <= 0) {
-                        *(boco_vaso_data + nxyz * it + nxy * islice + nx * ix + iy) = 0;
+                    if (*(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy) <= 0) {
+                        *(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy) = 0;
                     }
-                    if (*(boco_vaso_data + nxyz * it + nxy * islice + nx * ix + iy) >= 5) {
-                        *(boco_vaso_data + nxyz * it + nxy * islice + nx * ix + iy) = 5;
+                    if (*(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy) >= 5) {
+                        *(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy) = 5;
                     }
                 }
             }
@@ -228,42 +228,42 @@ int main(int argc, char * argv[]) {
 
         for (int shift = -3; shift <= 3; ++shift) {
             cout << "  Calculating shift = " << shift << endl;
-            for (int islice = 0; islice < size_z; ++islice) {
+            for (int iz = 0; iz < size_z; ++iz) {
                 for (int iy = 0; iy < size_x; ++iy) {
                     for (int ix = 0; ix < size_y; ++ix) {
                         for (int it = 3; it < size_t-3; ++it) {
-                            *(boco_vaso_data + nxyz * it + nxy * islice + nx * ix + iy) = *(nim_file_1_data + nxyz * (it) + nxy * islice + nx * ix + iy) / (*(nim_file_2_data + nxyz * (it + shift) + nxy * islice + nx * ix + iy));
+                            *(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy) = *(nim_file_1_data + nxyz * (it) + nxy * iz + nx * ix + iy) / (*(nim_file_2_data + nxyz * (it + shift) + nxy * iz + nx * ix + iy));
                         }
                         for (int it = 0; it < size_t; ++it) {
-                            vec_file1[it] = *(boco_vaso_data + nxyz * it + nxy * islice + nx * ix + iy);
-                            vec_file2[it] = *(nim_file_2_data + nxyz * it + nxy * islice + nx * ix + iy);
+                            vec_file1[it] = *(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy);
+                            vec_file2[it] = *(nim_file_2_data + nxyz * it + nxy * iz + nx * ix + iy);
                         }
                         // TODO: WTF is `+ +`
-                        *(correl_file_data + +nxyz*(shift+3) + nxy*islice + nx*ix + iy) = ren_correl(vec_file1, vec_file2,  size_t);
+                        *(correl_file_data + +nxyz*(shift+3) + nxy*iz + nx*ix + iy) = ren_correl(vec_file1, vec_file2,  size_t);
                     }
                 }
             }
         }
         // Get back to default
-        for (int islice = 0; islice < size_z; ++islice) {
+        for (int iz = 0; iz < size_z; ++iz) {
             for (int iy = 0; iy < size_x; ++iy) {
                 for (int ix = 0; ix < size_y; ++ix) {
                     for (int it = 0; it < size_t; ++it) {
-                        *(boco_vaso_data + nxyz * it + nxy * islice + nx * ix + iy) = *(nim_file_1_data + nxyz * (it) + nxy * islice + nx * ix + iy) / (*(nim_file_2_data + nxyz*it + nxy * islice + nx * ix + iy));
+                        *(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy) = *(nim_file_1_data + nxyz * (it) + nxy * iz + nx * ix + iy) / (*(nim_file_2_data + nxyz*it + nxy * iz + nx * ix + iy));
                     }
                 }
             }
         }
         // Clean VASO values that are unrealistic
-        for (int islice = 0; islice < size_z; ++islice) {
+        for (int iz = 0; iz < size_z; ++iz) {
             for (int iy = 0; iy < size_x; ++iy) {
                 for (int ix = 0; ix < size_y; ++ix) {
                     for (int it = 0; it < size_t; ++it) {
-                        if (*(boco_vaso_data + nxyz * it + nxy * islice + nx * ix + iy) <= 0) {
-                            *(boco_vaso_data + nxyz * it + nxy * islice + nx * ix + iy) = 0;
+                        if (*(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy) <= 0) {
+                            *(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy) = 0;
                         }
-                        if (*(boco_vaso_data + nxyz*it + nxy*islice + nx*ix + iy) >= 2) {
-                            *(boco_vaso_data + nxyz*it + nxy*islice + nx*ix + iy) = 2;
+                        if (*(boco_vaso_data + nxyz*it + nxy*iz + nx*ix + iy) >= 2) {
+                            *(boco_vaso_data + nxyz*it + nxy*iz + nx*ix + iy) = 2;
                         }
                     }
                 }
@@ -308,7 +308,7 @@ int main(int argc, char * argv[]) {
         float AV_Nulled[trialdur];
         float AV_BOLD[trialdur];
 
-        for (int islice = 0; islice < size_z; ++islice) {
+        for (int iz = 0; iz < size_z; ++iz) {
             for (int iy = 0; iy < size_x; ++iy) {
                 for (int ix = 0; ix < size_y; ++ix) {
                     for (int it = 0; it < trialdur; ++it) {
@@ -316,27 +316,27 @@ int main(int argc, char * argv[]) {
                         AV_BOLD[it] = 0;
                     }
                     for (int it = 0; it < trialdur * numberofTrials; ++it) {
-                        AV_Nulled[it%trialdur] = AV_Nulled[it%trialdur] + (*(nim_file_1_data + nxyz *(it) + nxy * islice + nx * ix + iy)) / numberofTrials;
-                        AV_BOLD[it%trialdur] = AV_BOLD[it%trialdur] + (*(nim_file_2_data + nxyz *(it) + nxy * islice + nx * ix + iy)) / numberofTrials;
+                        AV_Nulled[it%trialdur] = AV_Nulled[it%trialdur] + (*(nim_file_1_data + nxyz *(it) + nxy * iz + nx * ix + iy)) / numberofTrials;
+                        AV_BOLD[it%trialdur] = AV_BOLD[it%trialdur] + (*(nim_file_2_data + nxyz *(it) + nxy * iz + nx * ix + iy)) / numberofTrials;
                     }
                     for (int it = 0; it < trialdur; ++it) {
-                        *(triav_file_data + nxyz * it + nxy * islice + nx * ix + iy) = AV_Nulled[it] / AV_BOLD[it];
-                        *(triav_B_file_data + nxyz * it + nxy * islice + nx * ix + iy) = AV_BOLD[it];
+                        *(triav_file_data + nxyz * it + nxy * iz + nx * ix + iy) = AV_Nulled[it] / AV_BOLD[it];
+                        *(triav_B_file_data + nxyz * it + nxy * iz + nx * ix + iy) = AV_BOLD[it];
                     }
                 }
             }
         }
 
         // clean VASO values that are unrealistic
-        for (int islice = 0; islice < size_z; ++islice) {
+        for (int iz = 0; iz < size_z; ++iz) {
             for (int iy = 0; iy < size_x; ++iy) {
                 for (int ix = 0; ix < size_y; ++ix) {
                     for (int it = 0; it < trialdur; ++it) {
-                        if (*(triav_file_data + nxyz * it + nxy * islice + nx * ix + iy) <= 0) {
-                            *(triav_file_data + nxyz * it + nxy * islice + nx * ix + iy) = 0;
+                        if (*(triav_file_data + nxyz * it + nxy * iz + nx * ix + iy) <= 0) {
+                            *(triav_file_data + nxyz * it + nxy * iz + nx * ix + iy) = 0;
                         }
-                        if (*(triav_file_data + nxyz * it + nxy * islice + nx * ix + iy) >= 2) {
-                            *(triav_file_data + nxyz * it + nxy * islice + nx * ix + iy) = 2;
+                        if (*(triav_file_data + nxyz * it + nxy * iz + nx * ix + iy) >= 2) {
+                            *(triav_file_data + nxyz * it + nxy * iz + nx * ix + iy) = 2;
                         }
                     }
                 }
