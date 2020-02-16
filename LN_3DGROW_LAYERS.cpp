@@ -23,9 +23,6 @@ int show_help(void) {
     printf(
     "LN_3DGROW_LAYERS: Short exmample of Layering.\n"
     "\n"
-    "    This program is to demonstrate how to read a NIfTI-2 dataset,\n"
-    "    set output filenames and write a NIfTI-2 dataset. All via the\n"
-    "    standard NIfTI C library.\n"
     "\n"
     "Usage:\n"
     "    LN_3DGROW_LAYERS -rim rim.nii \n"
