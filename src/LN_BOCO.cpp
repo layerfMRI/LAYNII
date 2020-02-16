@@ -116,11 +116,24 @@ int main(int argc, char * argv[]) {
     nim_file_2->data = calloc(nim_file_2->nvox, nim_file_2->nbyper);
     float* nim_file_2_data = (float*) nim_file_2->data;
 
-    // if (!fout) { fprintf(stderr, "-- no output requested \n"); return 0; }
-    //     assign nifti_image fname/iname pair, based on output filename
-    //     (request to 'check' image and 'set_byte_order' here)
-    // if (nifti_set_filenames(nim_input, fout, 1, 1)) return 1;
+    //////////////////////////////////////////////////////////////
+    // Fixing potential problems with different input datatypes //
+    // here, I am loading them in their native datatype         //
+    // and translate them to the datatime I like best           //
+    //////////////////////////////////////////////////////////////
 
+    if (nim_file_1i->datatype == NIFTI_TYPE_INT16) {
+        short *nim_file_1i_data = (short *) nim_file_1i->data;
+        for (int it = 0; it < size_t; ++it) {
+            for (int iz = 0; iz < size_z; ++iz) {
+                for (int iy=0; iy < size_x; ++iy) {
+                    for (int ix = 0; ix < size_y; ++ix) {
+                        *(nim_file_1_data + VOXEL_ID) = (float) (*(nim_file_1i_data + VOXEL_ID));
+                    }
+                }
+            }
+        }
+    }
     if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
         float  *nim_file_1i_data = (float*) nim_file_1i->data;
         for (int it = 0; it < size_t; ++it) {
@@ -134,30 +147,6 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    if (nim_file_1i->datatype == NIFTI_TYPE_INT16) {
-        short *nim_file_1i_data = (short *) nim_file_1i->data;
-        for (int it = 0; it < size_t; ++it) {
-            for (int iz = 0; iz < size_z; ++iz) {
-                for (int iy=0; iy < size_x; ++iy) {
-                    for (int ix = 0; ix < size_y; ++ix) {
-                        *(nim_file_1_data + VOXEL_ID) = (float) (*(nim_file_1i_data + VOXEL_ID));
-                    }
-                }
-            }
-        }
-    }
-    // if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
-    //     float* nim_file_1i_data = (float*) nim_file_1i->data;
-    //     for (int it = 0; it < size_t; ++it) {
-    //         for (int iz = 0; iz < size_z; ++iz) {
-    //             for (int iy = 0; iy < size_x; ++iy) {
-    //                 for (int ix = 0; ix < size_y; ++ix) {
-    //                     *(nim_file_1_data + VOXEL_ID) = (float) (*(nim_file_1i_data + VOXEL_ID));
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
     if (nim_file_2i->datatype == NIFTI_TYPE_INT16) {
         short  *nim_file_2i_data = (short *) nim_file_2i->data;
         for (int it = 0; it < size_t; ++it) {
@@ -182,6 +171,8 @@ int main(int argc, char * argv[]) {
             }
         }
     }
+
+    // ========================================================================
 
     float current_vaso = 0;
     nifti_image* boco_vaso = nifti_copy_nim_info(nim_file_1);
@@ -288,7 +279,7 @@ int main(int argc, char * argv[]) {
         cout << "  Trial duration is " <<trialdur << ". This means there are " << (float)size_t/(float)trialdur <<  " trials recorded here." << endl;
 
         int numberofTrials = size_t/trialdur;
-        // Trial averave file
+        // Trial average file
         nifti_image* triav_file = nifti_copy_nim_info(nim_file_1);
         triav_file->nt = trialdur;
         triav_file->nvox = nim_file_1->nvox / size_t * trialdur;
@@ -308,40 +299,35 @@ int main(int argc, char * argv[]) {
         float AV_Nulled[trialdur];
         float AV_BOLD[trialdur];
 
-        for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_x; ++iy) {
-                for (int ix = 0; ix < size_y; ++ix) {
-                    for (int it = 0; it < trialdur; ++it) {
-                        AV_Nulled[it] = 0;
-                        AV_BOLD[it] = 0;
-                    }
-                    for (int it = 0; it < trialdur * numberofTrials; ++it) {
-                        AV_Nulled[it%trialdur] = AV_Nulled[it%trialdur] + (*(nim_file_1_data + nxyz *it + nxy * iz + nx * ix + iy)) / numberofTrials;
-                        AV_BOLD[it%trialdur] = AV_BOLD[it%trialdur] + (*(nim_file_2_data + nxyz *it + nxy * iz + nx * ix + iy)) / numberofTrials;
-                    }
-                    for (int it = 0; it < trialdur; ++it) {
-                        *(triav_file_data + VOXEL_ID) = AV_Nulled[it] / AV_BOLD[it];
-                        *(triav_B_file_data + VOXEL_ID) = AV_BOLD[it];
-                    }
-                }
+        FOR_EACH_VOXEL_ZYX
+            for (int it = 0; it < trialdur; ++it) {
+                AV_Nulled[it] = 0;
+                AV_BOLD[it] = 0;
             }
-        }
+            for (int it = 0; it < trialdur * numberofTrials; ++it) {
+                AV_Nulled[it%trialdur] = AV_Nulled[it%trialdur]
+                    + (*(nim_file_1_data + VOXEL_ID)) / numberofTrials;
+                AV_BOLD[it%trialdur] = AV_BOLD[it%trialdur]
+                    + (*(nim_file_2_data + VOXEL_ID)) / numberofTrials;
+            }
+            for (int it = 0; it < trialdur; ++it) {
+                *(triav_file_data + VOXEL_ID) = AV_Nulled[it] / AV_BOLD[it];
+                *(triav_B_file_data + VOXEL_ID) = AV_BOLD[it];
+            }
+        END_FOR_EACH_VOXEL_ZYX
 
-        // clean VASO values that are unrealistic
-        for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_x; ++iy) {
-                for (int ix = 0; ix < size_y; ++ix) {
-                    for (int it = 0; it < trialdur; ++it) {
-                        if (*(triav_file_data + VOXEL_ID) <= 0) {
-                            *(triav_file_data + VOXEL_ID) = 0;
-                        }
-                        if (*(triav_file_data + VOXEL_ID) >= 2) {
-                            *(triav_file_data + VOXEL_ID) = 2;
-                        }
-                    }
+        // Clean VASO values that are unrealistic
+        FOR_EACH_VOXEL_ZYX
+            for (int it = 0; it < trialdur; ++it) {
+                if (*(triav_file_data + VOXEL_ID) <= 0) {
+                    *(triav_file_data + VOXEL_ID) = 0;
+                }
+                if (*(triav_file_data + VOXEL_ID) >= 2) {
+                    *(triav_file_data + VOXEL_ID) = 2;
                 }
             }
-        }
+        END_FOR_EACH_VOXEL_ZYX
+
         const char* fout_trial="VASO_trialAV_LN.nii";
         if (nifti_set_filenames(triav_file, fout_trial, 1, 1)) {
             return 1;
