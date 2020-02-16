@@ -3,12 +3,6 @@
 
 #include "./common.h"
 
-using namespace std;
-
-#define PI 3.14159265;
-
-// #include "utils.hpp"
-
 int show_help(void) {
     printf(
     "LN_3DCOLUMNS : Calculates cortical distances (columnar structures) \n"

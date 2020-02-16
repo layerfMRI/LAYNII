@@ -9,11 +9,9 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
-#include <cstdlib>
 #include <fstream>
-#include <iostream>
 #include <string>
-// #include "stdafx.h" // Enable for Microsoft compilers, disable for linux and mac
+// #include "stdafx.h" // Enable for Windows compilers, disable for linux & mac
 
 using namespace std;
 
