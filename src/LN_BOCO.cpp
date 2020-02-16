@@ -125,9 +125,10 @@ int main(int argc, char * argv[]) {
         float  *nim_file_1i_data = (float*) nim_file_1i->data;
         for (int it = 0; it < size_t; ++it) {
             for (int iz = 0; iz < size_z; ++iz) {
+                // TODO(Faruk): `i!y! < size_!x!` looks susp.
                 for (int iy = 0; iy < size_x; ++iy) {
                     for (int ix = 0; ix < size_y; ++ix) {
-                        *(nim_file_1_data + nxyz * it + nxy * iz + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz *it + nxy * iz + nx * ix + iy));
+                        *(nim_file_1_data + VOXEL_ID) = (float) (*(nim_file_1i_data + VOXEL_ID));
                     }
                 }
             }
@@ -139,7 +140,7 @@ int main(int argc, char * argv[]) {
             for (int iz = 0; iz < size_z; ++iz) {
                 for (int iy=0; iy < size_x; ++iy) {
                     for (int ix = 0; ix < size_y; ++ix) {
-                        *(nim_file_1_data + nxyz *it + nxy * iz + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz * it + nxy * iz + nx * ix + iy));
+                        *(nim_file_1_data + VOXEL_ID) = (float) (*(nim_file_1i_data + VOXEL_ID));
                     }
                 }
             }
@@ -151,7 +152,7 @@ int main(int argc, char * argv[]) {
     //         for (int iz = 0; iz < size_z; ++iz) {
     //             for (int iy = 0; iy < size_x; ++iy) {
     //                 for (int ix = 0; ix < size_y; ++ix) {
-    //                     *(nim_file_1_data + nxyz * it + nxy * iz + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz * it + nxy * iz + nx * ix + iy));
+    //                     *(nim_file_1_data + VOXEL_ID) = (float) (*(nim_file_1i_data + VOXEL_ID));
     //                 }
     //             }
     //         }
@@ -163,7 +164,7 @@ int main(int argc, char * argv[]) {
             for (int iz = 0; iz < size_z; ++iz) {
                 for (int iy = 0; iy < size_x; ++iy) {
                     for (int ix = 0; ix < size_y; ++ix) {
-                        *(nim_file_2_data + nxyz * it + nxy * iz + nx * ix + iy) = (float) (*(nim_file_2i_data + nxyz * it + nxy * iz + nx * ix + iy));
+                        *(nim_file_2_data + VOXEL_ID) = (float) (*(nim_file_2i_data + VOXEL_ID));
                     }
                 }
             }
@@ -175,7 +176,7 @@ int main(int argc, char * argv[]) {
             for (int iz = 0; iz < size_z; ++iz) {
                 for (int iy = 0; iy < size_x; ++iy) {
                     for (int ix = 0; ix < size_y; ++ix) {
-                        *(nim_file_2_data + nxyz * it + nxy * iz + nx * ix + iy) = (float) (*(nim_file_2i_data + nxyz * it + nxy * iz + nx * ix + iy));
+                        *(nim_file_2_data + VOXEL_ID) = (float) (*(nim_file_2i_data + VOXEL_ID));
                     }
                 }
             }
@@ -194,7 +195,7 @@ int main(int argc, char * argv[]) {
         for (int iy = 0; iy < size_x; ++iy) {
             for (int ix = 0; ix < size_y; ++ix) {
                 for (int it = 0; it < size_t; ++it) {
-                    *(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy) = *(nim_file_1_data + nxyz * (it) + nxy * iz + nx * ix + iy) / (*(nim_file_2_data + nxyz * it + nxy * iz + nx * ix + iy));
+                    *(boco_vaso_data + VOXEL_ID) = *(nim_file_1_data + VOXEL_ID) / (*(nim_file_2_data + VOXEL_ID));
                 }
             }
         }
@@ -204,11 +205,11 @@ int main(int argc, char * argv[]) {
         for (int iy = 0; iy < size_x; ++iy) {
             for (int ix=0; ix < size_y; ++ix) {
                 for (int it = 0; it < size_t; ++it) {
-                    if (*(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy) <= 0) {
-                        *(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy) = 0;
+                    if (*(boco_vaso_data + VOXEL_ID) <= 0) {
+                        *(boco_vaso_data + VOXEL_ID) = 0;
                     }
-                    if (*(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy) >= 5) {
-                        *(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy) = 5;
+                    if (*(boco_vaso_data + VOXEL_ID) >= 5) {
+                        *(boco_vaso_data + VOXEL_ID) = 5;
                     }
                 }
             }
@@ -232,14 +233,13 @@ int main(int argc, char * argv[]) {
                 for (int iy = 0; iy < size_x; ++iy) {
                     for (int ix = 0; ix < size_y; ++ix) {
                         for (int it = 3; it < size_t-3; ++it) {
-                            *(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy) = *(nim_file_1_data + nxyz * (it) + nxy * iz + nx * ix + iy) / (*(nim_file_2_data + nxyz * (it + shift) + nxy * iz + nx * ix + iy));
+                            *(boco_vaso_data + VOXEL_ID) = *(nim_file_1_data + VOXEL_ID) / (*(nim_file_2_data + nxyz * (it + shift) + nxy * iz + nx * ix + iy));
                         }
                         for (int it = 0; it < size_t; ++it) {
-                            vec_file1[it] = *(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy);
-                            vec_file2[it] = *(nim_file_2_data + nxyz * it + nxy * iz + nx * ix + iy);
+                            vec_file1[it] = *(boco_vaso_data + VOXEL_ID);
+                            vec_file2[it] = *(nim_file_2_data + VOXEL_ID);
                         }
-                        // TODO: WTF is `+ +`
-                        *(correl_file_data + +nxyz*(shift+3) + nxy*iz + nx*ix + iy) = ren_correl(vec_file1, vec_file2,  size_t);
+                        *(correl_file_data + nxyz * (shift+3) + nxy * iz + nx * ix + iy) = ren_correl(vec_file1, vec_file2, size_t);
                     }
                 }
             }
@@ -249,7 +249,7 @@ int main(int argc, char * argv[]) {
             for (int iy = 0; iy < size_x; ++iy) {
                 for (int ix = 0; ix < size_y; ++ix) {
                     for (int it = 0; it < size_t; ++it) {
-                        *(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy) = *(nim_file_1_data + nxyz * (it) + nxy * iz + nx * ix + iy) / (*(nim_file_2_data + nxyz*it + nxy * iz + nx * ix + iy));
+                        *(boco_vaso_data + VOXEL_ID) = *(nim_file_1_data + VOXEL_ID) / (*(nim_file_2_data + VOXEL_ID));
                     }
                 }
             }
@@ -259,11 +259,11 @@ int main(int argc, char * argv[]) {
             for (int iy = 0; iy < size_x; ++iy) {
                 for (int ix = 0; ix < size_y; ++ix) {
                     for (int it = 0; it < size_t; ++it) {
-                        if (*(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy) <= 0) {
-                            *(boco_vaso_data + nxyz * it + nxy * iz + nx * ix + iy) = 0;
+                        if (*(boco_vaso_data + VOXEL_ID) <= 0) {
+                            *(boco_vaso_data + VOXEL_ID) = 0;
                         }
-                        if (*(boco_vaso_data + nxyz*it + nxy*iz + nx*ix + iy) >= 2) {
-                            *(boco_vaso_data + nxyz*it + nxy*iz + nx*ix + iy) = 2;
+                        if (*(boco_vaso_data + VOXEL_ID) >= 2) {
+                            *(boco_vaso_data + VOXEL_ID) = 2;
                         }
                     }
                 }
@@ -316,12 +316,12 @@ int main(int argc, char * argv[]) {
                         AV_BOLD[it] = 0;
                     }
                     for (int it = 0; it < trialdur * numberofTrials; ++it) {
-                        AV_Nulled[it%trialdur] = AV_Nulled[it%trialdur] + (*(nim_file_1_data + nxyz *(it) + nxy * iz + nx * ix + iy)) / numberofTrials;
-                        AV_BOLD[it%trialdur] = AV_BOLD[it%trialdur] + (*(nim_file_2_data + nxyz *(it) + nxy * iz + nx * ix + iy)) / numberofTrials;
+                        AV_Nulled[it%trialdur] = AV_Nulled[it%trialdur] + (*(nim_file_1_data + nxyz *it + nxy * iz + nx * ix + iy)) / numberofTrials;
+                        AV_BOLD[it%trialdur] = AV_BOLD[it%trialdur] + (*(nim_file_2_data + nxyz *it + nxy * iz + nx * ix + iy)) / numberofTrials;
                     }
                     for (int it = 0; it < trialdur; ++it) {
-                        *(triav_file_data + nxyz * it + nxy * iz + nx * ix + iy) = AV_Nulled[it] / AV_BOLD[it];
-                        *(triav_B_file_data + nxyz * it + nxy * iz + nx * ix + iy) = AV_BOLD[it];
+                        *(triav_file_data + VOXEL_ID) = AV_Nulled[it] / AV_BOLD[it];
+                        *(triav_B_file_data + VOXEL_ID) = AV_BOLD[it];
                     }
                 }
             }
@@ -332,11 +332,11 @@ int main(int argc, char * argv[]) {
             for (int iy = 0; iy < size_x; ++iy) {
                 for (int ix = 0; ix < size_y; ++ix) {
                     for (int it = 0; it < trialdur; ++it) {
-                        if (*(triav_file_data + nxyz * it + nxy * iz + nx * ix + iy) <= 0) {
-                            *(triav_file_data + nxyz * it + nxy * iz + nx * ix + iy) = 0;
+                        if (*(triav_file_data + VOXEL_ID) <= 0) {
+                            *(triav_file_data + VOXEL_ID) = 0;
                         }
-                        if (*(triav_file_data + nxyz * it + nxy * iz + nx * ix + iy) >= 2) {
-                            *(triav_file_data + nxyz * it + nxy * iz + nx * ix + iy) = 2;
+                        if (*(triav_file_data + VOXEL_ID) >= 2) {
+                            *(triav_file_data + VOXEL_ID) = 2;
                         }
                     }
                 }
@@ -363,11 +363,11 @@ int main(int argc, char * argv[]) {
     }
     nifti_image_write(boco_vaso);
 
-// const char  *fout_6="kootrGM.nii";
-// if (nifti_set_filenames(GMkoord2, fout_6 , 1, 1)) return 1;
-// nifti_image_write(GMkoord2);
+    // const char* fout_6 = "kootrGM.nii";
+    // if (nifti_set_filenames(GMkoord2, fout_6 , 1, 1)) return 1;
+    // nifti_image_write(GMkoord2);
 
-// koord.autowrite("koordinaten.nii", wopts, &prot);
+    // koord.autowrite("koordinaten.nii", wopts, &prot);
     cout << "  Finished." << endl;
     return 0;
 }

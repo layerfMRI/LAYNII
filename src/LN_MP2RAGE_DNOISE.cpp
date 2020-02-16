@@ -175,7 +175,7 @@ int main(int argc, char* argv[]) {
         nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
         float* nim_inputfi_2_data = static_cast<float*>(nim_inputfi_2->data);
         FOR_EACH_VOXEL_TZYX
-            *(nim_inv2_data + nxyz * t +  nxy * z + nx * x + y) =
+            *(nim_inv2_data + VOXEL_ID) =
                 static_cast<float>(*(nim_inputfi_2_data + VOXEL_ID));
         END_FOR_EACH_VOXEL_TZYX
     }
