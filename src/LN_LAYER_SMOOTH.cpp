@@ -81,8 +81,8 @@ int main(int argc, char*  argv[]) {
         return 1;
     }
     // read input dataset, including data
-    nifti_image * nim_inputfi = nifti_image_read(finfi, 1);
-    if (!nim_inputfi) {
+    nifti_image * nii1 = nifti_image_read(finfi, 1);
+    if (!nii1) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", finfi);
         return 2;
     }
@@ -91,129 +91,47 @@ int main(int argc, char*  argv[]) {
         return 1;
     }
     // read input dataset, including data
-    nifti_image * nim_maski = nifti_image_read(fmaski, 1);
-    if (!nim_maski) {
+    nifti_image * nii2 = nifti_image_read(fmaski, 1);
+    if (!nii2) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", fmaski);
         return 2;
     }
 
     log_welcome("LN_LAYER_SMOOTH");
-    log_nifti_descriptives(nim_inputfi);
-    log_nifti_descriptives(nim_maski);
+    log_nifti_descriptives(nii1);
+    log_nifti_descriptives(nii2);
 
     // Get dimensions of input
-    const int sizeSlice = nim_maski->nz;
-    const int sizePhase = nim_maski->nx;
-    const int sizeRead = nim_maski->ny;
-    const int nrep = nim_maski->nt;
-    const int nx = nim_maski->nx;
-    const int nxy = nim_maski->nx * nim_maski->ny;
-    const int nxyz = nim_maski->nx * nim_maski->ny * nim_maski->nz;
-    const float dX = nim_maski->pixdim[1];
-    const float dY = nim_maski->pixdim[2];
-    float dZ = nim_maski->pixdim[3];
-    if (twodim == 1) dZ = 1000 * nim_maski->pixdim[3];
+    const int sizeSlice = nii2->nz;
+    const int sizePhase = nii2->nx;
+    const int sizeRead = nii2->ny;
+    const int nrep = nii2->nt;
+    const int nx = nii2->nx;
+    const int nxy = nii2->nx * nii2->ny;
+    const int nxyz = nii2->nx * nii2->ny * nii2->nz;
+    const float dX = nii2->pixdim[1];
+    const float dY = nii2->pixdim[2];
+    float dZ = nii2->pixdim[3];
+    if (twodim == 1) dZ = 1000 * nii2->pixdim[3];
 
-    // nim_mask->datatype = NIFTI_TYPE_FLOAT32;
-    // nim_mask->nbyper = sizeof(float);
-    // nim_mask->data = calloc(nim_mask->nvox, nim_mask->nbyper);
 
-    nifti_image * nim_inputf = nifti_copy_nim_info(nim_inputfi);
-    nim_inputf->datatype = NIFTI_TYPE_FLOAT32;
-    nim_inputf->nbyper = sizeof(float);
-    nim_inputf->data = calloc(nim_inputf->nvox, nim_inputf->nbyper);
-    float* nim_inputf_data = (float*) nim_inputf->data;
+    // ========================================================================
+    // Fix datatype issues
 
-    nifti_image * nim_mask = nifti_copy_nim_info(nim_maski);
-    nim_mask->datatype = NIFTI_TYPE_INT32;
-    nim_mask->nbyper = sizeof(int);
-    nim_mask->data = calloc(nim_mask->nvox, nim_mask->nbyper);
-    int* nim_mask_data = (int*) nim_mask->data;
+    nifti_image* nii1_temp = recreate_nii_with_float_datatype(nii1);
+    float* nii1_data = static_cast<float*>(nii1_temp->data);
 
-    //////////////////////////////////////////////////////////////
-    // Fixing potential problems with different input datatypes //
-    //////////////////////////////////////////////////////////////
+    nifti_image* nii2_temp = recreate_nii_with_float_datatype(nii2);
+    float* nii_mask_data = static_cast<float*>(nii2_temp->data);
 
-    if (nim_inputfi->datatype == NIFTI_TYPE_INT16) {
-        short *nim_inputfi_data = (short *) nim_inputfi->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int iz  = 0; iz  < sizeSlice; ++iz) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix=0; ix < sizeRead; ++ix) {
-                        *(nim_inputf_data + VOXEL_ID) = (float) (*(nim_inputfi_data + VOXEL_ID));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_inputfi->datatype == NIFTI_TYPE_INT32) {
-        int* nim_inputfi_data = (int*) nim_inputfi->data;
-        for (int it=0; it < nrep; ++it) {
-            for (int iz =0; iz  < sizeSlice; ++iz) {
-                for (int iy=0; iy < sizePhase; ++iy) {
-                    for (int ix=0; ix < sizeRead; ++ix) {
-                        *(nim_inputf_data + VOXEL_ID) = (float) (*(nim_inputfi_data + VOXEL_ID));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_inputfi->datatype == NIFTI_TYPE_FLOAT32) {
-        float* nim_inputfi_data = (float*) nim_inputfi->data;
-        for (int it=0; it < nrep; ++it) {
-            for (int iz  = 0; iz  < sizeSlice; ++iz) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_inputf_data + VOXEL_ID) = (float) (*(nim_inputfi_data + VOXEL_ID));
-                    }
-                }
-            }
-        }
-    }
-
-    if (nim_maski->datatype == NIFTI_TYPE_INT16) {
-        short *nim_maski_data = (short *) nim_maski->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int iz  = 0; iz  < sizeSlice; ++iz) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_mask_data + VOXEL_ID) = (int) (*(nim_maski_data + VOXEL_ID));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_maski->datatype == NIFTI_TYPE_INT32) {
-        int* nim_maski_data = (int*) nim_maski->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int iz  = 0; iz  < sizeSlice; ++iz) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_mask_data + VOXEL_ID) = (int) (*(nim_maski_data + VOXEL_ID));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_maski->datatype == NIFTI_TYPE_FLOAT32) {
-        float* nim_maski_data = (float*) nim_maski->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int iz  = 0; iz  < sizeSlice; ++iz) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_mask_data + VOXEL_ID) = (int) (*(nim_maski_data + VOXEL_ID));
-                    }
-                }
-            }
-        }
-    }
+    // ========================================================================
 
     /////////////////////////////////////
     // MAKE allocating necessary files //
     /////////////////////////////////////
 
-    nifti_image * smoothed = nifti_copy_nim_info(nim_inputf);
-    nifti_image * gausweight = nifti_copy_nim_info(nim_inputf);
+    nifti_image * smoothed = nifti_copy_nim_info(nii1_temp);
+    nifti_image * gausweight = nifti_copy_nim_info(nii1_temp);
 
     smoothed->datatype = NIFTI_TYPE_FLOAT32;
     gausweight->datatype = NIFTI_TYPE_FLOAT32;
@@ -247,7 +165,7 @@ int main(int argc, char*  argv[]) {
     for (int iz = 0; iz < sizeSlice; ++iz) {
         for (int iy = 0; iy < sizePhase; ++iy) {
             for (int ix = 0; ix < sizeRead; ++ix) {
-                if (*(nim_mask_data + VOXEL_ID_3D) > layernumber) layernumber = *(nim_mask_data + VOXEL_ID_3D);
+                if (*(nii_mask_data + VOXEL_ID_3D) > layernumber) layernumber = *(nii_mask_data + VOXEL_ID_3D);
             }
         }
     }
@@ -275,18 +193,18 @@ int main(int argc, char*  argv[]) {
                         *(gausweight_data + VOXEL_ID_3D) = 0;
                         // *(smoothed_data + VOXEL_ID_3D) = 0;
 
-                        if (*(nim_mask_data + nxy*iz + nx * ix + iy) == layernumber_i) {
+                        if (*(nii_mask_data + nxy*iz + nx * ix + iy) == layernumber_i) {
 
                             for (int iz_i = max(0, iz-vinc); iz_i < min(iz + vinc + 1, sizeSlice-1); ++iz_i) {
                                 for (int iy_i = max(0, iy-vinc); iy_i < min(iy + vinc + 1, sizePhase - 1); ++iy_i) {
                                     for (int ix_i = max(0, ix-vinc); ix_i < min(ix + vinc + 1, sizeRead - 1); ++ix_i) {
-                                        if (*(nim_mask_data + nxy * iz_i + nx * ix_i + iy_i) == layernumber_i) {
+                                        if (*(nii_mask_data + nxy * iz_i + nx * ix_i + iy_i) == layernumber_i) {
                                             dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                             // cout << "  Debug 4 " << gaus(dist_i ,FWHM_val) <<   endl;
                                             // cout << "  Debug 5 " << dist_i  <<   endl;
                                             // if (*(nim_input_data + VOXEL_ID_3D) == 3) cout << "debug  4b " << endl;
                                             // dummy = *(layer_data + nxy*iz_i + nx*ix_i + iy_i);
-                                            *(smoothed_data + VOXEL_ID_3D) = *(smoothed_data + VOXEL_ID_3D) + *(nim_inputf_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
+                                            *(smoothed_data + VOXEL_ID_3D) = *(smoothed_data + VOXEL_ID_3D) + *(nii1_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
                                             *(gausweight_data + VOXEL_ID_3D) = *(gausweight_data + VOXEL_ID_3D) + gaus(dist_i, FWHM_val);
                                         }
                                     }
@@ -294,7 +212,7 @@ int main(int argc, char*  argv[]) {
                             }
                             if (*(gausweight_data + VOXEL_ID_3D) > 0) *(smoothed_data + VOXEL_ID_3D) = *(smoothed_data + VOXEL_ID_3D) / *(gausweight_data + VOXEL_ID_3D);
                         }
-                        if (*(nim_mask_data + VOXEL_ID_3D) <= 0) *(smoothed_data + VOXEL_ID_3D) = *(nim_inputf_data + VOXEL_ID_3D);
+                        if (*(nii_mask_data + VOXEL_ID_3D) <= 0) *(smoothed_data + VOXEL_ID_3D) = *(nii1_data + VOXEL_ID_3D);
                     }
                 }
             }
@@ -307,7 +225,7 @@ int main(int argc, char*  argv[]) {
 
     if (sulctouch == 1) {
         // Allocating local connected vincinity file
-        nifti_image * hairy_brain = nifti_copy_nim_info(nim_mask);
+        nifti_image * hairy_brain = nifti_copy_nim_info(nii2_temp);
         hairy_brain->datatype = NIFTI_TYPE_INT32;
         hairy_brain->nbyper = sizeof(int);
         hairy_brain->data = calloc(hairy_brain->nvox, hairy_brain->nbyper);
@@ -338,7 +256,7 @@ int main(int argc, char*  argv[]) {
         for (int iz = 0; iz < sizeSlice; ++iz) {
             for (int iy = 0; iy < sizePhase; ++iy) {
                 for (int ix = 0; ix < sizeRead; ++ix) {
-                    if (*(nim_mask_data + VOXEL_ID_3D) > 1) {
+                    if (*(nii_mask_data + VOXEL_ID_3D) > 1) {
                         nvoxels_to_go_across++;
                     }
                 }
@@ -349,13 +267,13 @@ int main(int argc, char*  argv[]) {
         for (int iz = 0; iz < sizeSlice; ++iz) {
             for (int iy = 0; iy < sizePhase; ++iy) {
                 for (int ix = 0; ix < sizeRead - 0; ++ix) {
-                    if (*(nim_mask_data + VOXEL_ID_3D) > 0) {
+                    if (*(nii_mask_data + VOXEL_ID_3D) > 0) {
                         running_index++;
                         if ((running_index * 100) / nvoxels_to_go_across != pref_ratio) {
                             cout << "\r " << (running_index * 100) / nvoxels_to_go_across <<  "% " << flush;
                             pref_ratio = (running_index * 100) / nvoxels_to_go_across;
                         }
-                        layernumber_i = *(nim_mask_data + VOXEL_ID_3D);
+                        layernumber_i = *(nii_mask_data + VOXEL_ID_3D);
                         *(gausweight_data + VOXEL_ID_3D) = 0;
 
                         /////////////////////////////////////////////////
@@ -385,7 +303,7 @@ int main(int argc, char*  argv[]) {
                                             for (int iz_i = max(0, iz_ii - vinc_steps); iz_i <= min(iz_ii + vinc_steps, sizeSlice - 1); ++iz_i) {
                                                 for (int iy_i = max(0, iy_ii - vinc_steps); iy_i<= min(iy_ii + vinc_steps, sizePhase - 1); ++iy_i) {
                                                     for (int ix_i = max(0, ix_ii - vinc_steps); ix_i <= min(ix_ii + vinc_steps, sizeRead - 1); ++ix_i) {
-                                                        if (dist((float)ix_ii, (float)iy_ii, (float)iz_ii, (float)ix_i, (float)iy_i, (float)iz_i, 1, 1, 1) <= 1.74 && *(nim_mask_data + nxy * iz_i + nx * ix_i + iy_i) == layernumber_i) {
+                                                        if (dist((float)ix_ii, (float)iy_ii, (float)iz_ii, (float)ix_i, (float)iy_i, (float)iz_i, 1, 1, 1) <= 1.74 && *(nii_mask_data + nxy * iz_i + nx * ix_i + iy_i) == layernumber_i) {
                                                             *(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) = 1;
                                                         }
                                                     }
@@ -403,14 +321,14 @@ int main(int argc, char*  argv[]) {
                                 for (int ix_i = max(0, ix-vinc); ix_i <= min(ix + vinc, sizeRead - 1); ++ix_i) {
                                     if (*(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) == 1) {
                                         dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                        *(smoothed_data + VOXEL_ID_3D) = *(smoothed_data + VOXEL_ID_3D) + *(nim_inputf_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
+                                        *(smoothed_data + VOXEL_ID_3D) = *(smoothed_data + VOXEL_ID_3D) + *(nii1_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
                                         *(gausweight_data + VOXEL_ID_3D) = *(gausweight_data + VOXEL_ID_3D) + gaus(dist_i, FWHM_val);
                                     }
                                 }
                             }
                         }
                         if (*(gausweight_data + VOXEL_ID_3D) > 0) *(smoothed_data + VOXEL_ID_3D) = *(smoothed_data + VOXEL_ID_3D) / *(gausweight_data + VOXEL_ID_3D);
-                    } // if scope  if (*(nim_mask_data + VOXEL_ID_3D) > 0){ closed
+                    } // if scope  if (*(nii_mask_data + VOXEL_ID_3D) > 0){ closed
 
                 }
             }
@@ -418,8 +336,8 @@ int main(int argc, char*  argv[]) {
         // for(int iz=0; iz<sizeSlice; ++iz){
         //     for(int iy=0; iy<sizePhase; ++iy){
         //         for(int ix=0; ix<sizeRead; ++ix){
-        //             if(*(nim_inputf_data + VOXEL_ID_3D) > 0) {
-        //                 *(nim_inputf_data + VOXEL_ID_3D) = *(smoothed_data + VOXEL_ID_3D);
+        //             if(*(nii1_data + VOXEL_ID_3D) > 0) {
+        //                 *(nii1_data + VOXEL_ID_3D) = *(smoothed_data + VOXEL_ID_3D);
         //             }
         //         }
         //     }
@@ -439,7 +357,7 @@ int main(int argc, char*  argv[]) {
             for (int iz  = 0; iz  < sizeSlice; ++iz) {
                 for (int iy = 0; iy < sizePhase; ++iy) {
                     for (int ix = 0; ix < sizeRead; ++ix) {
-                        if (*(nim_mask_data + VOXEL_ID) == 0) {
+                        if (*(nii_mask_data + VOXEL_ID) == 0) {
                             *(smoothed_data + VOXEL_ID) = 0;
                         }
                     }
@@ -449,11 +367,11 @@ int main(int argc, char*  argv[]) {
     }
 
     // cout << "  Running also until here  5..." << endl;
-    // cout << "  Slope " << smoothed->scl_slope << " " << nim_inputfi->scl_slope << endl;
+    // cout << "  Slope " << smoothed->scl_slope << " " << nii1->scl_slope << endl;
 
-    smoothed->scl_slope = nim_inputfi->scl_slope;
+    smoothed->scl_slope = nii1->scl_slope;
 
-    if (nim_inputfi->scl_inter != 0) {
+    if (nii1->scl_inter != 0) {
         cout << " ########################################## " << endl;
         cout << " #####   WARNING   WANRING   WANRING  ##### " << endl;
         cout << " ## the NIFTI scale factor is asymmetric ## " << endl;
@@ -467,12 +385,12 @@ int main(int argc, char*  argv[]) {
     // nifti_image_write(leak_layer);
 
     // const char* fout_5 = "input_file.nii" ;
-    // if (nifti_set_filenames(nim_inputf, fout_5, 1, 1)) return 1;
-    // nifti_image_write(nim_inputf);
+    // if (nifti_set_filenames(nii1_temp, fout_5, 1, 1)) return 1;
+    // nifti_image_write(nii1_temp);
 
     // const char* fout_2 = "mask.nii" ;
-    // if (nifti_set_filenames(nim_mask, fout_2, 1, 1)) return 1;
-    // nifti_image_write(nim_mask);
+    // if (nifti_set_filenames(nii2_temp, fout_2, 1, 1)) return 1;
+    // nifti_image_write(nii2_temp);
 
     string prefix = "smoothed_";
     string filename = (string) (finfi);
