@@ -127,56 +127,31 @@ int main(int argc, char * argv[]) {
 
     if (nim_file_1i->datatype == NIFTI_TYPE_INT16) {
         int16_t* nim_file_1i_data = static_cast<int16_t*>(nim_file_1i->data);
-        for (int it = 0; it < size_t; ++it) {
-            for (int iz = 0; iz < size_z; ++iz) {
-                for (int iy=0; iy < size_x; ++iy) {
-                    for (int ix = 0; ix < size_y; ++ix) {
-                        *(nim_file_1_data + VOXEL_ID) =
-                            static_cast<float>(*(nim_file_1i_data + VOXEL_ID));
-                    }
-                }
-            }
-        }
+        FOR_EACH_VOXEL_TZYX
+            *(nim_file_1_data + VOXEL_ID) =
+                static_cast<float>(*(nim_file_1i_data + VOXEL_ID));
+        END_FOR_EACH_VOXEL_TZYX
     }
     if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
         float* nim_file_1i_data = static_cast<float*>(nim_file_1i->data);
-        for (int it = 0; it < size_t; ++it) {
-            for (int iz = 0; iz < size_z; ++iz) {
-                // TODO(Faruk): `i!y! < size_!x!` looks susp.
-                for (int iy = 0; iy < size_x; ++iy) {
-                    for (int ix = 0; ix < size_y; ++ix) {
-                        *(nim_file_1_data + VOXEL_ID) =
-                            static_cast<float>(*(nim_file_1i_data + VOXEL_ID));
-                    }
-                }
-            }
-        }
+        FOR_EACH_VOXEL_TZYX
+            *(nim_file_1_data + VOXEL_ID) =
+                static_cast<float>(*(nim_file_1i_data + VOXEL_ID));
+        END_FOR_EACH_VOXEL_TZYX
     }
     if (nim_file_2i->datatype == NIFTI_TYPE_INT16) {
         int16_t* nim_file_2i_data = static_cast<int16_t*>(nim_file_2i->data);
-        for (int it = 0; it < size_t; ++it) {
-            for (int iz = 0; iz < size_z; ++iz) {
-                for (int iy = 0; iy < size_x; ++iy) {
-                    for (int ix = 0; ix < size_y; ++ix) {
-                        *(nim_file_2_data + VOXEL_ID) =
-                            static_cast<float>(*(nim_file_2i_data + VOXEL_ID));
-                    }
-                }
-            }
-        }
+        FOR_EACH_VOXEL_TZYX
+            *(nim_file_2_data + VOXEL_ID) =
+                static_cast<float>(*(nim_file_2i_data + VOXEL_ID));
+        END_FOR_EACH_VOXEL_TZYX
     }
     if (nim_file_2i->datatype == NIFTI_TYPE_FLOAT32) {
         float* nim_file_2i_data = static_cast<float*>(nim_file_2i->data);
-        for (int it = 0; it < size_t; ++it) {
-            for (int iz = 0; iz < size_z; ++iz) {
-                for (int iy = 0; iy < size_x; ++iy) {
-                    for (int ix = 0; ix < size_y; ++ix) {
-                        *(nim_file_2_data + VOXEL_ID) =
-                            static_cast<float>(*(nim_file_2i_data + VOXEL_ID));
-                    }
-                }
-            }
-        }
+        FOR_EACH_VOXEL_TZYX
+            *(nim_file_2_data + VOXEL_ID) =
+                static_cast<float>(*(nim_file_2i_data + VOXEL_ID));
+        END_FOR_EACH_VOXEL_TZYX
     }
 
     // ========================================================================
@@ -190,8 +165,8 @@ int main(int argc, char * argv[]) {
 
     // AVERAGE across Trials
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
                 for (int it = 0; it < size_t; ++it) {
                     *(boco_vaso_data + VOXEL_ID) = *(nim_file_1_data + VOXEL_ID)
                                                    / (*(nim_file_2_data + VOXEL_ID));
@@ -201,8 +176,8 @@ int main(int argc, char * argv[]) {
     }
     // Clean VASO values that are unrealistic
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix=0; ix < size_y; ++ix) {
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
                 for (int it = 0; it < size_t; ++it) {
                     if (*(boco_vaso_data + VOXEL_ID) <= 0) {
                         *(boco_vaso_data + VOXEL_ID) = 0;
@@ -229,27 +204,27 @@ int main(int argc, char * argv[]) {
         for (int shift = -3; shift <= 3; ++shift) {
             cout << "  Calculating shift = " << shift << endl;
             for (int iz = 0; iz < size_z; ++iz) {
-                for (int iy = 0; iy < size_x; ++iy) {
-                    for (int ix = 0; ix < size_y; ++ix) {
+                for (int iy = 0; iy < size_y; ++iy) {
+                    for (int ix = 0; ix < size_x; ++ix) {
                         for (int it = 3; it < size_t-3; ++it) {
                             *(boco_vaso_data + VOXEL_ID) =
                                 *(nim_file_1_data + VOXEL_ID)
                                 / (*(nim_file_2_data + nxyz * (it + shift)
-                                     + nxy * iz + nx * ix + iy));
+                                     + nxy * iz + nx * iy + nx));
                         }
                         for (int it = 0; it < size_t; ++it) {
                             vec_file1[it] = *(boco_vaso_data + VOXEL_ID);
                             vec_file2[it] = *(nim_file_2_data + VOXEL_ID);
                         }
-                        *(correl_file_data + nxyz * (shift+3) + nxy * iz + nx * ix + iy) = ren_correl(vec_file1, vec_file2, size_t);
+                        *(correl_file_data + nxyz * (shift+3) + nxy * iz + nx * iy + nx) = ren_correl(vec_file1, vec_file2, size_t);
                     }
                 }
             }
         }
         // Get back to default
         for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_x; ++iy) {
-                for (int ix = 0; ix < size_y; ++ix) {
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x; ++ix) {
                     for (int it = 0; it < size_t; ++it) {
                         *(boco_vaso_data + VOXEL_ID) =
                             *(nim_file_1_data + VOXEL_ID)
@@ -260,8 +235,8 @@ int main(int argc, char * argv[]) {
         }
         // Clean VASO values that are unrealistic
         for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_x; ++iy) {
-                for (int ix = 0; ix < size_y; ++ix) {
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x; ++ix) {
                     for (int it = 0; it < size_t; ++it) {
                         if (*(boco_vaso_data + VOXEL_ID) <= 0) {
                             *(boco_vaso_data + VOXEL_ID) = 0;
@@ -315,8 +290,8 @@ int main(int argc, char * argv[]) {
         float AV_BOLD[trialdur];
 
         for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_x; ++iy) {
-                for (int ix = 0; ix < size_y; ++ix) {
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x; ++ix) {
                     for (int it = 0; it < trialdur; ++it) {
                         AV_Nulled[it] = 0;
                         AV_BOLD[it] = 0;
@@ -337,8 +312,8 @@ int main(int argc, char * argv[]) {
 
         // Clean VASO values that are unrealistic
         for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_x; ++iy) {
-                for (int ix = 0; ix < size_y; ++ix) {
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x; ++ix) {
                     for (int it = 0; it < trialdur; ++it) {
                         if (*(triav_file_data + VOXEL_ID) <= 0) {
                             *(triav_file_data + VOXEL_ID) = 0;
