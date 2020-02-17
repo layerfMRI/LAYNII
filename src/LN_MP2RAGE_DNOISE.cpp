@@ -94,140 +94,57 @@ int main(int argc, char* argv[]) {
     }
 
     // Read input dataset, including data
-    nifti_image* nim_inputfi_1 = nifti_image_read(finfi_1, 1);
-    if (!nim_inputfi_1) {
+    nifti_image* nii1 = nifti_image_read(finfi_1, 1);
+    if (!nii1) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", finfi_1);
         return 2;
     }
 
-    nifti_image* nim_inputfi_2 = nifti_image_read(finfi_2, 1);
-    if (!nim_inputfi_2) {
+    nifti_image* nii2 = nifti_image_read(finfi_2, 1);
+    if (!nii2) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", finfi_2);
         return 2;
     }
 
-    nifti_image* nim_inputfi_3 = nifti_image_read(finfi_3, 1);
-    if (!nim_inputfi_3) {
+    nifti_image* nii3 = nifti_image_read(finfi_3, 1);
+    if (!nii3) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", finfi_3);
         return 2;
     }
 
     log_welcome("LN_MP2RAGE_DNOISE");
-    log_nifti_descriptives(nim_inputfi_1);
-    log_nifti_descriptives(nim_inputfi_2);
-    log_nifti_descriptives(nim_inputfi_3);
+    log_nifti_descriptives(nii1);
+    log_nifti_descriptives(nii2);
+    log_nifti_descriptives(nii3);
 
     // Get dimensions of input
-    int size_x = nim_inputfi_1->nx;  // phase
-    int size_y = nim_inputfi_1->ny;  // read
-    int size_z = nim_inputfi_1->nz;  // slice
-    int size_t = nim_inputfi_1->nt;  // time
-    int nx = nim_inputfi_1->nx;
-    int nxy = nim_inputfi_1->nx * nim_inputfi_1->ny;
-    int nxyz = nim_inputfi_1->nx * nim_inputfi_1->ny * nim_inputfi_1->nz;
+    int size_x = nii1->nx;  // phase
+    int size_y = nii1->ny;  // read
+    int size_z = nii1->nz;  // slice
+    int size_t = nii1->nt;  // time
+    int nx = nii1->nx;
+    int nxy = nii1->nx * nii1->ny;
+    int nxyz = nii1->nx * nii1->ny * nii1->nz;
 
-    //////////////////
-    // LOADING INV1 //
-    //////////////////
-    nifti_image* nim_inv1 = nifti_copy_nim_info(nim_inputfi_1);
-    nim_inv1->datatype = NIFTI_TYPE_FLOAT32;
-    nim_inv1->nbyper = sizeof(float);
-    nim_inv1->data = calloc(nim_inv1->nvox, nim_inv1->nbyper);
-    float* nim_inv1_data = static_cast<float*>(nim_inv1->data);
+    // ========================================================================
+    // Fix datatype issues
 
-    //////////////////////////////////////////////////////////////
-    // Fixing potential problems with different input datatypes //
-    // here, I am loading them in their native datatype         //
-    // and translate them to the datatime I like best           //
-    //////////////////////////////////////////////////////////////
+    nifti_image* nii_inv1 = recreate_nii_with_float_datatype(nii1);
+    float* nii_inv1_data = static_cast<float*>(nii_inv1->data);
 
-    if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ||
-        nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
-        float* nim_inputfi_1_data = static_cast<float*>(nim_inputfi_1->data);
-        FOR_EACH_VOXEL_TZYX
-            *(nim_inv1_data + VOXEL_ID) =
-                static_cast<float>(*(nim_inputfi_1_data + VOXEL_ID));
-        END_FOR_EACH_VOXEL_TZYX
-    }
+    nifti_image* nii_inv2 = recreate_nii_with_float_datatype(nii2);
+    float* nii_inv2_data = static_cast<float*>(nii_inv2->data);
 
-    if (nim_inputfi_3->datatype == NIFTI_TYPE_INT16 ||
-        nim_inputfi_3->datatype == DT_UINT16) {
-        int16_t* nim_inputfi_1_data =
-            static_cast<int16_t*>(nim_inputfi_1->data);
-        FOR_EACH_VOXEL_TZYX
-            *(nim_inv1_data + VOXEL_ID) =
-                static_cast<float>(*(nim_inputfi_1_data + VOXEL_ID));
-        END_FOR_EACH_VOXEL_TZYX
-    }
+    nifti_image* nii_uni = recreate_nii_with_float_datatype(nii3);
+    float* nii_uni_data = static_cast<float*>(nii_uni->data);
 
-    //////////////////
-    // Loading INV2 //
-    //////////////////
-    nifti_image* nim_inv2 = nifti_copy_nim_info(nim_inputfi_2);
-    nim_inv2->datatype = NIFTI_TYPE_FLOAT32;
-    nim_inv2->nbyper = sizeof(float);
-    nim_inv2->data = calloc(nim_inv2->nvox, nim_inv2->nbyper);
-    float*nim_inv2_data = static_cast<float*>(nim_inv2->data);
-
-    //////////////////////////////////////////////////////////////
-    // Fixing potential problems with different input datatypes //
-    // again /////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////
-    if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ||
-        nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
-        float* nim_inputfi_2_data = static_cast<float*>(nim_inputfi_2->data);
-        FOR_EACH_VOXEL_TZYX
-            *(nim_inv2_data + VOXEL_ID) =
-                static_cast<float>(*(nim_inputfi_2_data + VOXEL_ID));
-        END_FOR_EACH_VOXEL_TZYX
-    }
-
-    if (nim_inputfi_3->datatype == NIFTI_TYPE_INT16 ||
-        nim_inputfi_3->datatype == DT_UINT16) {
-        int16_t* nim_inputfi_2_data =
-            static_cast<int16_t*>(nim_inputfi_2->data);
-        FOR_EACH_VOXEL_TZYX
-            *(nim_inv2_data + VOXEL_ID) =
-                static_cast<float>(*(nim_inputfi_2_data + VOXEL_ID));
-        END_FOR_EACH_VOXEL_TZYX
-    }
-
-    /////////////////
-    // LOADING UNI //
-    /////////////////
-    nifti_image* nim_uni = nifti_copy_nim_info(nim_inputfi_3);
-    nim_uni->datatype = NIFTI_TYPE_FLOAT32;
-    nim_uni->nbyper = sizeof(float);
-    nim_uni->data = calloc(nim_uni->nvox, nim_uni->nbyper);
-    float* nim_uni_data = static_cast<float*>(nim_uni->data);
-
-    ////////////////////////////////////////////////////////////////////
-    // Fixing potential problems with different input datatypes again //
-    ////////////////////////////////////////////////////////////////////
-    if (nim_inputfi_3->datatype == NIFTI_TYPE_FLOAT32 ||
-        nim_inputfi_3->datatype == NIFTI_TYPE_INT32) {
-        float* nim_inputfi_3_data = static_cast<float*>(nim_inputfi_3->data);
-        FOR_EACH_VOXEL_TZYX
-            *(nim_uni_data + VOXEL_ID) =
-            static_cast<float>(*(nim_inputfi_3_data + VOXEL_ID));
-        END_FOR_EACH_VOXEL_TZYX
-    }
-
-    if (nim_inputfi_3->datatype == NIFTI_TYPE_INT16 ||
-        nim_inputfi_3->datatype == DT_UINT16) {
-        int16_t* nim_inputfi_3_data =
-            static_cast<int16_t*>(nim_inputfi_3->data);
-        FOR_EACH_VOXEL_TZYX
-            *(nim_uni_data + VOXEL_ID) =
-                static_cast<float>(*(nim_inputfi_3_data + VOXEL_ID));
-        END_FOR_EACH_VOXEL_TZYX
-    }
+    // ========================================================================
 
     /////////////////////////////////////
     // Make allocating necessary files //
     /////////////////////////////////////
-    nifti_image* phaseerror = nifti_copy_nim_info(nim_inv1);
-    nifti_image* dddenoised = nifti_copy_nim_info(nim_inv1);
+    nifti_image* phaseerror = nifti_copy_nim_info(nii_inv1);
+    nifti_image* dddenoised = nifti_copy_nim_info(nii_inv1);
     phaseerror->datatype = NIFTI_TYPE_FLOAT32;
     dddenoised->datatype = NIFTI_TYPE_FLOAT32;
     phaseerror->nbyper = sizeof(float);
@@ -237,8 +154,8 @@ int main(int argc, char* argv[]) {
     float* phaseerror_data = static_cast<float*>(phaseerror->data);
     float* dddenoised_data = static_cast<float*>(dddenoised->data);
 
-    nifti_image* uni1  = nifti_copy_nim_info(nim_inv1);
-    nifti_image* uni2  = nifti_copy_nim_info(nim_inv1);
+    nifti_image* uni1  = nifti_copy_nim_info(nii_inv1);
+    nifti_image* uni2  = nifti_copy_nim_info(nii_inv1);
     uni1->datatype = NIFTI_TYPE_FLOAT32;
     uni2->datatype = NIFTI_TYPE_FLOAT32;
     uni1->nbyper = sizeof(float);
@@ -268,18 +185,18 @@ int main(int argc, char* argv[]) {
     // Scaling UNI to range of -0.5 to 0.5 as in the paper //
     /////////////////////////////////////////////////////////
     FOR_EACH_VOXEL_TZYX
-        unival = (*(nim_uni_data + VOXEL_ID) - SIEMENS_f * 0.5) / SIEMENS_f;
-        // inv1val = *(nim_inv1_data + VOXEL_ID);
-        inv2val = *(nim_inv2_data + VOXEL_ID);
-        wrong_unival = *(nim_inv1_data + VOXEL_ID) * *(nim_inv2_data + VOXEL_ID) / (*(nim_inv1_data + VOXEL_ID)* *(nim_inv1_data + VOXEL_ID) + *(nim_inv2_data + VOXEL_ID)* *(nim_inv2_data + VOXEL_ID));
+        unival = (*(nii_uni_data + VOXEL_ID) - SIEMENS_f * 0.5) / SIEMENS_f;
+        // inv1val = *(nii_inv1_data + VOXEL_ID);
+        inv2val = *(nii_inv2_data + VOXEL_ID);
+        wrong_unival = *(nii_inv1_data + VOXEL_ID) * *(nii_inv2_data + VOXEL_ID) / (*(nii_inv1_data + VOXEL_ID)* *(nii_inv1_data + VOXEL_ID) + *(nii_inv2_data + VOXEL_ID)* *(nii_inv2_data + VOXEL_ID));
 
         // sign_ = unival;
-        // *(nim_uni_data + VOXEL_ID) / *(phaseerror_data + VOXEL_ID);
+        // *(nii_uni_data + VOXEL_ID) / *(phaseerror_data + VOXEL_ID);
         // if (sign_ <= 0) {
-        //     *(nim_inv1_data + VOXEL_ID) = -1 * *(nim_inv1_data + VOXEL_ID);
+        //     *(nii_inv1_data + VOXEL_ID) = -1 * *(nii_inv1_data + VOXEL_ID);
         // }
 
-        // denoised_wrong = (*(nim_inv1_data + VOXEL_ID) * *(nim_inv2_data + VOXEL_ID) - beta) / (*(nim_inv1_data + VOXEL_ID) * *(nim_inv1_data + VOXEL_ID) + *(nim_inv2_data + VOXEL_ID) * *(nim_inv2_data + VOXEL_ID) + 2. * beta);
+        // denoised_wrong = (*(nii_inv1_data + VOXEL_ID) * *(nii_inv2_data + VOXEL_ID) - beta) / (*(nii_inv1_data + VOXEL_ID) * *(nii_inv1_data + VOXEL_ID) + *(nii_inv2_data + VOXEL_ID) * *(nii_inv2_data + VOXEL_ID) + 2. * beta);
         // denoised_wrong = (denoised_wrong +0.5) * SIEMENS_f;
         *(phaseerror_data + VOXEL_ID) = wrong_unival;
 
@@ -299,9 +216,9 @@ int main(int argc, char* argv[]) {
         *(dddenoised_data + VOXEL_ID) = ((uni1val_calc * inv2val - beta) / (uni1val_calc * uni1val_calc + inv2val * inv2val + 2. * beta) + 0.5) * SIEMENS_f;
     END_FOR_EACH_VOXEL_TZYX
 
-    dddenoised->scl_slope = nim_uni->scl_slope;
+    dddenoised->scl_slope = nii_uni->scl_slope;
 
-    if (nim_uni->scl_inter != 0) {
+    if (nii_uni->scl_inter != 0) {
         cout << " ########################################## " << endl;
         cout << " #####   WARNING   WANRING   WANRING  ##### " << endl;
         cout << " ## the NIFTI scale factor is asymmetric ## " << endl;
