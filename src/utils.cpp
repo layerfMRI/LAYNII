@@ -42,6 +42,12 @@ nifti_image* recreate_nii_with_float_datatype(nifti_image* nii) {
     const int nxy = nii->nx * nii->ny;
     const int nxyz = nii->nx * nii->ny * nii->nz;
 
+    // NOTE(for future reference): Rick's comments:
+    // nifti_copy_nim_info(). It will return with data == NULL.
+    // If you need the data allocated, memory use would not change once you do so.
+    // There is also nifti_make_new_nim()
+    // nifti_image * nifti_make_new_nim(const int64_t dims[], int datatype, int data_fill)
+
     nifti_image* nii_new = nifti_copy_nim_info(nii);
     nii_new->datatype = NIFTI_TYPE_FLOAT32;
     nii_new->nbyper = sizeof(float);
