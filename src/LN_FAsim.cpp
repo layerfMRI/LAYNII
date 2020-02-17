@@ -1,4 +1,6 @@
 
+// TODO(Faruk): I am not sure what this program is for. Need to ask Renzo.
+
 #include "./common.h"
 #include "./utils.h"
 
