@@ -86,13 +86,15 @@ int main(int argc, char * argv[]) {
         fprintf(stderr, "** failed to read NIfTI from '%s'.\n", fin_1);
         return 2;
     }
-    log_nifti_descriptives(nim_file_1i);
 
     nifti_image* nim_file_2i = nifti_image_read(fin_2, 1);
     if (!nim_file_2i) {
         fprintf(stderr, "** failed to read NIfTI from '%s'.\n", fin_2);
         return 2;
     }
+
+    log_welcome("LN_BOCO");
+    log_nifti_descriptives(nim_file_1i);
     log_nifti_descriptives(nim_file_2i);
 
     // Get dimensions of input

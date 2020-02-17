@@ -99,20 +99,22 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", finfi_1);
         return 2;
     }
-    log_nifti_descriptives(nim_inputfi_1);
 
     nifti_image* nim_inputfi_2 = nifti_image_read(finfi_2, 1);
     if (!nim_inputfi_2) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", finfi_2);
         return 2;
     }
-    log_nifti_descriptives(nim_inputfi_2);
 
     nifti_image* nim_inputfi_3 = nifti_image_read(finfi_3, 1);
     if (!nim_inputfi_3) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", finfi_3);
         return 2;
     }
+
+    log_welcome("LN_MP2RAGE_DNOISE");
+    log_nifti_descriptives(nim_inputfi_1);
+    log_nifti_descriptives(nim_inputfi_2);
     log_nifti_descriptives(nim_inputfi_3);
 
     // Get dimensions of input

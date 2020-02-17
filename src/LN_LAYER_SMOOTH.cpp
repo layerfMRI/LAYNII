@@ -97,19 +97,23 @@ int main(int argc, char*  argv[]) {
         return 2;
     }
 
-    // Get dimensions of input
-    int sizeSlice = nim_maski->nz;
-    int sizePhase = nim_maski->nx;
-    int sizeRead = nim_maski->ny;
-    int nrep = nim_maski->nt;
-    int nx = nim_maski->nx;
-    int nxy = nim_maski->nx * nim_maski->ny;
-    int nxyz = nim_maski->nx * nim_maski->ny * nim_maski->nz;
-    float dX = nim_maski->pixdim[1];
-    float dY = nim_maski->pixdim[2];
-    float dZ = nim_maski->pixdim[3];
+    log_welcome("LN_LAYER_SMOOTH");
+    log_nifti_descriptives(nim_inputfi);
+    log_nifti_descriptives(nim_maski);
 
-    if (twodim == 1) dZ = 1000 * dZ;
+    // Get dimensions of input
+    const int sizeSlice = nim_maski->nz;
+    const int sizePhase = nim_maski->nx;
+    const int sizeRead = nim_maski->ny;
+    const int nrep = nim_maski->nt;
+    const int nx = nim_maski->nx;
+    const int nxy = nim_maski->nx * nim_maski->ny;
+    const int nxyz = nim_maski->nx * nim_maski->ny * nim_maski->nz;
+    const float dX = nim_maski->pixdim[1];
+    const float dY = nim_maski->pixdim[2];
+    float dZ = nim_maski->pixdim[3];
+    if (twodim == 1) dZ = 1000 * nim_maski->pixdim[3];
+
     // nim_mask->datatype = NIFTI_TYPE_FLOAT32;
     // nim_mask->nbyper = sizeof(float);
     // nim_mask->data = calloc(nim_mask->nvox, nim_mask->nbyper);
@@ -203,9 +207,6 @@ int main(int argc, char*  argv[]) {
             }
         }
     }
-
-    log_nifti_descriptives(nim_inputf);
-    log_nifti_descriptives(nim_mask);
 
     /////////////////////////////////////
     // MAKE allocating necessary files //

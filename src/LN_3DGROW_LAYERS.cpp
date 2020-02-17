@@ -61,6 +61,9 @@ int main(int argc, char*  argv[]) {
         return 2;
     }
 
+    log_welcome("LN_3DGROW_LAYERS");
+    log_nifti_descriptives(nim_input);
+
     // Get dimensions of input
     const int sizeSlice = nim_input->nz;
     const int sizePhase = nim_input->nx;
@@ -71,9 +74,8 @@ int main(int argc, char*  argv[]) {
     // const int nxyz = nim_input->nx * nim_input->ny * nim_input->nz;
     const float dX = nim_input->pixdim[1];
     const float dY = nim_input->pixdim[2];
-    const float dZ = nim_input->pixdim[3];
+    float dZ = nim_input->pixdim[3];
 
-    log_nifti_descriptives(nim_input);
 
     // if (!fout) { fprintf(stderr, "-- no output requested \n"); return 0; }
     // assign nifti_image fname/iname pair, based on output filename

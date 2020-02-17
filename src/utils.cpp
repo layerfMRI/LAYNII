@@ -3,6 +3,13 @@
 #include "../src/utils.h"
 
 // Definitions
+void log_welcome(const char* programname) {
+    cout << "============="<< endl;
+    cout << "LAYNII v1.2.0"<< endl;
+    cout << "============="<< endl;
+    cout << programname << "\n" << endl;
+}
+
 void log_output(const char* filename) {
     cout << "  Writing output as:" << endl;
     cout << "    " << filename << endl;
