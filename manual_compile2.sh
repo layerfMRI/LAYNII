@@ -7,7 +7,7 @@ g++    -c -o obj/znzlib.o deps/znzlib.cpp
 g++    -c -o obj/renzo_stat.o src/renzo_stat.c
 g++    -c -o obj/utils.o src/utils.cpp
 
-# # LAYNII
+# LAYNII priority programs
 g++    -c -o obj/LN_MP2RAGE_DNOISE.o src/LN_MP2RAGE_DNOISE.cpp
 g++  -o bin/LN_MP2RAGE_DNOISE -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_MP2RAGE_DNOISE.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/utils.o
 g++    -c -o obj/LN_BOCO.o src/LN_BOCO.cpp
@@ -17,12 +17,15 @@ g++  -o bin/LN_LAYER_SMOOTH -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_LAYER_SMOOTH
 g++    -c -o obj/LN_3DGROW_LAYERS.o src/LN_3DGROW_LAYERS.cpp
 g++  -o bin/LN_3DGROW_LAYERS -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_3DGROW_LAYERS.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/utils.o
 
+# LAYNII other programs
 g++    -c -o obj/LN_CORREL2FILES.o src/LN_CORREL2FILES.cpp
 g++  -o bin/LN_CORREL2FILES -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_CORREL2FILES.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/renzo_stat.o obj/utils.o
 g++    -c -o obj/LN_DEBUGGING.o src/LN_DEBUGGING.cpp
 g++  -o bin/LN_DEBUGGING -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_DEBUGGING.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/utils.o
 g++    -c -o obj/LN_DIRECT_SMOOTH.o src/LN_DIRECT_SMOOTH.cpp
 g++  -o bin/LN_DIRECT_SMOOTH -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_DIRECT_SMOOTH.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/utils.o
+g++    -c -o obj/LN_EXTREMETR.o src/LN_EXTREMETR.cpp
+g++  -o bin/LN_EXTREMETR -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_EXTREMETR.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/utils.o
 # g++    -c -o obj/LN_GRADSMOOTH.o src/LN_GRADSMOOTH.cpp
 # g++  -o bin/LN_GRADSMOOTH -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_GRADSMOOTH.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/renzo_stat.o obj/utils.o
 # g++    -c -o obj/LN_SKEW.o src/LN_SKEW.cpp
@@ -49,8 +52,6 @@ g++  -o bin/LN_DIRECT_SMOOTH -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_DIRECT_SMOO
 # g++  -o bin/LN_IMAGIRO -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_IMAGIRO.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/utils.o
 # g++    -c -o obj/LN_RAGRUG.o src/LN_RAGRUG.cpp
 # g++  -o bin/LN_RAGRUG -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_RAGRUG.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/utils.o
-# g++    -c -o obj/LN_EXTREMETR.o src/LN_EXTREMETR.cpp
-# g++  -o bin/LN_EXTREMETR -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_EXTREMETR.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/utils.o
 # g++    -c -o obj/LN_TRIAL.o src/LN_TRIAL.cpp
 # g++  -o bin/LN_TRIAL -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_TRIAL.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/utils.o
 # g++    -c -o obj/LN_ZOOM.o src/LN_ZOOM.cpp

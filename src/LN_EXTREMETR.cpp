@@ -20,9 +20,9 @@ int show_help(void) {
 }
 
 int main(int argc, char * argv[]) {
-    // nifti_image * nim_input=NULL;
-    char *fin_1 = NULL, *fin_2 = NULL;
-    int ac, disp_float_eg = 0;
+    // nifti_image* nim_input=NULL;
+    char *fin_1 = NULL;
+    int ac;
     if (argc < 2) {  // Typing '-help' is sooo much work
         return show_help();
     }
@@ -44,137 +44,92 @@ int main(int argc, char * argv[]) {
         return 1;
     }
     // Read input dataset, including data
-    nifti_image * nim_file_1i = nifti_image_read(fin_1, 1);
-    if (!nim_file_1i) {
+    nifti_image* nii1 = nifti_image_read(fin_1, 1);
+    if (!nii1) {
       fprintf(stderr, "** failed to read NIfTI image from '%s'\n", fin_1);
       return 2;
     }
 
     log_welcome("LN_EXTREMETR");
-    log_nifti_descriptives(nim_file_1i);
+    log_nifti_descriptives(nii1);
 
     // Get dimensions of input
-    int sizeSlice = nim_file_1i->nz;
-    int sizePhase = nim_file_1i->nx;
-    int sizeRead = nim_file_1i->ny;
-    int nrep =  nim_file_1i->nt;
-    int nx =  nim_file_1i->nx;
-    int nxy = nim_file_1i->nx * nim_file_1i->ny;
-    int nxyz = nim_file_1i->nx * nim_file_1i->ny * nim_file_1i->nz;
+    int size_x = nii1->nx;
+    int size_y = nii1->ny;
+    int size_z = nii1->nz;
+    int size_t = nii1->nt;
+    int nx = nii1->nx;
+    int nxy = nii1->nx * nii1->ny;
+    int nxyz = nii1->nx * nii1->ny * nii1->nz;
 
-    nifti_image * nim_file_1 = nifti_copy_nim_info(nim_file_1i);
-    nim_file_1->datatype = NIFTI_TYPE_FLOAT32;
-    nim_file_1->nbyper = sizeof(float);
-    nim_file_1->data = calloc(nim_file_1->nvox, nim_file_1->nbyper);
-    float *nim_file_1_data = (float *) nim_file_1->data;
+    // ========================================================================
+    // Fix datatype issues
 
-    // if (!fout) {
-    //     fprintf(stderr, "-- no output requested \n");
-    //     return 0;
-    // }
-    // // assign nifti_image fname/iname pair, based on output filename
-    // // (request to 'check' image and 'set_byte_order' here)
-    // if (nifti_set_filenames(nim_input, fout, 1, 1)) {
-    //     return 1;
-    // }
+    nifti_image* nii1_temp = recreate_nii_with_float_datatype(nii1);
+    float* nii1_temp_data = static_cast<float*>(nii1_temp->data);
 
-    if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
-        float *nim_file_1i_data = (float *) nim_file_1i->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_file_1i->datatype == NIFTI_TYPE_INT16) {
-        short *nim_file_1i_data = (short *) nim_file_1i->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
-        float *nim_file_1i_data = (float *) nim_file_1i->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
+    // ========================================================================
 
-    nifti_image * max_file = nifti_copy_nim_info(nim_file_1);
+    nifti_image* max_file = nifti_copy_nim_info(nii1_temp);
     max_file->nt = 1;
-    max_file->nvox = nim_file_1->nvox / nrep;
+    max_file->nvox = nii1_temp->nvox / size_t;
     max_file->datatype = NIFTI_TYPE_INT16;
     max_file->nbyper = sizeof(float);
     max_file->data = calloc(max_file->nvox, max_file->nbyper);
-    short *max_file_data = (short *) max_file->data;
+    short* max_file_data = (short*) max_file->data;
 
-    nifti_image * min_file = nifti_copy_nim_info(nim_file_1);
+    nifti_image* min_file = nifti_copy_nim_info(nii1_temp);
     min_file->nt = 1;
-    min_file->nvox = nim_file_1->nvox / nrep;
+    min_file->nvox = nii1_temp->nvox / size_t;
     min_file->datatype = NIFTI_TYPE_INT16;
     min_file->nbyper = sizeof(float);
     min_file->data = calloc(min_file->nvox, min_file->nbyper);
-    short *min_file_data = (short *) min_file->data;
+    short* min_file_data = (short*) min_file->data;
 
     double max_val = 0;
     double min_val = 1000000000;
     int TR_max = 0;
     int TR_min = 0;
 
-    for (int islice = 0; islice < sizeSlice; ++islice) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead; ++ix) {
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
                 max_val = 0;
                 min_val = 1000000000;
-                for (int it = 0; it < nrep; ++it) {
-                    if (*(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy) > max_val) {
-                        max_val = *(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy);
+                for (int it = 0; it < size_t; ++it) {
+                    if (*(nii1_temp_data + VOXEL_ID) > max_val) {
+                        max_val = *(nii1_temp_data + VOXEL_ID);
                         TR_max = it;
                     }
                 }
-                for (int it = 0; it < nrep; ++it) {
-                    if (*(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy) < min_val) {
-                        min_val = *(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy);
+                for (int it = 0; it < size_t; ++it) {
+                    if (*(nii1_temp_data + VOXEL_ID) < min_val) {
+                        min_val = *(nii1_temp_data + VOXEL_ID);
                         TR_min = it;
                     }
                 }
-                *(min_file_data + nxy*islice + nx*ix + iy) =  TR_min;
-                *(max_file_data + nxy*islice + nx*ix + iy) =  TR_max;
+                *(min_file_data + VOXEL_ID_3D) = TR_min;
+                *(max_file_data + VOXEL_ID_3D) = TR_max;
            }
         }
     }
 
     cout << "  Runing also until here 5... " << endl;
 
-    string prefix_1 = "max_TR_";
-    string prefix_2 = "min_TR_";
     string filename_1 = (string) (fin_1);
+    string prefix_1 = "max_TR_";
     string outfilename_1 = prefix_1+filename_1;
-    string outfilename_2 = prefix_2+filename_1;
 
-    cout << "  Writing as = " << outfilename_1.c_str() << " and "<< outfilename_2.c_str() << endl;
-
+    log_output(outfilename_1.c_str());
     const char *fout_1 = outfilename_1.c_str();
     if (nifti_set_filenames(max_file, fout_1 , 1, 1)) {
         return 1;
     }
     nifti_image_write(max_file);
 
+    string prefix_2 = "min_TR_";
+    string outfilename_2 = prefix_2+filename_1;
+    log_output(outfilename_2.c_str());
     const char *fout_2 = outfilename_2.c_str();
     if (nifti_set_filenames(min_file, fout_2 , 1, 1)) {
         return 1;
