@@ -23,7 +23,7 @@ int show_help(void) {
 }
 
 int main(int argc, char * argv[]) {
-    // nifti_image * nim_input=NULL;
+    // nifti_image* nim_input=NULL;
     char *fin_1 = NULL, *fin_2 = NULL;
     int ac, disp_float_eg = 0;
     if (argc < 2) {  // Typing '-help' is sooo much work
@@ -62,143 +62,70 @@ int main(int argc, char * argv[]) {
     }
 
     // Read input dataset, including data
-    nifti_image * nim_file_1i = nifti_image_read(fin_1, 1);
-    if (!nim_file_1i) {
+    nifti_image* nii1 = nifti_image_read(fin_1, 1);
+    if (!nii1) {
         fprintf(stderr, "** failed to read NIfTI image from '%s'\n", fin_1);
         return 2;
     }
-    nifti_image *nim_file_2i = nifti_image_read(fin_2, 1);
-    if (!nim_file_2i) {
+    nifti_image*nii2 = nifti_image_read(fin_2, 1);
+    if (!nii2) {
         fprintf(stderr, "** failed to read NIfTI image from '%s'\n", fin_2);
         return 2;
     }
 
     log_welcome("LN_CORREL2FILES");
-    log_nifti_descriptives(nim_file_1i);
-    log_nifti_descriptives(nim_file_2i);
+    log_nifti_descriptives(nii1);
+    log_nifti_descriptives(nii2);
 
     // Get dimensions of input
-    int sizeSlice = nim_file_1i->nz;
-    int sizePhase = nim_file_1i->nx;
-    int sizeRead = nim_file_1i->ny;
-    int nrep = nim_file_1i->nt;
-    int nx = nim_file_1i->nx;
-    int nxy = nim_file_1i->nx * nim_file_1i->ny;
-    int nxyz = nim_file_1i->nx * nim_file_1i->ny * nim_file_1i->nz;
+    int size_z = nii1->nz;
+    int size_x = nii1->nx;
+    int size_y = nii1->ny;
+    int size_t = nii1->nt;
+    int nx = nii1->nx;
+    int nxy = nii1->nx * nii1->ny;
+    int nxyz = nii1->nx * nii1->ny * nii1->nz;
 
-    nifti_image * nim_file_1 = nifti_copy_nim_info(nim_file_1i);
-    nim_file_1->datatype = NIFTI_TYPE_FLOAT32;
-    nim_file_1->nbyper = sizeof(float);
-    nim_file_1->data = calloc(nim_file_1->nvox, nim_file_1->nbyper);
-    float *nim_file_1_data = (float *) nim_file_1->data;
+    // ========================================================================
+    // Fix datatype issues
 
-    nifti_image * nim_file_2 = nifti_copy_nim_info(nim_file_1i);
-    nim_file_2->datatype = NIFTI_TYPE_FLOAT32;
-    nim_file_2->nbyper = sizeof(float);
-    nim_file_2->data = calloc(nim_file_2->nvox, nim_file_2->nbyper);
-    float *nim_file_2_data = (float *) nim_file_2->data;
+    nifti_image* nii1_temp = recreate_nii_with_float_datatype(nii1);
+    float* nii1_temp_data = static_cast<float*>(nii1_temp->data);
 
-    // if (!fout) {
-    //     fprintf(stderr, "-- no output requested \n");
-    //     return 0;
-    // }
-    // // Assign nifti_image fname/iname pair, based on output filename
-    // // (request to 'check' image and 'set_byte_order' here)
-    // if (nifti_set_filenames(nim_input, fout, 1, 1)) {
-    //     return 1;
-    // }
+    nifti_image* nii2_temp = recreate_nii_with_float_datatype(nii2);
+    float* nii2_temp_data = static_cast<float*>(nii2_temp->data);
 
-    if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
-        float *nim_file_1i_data = (float *) nim_file_1i->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_file_1i->datatype == NIFTI_TYPE_INT16) {
-        short *nim_file_1i_data = (short *) nim_file_1i->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
-        float *nim_file_1i_data = (float *) nim_file_1i->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_file_2i->datatype == NIFTI_TYPE_INT16) {
-        short *nim_file_2i_data = (short *) nim_file_2i->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_file_2_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_file_2i_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_file_2i->datatype == NIFTI_TYPE_FLOAT32) {
-        float *nim_file_2i_data = (float *) nim_file_2i->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_file_2_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_file_2i_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
+    // ========================================================================
 
-    nifti_image * correl_file = nifti_copy_nim_info(nim_file_1);
+    nifti_image* correl_file = nifti_copy_nim_info(nii1_temp);
     correl_file->nt = 1;
-    correl_file->nvox = nim_file_1->nvox / nrep;
+    correl_file->nvox = nii1_temp->nvox / size_t;
     correl_file->datatype = NIFTI_TYPE_FLOAT32;
     correl_file->nbyper = sizeof(float);
     correl_file->data = calloc(correl_file->nvox, correl_file->nbyper);
-    float *correl_file_data = (float *) correl_file->data;
+    float* correl_file_data = (float* ) correl_file->data;
 
-    double vec_file1[nrep];
-    double vec_file2[nrep];
+    double vec_file1[size_t];
+    double vec_file2[size_t];
 
-    for (int islice = 0; islice < sizeSlice; ++islice) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead; ++ix) {
-                for (int it = 0;  it < nrep; ++it) {
-                    vec_file1[it] = *(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy);
-                    vec_file2[it] = *(nim_file_2_data + nxyz * it + nxy * islice + nx * ix + iy);
+    // Loop across voxels
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                for (int it = 0;  it < size_t; ++it) {
+                    vec_file1[it] = *(nii1_temp_data + VOXEL_ID);
+                    vec_file2[it] = *(nii2_temp_data + VOXEL_ID);
                 }
-                // cout << ren_correl(vec_file1, vec_file2, nrep) << "     " << gsl_stats_correlation(vec_file1, 1, vec_file2, 1, nrep) << endl;
-                *(correl_file_data + nxy * islice + nx * ix + iy) = ren_correl(vec_file1, vec_file2, nrep);
+                *(correl_file_data + VOXEL_ID_3D) = ren_correl(vec_file1, vec_file2, size_t);
             }
         }
     }
-    cout << "  Running also until here  5... " << endl;
 
     string prefix = "correlated_";
     string filename_1 = (string) (fin_1);
     string outfilename = prefix+filename_1;
 
-    cout << "  Writing as = " << outfilename.c_str() << endl;
+    log_output(outfilename.c_str());
 
     const char *fout_1 = outfilename.c_str();
     if (nifti_set_filenames(correl_file, fout_1, 1, 1)) {
@@ -218,7 +145,6 @@ int main(int argc, char * argv[]) {
     // }
     // nifti_image_write(GMkoord2);
 
-    // koord.autowrite("koordinaten.nii", wopts, &prot);
     cout << "  Finished." << endl;
     return 0;
 }

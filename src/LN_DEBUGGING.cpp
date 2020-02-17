@@ -22,7 +22,7 @@ int show_help(void) {
 }
 
 int main(int argc, char * argv[]) {
-    nifti_image *nim_input = NULL;
+    nifti_image *nii1 = NULL;
     char *fin = NULL, *fout = NULL;
     int ac, disp_float_eg = 0;
     if (argc < 2) {  // Typing '-help' is sooo much work
@@ -46,120 +46,26 @@ int main(int argc, char * argv[]) {
         fprintf(stderr, "** missing option '-rim'\n");
         return 1;
     }
+
     // Read input dataset, including data
-    nim_input = nifti_image_read(fin, 1);
+    nii1 = nifti_image_read(fin, 1);
 
     log_welcome("LN_DEBUGGING");
-    log_nifti_descriptives(nim_input);
+    log_nifti_descriptives(nii1);
 
-    // Get dimensions of input
-    int sizeSlice = nim_input->nz;
-    int sizePhase = nim_input->nx;
-    int sizeRead = nim_input->ny;
-    int nrep = nim_input->nt;
-    int nx = nim_input->nx;
-    int nxy = nim_input->nx * nim_input->ny;
-    int nxyz = nim_input->nx * nim_input->ny * nim_input->nz;
+    // ========================================================================
+    // Fix datatype issues
+    nifti_image* nii2 = recreate_nii_with_float_datatype(nii1);
 
-    // Get access to data of nim_input
-    nim_input = nifti_image_read(fin, 1);
-    short *nim_input_data = (short *) nim_input->data;
+    // ========================================================================
 
-    nifti_image * nim_2 = nifti_image_read(fin, 1);
-    cout << "  1st datatype 1 " << nim_input->datatype << endl;
-    // short  *nim_2_data = (short *) nim_2->data;
-
-    nifti_image * nim_5 = nifti_image_read(fin, 1);
-    nim_5->datatype = NIFTI_TYPE_FLOAT32;
-    nim_5->nbyper = sizeof(float);
-    nim_5->data = calloc(nim_5->nvox, nim_5->nbyper);
-    float *nim_5_data = (float *) nim_5->data;
-
-    if (nim_input->datatype == NIFTI_TYPE_FLOAT32) {
-        float *nim_2_data = (float *) nim_2->data;
-        cout << "  Datatype 1 " << nim_2->datatype << endl;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_5_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_2_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_input->datatype == NIFTI_TYPE_FLOAT32) {
-        float  *nim_2_data = (float *) nim_2->data;
-        cout << "  Datatype 1 " << nim_2->datatype << endl;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_5_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_2_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_input->datatype == NIFTI_TYPE_INT16) {
-        short  *nim_2_data = (short *) nim_2->data;
-        cout << "  Datatype 1 " << nim_2->datatype << endl;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_5_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_2_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_input->datatype == NIFTI_TYPE_INT32) {
-        int *nim_2_data = (int *) nim_2->data;
-        cout << "  Datatype 1 " << nim_2->datatype << endl;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_5_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_2_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-
-    // Rick comments
-    // nifti_copy_nim_info(). It will return with data == NULL.
-    // If you need the data allocated, memory use would not change once you do so.
-    // There is also nifti_make_new_nim()
-    // nifti_image * nifti_make_new_nim(const int64_t dims[], int datatype, int data_fill)
-
-    // for (int timestep = 0; timestep < 100; ++timestep) {
-    //     cout << timestep << "  Timestep " << endl;
-    //     for (int islice = 0; islice < sizeSlice; ++islice) {
-    //         for (int iy = 0; iy < sizePhase; ++iy) {
-    //             for (int ix = 0; ix < sizeRead; ++ix) {
-    //                 // cout << islice << " Slices " << iy << " | PhaseSteps " << ix << " | Read steps " << endl;
-    //               *(nim_3_data + nxyz * timestep + nxy * islice + nx * ix + iy) = 1;
-    //             }
-    //         }
-    //     }
-    // }
-
-    cout << "  Runing also until here 5... " << endl;
-
-     // Output file name
-    const char  *fout_5 = "nim_5.nii";
-    if (nifti_set_filenames(nim_5, fout_5 , 1, 1)) {
+    // Output file name
+    const char* outfilename = "nii2.nii";
+    if (nifti_set_filenames(nii2, outfilename , 1, 1)) {
         return 1;
     }
-    nifti_image_write(nim_5);
-
-    const char  *fout_2 = "nim_2.nii";
-    if (nifti_set_filenames(nim_2, fout_2 , 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(nim_2);
+    log_output(outfilename);
+    nifti_image_write(nii2);
 
     cout << "  Finished." << endl;
     return 0;
