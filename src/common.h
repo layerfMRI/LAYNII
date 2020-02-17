@@ -33,7 +33,7 @@ using namespace std;
 #define END_FOR_EACH_VOXEL_TZYX }}}}
 
 // Used inside voxel loops
-#define VOXEL_ID (nxyz * it + nxy * iz + nx * iy + ix)
 #define VOXEL_ID_3D (nxy * iz + nx * iy + ix)
+#define VOXEL_ID (nxyz * it + VOXEL_ID_3D)
 
 // ============================================================================
