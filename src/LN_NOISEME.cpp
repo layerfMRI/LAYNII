@@ -1,5 +1,6 @@
 
 #include "./common.h"
+#include "./utils.h"
 
 int N_rand = 1000;
 double_t lower = -10;

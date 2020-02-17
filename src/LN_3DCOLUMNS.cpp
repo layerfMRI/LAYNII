@@ -2,6 +2,7 @@
 // TODO(@Faruk): Test after cosmetics (need layers.nii from Renzo)
 
 #include "./common.h"
+#include "./utils.h"
 
 int show_help(void) {
     printf(

@@ -4,6 +4,7 @@
 // Also seems to give the same error in the old version. Check with Renzo.
 
 #include "./common.h"
+#include "./utils.h"
 
 int show_help(void) {
     printf(

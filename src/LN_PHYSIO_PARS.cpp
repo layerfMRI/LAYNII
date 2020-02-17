@@ -12,6 +12,7 @@
 #include <fstream>
 #include <string>
 // #include "stdafx.h" // Enable for Windows compilers, disable for linux & mac
+#include "./utils.h"
 
 using namespace std;
 
