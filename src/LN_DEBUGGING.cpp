@@ -4,7 +4,7 @@
 
 int show_help(void) {
     printf(
-    "LN_DEBUGGINH: Short example of Layering.\n"
+    "LN_DEBUGGING: Short example of Layering.\n"
     "\n"
     "    This program demonstrates how to read a NIfTI-2 dataset.\n"
     "    Set output filenames and write a NIfTI-2 dataset, all via the\n"
@@ -49,6 +49,9 @@ int main(int argc, char * argv[]) {
     // Read input dataset, including data
     nim_input = nifti_image_read(fin, 1);
 
+    log_welcome("LN_DEBUGGING");
+    log_nifti_descriptives(nim_input);
+
     // Get dimensions of input
     int sizeSlice = nim_input->nz;
     int sizePhase = nim_input->nx;
@@ -57,8 +60,6 @@ int main(int argc, char * argv[]) {
     int nx = nim_input->nx;
     int nxy = nim_input->nx * nim_input->ny;
     int nxyz = nim_input->nx * nim_input->ny * nim_input->nz;
-
-    cout << sizeSlice << " Slices | " << sizePhase << " PhaseSteps | " << sizeRead << " Read steps | " << nrep << " Timesteps " << endl;
 
     // Get access to data of nim_input
     nim_input = nifti_image_read(fin, 1);

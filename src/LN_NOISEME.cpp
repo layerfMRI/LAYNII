@@ -87,6 +87,10 @@ int main(int argc, char * argv[]) {
         fprintf(stderr, "** failed to read NIfTI image from '%s'\n", fin);
         return 2;
     }
+
+    log_welcome("LN_NOISEME");
+    log_nifti_descriptives(nim_input);
+
     // Get dimensions of input
     int sizeSlice = nim_input->nz;
     int sizePhase = nim_input->nx;
@@ -95,8 +99,6 @@ int main(int argc, char * argv[]) {
     int nx = nim_input->nx;
     int nxy = nim_input->nx * nim_input->ny;
     int nxyz = nim_input->nx * nim_input->ny * nim_input->nz;
-
-    cout << sizeSlice << " Slices | " <<  sizePhase << " PhaseSteps | " <<  sizeRead << " Read steps | " <<  nrep << " Timesteps "  << endl;
 
     if (!fout) {
         fprintf(stderr, "-- no output requested \n");

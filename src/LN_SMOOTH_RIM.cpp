@@ -55,6 +55,9 @@ int main(int argc, char * argv[]) {
         return 2;
     }
 
+    log_welcome("LN_SMOOTH_RIM");
+    log_nifti_descriptives(nim_rim_r);
+
     // Get dimensions of input
     int sizeSlice = nim_rim_r->nz;
     int sizePhase = nim_rim_r->nx;
@@ -120,10 +123,6 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    cout << " " << sizeSlice << " Slices | " << sizePhase << " PhaseSteps | " << sizeRead << " Read steps | " << nrep << " timesteps " << endl;
-    cout << "  Voxel size = " << dX << " x " << dY << " x " << dZ << endl;
-    cout << "  Datatype of rim input = " << nim_rim_r->datatype << endl;
-    cout << "  Datatype of rim output = " << nim_rim->datatype << endl;
 
     //////////////////////////////
     // Finding number of layers //
@@ -137,12 +136,12 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    cout << " There are " << layernumber << " to smooth " << endl;
+    cout << "  There are " << layernumber << " to smooth." << endl;
     if (layernumber > 3) {
-        cout << " ################################### " << endl;
-        cout << " ##       You are in Trouble      ## " << endl;
-        cout << " ## There are more than 3 numbers ## " << endl;
-        cout << " ################################### " << endl;
+        cout << "  ################################### " << endl;
+        cout << "  ##       You are in Trouble      ## " << endl;
+        cout << "  ## There are more than 3 numbers ## " << endl;
+        cout << "  ################################### " << endl;
     }
 
     //////////////////////////////////////////////

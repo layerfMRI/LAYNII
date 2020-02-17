@@ -56,6 +56,9 @@ int main(int argc, char * argv[]) {
         return 2;
     }
 
+    log_welcome("LN_FIX_RIM");
+    log_nifti_descriptives(nim_rim_r);
+
     // Get dimensions of input
     int sizeSlice = nim_rim_r->nz;
     int sizePhase = nim_rim_r->nx;
@@ -64,13 +67,6 @@ int main(int argc, char * argv[]) {
     int nx = nim_rim_r->nx;
     int nxy = nim_rim_r->nx * nim_rim_r->ny;
     int nxyz = nim_rim_r->nx * nim_rim_r->ny * nim_rim_r->nz;
-    float dX = nim_rim_r->pixdim[1];
-    float dY = nim_rim_r->pixdim[2];
-    float dZ = nim_rim_r->pixdim[3];
-
-    if (twodim == 1) {
-        dZ = 1000 * dZ;
-    }
 
     // nim_mask->datatype = NIFTI_TYPE_FLOAT32;
     // nim_mask->nbyper = sizeof(float);
@@ -121,9 +117,7 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    cout << " " << sizeSlice << " Slices | " <<  sizePhase << " PhaseSteps | " <<  sizeRead << " Read steps | " <<  nrep << " Timesteps "  << endl;
-    cout << "  Voxel size = " <<  dX << " x " <<  dY << " x "  <<  dZ  << endl;
-    cout << "  Datatype of rim input = " << nim_rim_r->datatype << endl;
+
     cout << "  Datatype of rim output = " << nim_rim ->datatype << endl;
 
     //////////////////////////////

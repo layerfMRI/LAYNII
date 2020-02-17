@@ -72,6 +72,7 @@ int main(int argc, char * argv[]) {
         fprintf(stderr, "** missing option '-timeseries'\n");
         return 1;
     }
+
     // Read input dataset, including data
     nifti_image * nim_inputfi = nifti_image_read(finfi, 1);
     if (!nim_inputfi) {
@@ -83,6 +84,9 @@ int main(int argc, char * argv[]) {
         return 2;
     }
 
+    log_welcome("LN_TEMPSMOOTH");
+    log_nifti_descriptives(nim_inputfi);
+
     // Get dimensions of input
     int sizeSlice = nim_inputfi->nz;
     int sizePhase = nim_inputfi->nx;
@@ -92,8 +96,8 @@ int main(int argc, char * argv[]) {
     int nxy = nim_inputfi->nx * nim_inputfi->ny;
     int nxyz = nim_inputfi->nx * nim_inputfi->ny * nim_inputfi->nz;
     float dX = nim_inputfi->pixdim[1];
-    float dY = nim_inputfi->pixdim[2];
-    float dZ = nim_inputfi->pixdim[3];
+    // float dY = nim_inputfi->pixdim[2];
+    // float dZ = nim_inputfi->pixdim[3];
 
     // Note: If you are running the smoothing in 2D, it will still go through
     // the entire pipeline. The only difference is that the weights in a
@@ -103,7 +107,7 @@ int main(int argc, char * argv[]) {
     nim_inputf->datatype = NIFTI_TYPE_FLOAT32;
     nim_inputf->nbyper = sizeof(float);
     nim_inputf->data = calloc(nim_inputf->nvox, nim_inputf->nbyper);
-    float *nim_inputf_data = (float *) nim_inputf->data;
+    float* nim_inputf_data = (float* ) nim_inputf->data;
 
     //////////////////////////////////////////////////////////////
     // Fixing potential problems with different input datatypes //
@@ -111,7 +115,7 @@ int main(int argc, char * argv[]) {
     // and translate them to the datatime I like best  ///////////
     //////////////////////////////////////////////////////////////
     if (nim_inputfi->datatype == NIFTI_TYPE_FLOAT32) {
-        float *nim_inputfi_data = (float *) nim_inputfi->data;
+        float* nim_inputfi_data = (float* ) nim_inputfi->data;
         for (int it = 0; it < nrep; ++it) {
             for (int islice = 0; islice < sizeSlice; ++islice) {
                 for (int iy = 0; iy < sizePhase; ++iy) {
@@ -147,11 +151,6 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    // Write out some stuff that might be good to know, if you want to debug
-    cout << sizeSlice << " Slices | " << sizePhase << " Phase steps | " << sizeRead << " Read steps | " << nrep << " Timesteps " << endl;
-    cout << "  Voxel size = " << dX << " x " << dY << " x " << dZ << endl;
-    cout << "  Datatype 1 = " << nim_inputf->datatype << endl;
-
     /////////////////////////////////////
     // Make allocating necessary files //
     /////////////////////////////////////
@@ -168,14 +167,14 @@ int main(int argc, char * argv[]) {
     // So with the next lines I am saving RAM.
     gausweight->nt = 1;
     gausweight->nvox = gausweight->nvox / nrep;
-    float *smoothed_data = (float *) smoothed->data;
-    float *gausweight_data = (float *) gausweight->data;
+    float* smoothed_data = (float* ) smoothed->data;
+    float* gausweight_data = (float* ) gausweight->data;
 
     // nifti_image *debug = nifti_copy_nim_info(nim_inputf);
     // debug->datatype = NIFTI_TYPE_FLOAT32;
     // debug->nbyper = sizeof(float);
     // debug->data = calloc(debug->nvox, debug->nbyper);
-    // float *debug_data = (float *) debug->data;
+    // float* debug_data = (float* ) debug->data;
 
     // float dist(float x1, float y1, float z1, float x2, float y2, float z2,
     //            float dX, float dY, float dZ);
@@ -296,12 +295,12 @@ int main(int argc, char * argv[]) {
     smoothed->scl_slope = nim_inputfi->scl_slope;
 
     if (nim_inputfi->scl_inter != 0) {
-        cout << " ########################################## " << endl;
-        cout << " #####   WARNING   WANRING   WANRING  ##### " << endl;
-        cout << " ## The NIFTI scale factor is asymmetric ## " << endl;
-        cout << " ## Why would you do such a thing????    ## " << endl;
-        cout << " #####   WARNING   WANRING   WANRING  ##### " << endl;
-        cout << " ########################################## " << endl;
+        cout << "  ########################################## " << endl;
+        cout << "  #####   WARNING   WANRING   WANRING  ##### " << endl;
+        cout << "  ## The NIFTI scale factor is asymmetric ## " << endl;
+        cout << "  ## Why would you do such a thing????    ## " << endl;
+        cout << "  #####   WARNING   WANRING   WANRING  ##### " << endl;
+        cout << "  ########################################## " << endl;
     }
 
     string prefix = "smoothed_";

@@ -136,6 +136,10 @@ int main(int argc, char * argv[]) {
         return 2;
     }
 
+    log_welcome("LN_GRADSMOOTH");
+    log_nifti_descriptives(nim_inputfi);
+    log_nifti_descriptives(nim_maski);
+
     // Get dimensions of input
     int sizeSlice = nim_maski->nz;
     int sizePhase = nim_maski->nx;
@@ -277,11 +281,6 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    // Write out some stuff that might be good to know, if you want to debug
-    cout << sizeSlice << " Slices | " << sizePhase << " Phase_steps | " << sizeRead << " Read_steps | " << nrep << " Time_steps " << endl;
-    cout << "  Voxel size = " << dX << " x " << dY << " x " << dZ << endl;
-    cout << "  Datatype 1 = " << nim_inputf->datatype << endl;
-    cout << "  Datatype 2 = " << nim_mask->datatype << endl;
 
     /////////////////////////////////////
     // Make allocating necessary files //

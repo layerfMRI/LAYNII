@@ -60,6 +60,10 @@ int main(int argc, char * argv[]) {
         fprintf(stderr, "** failed to read layer NIfTI image from '%s'\n", input_filename);
         return 2;
     }
+
+    log_welcome("LN_SHORT_ME");
+    log_nifti_descriptives(nim_input_r);
+
     // Get dimensions of input
     int sizeSlice = nim_input_r->nz;
     int sizePhase = nim_input_r->nx;

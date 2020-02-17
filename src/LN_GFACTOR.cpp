@@ -107,6 +107,9 @@ int main(int argc, char * argv[]) {
         return 2;
     }
 
+    log_welcome("LN_GFACTOR");
+    log_nifti_descriptives(nim_input);
+
     // Get dimensions of input
     int sizeSlice = nim_input->nz;
     int sizePhase = nim_input->nx;
@@ -115,9 +118,6 @@ int main(int argc, char * argv[]) {
     int nx = nim_input->nx;
     int nxy = nim_input->nx * nim_input->ny;
     int nxyz = nim_input->nx * nim_input->ny * nim_input->nz;
-
-    cout << sizeSlice << " Slices | " << sizePhase << " Phase_steps | " << sizeRead << " Read_steps | " << nrep << " Time_steps " << endl;
-    // cout << sizePhase %grappa_int << " mod    " << endl;
 
     if (direction_int == 0) {
         sizePhase = sizePhase - (sizePhase %grappa_int);

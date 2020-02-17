@@ -56,6 +56,9 @@ int main(int argc, char * argv[]) {
         return 2;
     }
 
+    log_welcome("LN_TRIAL");
+    log_nifti_descriptives(nim_file_1i);
+
     // Get dimensions of input
     int sizeSlice = nim_file_1i->nz;
     int sizePhase = nim_file_1i->nx;
@@ -65,10 +68,12 @@ int main(int argc, char * argv[]) {
     int nxy = nim_file_1i->nx * nim_file_1i->ny;
     int nxyz = nim_file_1i->nx * nim_file_1i->ny * nim_file_1i->nz;
 
-    cout << sizeSlice << " Slices | " <<  sizePhase << " PhaseSteps | " <<  sizeRead << " Read steps | " <<  nrep << " Timesteps "  << endl;
-    cout << "  Trial duration is " <<trialdur << ". This means there are " << (float)nrep/(float)trialdur <<  " trials recorded here." << endl;
-
     int numberofTrials = nrep/trialdur;
+
+    cout << "  Trial duration is " << trialdur
+         << ". This means there are " << (float)nrep/(float)trialdur
+         <<  " trials recorded here." << endl;
+
 
     nifti_image * nim_file_1 = nifti_copy_nim_info(nim_file_1i);
     nim_file_1->datatype = NIFTI_TYPE_FLOAT32;

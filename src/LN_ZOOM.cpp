@@ -28,7 +28,7 @@ int show_help(void) {
 }
 
 int main(int argc, char * argv[]) {
-    // nifti_image * nim_input=NULL;
+    // nifti_image* nim_input=NULL;
     char *fin_1 = NULL, *fin_2 = NULL;
     int ac, disp_float_eg = 0, shift = 0;
     int trialdur = 0;
@@ -60,7 +60,7 @@ int main(int argc, char * argv[]) {
        return 1;
     }
     // Read input dataset, including data
-    nifti_image * nim_file_1i = nifti_image_read(fin_1, 1);
+    nifti_image* nim_file_1i = nifti_image_read(fin_1, 1);
     if (!nim_file_1i) {
         fprintf(stderr, "** failed to read NIfTI image from '%s'\n", fin_1);
         return 2;
@@ -70,11 +70,16 @@ int main(int argc, char * argv[]) {
         return 1;
     }
     // Read input dataset, including data
-    nifti_image * nim_file_2i = nifti_image_read(fin_2, 1);
+    nifti_image* nim_file_2i = nifti_image_read(fin_2, 1);
     if (!nim_file_2i) {
         fprintf(stderr, "** failed to read NIfTI image from '%s'\n", fin_2);
         return 2;
     }
+
+    log_welcome("LN_ZOOM");
+    log_nifti_descriptives(nim_file_1i);
+    log_nifti_descriptives(nim_file_1i);
+
     // Get dimensions of input
     int sizeSlice = nim_file_1i->nz;
     int sizePhase = nim_file_1i->nx;
@@ -84,19 +89,17 @@ int main(int argc, char * argv[]) {
     int nxy = nim_file_1i->nx * nim_file_1i->ny;
     int nxyz = nim_file_1i->nx * nim_file_1i->ny * nim_file_1i->nz;
 
-    cout << sizeSlice << " Slices " << sizePhase << " | PhaseSteps " << sizeRead << " | Read steps " << nrep << " timesteps " << endl;
-
-    nifti_image * nim_file_1 = nifti_copy_nim_info(nim_file_1i);
+    nifti_image* nim_file_1 = nifti_copy_nim_info(nim_file_1i);
     nim_file_1->datatype = NIFTI_TYPE_FLOAT32;
     nim_file_1->nbyper = sizeof(float);
     nim_file_1->data = calloc(nim_file_1->nvox, nim_file_1->nbyper);
-    float  *nim_file_1_data = (float *) nim_file_1->data;
+    float* nim_file_1_data = (float*) nim_file_1->data;
 
-    nifti_image * nim_file_2 = nifti_copy_nim_info(nim_file_1i);
+    nifti_image* nim_file_2 = nifti_copy_nim_info(nim_file_1i);
     nim_file_2->datatype = NIFTI_TYPE_FLOAT32;
     nim_file_2->nbyper = sizeof(float);
     nim_file_2->data = calloc(nim_file_2->nvox, nim_file_2->nbyper);
-    float  *nim_file_2_data = (float *) nim_file_2->data;
+    float* nim_file_2_data = (float*) nim_file_2->data;
 
     // if (!fout) {
     //     fprintf(stderr, "-- no output requested \n");
@@ -109,7 +112,7 @@ int main(int argc, char * argv[]) {
     // }
 
     if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
-        float *nim_file_1i_data = (float *) nim_file_1i->data;
+        float* nim_file_1i_data = (float*) nim_file_1i->data;
         for (int it = 0; it < nrep; ++it) {
             for (int islice = 0; islice < sizeSlice; ++islice) {
                 for (int iy = 0; iy < sizePhase; ++iy) {
@@ -133,7 +136,7 @@ int main(int argc, char * argv[]) {
         }
     }
     if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
-        float *nim_file_1i_data = (float *) nim_file_1i->data;
+        float* nim_file_1i_data = (float*) nim_file_1i->data;
         for (int it = 0; it < nrep; ++it) {
             for (int islice = 0; islice < sizeSlice; ++islice) {
                 for (int iy = 0; iy <sizePhase; ++iy) {
@@ -157,7 +160,7 @@ int main(int argc, char * argv[]) {
         }
     }
     if (nim_file_2i->datatype == NIFTI_TYPE_FLOAT32) {
-        float *nim_file_2i_data = (float *) nim_file_2i->data;
+        float* nim_file_2i_data = (float*) nim_file_2i->data;
         for (int it = 0; it < nrep; ++it) {
             for (int islice = 0; islice < sizeSlice; ++islice) {
                 for (int iy = 0; iy < sizePhase; ++iy) {
@@ -197,7 +200,7 @@ int main(int argc, char * argv[]) {
     int zoomed_x_size = max_x - min_x;
     int zoomed_y_size = max_y - min_y;
 
-    nifti_image * zoomed_file = nifti_copy_nim_info(nim_file_1);
+    nifti_image* zoomed_file = nifti_copy_nim_info(nim_file_1);
     // zoomed_file->nt = 7;
     zoomed_file->nz = zoomed_z_size;
     zoomed_file->nx = zoomed_x_size;
@@ -207,7 +210,7 @@ int main(int argc, char * argv[]) {
     zoomed_file->datatype = NIFTI_TYPE_FLOAT32;
     zoomed_file->nbyper = sizeof(float);
     zoomed_file->data = calloc(zoomed_file->nvox, zoomed_file->nbyper);
-    float *zoomed_file_data = (float *) zoomed_file->data;
+    float* zoomed_file_data = (float*) zoomed_file->data;
 
     cout << "  Reduction " << (nim_file_1->nvox * zoomed_x_size  * zoomed_y_size * zoomed_z_size) / (nim_file_1i->nx * nim_file_1i->ny * nim_file_1i->nz) << endl;
 

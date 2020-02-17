@@ -59,6 +59,9 @@ int main(int argc, char * argv[]) {
         return 2;
     }
 
+    log_welcome("LN_RAGRUG");
+    log_nifti_descriptives(nim_inputfi);
+
     // Get dimensions of input
     int sizeSlice = nim_inputfi->nz;
     int sizePhase = nim_inputfi->nx;
@@ -120,9 +123,6 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    cout << sizeSlice << " Slices | " <<  sizePhase << " PhaseSteps | " <<  sizeRead << " Read steps | " <<  nrep << " Timesteps "  << endl;
-    cout << "  Voxel size = " <<  dX << " x " <<  dY << " x "  <<  dZ  << endl;
-    cout << "  Datatye 1 = " << nim_inputf->datatype << endl;
 
     /////////////////////////////////////
     // Make allocating necessary files //
@@ -156,7 +156,7 @@ int main(int argc, char * argv[]) {
     ////////////////////
     // cout << " DEBUG " << dist(1., 1., 1., 1., 2., 1., dX, dY, dZ) << endl;
 
-    cout << "  Filling nii with spatial values " << endl;
+    cout << "  Filling nii with spatial values..." << endl;
 
     for (int iz = 0; iz < sizeSlice; ++iz) {
         for (int iy = 0; iy < sizePhase; ++iy) {

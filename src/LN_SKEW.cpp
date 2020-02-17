@@ -49,7 +49,11 @@ int main(int argc, char * argv[]) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin_1);
         return 2;
     }
-    // Get dimsions of input
+
+    log_welcome("LN_SKEW");
+    log_nifti_descriptives(nim_file_1i);
+
+    // Get dimensions of input
     int sizeSlice = nim_file_1i->nz;
     int sizePhase = nim_file_1i->nx;
     int sizeRead = nim_file_1i->ny;
@@ -57,8 +61,6 @@ int main(int argc, char * argv[]) {
     int nx = nim_file_1i->nx;
     int nxy = nim_file_1i->nx * nim_file_1i->ny;
     int nxyz = nim_file_1i->nx * nim_file_1i->ny * nim_file_1i->nz;
-
-    cout << sizeSlice << " Slices | " <<  sizePhase << " PhaseSteps | " <<  sizeRead << " Read steps | " <<  nrep << " Timesteps "  << endl;
 
     nifti_image * nim_file_1 = nifti_copy_nim_info(nim_file_1i);
     nim_file_1->datatype = NIFTI_TYPE_FLOAT32;

@@ -1,5 +1,5 @@
 
-// TODO(@Faruk): Test after cosmetics (need layers.nii from Renzo)
+// TODO(@Faruk): Test requires `layers.nii` I need to get it from Renzo.
 
 #include "./common.h"
 #include "./utils.h"
@@ -90,6 +90,11 @@ int main(int argc, char * argv[]) {
         fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", layer_filename);
         return 2;
     }
+
+    log_welcome("LN_3DCOLUMNS");
+    log_nifti_descriptives(nim_layers_r);
+    log_nifti_descriptives(nim_landmarks_r);
+
     // Get dimensions of input
     int sizeSlice = nim_layers_r->nz;
     int sizePhase = nim_layers_r->nx;
@@ -197,10 +202,6 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    cout << " " << sizeSlice << " Slices | " << sizePhase << " Phase_steps | " << sizeRead << " Read_steps | " << nrep << " Time_steps " << endl;
-    cout << "  Voxel size = " << dX << " x " << dY << " x " << dZ << endl;
-    cout << "  Datatype of layers mask = " << nim_layers->datatype << endl;
-    cout << "  Datatype of landmark mask = " << nim_landmarks->datatype << endl;
 
     //////////////////////////////
     // Finding number of layers //

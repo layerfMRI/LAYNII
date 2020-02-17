@@ -56,22 +56,26 @@ int main(int argc, char * argv[]) {
         fprintf(stderr, "** missing option '-file1'\n");
         return 1;
     }
+    if (!fin_2) {
+        fprintf(stderr, "** missing option '-file2'\n");
+        return 1;
+    }
+
     // Read input dataset, including data
     nifti_image * nim_file_1i = nifti_image_read(fin_1, 1);
     if (!nim_file_1i) {
         fprintf(stderr, "** failed to read NIfTI image from '%s'\n", fin_1);
         return 2;
     }
-    if (!fin_2) {
-        fprintf(stderr, "** missing option '-file2'\n");
-        return 1;
-    }
-    // Read input dataset, including data
     nifti_image *nim_file_2i = nifti_image_read(fin_2, 1);
     if (!nim_file_2i) {
         fprintf(stderr, "** failed to read NIfTI image from '%s'\n", fin_2);
         return 2;
     }
+
+    log_welcome("LN_CORREL2FILES");
+    log_nifti_descriptives(nim_file_1i);
+    log_nifti_descriptives(nim_file_2i);
 
     // Get dimensions of input
     int sizeSlice = nim_file_1i->nz;
@@ -81,8 +85,6 @@ int main(int argc, char * argv[]) {
     int nx = nim_file_1i->nx;
     int nxy = nim_file_1i->nx * nim_file_1i->ny;
     int nxyz = nim_file_1i->nx * nim_file_1i->ny * nim_file_1i->nz;
-
-    cout << sizeSlice << " Slices " << sizePhase << " | PhaseSteps " << sizeRead << " | Read steps " << nrep << " | Timesteps " << endl;
 
     nifti_image * nim_file_1 = nifti_copy_nim_info(nim_file_1i);
     nim_file_1->datatype = NIFTI_TYPE_FLOAT32;

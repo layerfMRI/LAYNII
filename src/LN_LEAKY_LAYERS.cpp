@@ -70,6 +70,9 @@ int main(int argc, char * argv[]) {
         return 2;
     }
 
+    log_welcome("LN_LEAKY_LAYERS");
+    log_nifti_descriptives(nim_inputr);
+
     // Get dimensions of input
     int sizeSlice = nim_inputr->nz;
     int sizePhase = nim_inputr->nx;
@@ -140,12 +143,8 @@ int main(int argc, char * argv[]) {
     ////////////////////////////
     if (dim == 2) {
         dZ = 1000.;
-        cout << "  I am calculating layers only in 2D " << endl;
+        cout << "  Calculating layers only in 2D." << endl;
     }
-
-    cout << sizeSlice << " Slices | " << sizePhase << " Phase steps | " << sizeRead << " Read steps | " << nrep << " Timesteps " << endl;
-    cout << "  Voxel size = " << dX << " x " << dY << " x " << dZ << endl;
-    cout << "  Datatype 1 " << nim_input->datatype << endl;
 
     nifti_image *smoothed = nifti_copy_nim_info(nim_input);
     nifti_image *gausweight = nifti_copy_nim_info(nim_input);

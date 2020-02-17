@@ -1,4 +1,6 @@
 
+// TODO(Faruk): Requires layers.nii from Renzo for testing.
+
 #include "./common.h"
 #include "./utils.h"
 
@@ -98,6 +100,10 @@ int main(int argc, char * argv[]) {
         fprintf(stderr, " ** failed to read layer NIfTI image from '%s'\n", layer_filename);
         return 2;
     }
+
+    log_welcome("LN_COLUMNAR_DIST");
+    log_nifti_descriptives(nim_layers_r);
+    log_nifti_descriptives(nim_landmarks_r);
 
     // Get dimensions of input
     int sizeSlice = nim_layers_r->nz;
@@ -206,13 +212,6 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-
-    cout << " " << sizeSlice << " Slices | " << sizePhase << " PhaseSteps | " << sizeRead << " Read steps | " << nrep << " Timesteps " << endl;
-    cout << "  Voxel size = " << dX << " x " << dY << " x " << dZ << endl;
-
-
-    cout << "  Datatype of Layers mask = " << nim_layers->datatype << endl;
-    cout << "  Datatype of landmark mask = " << nim_landmarks->datatype << endl;
 
     //////////////////////////////
     // Finding number of layers //

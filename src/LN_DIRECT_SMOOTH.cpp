@@ -79,6 +79,7 @@ int main(int argc, char * argv[]) {
         fprintf(stderr, "** missing option '-input'\n");
         return 1;
     }
+
     // Read input dataset, including data
     nifti_image * nim_inputfi = nifti_image_read(finfi, 1);
     if (!nim_inputfi) {
@@ -89,6 +90,10 @@ int main(int argc, char * argv[]) {
         fprintf(stderr, "** failed to read direction '%i'\n", direction_i);
         return 2;
     }
+
+    log_welcome("LN_DIRECT_SMOOTH");
+    log_nifti_descriptives(nim_inputfi);
+
     // Get dimensions of input
     int sizeSlice = nim_inputfi->nz;
     int sizePhase = nim_inputfi->nx;
@@ -151,9 +156,6 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    cout << sizeSlice << " Slices | " << sizePhase << " PhaseSteps | " << sizeRead << " Read steps | " << nrep << " Timesteps " << endl;
-    cout << "  Voxel size = " << dX << " x " << dY << " x " << dZ << endl;
-    cout << "  Datatype 1 = " << nim_inputf->datatype << endl;
 
     /////////////////////////////////////
     // Make allocating necessary files //

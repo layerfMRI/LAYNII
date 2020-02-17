@@ -100,6 +100,9 @@ int main(int argc, char * argv[]) {
         cout << " z-direction " << endl;
     }
 
+    log_welcome("LN_INTPRO");
+    log_nifti_descriptives(nim_file_1i);
+
     // Get dimensions of input
     int sizeSlice = nim_file_1i->nz;
     int sizePhase = nim_file_1i->nx;
@@ -108,8 +111,6 @@ int main(int argc, char * argv[]) {
     int nx = nim_file_1i->nx;
     int nxy = nim_file_1i->nx * nim_file_1i->ny;
     int nxyz = nim_file_1i->nx * nim_file_1i->ny * nim_file_1i->nz;
-
-    cout << sizeSlice << " Slices | " << sizePhase << " Phase_steps | " << sizeRead << " Read_steps | " << nrep << " Time_steps " << endl;
 
     if (is_range > 0) {
         cout << "  Only looking for the Max/Min value in a proximity of " << is_range << " voxels." << endl;

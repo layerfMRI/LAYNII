@@ -94,12 +94,8 @@ int main(int argc, char * argv[]) {
         return 2;
     }
 
-    cout << "Using " << Nlayer_real << " Layers " << endl;
-    if (Nlayer_real > 1000) {
-        cout << endl << " Stop! Too many layers (>1000). I can't let you do that." << endl;
-    }
-
-    int Nlayer = 1000;  // This is an interim number that will be scaled later
+    log_welcome("LN_GROW_LAYERS");
+    log_nifti_descriptives(nim_input_i);
 
     // Get dimensions of input
     int sizeSlice = nim_input_i->nz;
@@ -113,10 +109,14 @@ int main(int argc, char * argv[]) {
     float dY = nim_input_i->pixdim[2];
     float dZ = nim_input_i->pixdim[3];
 
-    cout << sizeSlice << " Slices | " << sizePhase << " Phase_steps | " << sizeRead << " Read_steps | " << nrep << " Time_steps " << endl;
-    cout << "  Voxel size = " << dX << " x " << dY << " x " << dZ << endl;
+    cout << "  Using " << Nlayer_real << " layers." << endl;
+    if (Nlayer_real > 1000) {
+        cout << endl << "  Stop! Too many layers (>1000). I can't let you do that." << endl;
+    }
+    int Nlayer = 1000;  // This is an interim number that will be scaled later
+
     if (vinc_int != 50) {
-        cout << " Calculate layers up to cortical thicknesses of " << vinc_int << " voxels " << endl;
+        cout << "  Calculate layers up to cortical thicknesses of " << vinc_int << " voxels " << endl;
     }
 
     // if (!fout) { fprintf(stderr, "-- no output requested \n"); return 0; }

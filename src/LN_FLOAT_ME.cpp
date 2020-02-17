@@ -58,11 +58,14 @@ int main(int argc, char * argv[]) {
         return 1;
     }
     // Read input dataset, including data
-    nifti_image * nim_input_r = nifti_image_read(input_filename, 1);
+    nifti_image* nim_input_r = nifti_image_read(input_filename, 1);
     if (!nim_input_r) {
         fprintf(stderr, "** failed to read layer NIfTI image from '%s'\n", input_filename);
         return 2;
     }
+
+    log_welcome("LN_FLOAT_ME");
+    log_nifti_descriptives(nim_input_r);
 
     // Get dimsions of input
     int sizeSlice = nim_input_r->nz;
@@ -72,15 +75,12 @@ int main(int argc, char * argv[]) {
     int nx = nim_input_r->nx;
     int nxy = nim_input_r->nx * nim_input_r->ny;
     int nxyz = nim_input_r->nx * nim_input_r->ny * nim_input_r->nz;
-    float dX = nim_input_r->pixdim[1];
-    float dY = nim_input_r->pixdim[2];
-    float dZ = nim_input_r->pixdim[3];
 
     // nim_mask->datatype = NIFTI_TYPE_FLOAT32;
     // nim_mask->nbyper = sizeof(float);
     // nim_mask->data = calloc(nim_mask->nvox, nim_mask->nbyper);
 
-    nifti_image * nim_input = nifti_copy_nim_info(nim_input_r);
+    nifti_image* nim_input = nifti_copy_nim_info(nim_input_r);
     nim_input->datatype = NIFTI_TYPE_FLOAT32;
     nim_input->nbyper = sizeof(float);
     nim_input->data = calloc(nim_input->nvox, nim_input->nbyper);
