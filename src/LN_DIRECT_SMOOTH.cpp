@@ -29,10 +29,10 @@ int show_help(void) {
     return 0;
 }
 
-int main(int argc, char * argv[]) {
-    char * fout=NULL, * finfi=NULL;
-    int ac, direction_i=0, do_laurenz = 0, do_gauss = 0, do_sri = 0;
-    float FWHM_val=10, strength = 1;
+int main(int argc, char* argv[]) {
+    char* finfi = NULL;
+    int ac, direction_i = 0, do_laurenz = 0, do_gauss = 0, do_sri = 0;
+    float FWHM_val = 10, strength = 1;
     if (argc < 3) {
         return show_help();  // Typing '-help' is sooo much work
     }
@@ -42,32 +42,32 @@ int main(int argc, char * argv[]) {
             return show_help();
         } else if (!strcmp(argv[ac], "-FWHM")) {
             if (++ac >= argc) {
-            fprintf(stderr, "** missing argument for -FWHM\n");
-            return 1;
+                fprintf(stderr, "** missing argument for -FWHM\n");
+                return 1;
             }
-            FWHM_val = atof(argv[ac]);  // Pointer assignment, no string copy.
+            FWHM_val = atof(argv[ac]);  // Assign pointer, no string copy.
         } else if (!strcmp(argv[ac], "-input")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -input\n");
                 return 1;
             }
-            finfi = argv[ac];  // Pointer assignment, no string copy.
+            finfi = argv[ac];  // Assign pointer, no string copy.
         } else if (!strcmp(argv[ac], "-direction")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -direction\n");
                 return 1;
             }
-            direction_i = atoi(argv[ac]);  // Pointer assignment, no string copy.
+            direction_i = atoi(argv[ac]);  // Assign pointer, no string copy.
         } else if (!strcmp(argv[ac], "-laurenzian")) {
             do_laurenz = 1;
             fprintf(stderr, "Use Laurenzian smoothing instead of Gaussian.");
         } else if (!strcmp(argv[ac], "-Anonymous_sri")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -Anonymous_sri\n");
-            // return 1;
+                // return 1;
             }
             do_sri = 1;
-            strength = atof(argv[ac]);  // Pointer assignment, no string copy.
+            strength = atof(argv[ac]);  // Assign pointer, no string copy.
             fprintf(stderr, "Yes Sri I am doing you.");
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
@@ -81,9 +81,9 @@ int main(int argc, char * argv[]) {
     }
 
     // Read input dataset, including data
-    nifti_image * nim_inputfi = nifti_image_read(finfi, 1);
-    if (!nim_inputfi) {
-        fprintf(stderr, "** failed to read layer NIfTI image from '%s'\n", finfi);
+    nifti_image* nii1 = nifti_image_read(finfi, 1);
+    if (!nii1) {
+        fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", finfi);
         return 2;
     }
     if (direction_i == 0) {
@@ -92,78 +92,35 @@ int main(int argc, char * argv[]) {
     }
 
     log_welcome("LN_DIRECT_SMOOTH");
-    log_nifti_descriptives(nim_inputfi);
+    log_nifti_descriptives(nii1);
 
     // Get dimensions of input
-    int sizeSlice = nim_inputfi->nz;
-    int sizePhase = nim_inputfi->nx;
-    int sizeRead = nim_inputfi->ny;
-    int nrep =  nim_inputfi->nt;
-    int nx =  nim_inputfi->nx;
-    int nxy = nim_inputfi->nx * nim_inputfi->ny;
-    int nxyz = nim_inputfi->nx * nim_inputfi->ny * nim_inputfi->nz;
-    float dX =  1;  // nim_inputfi->pixdim[1];
-    float dY =  1;  // nim_inputfi->pixdim[2];
-    float dZ =  1;  // nim_inputfi->pixdim[3];
+    const int size_x = nii1->nx;
+    const int size_y = nii1->ny;
+    const int size_z = nii1->nz;
+    const int size_t = nii1->nt;
+    const int nx = nii1->nx;
+    const int nxy = nii1->nx * nii1->ny;
+    const int nxyz = nii1->nx * nii1->ny * nii1->nz;
+    const float dX = 1;  // nii1->pixdim[1];
+    const float dY = 1;  // nii1->pixdim[2];
+    const float dZ = 1;  // nii1->pixdim[3];
 
-    // nim_mask->datatype = NIFTI_TYPE_FLOAT32;
-    // nim_mask->nbyper = sizeof(float);
-    // nim_mask->data = calloc(nim_mask->nvox, nim_mask->nbyper);
+    // ========================================================================
+    // Fix datatype issues
 
-    nifti_image * nim_inputf = nifti_copy_nim_info(nim_inputfi);
-    nim_inputf->datatype = NIFTI_TYPE_FLOAT32;
-    nim_inputf->nbyper = sizeof(float);
-    nim_inputf->data = calloc(nim_inputf->nvox, nim_inputf->nbyper);
-    float *nim_inputf_data = (float *) nim_inputf->data;
+    nifti_image* nii1_temp = recreate_nii_with_float_datatype(nii1);
+    float* nii1_temp_data = static_cast<float*>(nii1_temp->data);
 
-    //////////////////////////////////////////////////////////////
-    // Fixing potential problems with different input datatypes //
-    //////////////////////////////////////////////////////////////
-
-    if (nim_inputfi->datatype == NIFTI_TYPE_FLOAT32 ||  nim_inputfi->datatype == NIFTI_TYPE_INT32) {
-        float *nim_inputfi_data = (float *) nim_inputfi->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_inputf_data + nxyz *it + nxy*islice + nx*ix + iy) = (float) (*(nim_inputfi_data + nxyz *it + nxy*islice + nx*ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_inputfi->datatype == NIFTI_TYPE_INT16 || nim_inputfi->datatype == DT_UINT16) {
-        short *nim_inputfi_data = (short *) nim_inputfi->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix=0; ix < sizeRead; ++ix) {
-                        *(nim_inputf_data + nxyz *it + nxy * islice + nx * ix + iy) = (float) (*(nim_inputfi_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_inputfi->datatype == DT_FLOAT64 || nim_inputfi->datatype == NIFTI_TYPE_FLOAT64) {
-        double *nim_inputfi_data = (double *) nim_inputfi->data;
-        for (int it = 0; it< nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_inputf_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_inputfi_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
+    // ========================================================================
 
     /////////////////////////////////////
     // Make allocating necessary files //
     /////////////////////////////////////
-    nifti_image * smoothed = nifti_copy_nim_info(nim_inputf);
-    nifti_image * gausweight = nifti_copy_nim_info(nim_inputf);
-    // nifti_image * layer = nifti_copy_nim_info(nim_input);
-    // nifti_image * leak_layer = nifti_copy_nim_info(nim_input);
+    nifti_image* smoothed = nifti_copy_nim_info(nii1_temp);
+    nifti_image* gausweight = nifti_copy_nim_info(nii1_temp);
+    // nifti_image* layer = nifti_copy_nim_info(nim_input);
+    // nifti_image* leak_layer = nifti_copy_nim_info(nim_input);
 
     smoothed->datatype = NIFTI_TYPE_FLOAT32;
     gausweight->datatype = NIFTI_TYPE_FLOAT32;
@@ -180,17 +137,15 @@ int main(int argc, char * argv[]) {
     // layer->data = calloc(layer->nvox, layer->nbyper);
     // leak_layer->data = calloc(leak_layer->nvox, leak_layer->nbyper);
 
-    float *smoothed_data = (float *) smoothed->data;
-    float *gausweight_data = (float *) gausweight->data;
-    // float *layer_data = (float *) layer->data;
-    // float *leak_layer_data = (float *) leak_layer->data;
+    float* smoothed_data = (float*) smoothed->data;
+    float* gausweight_data = (float*) gausweight->data;
+    // float* layer_data = (float*) layer->data;
+    // float* leak_layer_data = (float*) leak_layer->data;
     float dist(float x1, float y1, float z1, float x2, float y2, float z2,
                float dX, float dY, float dZ);
     float gaus(float distance, float sigma);
     float laur(float distance, float sigma);
     float ASLFt(float distance, float strength);
-
-    cout << "  Debug 2 " << endl;
 
     // Float kernal_size = 10;  // corresponds to one voxel sice.
     int vinc = max(1., 2. * FWHM_val / dX);  // Ignore far voxels
@@ -202,140 +157,103 @@ int main(int argc, char * argv[]) {
         do_gauss = 1;
     }
     if (do_sri == 1) {
-        cout << "  No FWHM_val is used. Strength is " << strength<< endl;
+        cout << "  No FWHM_val is used. Strength is " << strength << endl;
     }
-    // cout << " No FWHM_val is used. Strength is " << strength<< endl;
 
     ////////////////////
     // Smoothing loop //
     ////////////////////
     // cout << " DEBUG " << dist(1.,1.,1.,1.,2.,1.,dX,dY,dZ) << endl;
     cout << "  Smoothing in dimension " << direction_i << endl;
-    cout << "  Timestep... " << flush;
+    cout << "  Time step... " << flush;
 
-    for (int i = 0; i < 5;  i++) {
+    for (int i = 0; i < 5; i++) {
         cout << "  " << ASLFt(i, strength) << endl;
     }
 
     if (direction_i == 1) {
-        for (int it = 0; it < nrep; ++it) {
-            cout << "  " << it << "..." << flush;
-            for (int iz = 0; iz < sizeSlice; ++iz) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead - 0; ++ix) {
-                        *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy) = 0;
-                        //*(smoothed_data + nxy * iz + nx * ix + iy) = 0;
+        FOR_EACH_VOXEL_TZYX
+            *(gausweight_data + VOXEL_ID) = 0;
 
-                        for (int ix_i = max(0, ix - vinc); ix_i < min(ix + vinc + 1, sizeRead); ++ix_i) {
-                            if (*(nim_inputf_data + nxyz * it + nxy * iz + nx * ix_i + iy) != 0) {
-                                dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy, (float)iz, dX, dY, dZ);
+            for (int ix_i = max(0, ix - vinc); ix_i < min(ix + vinc + 1, size_x); ++ix_i) {
+                if (*(nii1_temp_data + nxyz * it + nxy * iz + nx * iy + ix_i) != 0) {
+                    dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy, (float)iz, dX, dY, dZ);
 
-                                if (do_gauss == 1) {
-                                    *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) = *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) + *(nim_inputf_data + nxyz * it + nxy * iz + nx * ix_i + iy) * gaus(dist_i, FWHM_val);
-                                    *(gausweight_data + nxyz *it + nxy * iz + nx * ix + iy) = *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy) + gaus(dist_i, FWHM_val);
-                                }
-                                if (do_laurenz == 1) {
-                                    *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) = *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) + *(nim_inputf_data + nxyz * it + nxy * iz + nx * ix_i + iy) * laur(dist_i, FWHM_val);
-                                    *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy) = *(gausweight_data + nxyz *it + nxy*iz + nx*ix + iy) + laur(dist_i, FWHM_val);
-                                }
-                                if (do_sri == 1) {
-                                    *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) = *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) + *(nim_inputf_data + nxyz * it + nxy * iz + nx * ix_i + iy) * ASLFt(dist_i, strength);
-                                    *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy) = *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy) + ASLFt(dist_i, strength);
-                                }
-                            }
-                        }
+                    if (do_gauss == 1) {
+                        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) + *(nii1_temp_data + nxyz * it + nxy * iz + nx * iy + ix_i) * gaus(dist_i, FWHM_val);
+                        *(gausweight_data + VOXEL_ID) = *(gausweight_data + VOXEL_ID) + gaus(dist_i, FWHM_val);
+                    }
+                    if (do_laurenz == 1) {
+                        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) + *(nii1_temp_data + nxyz * it + nxy * iz + nx * iy + ix_i) * laur(dist_i, FWHM_val);
+                        *(gausweight_data + VOXEL_ID) = *(gausweight_data + VOXEL_ID) + laur(dist_i, FWHM_val);
+                    }
+                    if (do_sri == 1) {
+                        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) + *(nii1_temp_data + nxyz * it + nxy * iz + nx * iy + ix_i) * ASLFt(dist_i, strength);
+                        *(gausweight_data + VOXEL_ID) = *(gausweight_data + VOXEL_ID) + ASLFt(dist_i, strength);
                     }
                 }
             }
-        }
+        END_FOR_EACH_VOXEL_TZYX
     }
     if (direction_i == 2) {
-        for (int it = 0; it < nrep; ++it) {
-            cout << "  " << it << "..." << flush;
-            for (int iz = 0; iz < sizeSlice; ++iz) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead - 0; ++ix) {
-                        *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy) = 0;
-                        //*(smoothed_data + nxy * iz + nx * ix + iy) = 0;
+        FOR_EACH_VOXEL_TZYX
+            *(gausweight_data + VOXEL_ID) = 0;
 
-                        for (int iy_i = max(0, iy - vinc); iy_i < min(iy + vinc + 1, sizePhase); ++iy_i) {
-                            if (*(nim_inputf_data + nxyz * it + nxy * iz + nx * ix + iy_i) != 0) {
-                                dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix, (float)iy_i, (float)iz, dX, dY, dZ);
+            for (int iy_i = max(0, iy - vinc); iy_i < min(iy + vinc + 1, size_y); ++iy_i) {
+                if (*(nii1_temp_data + nxyz * it + nxy * iz + nx * iy_i + ix) != 0) {
+                    dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix, (float)iy_i, (float)iz, dX, dY, dZ);
 
-                                if (do_gauss == 1) {
-                                    *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) = *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) + *(nim_inputf_data + nxyz * it + nxy * iz + nx * ix + iy_i) * gaus(dist_i, FWHM_val);
-                                    *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy) = *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy) + gaus(dist_i, FWHM_val);
-                                }
-                                if (do_laurenz == 1) {
-                                    *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) = *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) + *(nim_inputf_data + nxyz * it + nxy * iz + nx * ix + iy_i) * laur(dist_i, FWHM_val);
-                                    *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy) = *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy) + laur(dist_i, FWHM_val);
-                                }
-                                if (do_sri == 1) {
-                                    *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) = *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) + *(nim_inputf_data + nxyz * it + nxy * iz + nx * ix + iy_i) * ASLFt(dist_i, strength);
-                                    *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy) = *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy) + ASLFt(dist_i, strength);
-                                }
-                            }
-                        }
+                    if (do_gauss == 1) {
+                        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) + *(nii1_temp_data + nxyz * it + nxy * iz + nx * iy_i + ix) * gaus(dist_i, FWHM_val);
+                        *(gausweight_data + VOXEL_ID) = *(gausweight_data + VOXEL_ID) + gaus(dist_i, FWHM_val);
+                    }
+                    if (do_laurenz == 1) {
+                        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) + *(nii1_temp_data + nxyz * it + nxy * iz + nx * iy_i + ix) * laur(dist_i, FWHM_val);
+                        *(gausweight_data + VOXEL_ID) = *(gausweight_data + VOXEL_ID) + laur(dist_i, FWHM_val);
+                    }
+                    if (do_sri == 1) {
+                        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) + *(nii1_temp_data + nxyz * it + nxy * iz + nx * iy_i + ix) * ASLFt(dist_i, strength);
+                        *(gausweight_data + VOXEL_ID) = *(gausweight_data + VOXEL_ID) + ASLFt(dist_i, strength);
                     }
                 }
             }
-        }
+        END_FOR_EACH_VOXEL_TZYX
     }
     if (direction_i == 3) {
-        for (int it = 0; it < nrep; ++it) {
-            cout << "  " << it << "..." << flush;
-            for (int iz = 0; iz < sizeSlice; ++iz) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead-0; ++ix) {
-                        *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy) = 0;
-                        // *(smoothed_data + nxy * iz + nx * ix + iy) = 0;
-                        for (int iz_i=max(0,iz-vinc); iz_i<min(iz+vinc+1,sizeSlice); ++iz_i) {
-                            if (*(nim_inputf_data + nxyz * it + nxy * iz_i + nx * ix + iy) != 0) {
+        FOR_EACH_VOXEL_TZYX
+            *(gausweight_data + VOXEL_ID) = 0;
 
-                                dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix, (float)iy, (float)iz_i, dX, dY, dZ);
+            for (int iz_i = max(0, iz - vinc); iz_i < min(iz + vinc + 1, size_z); ++iz_i) {
+                if (*(nii1_temp_data + nxyz * it + nxy * iz_i + nx * iy + ix) != 0) {
+                    dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix, (float)iy, (float)iz_i, dX, dY, dZ);
 
-                                if (*(nim_inputf_data + nxyz * it + nxy * iz_i + nx * ix + iy) == 0) {
-                                    cout << *(nim_inputf_data + nxyz * it + nxy * iz_i + nx * ix + iy) << endl;
-                                }
-
-                                if (do_gauss == 1) {
-                                    *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) = *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) + *(nim_inputf_data + nxyz * it + nxy * iz_i + nx * ix + iy) * gaus(dist_i, FWHM_val);
-                                    *(gausweight_data + nxyz *it + nxy * iz + nx * ix + iy) = *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy) + gaus(dist_i, FWHM_val);
-                                }
-                                if (do_laurenz == 1) {
-                                    *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) = *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) + *(nim_inputf_data + nxyz * it + nxy * iz_i + nx * ix + iy) * laur(dist_i, FWHM_val);
-                                    *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy) = *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy) + laur(dist_i, FWHM_val);
-                                }
-                                if (do_sri == 1) {
-                                    *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) = *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) + *(nim_inputf_data + nxyz * it + nxy * iz_i + nx * ix + iy) * ASLFt(dist_i, strength);
-                                    *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy) = *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy) + ASLFt(dist_i, strength);
-                                }
-                            }
-                        }
+                    if (do_gauss == 1) {
+                        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) + *(nii1_temp_data + nxyz * it + nxy * iz_i + nx * iy + ix) * gaus(dist_i, FWHM_val);
+                        *(gausweight_data + VOXEL_ID) = *(gausweight_data + VOXEL_ID) + gaus(dist_i, FWHM_val);
+                    }
+                    if (do_laurenz == 1) {
+                        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) + *(nii1_temp_data + nxyz * it + nxy * iz_i + nx * iy + ix) * laur(dist_i, FWHM_val);
+                        *(gausweight_data + VOXEL_ID) = *(gausweight_data + VOXEL_ID) + laur(dist_i, FWHM_val);
+                    }
+                    if (do_sri == 1) {
+                        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) + *(nii1_temp_data + nxyz * it + nxy * iz_i + nx * iy + ix) * ASLFt(dist_i, strength);
+                        *(gausweight_data + VOXEL_ID) = *(gausweight_data + VOXEL_ID) + ASLFt(dist_i, strength);
                     }
                 }
             }
-        }
+        END_FOR_EACH_VOXEL_TZYX
     }
-    cout << endl;
 
     ///////////////////////////////
     // Correcting for edge error //
     ///////////////////////////////
-    for (int it = 0; it < nrep; ++it) {
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
-                    *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) = *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) / *(gausweight_data + nxyz * it + nxy * iz + nx * ix + iy);
-                }
-            }
-        }
-    }
-    cout << "  Running also until here  " << endl;
+    FOR_EACH_VOXEL_TZYX
+        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) / *(gausweight_data + VOXEL_ID);
+    END_FOR_EACH_VOXEL_TZYX
 
-    smoothed->scl_slope =  nim_inputfi->scl_slope;
+    smoothed->scl_slope = nii1->scl_slope;
 
-    if (nim_inputfi->scl_inter != 0) {
+    if (nii1->scl_inter != 0) {
         cout << " ########################################## " << endl;
         cout << " #####   WARNING   WANRING   WANRING  ##### " << endl;
         cout << " ## the NIFTI scale factor is asymmetric ## " << endl;
@@ -344,31 +262,30 @@ int main(int argc, char * argv[]) {
     }
 
     // output file name
-    // const char *fout_4 ="leaky_layers.nii";
+    // const char*fout_4 ="leaky_layers.nii";
     // if (nifti_set_filenames(leak_layer, fout_4, 1, 1)) return 1;
     // nifti_image_write(leak_layer);
     //
-    // const char *fout_5 = "input_file.nii";
-    // if (nifti_set_filenames(nim_inputf, fout_5, 1, 1)) return 1;
-    // nifti_image_write(nim_inputf);
+    // const char*fout_5 = "input_file.nii";
+    // if (nifti_set_filenames(nii1_temp, fout_5, 1, 1)) return 1;
+    // nifti_image_write(nii1_temp);
     //
-    // const char *fout_2 = "mask.nii";
+    // const char*fout_2 = "mask.nii";
     // if (nifti_set_filenames(nim_mask, fout_2, 1, 1)) return 1;
     // nifti_image_write(nim_mask);
 
     string prefix = "smoothed_";
     string filename = (string) (finfi);
-    string outfilename = prefix+filename;
+    string outfilename = prefix + filename;
+    log_output(outfilename.c_str());
 
-    cout << "  Writing as = " << outfilename.c_str() << endl;  // finfi is: char *
-
-    const char *fout_1 = outfilename.c_str();
+    const char*fout_1 = outfilename.c_str();
     if (nifti_set_filenames(smoothed, fout_1, 1, 1)) {
         return 1;
     }
     nifti_image_write(smoothed);
 
-    // const char *fout_1 = "layer.nii";
+    // const char*fout_1 = "layer.nii";
     // if (nifti_set_filenames(layer, fout_1, 1, 1)) return 1;
     // nifti_image_write(layer);
 
@@ -384,24 +301,27 @@ float dist(float x1, float y1, float z1, float x2, float y2, float z2,
 }
 
 float gaus(float distance, float sigma) {
-    return 1. / (sigma * sqrt(2. * 3.141592)) * exp (-0.5 * distance * distance / (sigma * sigma));
+    return 1. / (sigma * sqrt(2. * 3.141592))
+           * exp(-0.5 * distance * distance / (sigma * sigma));
 }
 
-float laur (float distance, float sigma) {
+float laur(float distance, float sigma) {
     // Note: For consistency with Gaus's sigma, I am using a scaled version of
     // the FWHM.
     // sigma = sigma / sqrt(2 * log (2));
     float result = 0;
     if ((int)distance%2 == 0) {
         // sigma = 2 * sigma;
-        result = 1 * 1. / (3.141592 * sigma) * 1 /(1 + distance * distance / (sigma * sigma));
+        result = 1 * 1. / (3.141592 * sigma) * 1
+                 / (1 + distance * distance / (sigma * sigma));
     }
     if ((int)distance%2 == 1) {
         // sigma = 2 * sigma;
-        result = 1.6 * 1. / (3.141592 * sigma) * 1 / (1 + distance * distance / (sigma * sigma));
+        result = 1.6 * 1. / (3.141592 * sigma) * 1
+                 / (1 + distance * distance / (sigma * sigma));
     }
-return result;
-// return 1 / 3.141592 * 1/ ((distance) * (distance) + (0.5 * sigma) * (0.5 * sigma));
+    return result;
+// return 1 / 3.141592 * 1 / ((distance) * (distance) + (0.5 * sigma) * (0.5 * sigma));
 }
 
 float ASLFt(float distance, float strength) {
