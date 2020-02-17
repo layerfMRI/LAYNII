@@ -107,54 +107,14 @@ int main(int argc, char * argv[]) {
     const int nxy = nii1->nx * nii1->ny;
     const int nxyz = nii1->nx * nii1->ny * nii1->nz;
 
-    //////////////////////////////////////////////////////////////
-    // Fixing potential problems with different input datatypes //
-    // here, I am loading them in their native datatype         //
-    // and translate them to the datatime I like best           //
-    //////////////////////////////////////////////////////////////
+    // ========================================================================
+    // Fix datatype issues
 
-    nifti_image* nii1_temp = nifti_copy_nim_info(nii1);
-    nii1_temp->datatype = NIFTI_TYPE_FLOAT32;
-    nii1_temp->nbyper = sizeof(float);
-    nii1_temp->data = calloc(nii1_temp->nvox, nii1_temp->nbyper);
-    float* nii1_temp_data = static_cast<float*>(nii1_temp->data);
+    nifti_image* nii1_temp = recreate_nii_with_float_datatype(nii1);
+    float* nii1_data = static_cast<float*>(nii1_temp->data);
 
-    if (nii1->datatype == NIFTI_TYPE_INT16) {
-        int16_t* nim_file_1i_data = static_cast<int16_t*>(nii1->data);
-        FOR_EACH_VOXEL_TZYX
-            *(nii1_temp_data + VOXEL_ID) =
-                static_cast<float>(*(nim_file_1i_data + VOXEL_ID));
-        END_FOR_EACH_VOXEL_TZYX
-    }
-    if (nii1->datatype == NIFTI_TYPE_FLOAT32) {
-        float* nim_file_1i_data = static_cast<float*>(nii1->data);
-        FOR_EACH_VOXEL_TZYX
-            *(nii1_temp_data + VOXEL_ID) =
-                static_cast<float>(*(nim_file_1i_data + VOXEL_ID));
-        END_FOR_EACH_VOXEL_TZYX
-    }
-
-
-    nifti_image* nii2_temp = nifti_copy_nim_info(nii1);
-    nii2_temp->datatype = NIFTI_TYPE_FLOAT32;
-    nii2_temp->nbyper = sizeof(float);
-    nii2_temp->data = calloc(nii2_temp->nvox, nii2_temp->nbyper);
+    nifti_image* nii2_temp = recreate_nii_with_float_datatype(nii2);
     float* nii2_data = static_cast<float*>(nii2_temp->data);
-
-    if (nii2->datatype == NIFTI_TYPE_INT16) {
-        int16_t* nii2_temp_data = static_cast<int16_t*>(nii2->data);
-        FOR_EACH_VOXEL_TZYX
-            *(nii2_data + VOXEL_ID) =
-                static_cast<float>(*(nii2_temp_data + VOXEL_ID));
-        END_FOR_EACH_VOXEL_TZYX
-    }
-    if (nii2->datatype == NIFTI_TYPE_FLOAT32) {
-        float* nii2_temp_data = static_cast<float*>(nii2->data);
-        FOR_EACH_VOXEL_TZYX
-            *(nii2_data + VOXEL_ID) =
-                static_cast<float>(*(nii2_temp_data + VOXEL_ID));
-        END_FOR_EACH_VOXEL_TZYX
-    }
 
     // ========================================================================
 
@@ -170,7 +130,7 @@ int main(int argc, char * argv[]) {
         for (int iy = 0; iy < size_y; ++iy) {
             for (int ix = 0; ix < size_x; ++ix) {
                 for (int it = 0; it < size_t; ++it) {
-                    *(boco_vaso_data + VOXEL_ID) = *(nii1_temp_data + VOXEL_ID)
+                    *(boco_vaso_data + VOXEL_ID) = *(nii1_data + VOXEL_ID)
                                                    / (*(nii2_data + VOXEL_ID));
                 }
             }
@@ -210,7 +170,7 @@ int main(int argc, char * argv[]) {
                     for (int ix = 0; ix < size_x; ++ix) {
                         for (int it = 3; it < size_t-3; ++it) {
                             *(boco_vaso_data + VOXEL_ID) =
-                                *(nii1_temp_data + VOXEL_ID)
+                                *(nii1_data + VOXEL_ID)
                                 / (*(nii2_data + nxyz * (it + shift)
                                      + nxy * iz + nx * iy + nx));
                         }
@@ -229,7 +189,7 @@ int main(int argc, char * argv[]) {
                 for (int ix = 0; ix < size_x; ++ix) {
                     for (int it = 0; it < size_t; ++it) {
                         *(boco_vaso_data + VOXEL_ID) =
-                            *(nii1_temp_data + VOXEL_ID)
+                            *(nii1_data + VOXEL_ID)
                             / (*(nii2_data + VOXEL_ID));
                     }
                 }
@@ -300,7 +260,7 @@ int main(int argc, char * argv[]) {
                     }
                     for (int it = 0; it < trialdur * numberofTrials; ++it) {
                         AV_Nulled[it%trialdur] = AV_Nulled[it%trialdur]
-                                                 + (*(nii1_temp_data + VOXEL_ID)) / numberofTrials;
+                                                 + (*(nii1_data + VOXEL_ID)) / numberofTrials;
                         AV_BOLD[it%trialdur] = AV_BOLD[it%trialdur]
                                                + (*(nii2_data + VOXEL_ID)) / numberofTrials;
                     }
