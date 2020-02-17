@@ -81,7 +81,7 @@ int main(int argc, char*  argv[]) {
         return 1;
     }
     // read input dataset, including data
-    nifti_image * nii1 = nifti_image_read(finfi, 1);
+    nifti_image* nii1 = nifti_image_read(finfi, 1);
     if (!nii1) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", finfi);
         return 2;
@@ -91,7 +91,7 @@ int main(int argc, char*  argv[]) {
         return 1;
     }
     // read input dataset, including data
-    nifti_image * nii2 = nifti_image_read(fmaski, 1);
+    nifti_image* nii2 = nifti_image_read(fmaski, 1);
     if (!nii2) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", fmaski);
         return 2;
@@ -102,10 +102,10 @@ int main(int argc, char*  argv[]) {
     log_nifti_descriptives(nii2);
 
     // Get dimensions of input
-    const int sizeSlice = nii2->nz;
-    const int sizePhase = nii2->nx;
-    const int sizeRead = nii2->ny;
-    const int nrep = nii2->nt;
+    const int size_z = nii2->nz;
+    const int size_x = nii2->nx;
+    const int size_y = nii2->ny;
+    const int size_t = nii2->nt;
     const int nx = nii2->nx;
     const int nxy = nii2->nx * nii2->ny;
     const int nxyz = nii2->nx * nii2->ny * nii2->nz;
@@ -130,8 +130,8 @@ int main(int argc, char*  argv[]) {
     // MAKE allocating necessary files //
     /////////////////////////////////////
 
-    nifti_image * smoothed = nifti_copy_nim_info(nii1_temp);
-    nifti_image * gausweight = nifti_copy_nim_info(nii1_temp);
+    nifti_image* smoothed = nifti_copy_nim_info(nii1_temp);
+    nifti_image* gausweight = nifti_copy_nim_info(nii1_temp);
 
     smoothed->datatype = NIFTI_TYPE_FLOAT32;
     gausweight->datatype = NIFTI_TYPE_FLOAT32;
@@ -162,9 +162,9 @@ int main(int argc, char*  argv[]) {
     //////////////////////////////
     int layernumber = 0;
 
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead; ++ix) {
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
                 if (*(nii_mask_data + VOXEL_ID_3D) > layernumber) layernumber = *(nii_mask_data + VOXEL_ID_3D);
             }
         }
@@ -187,24 +187,24 @@ int main(int argc, char*  argv[]) {
         for (int layernumber_i = 1; layernumber_i <= layernumber; ++layernumber_i) {
             cout << "\r    " << layernumber_i << " of " << layernumber << flush;
 
-            for (int iz = 0; iz < sizeSlice; ++iz) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead - 0; ++ix) {
+            for (int iz = 0; iz < size_z; ++iz) {
+                for (int iy = 0; iy < size_y; ++iy) {
+                    for (int ix = 0; ix < size_x - 0; ++ix) {
                         *(gausweight_data + VOXEL_ID_3D) = 0;
                         // *(smoothed_data + VOXEL_ID_3D) = 0;
 
-                        if (*(nii_mask_data + nxy*iz + nx * ix + iy) == layernumber_i) {
+                        if (*(nii_mask_data + VOXEL_ID_3D) == layernumber_i) {
 
-                            for (int iz_i = max(0, iz-vinc); iz_i < min(iz + vinc + 1, sizeSlice-1); ++iz_i) {
-                                for (int iy_i = max(0, iy-vinc); iy_i < min(iy + vinc + 1, sizePhase - 1); ++iy_i) {
-                                    for (int ix_i = max(0, ix-vinc); ix_i < min(ix + vinc + 1, sizeRead - 1); ++ix_i) {
-                                        if (*(nii_mask_data + nxy * iz_i + nx * ix_i + iy_i) == layernumber_i) {
+                            for (int iz_i = max(0, iz-vinc); iz_i < min(iz + vinc + 1, size_z-1); ++iz_i) {
+                                for (int iy_i = max(0, iy-vinc); iy_i < min(iy + vinc + 1, size_y - 1); ++iy_i) {
+                                    for (int ix_i = max(0, ix-vinc); ix_i < min(ix + vinc + 1, size_x - 1); ++ix_i) {
+                                        if (*(nii_mask_data + nxy * iz_i + nx * iy_i + ix_i) == layernumber_i) {
                                             dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                             // cout << "  Debug 4 " << gaus(dist_i ,FWHM_val) <<   endl;
                                             // cout << "  Debug 5 " << dist_i  <<   endl;
                                             // if (*(nim_input_data + VOXEL_ID_3D) == 3) cout << "debug  4b " << endl;
                                             // dummy = *(layer_data + nxy*iz_i + nx*ix_i + iy_i);
-                                            *(smoothed_data + VOXEL_ID_3D) = *(smoothed_data + VOXEL_ID_3D) + *(nii1_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
+                                            *(smoothed_data + VOXEL_ID_3D) = *(smoothed_data + VOXEL_ID_3D) + *(nii1_data + nxy * iz_i + nx * iy_i + ix_i) * gaus(dist_i, FWHM_val);
                                             *(gausweight_data + VOXEL_ID_3D) = *(gausweight_data + VOXEL_ID_3D) + gaus(dist_i, FWHM_val);
                                         }
                                     }
@@ -225,7 +225,7 @@ int main(int argc, char*  argv[]) {
 
     if (sulctouch == 1) {
         // Allocating local connected vincinity file
-        nifti_image * hairy_brain = nifti_copy_nim_info(nii2_temp);
+        nifti_image* hairy_brain = nifti_copy_nim_info(nii2_temp);
         hairy_brain->datatype = NIFTI_TYPE_INT32;
         hairy_brain->nbyper = sizeof(int);
         hairy_brain->data = calloc(hairy_brain->nvox, hairy_brain->nbyper);
@@ -234,9 +234,9 @@ int main(int argc, char*  argv[]) {
         int vinc_steps = 1;
 
         // Making sure I am cooking in a clean kitchen
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead - 0; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x - 0; ++ix) {
                     *(smoothed_data + VOXEL_ID_3D) = 0;
                 }
             }
@@ -253,9 +253,9 @@ int main(int argc, char*  argv[]) {
         int running_index = 0;
         int pref_ratio = 0;
 
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x; ++ix) {
                     if (*(nii_mask_data + VOXEL_ID_3D) > 1) {
                         nvoxels_to_go_across++;
                     }
@@ -264,9 +264,9 @@ int main(int argc, char*  argv[]) {
         }
         // cout << "  here 1" << endl;
 
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead - 0; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x - 0; ++ix) {
                     if (*(nii_mask_data + VOXEL_ID_3D) > 0) {
                         running_index++;
                         if ((running_index * 100) / nvoxels_to_go_across != pref_ratio) {
@@ -283,11 +283,11 @@ int main(int argc, char*  argv[]) {
                         // PREPARATION OF DUMMY VINSINITY FILE
                         // cout << "  here 2" << endl;
 
-                        for (int iz_i = max(0, iz - vinc - vinc_steps); iz_i <= min(iz + vinc + vinc_steps, sizeSlice - 1); ++iz_i) {
-                            for (int iy_i = max(0, iy - vinc - vinc_steps); iy_i <= min(iy + vinc + vinc_steps, sizePhase - 1); ++iy_i) {
-                                for (int ix_i = max(0, ix - vinc - vinc_steps); ix_i <= min(ix + vinc + vinc_steps, sizeRead - 1); ++ix_i) {
-                                    // cout << iz_i << " " << iy_i << "  " << ix_i << "  " <<  sizeSlice-1 << " " << sizePhase-1 << "  " << sizePhase-1 << "  " << endl;
-                                    *(hairy_brain_data + nxy*iz_i + nx*ix_i + iy_i) = 0;
+                        for (int iz_i = max(0, iz - vinc - vinc_steps); iz_i <= min(iz + vinc + vinc_steps, size_z - 1); ++iz_i) {
+                            for (int iy_i = max(0, iy - vinc - vinc_steps); iy_i <= min(iy + vinc + vinc_steps, size_y - 1); ++iy_i) {
+                                for (int ix_i = max(0, ix - vinc - vinc_steps); ix_i <= min(ix + vinc + vinc_steps, size_x - 1); ++ix_i) {
+                                    // cout << iz_i << " " << iy_i << "  " << ix_i << "  " <<  size_z-1 << " " << size_x-1 << "  " << size_x-1 << "  " << endl;
+                                    *(hairy_brain_data + nxy * iz_i + nx * iy_i + ix_i) = 0;
                                 }
                             }
                         }
@@ -296,15 +296,15 @@ int main(int argc, char*  argv[]) {
 
                         // Growing into neigbouring voxels.
                         for (int K_= 0; K_< vinc; K_++) {
-                            for (int iz_ii = max(0, iz - vinc); iz_ii <= min(iz + vinc, sizeSlice - 1); ++iz_ii) {
-                                for (int iy_ii = max(0,iy - vinc); iy_ii <= min(iy + vinc, sizePhase - 1); ++iy_ii) {
-                                    for (int ix_ii = max(0, ix-vinc); ix_ii <= min(ix + vinc, sizeRead - 1); ++ix_ii) {
-                                        if (*(hairy_brain_data + nxy * iz_ii + nx * ix_ii + iy_ii) == 1) {
-                                            for (int iz_i = max(0, iz_ii - vinc_steps); iz_i <= min(iz_ii + vinc_steps, sizeSlice - 1); ++iz_i) {
-                                                for (int iy_i = max(0, iy_ii - vinc_steps); iy_i<= min(iy_ii + vinc_steps, sizePhase - 1); ++iy_i) {
-                                                    for (int ix_i = max(0, ix_ii - vinc_steps); ix_i <= min(ix_ii + vinc_steps, sizeRead - 1); ++ix_i) {
-                                                        if (dist((float)ix_ii, (float)iy_ii, (float)iz_ii, (float)ix_i, (float)iy_i, (float)iz_i, 1, 1, 1) <= 1.74 && *(nii_mask_data + nxy * iz_i + nx * ix_i + iy_i) == layernumber_i) {
-                                                            *(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) = 1;
+                            for (int iz_ii = max(0, iz - vinc); iz_ii <= min(iz + vinc, size_z - 1); ++iz_ii) {
+                                for (int iy_ii = max(0,iy - vinc); iy_ii <= min(iy + vinc, size_x - 1); ++iy_ii) {
+                                    for (int ix_ii = max(0, ix-vinc); ix_ii <= min(ix + vinc, size_y - 1); ++ix_ii) {
+                                        if (*(hairy_brain_data + nxy * iz_ii + nx * iy_ii + ix_ii) == 1) {
+                                            for (int iz_i = max(0, iz_ii - vinc_steps); iz_i <= min(iz_ii + vinc_steps, size_z - 1); ++iz_i) {
+                                                for (int iy_i = max(0, iy_ii - vinc_steps); iy_i<= min(iy_ii + vinc_steps, size_y - 1); ++iy_i) {
+                                                    for (int ix_i = max(0, ix_ii - vinc_steps); ix_i <= min(ix_ii + vinc_steps, size_x - 1); ++ix_i) {
+                                                        if (dist((float)ix_ii, (float)iy_ii, (float)iz_ii, (float)ix_i, (float)iy_i, (float)iz_i, 1, 1, 1) <= 1.74 && *(nii_mask_data + nxy * iz_i + nx * iy_i + ix_i) == layernumber_i) {
+                                                            *(hairy_brain_data + nxy * iz_i + nx * iy_i + ix_i) = 1;
                                                         }
                                                     }
                                                 }
@@ -316,12 +316,12 @@ int main(int argc, char*  argv[]) {
                         }
 
                         // Apply smoothing within each layer and within local patch
-                        for (int iz_i = max(0, iz-vinc); iz_i <= min(iz + vinc, sizeSlice - 1); ++iz_i) {
-                            for (int iy_i = max(0, iy - vinc); iy_i <= min(iy + vinc, sizePhase - 1); ++iy_i) {
-                                for (int ix_i = max(0, ix-vinc); ix_i <= min(ix + vinc, sizeRead - 1); ++ix_i) {
-                                    if (*(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) == 1) {
+                        for (int iz_i = max(0, iz-vinc); iz_i <= min(iz + vinc, size_z - 1); ++iz_i) {
+                            for (int iy_i = max(0, iy - vinc); iy_i <= min(iy + vinc, size_y - 1); ++iy_i) {
+                                for (int ix_i = max(0, ix-vinc); ix_i <= min(ix + vinc, size_x - 1); ++ix_i) {
+                                    if (*(hairy_brain_data + nxy * iz_i + nx * iy_i + ix_i) == 1) {
                                         dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                        *(smoothed_data + VOXEL_ID_3D) = *(smoothed_data + VOXEL_ID_3D) + *(nii1_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
+                                        *(smoothed_data + VOXEL_ID_3D) = *(smoothed_data + VOXEL_ID_3D) + *(nii1_data + nxy * iz_i + nx * iy_i + ix_i) * gaus(dist_i, FWHM_val);
                                         *(gausweight_data + VOXEL_ID_3D) = *(gausweight_data + VOXEL_ID_3D) + gaus(dist_i, FWHM_val);
                                     }
                                 }
@@ -333,9 +333,9 @@ int main(int argc, char*  argv[]) {
                 }
             }
         }
-        // for(int iz=0; iz<sizeSlice; ++iz){
-        //     for(int iy=0; iy<sizePhase; ++iy){
-        //         for(int ix=0; ix<sizeRead; ++ix){
+        // for(int iz=0; iz<size_z; ++iz){
+        //     for(int iy=0; iy<size_x; ++iy){
+        //         for(int ix=0; ix<size_y; ++ix){
         //             if(*(nii1_data + VOXEL_ID_3D) > 0) {
         //                 *(nii1_data + VOXEL_ID_3D) = *(smoothed_data + VOXEL_ID_3D);
         //             }
@@ -353,10 +353,10 @@ int main(int argc, char*  argv[]) {
     ////////////////////////////////
 
     if (do_masking == 1) {
-        for (int it = 0; it < nrep; ++it) {
-            for (int iz  = 0; iz  < sizeSlice; ++iz) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
+        for (int it = 0; it < size_t; ++it) {
+            for (int iz  = 0; iz  < size_z; ++iz) {
+                for (int iy = 0; iy < size_y; ++iy) {
+                    for (int ix = 0; ix < size_x; ++ix) {
                         if (*(nii_mask_data + VOXEL_ID) == 0) {
                             *(smoothed_data + VOXEL_ID) = 0;
                         }
