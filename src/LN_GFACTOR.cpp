@@ -36,7 +36,7 @@ int show_help(void) {
 }
 
 int main(int argc, char * argv[]) {
-    nifti_image * nim_input = NULL;
+    nifti_image* nim_input = NULL;
     char * fin = NULL, * fout = NULL;
     int grappa_int, direction_int, ac, disp_float_eg = 0;
     float cutoff, variance_val;
@@ -141,28 +141,28 @@ int main(int argc, char * argv[]) {
     }
 
     // Get access to data of nim_input
-    float * nim_input_data = (float * ) nim_input->data;
+    float* nim_input_data = (float*) nim_input->data;
 
     // Allocating additional images
-    nifti_image * gfactormap = nifti_copy_nim_info(nim_input);
+    nifti_image* gfactormap = nifti_copy_nim_info(nim_input);
     gfactormap->datatype = NIFTI_TYPE_FLOAT32;
     gfactormap->nbyper = sizeof(float);
     gfactormap->data = calloc(gfactormap->nvox, gfactormap->nbyper);
-    float * gfactormap_data = (float * ) gfactormap->data;
+    float* gfactormap_data = (float*) gfactormap->data;
 
     // allocating additional images
-    nifti_image * binary = nifti_copy_nim_info(nim_input);
+    nifti_image* binary = nifti_copy_nim_info(nim_input);
     binary->datatype = NIFTI_TYPE_FLOAT32;
     binary->nbyper = sizeof(float);
     binary->data = calloc(binary->nvox, binary->nbyper);
-    float * binary_data = (float * ) binary->data;
+    float* binary_data = (float*) binary->data;
 
     // noise_image
-    nifti_image * noise_image = nifti_copy_nim_info(nim_input);
+    nifti_image* noise_image = nifti_copy_nim_info(nim_input);
     noise_image->datatype = NIFTI_TYPE_FLOAT32;
     noise_image->nbyper = sizeof(float);
     noise_image->data = calloc(noise_image->nvox, noise_image->nbyper);
-    float * noise_image_data = (float * ) noise_image->data;
+    float* noise_image_data = (float*) noise_image->data;
 
     // for (int timestep = 0; timestep < nrep; ++timestep) {
     //     for (int islice = 0; islice < sizeSlice; ++islice) {
@@ -218,7 +218,7 @@ int main(int argc, char * argv[]) {
                 for (int islice = 0; islice < sizeSlice; ++islice) {
                     for (int iy = 0; iy < sizePhase/grappa_int; ++iy) {
                         for (int ix = 0; ix < sizeRead; ++ix) {
-                            *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) = *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) + *(binary_data + nxyz * timestep + nxy * islice + nx * ix + iy+ grappa_seg * sizePhase/grappa_int)/grappa_int;
+                            *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) = *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) + *(binary_data + nxyz * timestep + nxy * islice + nx * ix + iy + grappa_seg * sizePhase / grappa_int) / grappa_int;
                         }
                     }
                 }
@@ -244,7 +244,7 @@ int main(int argc, char * argv[]) {
                 for (int islice = 0; islice < sizeSlice; ++islice) {
                     for (int iy = 0; iy < sizePhase; ++iy) {
                         for (int ix = 0; ix < sizeRead/grappa_int; ++ix) {
-                            *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) = *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) + *(binary_data + nxyz * timestep + nxy * islice + nx * (ix+ grappa_seg * sizeRead/grappa_int) + iy)/grappa_int;
+                            *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) = *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) + *(binary_data + nxyz * timestep + nxy * islice + nx * (ix+ grappa_seg * sizeRead / grappa_int) + iy) / grappa_int;
                         }
                     }
                 }
@@ -256,7 +256,7 @@ int main(int argc, char * argv[]) {
                 for (int islice = 0; islice < sizeSlice; ++islice) {
                     for (int iy = 0; iy < sizePhase; ++iy) {
                         for (int ix = 0; ix < sizeRead/grappa_int; ++ix) {
-                            *(gfactormap_data + nxyz * timestep + nxy * islice + nx * (ix+ grappa_seg * sizeRead/grappa_int) + iy) = *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy);
+                            *(gfactormap_data + nxyz * timestep + nxy * islice + nx * (ix+ grappa_seg * sizeRead / grappa_int) + iy) = *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy);
                         }
                     }
                 }
@@ -270,7 +270,7 @@ int main(int argc, char * argv[]) {
                 for (int islice = 0; islice < sizeSlice/grappa_int; ++islice) {
                     for (int iy = 0; iy < sizePhase; ++iy) {
                         for (int ix = 0; ix < sizeRead; ++ix) {
-                            *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) = *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) + *(binary_data + nxyz * timestep + nxy * (islice+ grappa_seg * sizeSlice/grappa_int) + nx * ix + iy)/grappa_int;
+                            *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) = *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) + *(binary_data + nxyz * timestep + nxy * (islice+ grappa_seg * sizeSlice / grappa_int) + nx * ix + iy) / grappa_int;
                         }
                     }
                 }
@@ -282,7 +282,7 @@ int main(int argc, char * argv[]) {
                 for (int islice = 0; islice < sizeSlice/grappa_int; ++islice) {
                     for (int iy = 0; iy < sizePhase; ++iy) {
                         for (int ix = 0; ix < sizeRead; ++ix) {
-                            *(gfactormap_data + nxyz * timestep +nxy * (islice+ grappa_seg * sizeSlice/grappa_int) + nx * ix + iy) = *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy);
+                            *(gfactormap_data + nxyz * timestep +nxy * (islice+ grappa_seg * sizeSlice / grappa_int) + nx * ix + iy) = *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy);
                         }
                     }
                 }
