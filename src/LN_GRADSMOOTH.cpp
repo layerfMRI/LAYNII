@@ -49,7 +49,7 @@ int show_help(void) {
 }
 
 int main(int argc, char * argv[]) {
-    char * fmaski = NULL,  * fout = NULL,  * finfi = NULL,  * froii = NULL;
+    char * fmaski = NULL, * fout = NULL, * finfi = NULL, * froii = NULL;
     int ac, twodim = 0, do_masking = 0, within = 0, acros = 0;
     float FWHM_val = 0, selectivity = 0.1;
     if (argc < 3) {  // Typing '-help' is sooo much work
@@ -112,7 +112,7 @@ int main(int argc, char * argv[]) {
         return 1;
     }
     // Read input dataset, including data
-    nifti_image * nim_inputfi = nifti_image_read(finfi, 1);
+    nifti_image* nim_inputfi = nifti_image_read(finfi, 1);
     if (!nim_inputfi) {
         fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", finfi);
         return 2;
@@ -122,7 +122,7 @@ int main(int argc, char * argv[]) {
         return 1;
     }
     // Read input dataset, including data
-    nifti_image * nim_maski = nifti_image_read(fmaski, 1);
+    nifti_image* nim_maski = nifti_image_read(fmaski, 1);
     if (!nim_maski) {
         fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", fmaski);
         return 2;
@@ -146,135 +146,59 @@ int main(int argc, char * argv[]) {
     int sizeRead = nim_maski->ny;
     int nrep = nim_inputfi->nt;
     int nx = nim_maski->nx;
-    int nxy = nim_maski->nx  * nim_maski->ny;
-    int nxyz = nim_maski->nx  * nim_maski->ny  * nim_maski->nz;
+    int nxy = nim_maski->nx * nim_maski->ny;
+    int nxyz = nim_maski->nx * nim_maski->ny * nim_maski->nz;
     float dX = nim_maski->pixdim[1];
     float dY = nim_maski->pixdim[2];
     float dZ = nim_maski->pixdim[3];
-
 
     // If you are running the smoothing in 2D, it will still go thought the
     // entire pipeline the only difference is that the weights in a certain
     // direction are suppressed doing it in 2D, will not speed up the program
     if  (twodim == 1) {
-        dZ = 1000  * dZ;
+        dZ = 1000 * dZ;
     }
 
-    nifti_image * nim_inputf = nifti_copy_nim_info(nim_inputfi);
-    nim_inputf->datatype = NIFTI_TYPE_FLOAT32;
-    nim_inputf->nbyper = sizeof(float);
-    nim_inputf->data = calloc(nim_inputf->nvox, nim_inputf->nbyper);
-    float * nim_inputf_data = (float * ) nim_inputf->data;
+    // ========================================================================
+    // Fix datatype issues
+    nifti_image* nim_inputf = recreate_nii_with_float_datatype(nim_inputfi);
+    float* nim_inputf_data = (float*) nim_inputf->data;
 
-    nifti_image * nim_mask = nifti_copy_nim_info(nim_maski);
-    nim_mask->datatype = NIFTI_TYPE_FLOAT32;
-    nim_mask->nbyper = sizeof(float);
-    nim_mask->data = calloc(nim_mask->nvox, nim_mask->nbyper);
-    float * nim_mask_data = (float * ) nim_mask->data;
+    nifti_image* nim_mask = recreate_nii_with_float_datatype(nim_maski);
+    float* nim_mask_data = (float*) nim_mask->data;
 
-    nifti_image * nim_roi = nifti_copy_nim_info(nim_maski);
-    nim_roi->datatype = NIFTI_TYPE_FLOAT32;
-    nim_roi->nbyper = sizeof(float);
-    nim_roi->data = calloc(nim_roi->nvox, nim_roi->nbyper);
-    float * nim_roi_data = (float * ) nim_roi->data;
+    nifti_image* nim_roi = recreate_nii_with_float_datatype(nim_maski);
+    float* nim_roi_data = (float*) nim_roi->data;
 
-    //////////////////////////////////////////////////////////////
-    // Fixing potential problems with different input datatypes //
-    // here, I am loading them in their native datatype //////////
-    // and translate them to the datatime I like best ////////////
-    //////////////////////////////////////////////////////////////
-    if (nim_inputfi->datatype == NIFTI_TYPE_FLOAT32 ||  nim_inputfi->datatype == NIFTI_TYPE_INT32) {
-        float * nim_inputfi_data = (float * ) nim_inputfi->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_inputf_data + nxyz  * it + nxy * islice + nx * ix + iy) = (float) (*(nim_inputfi_data + nxyz  * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_inputfi->datatype == NIFTI_TYPE_INT16 || nim_inputfi->datatype == DT_UINT16) {
-        short  * nim_inputfi_data = (short  * ) nim_inputfi->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_inputf_data + nxyz  * it + nxy * islice + nx * ix + iy) = (float) (*(nim_inputfi_data + nxyz  * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_inputfi->datatype == DT_FLOAT64 || nim_inputfi->datatype == NIFTI_TYPE_FLOAT64) {
-        double  * nim_inputfi_data = (double  * ) nim_inputfi->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_inputf_data + nxyz  * it + nxy * islice + nx * ix + iy) = (float) (*(nim_inputfi_data + nxyz  * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_maski->datatype == NIFTI_TYPE_FLOAT32 || nim_maski->datatype == NIFTI_TYPE_INT32) {
-        float * nim_maski_data = (float * ) nim_maski->data;
-        for (int islice = 0; islice < sizeSlice; ++islice) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead; ++ix) {
-                    *(nim_mask_data + nxy * islice + nx * ix + iy) = (float) (*(nim_maski_data + nxy * islice + nx * ix + iy));
-                }
-            }
-        }
-    }
-    if (nim_maski->datatype == NIFTI_TYPE_INT16 || nim_maski->datatype == DT_UINT16) {
-        short  * nim_maski_data = (short  * ) nim_maski->data;
-        for (int islice = 0; islice < sizeSlice; ++islice) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead; ++ix) {
-                    *(nim_mask_data + nxy * islice + nx * ix + iy) = (float) (*(nim_maski_data + nxy * islice + nx * ix + iy));
-                }
-            }
-        }
-    }
-    if (nim_maski->datatype == DT_FLOAT64 || nim_maski->datatype == NIFTI_TYPE_FLOAT64) {
-        double  * nim_maski_data = (double  * ) nim_maski->data;
-        for (int islice = 0; islice < sizeSlice; ++islice) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead; ++ix) {
-                    *(nim_mask_data + nxy * islice + nx * ix + iy) = (float) (*(nim_maski_data + nxy * islice + nx * ix + iy));
-                }
-            }
-        }
-    }
+    // ========================================================================
+
     if (do_masking == 1) {
         // Read input dataset, including data
-        nifti_image * nim_roii = nifti_image_read(froii, 1);
+        nifti_image* nim_roii = nifti_image_read(froii, 1);
         if (!nim_roii) {
             fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", froii);
             return 2;
         }
+
         if (nim_roii->datatype == NIFTI_TYPE_FLOAT32 ||  nim_roii->datatype == NIFTI_TYPE_INT32) {
-            float * nim_roii_data = (float * ) nim_roii->data;
+            float* nim_roii_data = (float*) nim_roii->data;
             for (int it = 0; it < nrep; ++it) {
                 for (int islice = 0; islice < sizeSlice; ++islice) {
                     for (int iy = 0; iy < sizePhase; ++iy) {
                         for (int ix = 0; ix < sizeRead; ++ix) {
-                            *(nim_roi_data + nxyz  * it + nxy * islice + nx * ix + iy) = (float) (*(nim_roii_data + nxyz  * it + nxy * islice + nx * ix + iy));
+                            *(nim_roi_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_roii_data + nxyz * it + nxy * islice + nx * ix + iy));
                         }
                     }
                 }
             }
         }
         if (nim_roii->datatype == NIFTI_TYPE_INT16 || nim_roii->datatype == DT_UINT16) {
-            short  * nim_roii_data = (short  * ) nim_roii->data;
+            short * nim_roii_data = (short *) nim_roii->data;
             for (int it = 0; it < nrep; ++it) {
                 for (int islice = 0; islice < sizeSlice; ++islice) {
                     for (int iy = 0; iy < sizePhase; ++iy) {
                         for (int ix = 0; ix < sizeRead; ++ix) {
-                            *(nim_roi_data + nxyz  * it + nxy * islice + nx * ix + iy) = (float) (*(nim_roii_data + nxyz  * it + nxy * islice + nx * ix + iy));
+                            *(nim_roi_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_roii_data + nxyz * it + nxy * islice + nx * ix + iy));
                         }
                     }
                 }
@@ -285,8 +209,8 @@ int main(int argc, char * argv[]) {
     /////////////////////////////////////
     // Make allocating necessary files //
     /////////////////////////////////////
-    nifti_image * smoothed = nifti_copy_nim_info(nim_inputf);
-    nifti_image * gausweight = nifti_copy_nim_info(nim_inputf);
+    nifti_image* smoothed = nifti_copy_nim_info(nim_inputf);
+    nifti_image* gausweight = nifti_copy_nim_info(nim_inputf);
     smoothed->datatype = NIFTI_TYPE_FLOAT32;
     gausweight->datatype = NIFTI_TYPE_FLOAT32;
     smoothed->nbyper = sizeof(float);
@@ -298,20 +222,20 @@ int main(int argc, char * argv[]) {
     // So with the next lines I am saving RAM
     gausweight->nt = 1;
     gausweight->nvox = gausweight->nvox / nrep;
-    float * smoothed_data = (float * ) smoothed->data;
-    float * gausweight_data = (float * ) gausweight->data;
+    float* smoothed_data = (float*) smoothed->data;
+    float* gausweight_data = (float*) gausweight->data;
 
-    // nifti_image * debug = nifti_copy_nim_info(nim_inputf);
+    // nifti_image* debug = nifti_copy_nim_info(nim_inputf);
     // debug->datatype = NIFTI_TYPE_FLOAT32;
     // debug->nbyper = sizeof(float);
     // debug->data = calloc(debug->nvox, debug->nbyper);
-    // float * debug_data = (float * ) debug->data;
+    // float* debug_data = (float*) debug->data;
 
     // if (do_masking == 1) {
     //     for (int islice = 0; islice < sizeSlice; ++islice) {
     //         for (int iy = 0; iy < sizePhase; ++iy) {
     //             for (int ix = 0; ix < sizeRead; ++ix) {
-    //                 *(debug_data + nxy * islice + nx * ix + iy) = 0;
+    //             *(debug_data + nxy * islice + nx * ix + iy) = 0;
     //             }
     //         }
     //     }
@@ -324,7 +248,7 @@ int main(int argc, char * argv[]) {
     cout << "  Time dimension of smoothed. Output file: " << smoothed->nt << endl;
 
     //  float kernel_size = 10;  // corresponds to one voxel sice.
-    int vinc = max(1., 2.  * FWHM_val/dX);  // Ignore if voxel is too far
+    int vinc = max(1., 2. * FWHM_val/dX);  // Ignore if voxel is too far
     float dist_i = 0.;
     cout << "  vinc " << vinc << endl;
     cout << "  FWHM_val " << FWHM_val << endl;
@@ -346,11 +270,11 @@ int main(int argc, char * argv[]) {
 
 
     // Estimate and output of program process and how much longer it will take.
-    int nvoxels_to_go_across = sizeSlice  * sizePhase  * sizeRead;
+    int nvoxels_to_go_across = sizeSlice * sizePhase * sizeRead;
     int running_index = 0;
     int pref_ratio = 0;
 
-    if (sizeSlice  * sizePhase  * sizeRead > 32767) {
+    if (sizeSlice * sizePhase * sizeRead > 32767) {
         cout << "  The number of voxels is bigger than the range of int the time estimation will be wrong." << endl;
     }
 
@@ -397,7 +321,7 @@ int main(int argc, char * argv[]) {
                     for (int iz_i = max(0, iz - vinc); iz_i <= min(iz + vinc, sizeSlice - 1); ++iz_i) {
                         for (int iy_i = max(0, iy - vinc); iy_i <= min(iy + vinc, sizePhase - 1); ++iy_i) {
                             for (int ix_i = max(0, ix - vinc); ix_i <= min(ix + vinc, sizeRead - 1); ++ix_i) {
-                                vec1[NvoxInVinc] = (double)  *(nim_mask_data + nxy * iz_i + nx * ix_i + iy_i);
+                                vec1[NvoxInVinc] = (double) *(nim_mask_data + nxy * iz_i + nx * ix_i + iy_i);
                                 NvoxInVinc++;
                             }
                         }
@@ -412,12 +336,12 @@ int main(int argc, char * argv[]) {
                         for (int iy_i = max(0, iy-vinc); iy_i <= min(iy+vinc, sizePhase-1); ++iy_i) {
                             for (int ix_i = max(0, ix-vinc); ix_i <= min(ix+vinc, sizeRead-1); ++ix_i) {
                                 dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                value_dist = fabs(local_val - *(nim_mask_data + nxy * iz_i + nx * ix_i + iy_i) );
+                                value_dist = fabs(local_val - *(nim_mask_data + nxy * iz_i + nx * ix_i + iy_i));
 
                                 // * (debug_data + nxy * iz_i + nx * ix_i + iy_i) = gaus(dist_i , FWHM_val)/gaus(0, FWHM_val)
-                                //                                                   * gaus(value_dist, grad_stdev * 0.1) /gaus(0, grad_stdev * 0.1) ;
+                                //                                               * gaus(value_dist, grad_stdev * 0.1) /gaus(0, grad_stdev * 0.1) ;
 
-                                temp_wight_factor = gaus(dist_i, FWHM_val)  * gaus(value_dist, grad_stdev * selectivity)/gaus(0, grad_stdev * selectivity);
+                                temp_wight_factor = gaus(dist_i, FWHM_val) * gaus(value_dist, grad_stdev * selectivity)/gaus(0, grad_stdev * selectivity);
 
                                 // Gauss data are important to avoid local
                                 // scaling differences. When the kernel size
@@ -430,8 +354,8 @@ int main(int argc, char * argv[]) {
                                                                                + temp_wight_factor;
 
                                 for (int it = 0; it < nrep; ++it) {  // loop across all time steps
-                                    *(smoothed_data + nxyz  * it + nxy * iz + nx * ix + iy) = *(smoothed_data + nxyz  * it + nxy * iz + nx * ix + iy  )
-                                                                                              + *(nim_inputf_data + nxyz  * it + nxy * iz_i + nx * ix_i + iy_i)  * temp_wight_factor;
+                                    *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) = *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy )
+                                                                                             + *(nim_inputf_data + nxyz * it + nxy * iz_i + nx * ix_i + iy_i) * temp_wight_factor;
                                 }
                             }
                         }
@@ -439,11 +363,11 @@ int main(int argc, char * argv[]) {
                     // Scaling signal intensity with the overall Gauss leakage
                     if (*(gausweight_data + nxy * iz + nx * ix + iy) > 0) {
                         for (int it = 0; it < nrep; ++it) {
-                            *(smoothed_data + nxyz  * it + nxy * iz + nx * ix + iy) = *(smoothed_data + nxyz  * it + nxy * iz + nx * ix + iy)/  *(gausweight_data + nxy * iz + nx * ix + iy);
+                            *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) = *(smoothed_data + nxyz * it + nxy * iz + nx * ix + iy) / *(gausweight_data + nxy * iz + nx * ix + iy);
                         }
                     }
                     // if (* (nim_mask_data + nxy * iz + nx * ix + iy) < = 0) {
-                    //     * (smoothed_data + nxy * iz + nx * ix + iy) = *(nim_inputf_data + nxy * iz + nx * ix + iy) ;
+                    // * (smoothed_data + nxy * iz + nx * ix + iy) = *(nim_inputf_data + nxy * iz + nx * ix + iy) ;
                     // }
                     // }  //debug loop closed
                 }
@@ -459,7 +383,7 @@ int main(int argc, char * argv[]) {
     //             for (int iy = 0; iy < sizePhase; ++iy) {
     //                 for (int ix = 0; ix < sizeRead; ++ix) {
     //                     if (*(nim_mask_data + nxy * islice + nx * ix + iy) == 0) {
-    //                         *(smoothed_data + nxyz  * it + nxy * islice + nx * ix + iy) = 0;
+    //                     *(smoothed_data + nxyz * it + nxy * islice + nx * ix + iy) = 0;
     //                     }
     //                 }
     //             }
