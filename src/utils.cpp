@@ -54,12 +54,14 @@ nifti_image* recreate_nii_with_float_datatype(nifti_image* nii) {
     nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
     float* nii_new_data = static_cast<float*>(nii_new->data);
 
-    if (nii->datatype == NIFTI_TYPE_INT8 || nii->datatype == DT_UINT8) {
+    if (nii->datatype == NIFTI_TYPE_INT8
+        || nii->datatype == DT_UINT8) {
         int8_t* temp = static_cast<int8_t*>(nii->data);
         FOR_EACH_VOXEL_TZYX
             *(nii_new_data + VOXEL_ID) = static_cast<float>(*(temp + VOXEL_ID));
         END_FOR_EACH_VOXEL_TZYX
-    } else if (nii->datatype == NIFTI_TYPE_INT16) {
+    } else if (nii->datatype == NIFTI_TYPE_INT16
+               || nii->datatype == DT_UINT16) {
         int16_t* temp = static_cast<int16_t*>(nii->data);
         FOR_EACH_VOXEL_TZYX
             *(nii_new_data + VOXEL_ID) = static_cast<float>(*(temp + VOXEL_ID));
@@ -71,6 +73,12 @@ nifti_image* recreate_nii_with_float_datatype(nifti_image* nii) {
         END_FOR_EACH_VOXEL_TZYX
     } else if (nii->datatype == NIFTI_TYPE_FLOAT32) {
         float* temp = static_cast<float*>(nii->data);
+        FOR_EACH_VOXEL_TZYX
+            *(nii_new_data + VOXEL_ID) = static_cast<float>(*(temp + VOXEL_ID));
+        END_FOR_EACH_VOXEL_TZYX
+    } else if (nii->datatype == NIFTI_TYPE_FLOAT64
+               || nii->datatype == DT_FLOAT64) {
+        double* temp = static_cast<double*>(nii->data);
         FOR_EACH_VOXEL_TZYX
             *(nii_new_data + VOXEL_ID) = static_cast<float>(*(temp + VOXEL_ID));
         END_FOR_EACH_VOXEL_TZYX
