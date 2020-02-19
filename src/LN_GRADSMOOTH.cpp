@@ -36,13 +36,13 @@ int show_help(void) {
     "                   the gradient file 0.1 is default.\n"
     "\n"
     "Notes:\n"
-    "     - If you run this on EPI-T1 data consider making them pretty, E.g:  \n"
-    "       start_bias_field.sh T1.nii  \n"
-    "       denoise_me.sh bico_T1.nii \n"
-    "       short_me.sh denoised_bico_T1.nii \n"
-    "       smooth_me.sh denoised_bico_T1.nii 0.5 \n"
-    "       mv smoothed_denoised_bico_T1.nii new_T1.nii \n"
-    "     - This program now supports INT16, INT32 and FLOAT32.\n"
+    "    - If you run this on EPI-T1 data consider making them pretty, E.g: \n"
+    "        start_bias_field.sh T1.nii \n"
+    "        denoise_me.sh bico_T1.nii \n"
+    "        short_me.sh denoised_bico_T1.nii \n"
+    "        smooth_me.sh denoised_bico_T1.nii 0.5 \n"
+    "        mv smoothed_denoised_bico_T1.nii new_T1.nii \n"
+    "    - This program now supports INT16, INT32 and FLOAT32.\n"
     "\n"
     "\n");
     return 0;
@@ -94,7 +94,7 @@ int main(int argc, char * argv[]) {
             }
             froii = argv[ac];  // Assign pointer, no string copy
             do_masking = 1;
-            cout << "Set every thing to zero outside the layers (masking option)." << endl;
+            cout << "Set everything to 0 outside the layers (mask option)." << endl;
         } else if (!strcmp(argv[ac], "-selectivity")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -selectivity\n");
