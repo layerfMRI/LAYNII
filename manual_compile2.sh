@@ -28,9 +28,9 @@ g++    -c -o obj/LN_EXTREMETR.o src/LN_EXTREMETR.cpp
 g++  -o bin/LN_EXTREMETR -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_EXTREMETR.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/utils.o
 g++    -c -o obj/LN_GFACTOR.o src/LN_GFACTOR.cpp
 g++  -o bin/LN_GFACTOR -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_GFACTOR.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/utils.o
+g++    -c -o obj/LN_GRADSMOOTH.o src/LN_GRADSMOOTH.cpp
+g++  -o bin/LN_GRADSMOOTH -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_GRADSMOOTH.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/renzo_stat.o obj/utils.o
 
-# g++    -c -o obj/LN_GRADSMOOTH.o src/LN_GRADSMOOTH.cpp
-# g++  -o bin/LN_GRADSMOOTH -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_GRADSMOOTH.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/renzo_stat.o obj/utils.o
 # g++    -c -o obj/LN_GROW_LAYERS.o src/LN_GROW_LAYERS.cpp
 # g++  -o bin/LN_GROW_LAYERS -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_GROW_LAYERS.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/utils.o
 # g++    -c -o obj/LN_IMAGIRO.o src/LN_IMAGIRO.cpp
