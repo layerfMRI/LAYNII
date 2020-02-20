@@ -31,6 +31,10 @@
 *.out
 *.app
 
+.DS_Store
+
+test_data/.DS_store
+
 # Test data
 #test_data/
 #*.nii
