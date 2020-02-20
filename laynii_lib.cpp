@@ -133,9 +133,7 @@ nifti_image* recreate_nii_with_float_datatype(nifti_image* nii) {
     const int size_y = nii->ny;
     const int size_z = nii->nz;
     const int size_t = nii->nt;
-    const int nx = nii->nx;
-    const int nxy = nii->nx * nii->ny;
-    const int nxyz = nii->nx * nii->ny * nii->nz;
+    const int nr_voxels = size_t * size_z * size_y * size_x;
 
     // NOTE(for future reference): Rick's comments:
     // nifti_copy_nim_info(). It will return with data == NULL.
@@ -152,31 +150,31 @@ nifti_image* recreate_nii_with_float_datatype(nifti_image* nii) {
     if (nii->datatype == NIFTI_TYPE_INT8
         || nii->datatype == DT_UINT8) {
         int8_t* temp = static_cast<int8_t*>(nii->data);
-        FOR_EACH_VOXEL_TZYX
-            *(nii_new_data + VOXEL_ID) = static_cast<float>(*(temp + VOXEL_ID));
-        END_FOR_EACH_VOXEL_TZYX
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(temp + i));
+        }
     } else if (nii->datatype == NIFTI_TYPE_INT16
                || nii->datatype == DT_UINT16) {
         int16_t* temp = static_cast<int16_t*>(nii->data);
-        FOR_EACH_VOXEL_TZYX
-            *(nii_new_data + VOXEL_ID) = static_cast<float>(*(temp + VOXEL_ID));
-        END_FOR_EACH_VOXEL_TZYX
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(temp + i));
+        }
     } else if (nii->datatype == NIFTI_TYPE_INT32) {
         int* temp = static_cast<int*>(nii->data);
-        FOR_EACH_VOXEL_TZYX
-            *(nii_new_data + VOXEL_ID) = static_cast<float>(*(temp + VOXEL_ID));
-        END_FOR_EACH_VOXEL_TZYX
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(temp + i));
+        }
     } else if (nii->datatype == NIFTI_TYPE_FLOAT32) {
         float* temp = static_cast<float*>(nii->data);
-        FOR_EACH_VOXEL_TZYX
-            *(nii_new_data + VOXEL_ID) = static_cast<float>(*(temp + VOXEL_ID));
-        END_FOR_EACH_VOXEL_TZYX
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(temp + i));
+        }
     } else if (nii->datatype == NIFTI_TYPE_FLOAT64
                || nii->datatype == DT_FLOAT64) {
         double* temp = static_cast<double*>(nii->data);
-        FOR_EACH_VOXEL_TZYX
-            *(nii_new_data + VOXEL_ID) = static_cast<float>(*(temp + VOXEL_ID));
-        END_FOR_EACH_VOXEL_TZYX
+    for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(temp + i));
+        }
     }
     return nii_new;
 }
