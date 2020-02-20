@@ -100,11 +100,11 @@ int main(int argc, char*  argv[]) {
 
     // ========================================================================
 
+    // Initialize min-max inversely to increas-decrease in the loop
     int min_z = 10000, max_z = 0;
     int min_x = 10000, max_x = 0;
     int min_y = 10000, max_y = 0;
     float mask_val = 0;
-
     for (int iz = 0; iz < size_z; ++iz) {
         for (int iy = 0; iy < size_y; ++iy) {
             for (int ix = 0; ix < size_x; ++ix) {
@@ -121,9 +121,9 @@ int main(int argc, char*  argv[]) {
     cout << "  x range is " << min_x << "-" << max_x << endl;
     cout << "  y range is " << min_y << "-" << max_y << endl;
     cout << "  z range is " << min_z << "-" << max_z << endl;
-    int zoomed_z_size = max_z - min_z;
-    int zoomed_x_size = max_x - min_x;
-    int zoomed_y_size = max_y - min_y;
+    int zoomed_z_size = max_z - min_z + 1;
+    int zoomed_x_size = max_x - min_x + 1;
+    int zoomed_y_size = max_y - min_y + 1;
 
     // Handle zoomed nifti
     nifti_image* zoomed_file = nifti_copy_nim_info(nim_file_1);
@@ -145,9 +145,9 @@ int main(int argc, char*  argv[]) {
     const int nxyz_2 = zoomed_file->nx * zoomed_file->ny * zoomed_file->nz;
 
     for (int it = 0; it < size_t; ++it) {
-        for (int iz = min_z; iz < max_z; ++iz) {
-            for (int iy = min_y; iy < max_y; ++iy) {
-                for (int ix = min_x; ix < max_x; ++ix) {
+        for (int iz = min_z; iz < max_z+1; ++iz) {
+            for (int iy = min_y; iy < max_y+1; ++iy) {
+                for (int ix = min_x; ix < max_x+1; ++ix) {
                     *(zoomed_file_data + nxyz_2 * it + nxy_2 * (iz - min_z) + nx_2 * (iy - min_y) + (ix - min_x))
                         = *(nii1_data + nxyz * it + nxy * iz + nx * iy + ix);
                 }
