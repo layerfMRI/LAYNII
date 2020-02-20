@@ -32,11 +32,8 @@
 *.app
 
 .DS_Store
-
-test_data/.DS_store
-
 # Test data
-#test_data/
+test_data/.DS_Store
 #*.nii
 
 # Ignore compiled files
