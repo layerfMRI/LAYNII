@@ -62,10 +62,10 @@ g++  -o bin/LN_GRADSMOOTH -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_GRADSMOOTH.o o
 # g++  -o bin/LN_FIX_RIM -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_FIX_RIM.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/utils.o
 # g++    -c -o obj/LN_FLOAT_ME.o src/LN_FLOAT_ME.cpp
 # g++  -o bin/LN_FLOAT_ME -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_FLOAT_ME.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/utils.o
-# g++    -c -o obj/LN_ZOOM.o src/LN_ZOOM.cpp
-# g++  -o bin/LN_ZOOM -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_ZOOM.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/utils.o
 # g++    -c -o obj/LN_COLUMNAR_DIST.o src/LN_COLUMNAR_DIST.cpp
 # g++  -o bin/LN_COLUMNAR_DIST -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_COLUMNAR_DIST.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/utils.o
+g++    -c -o obj/LN_ZOOM.o src/LN_ZOOM.cpp
+g++  -o bin/LN_ZOOM -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_ZOOM.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/utils.o
 
 # g++    -c -o obj/LN_PHYSIO_PARS.o src/LN_PHYSIO_PARS.cpp
 # g++  -o bin/LN_PHYSIO_PARS -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_PHYSIO_PARS.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/utils.o
