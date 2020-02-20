@@ -1,8 +1,8 @@
 
 // TODO(@Faruk): Test requires `layers.nii` I need to get it from Renzo.
 
-#include "./common.h"
-#include "./utils.h"
+
+#include "./laynii_lib.h"
 
 int show_help(void) {
     printf(

@@ -1,8 +1,8 @@
 
 // TODO(Faruk): Requires columnar_coordinated.nii and data2unfold.nii from Renzo for tests.
 
-#include "./common.h"
-#include "./utils.h"
+
+#include "./laynii_lib.h"
 
 int show_help(void) {
     printf(

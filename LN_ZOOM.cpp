@@ -3,8 +3,8 @@
 // `** ERROR: nifti_image_write_hdr_img: no image data`
 // Also seems to give the same error in the old version. Check with Renzo.
 
-#include "./common.h"
-#include "./utils.h"
+
+#include "./laynii_lib.h"
 
 int show_help(void) {
     printf(

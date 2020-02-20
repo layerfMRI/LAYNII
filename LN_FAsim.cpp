@@ -1,8 +1,8 @@
 
 // TODO(Faruk): I am not sure what this program is for. Need to ask Renzo.
 
-#include "./common.h"
-#include "./utils.h"
+
+#include "./laynii_lib.h"
 
 int show_help(void) {
     printf(

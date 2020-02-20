@@ -1,6 +1,6 @@
 
 #include <cmath>
-#include "./renzo_stat.h"
+
 
 // Definitions
 double ren_average(double arr[], int size) {

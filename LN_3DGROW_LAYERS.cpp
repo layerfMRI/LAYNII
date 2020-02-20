@@ -2,8 +2,8 @@
 // TODO(@Renzo): Check the vincinity loops. the "+1" are missing and
 // the z_dimensions is limited by REAN dimension????
 
-#include "./common.h"
-#include "./utils.h"
+
+#include "./laynii_lib.h"
 
 int show_help(void) {
     printf(
