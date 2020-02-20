@@ -32,8 +32,8 @@
 *.app
 
 # Test data
-test_data/
-*.nii
+#test_data/
+#*.nii
 
 # Ignore compiled files
 LN_3DCOLUMNS
