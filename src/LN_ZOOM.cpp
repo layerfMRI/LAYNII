@@ -111,8 +111,8 @@ int main(int argc, char * argv[]) {
     //     return 1;
     // }
 
-    if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
-        float* nim_file_1i_data = (float*) nim_file_1i->data;
+    if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32 ||  nim_file_1i->datatype == NIFTI_TYPE_INT32) {
+        float *nim_file_1i_data = (float *) nim_file_1i->data;
         for (int it = 0; it < nrep; ++it) {
             for (int islice = 0; islice < sizeSlice; ++islice) {
                 for (int iy = 0; iy < sizePhase; ++iy) {
@@ -123,7 +123,7 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    if (nim_file_1i->datatype == NIFTI_TYPE_INT16) {
+    if (nim_file_1i->datatype == NIFTI_TYPE_INT16 || nim_file_1i->datatype == DT_UINT16) {
         short *nim_file_1i_data = (short *) nim_file_1i->data;
         for (int it = 0; it < nrep; ++it) {
             for (int islice = 0; islice < sizeSlice; ++islice) {
@@ -135,8 +135,8 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
-        float* nim_file_1i_data = (float*) nim_file_1i->data;
+    if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32 ||  nim_file_1i->datatype == NIFTI_TYPE_INT32) {
+        float *nim_file_1i_data = (float *) nim_file_1i->data;
         for (int it = 0; it < nrep; ++it) {
             for (int islice = 0; islice < sizeSlice; ++islice) {
                 for (int iy = 0; iy <sizePhase; ++iy) {
@@ -147,7 +147,7 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    if (nim_file_2i->datatype == NIFTI_TYPE_INT16) {
+    if (nim_file_2i->datatype == NIFTI_TYPE_INT16 || nim_file_2i->datatype == DT_UINT16) {
         short  *nim_file_2i_data = (short *) nim_file_2i->data;
         for (int it = 0; it < nrep; ++it) {
             for (int islice = 0; islice < sizeSlice; ++islice) {
@@ -159,8 +159,8 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    if (nim_file_2i->datatype == NIFTI_TYPE_FLOAT32) {
-        float* nim_file_2i_data = (float*) nim_file_2i->data;
+    if (nim_file_2i->datatype == NIFTI_TYPE_FLOAT32 ||  nim_file_2i->datatype == NIFTI_TYPE_INT32) {
+        float *nim_file_2i_data = (float *) nim_file_2i->data;
         for (int it = 0; it < nrep; ++it) {
             for (int islice = 0; islice < sizeSlice; ++islice) {
                 for (int iy = 0; iy < sizePhase; ++iy) {
