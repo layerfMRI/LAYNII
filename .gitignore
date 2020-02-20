@@ -31,9 +31,13 @@
 *.out
 *.app
 
+.DS_Store
+
 # Test data
-test_data/
-*.nii
+test_data/.DS_Store
+
+# Ignore nii at top level
+/*.nii
 
 # Ignore compiled files
 LN_3DCOLUMNS
