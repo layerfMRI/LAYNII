@@ -31,13 +31,14 @@
 *.out
 *.app
 
-.DS_Store
-
-# Test data
-test_data/.DS_Store
+# Mac stuff
+*.DS_Store
 
 # Ignore nii at top level
 /*.nii
+
+# Test data (uncomment when pushing new nii to repo)
+test_data/*.nii
 
 # Ignore compiled files
 LN_3DCOLUMNS
