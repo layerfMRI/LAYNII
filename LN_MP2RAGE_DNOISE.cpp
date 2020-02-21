@@ -6,12 +6,12 @@ int show_help(void) {
     printf(
     "LN_MP2RAGE_DNOISE : Denoising MP2RAGE data.\n"
     "\n"
-    "    This program removes some of the background noise in MP2RAGE, \n"
-    "    UNI images to make themn look like MPRAGE images. This is done \n"
-    "    without needing to have the phase information. This is following \n"
-    "    the paper O’Brien KR et al. (2014) Robust T1-Weighted Structural \n"
-    "    Brain Imaging and Morphometry at 7T Using MP2RAGE. PLoS ONE 9(6): \n"
-    "    e99676. <doi:10.1371/journal.pone.0099676> \n"
+    "    This program removes some of the background noise in MP2RAGE,\n"
+    "    UNI images to make themn look like MPRAGE images. This is done\n"
+    "    without the phase information. See O’Brien K.R. et al. (2014)\n"
+    "    Robust T1-Weighted Structural Brain Imaging and Morphometry\n"
+    "    at 7T Using MP2RAGE. PLoS ONE 9(6): e99676.\n"
+    "    <DOI:10.1371/journal.pone.0099676>\n"
     "\n"
     "Usage:\n"
     "    LN_MP2RAGE_DNOISE -INV1 INV1.nii -INV2 INV2.nii -UNI UNI.nii -beta 0.2\n"
@@ -21,7 +21,7 @@ int show_help(void) {
     "    -INV1       : Nifti (.nii) file of the first inversion time.\n"
     "    -INV2       : Nifti (.nii) file of the second inversion time.\n"
     "    -UNI        : Nifti (.nii) of MP2RAGE UNI. Expecting SIEMENS \n"
-    "                  values between 0-4095. \n"
+    "                  unsigned integer 12 values between 0-4095. \n"
     "    -beta value : Regularization term. Default is 0.2.\n"
     "    -output     : (Optional) Custom output name. \n"
     "\n"
@@ -31,7 +31,7 @@ int show_help(void) {
 }
 
 int main(int argc, char* argv[]) {
-    float SIEMENS_f = 4095.0;
+    float SIEMENS_f = 4095.0;  // uint12 range 0-4095
     char* fmaski = NULL, *fout = NULL, *finfi_1 = NULL, *finfi_2 = NULL;
     char* finfi_3 = NULL;
     int ac, custom_output = 0;
@@ -122,9 +122,7 @@ int main(int argc, char* argv[]) {
     int size_y = nii1->ny;  // read
     int size_z = nii1->nz;  // slice
     int size_t = nii1->nt;  // time
-    int nx = nii1->nx;
-    int nxy = nii1->nx * nii1->ny;
-    int nxyz = nii1->nx * nii1->ny * nii1->nz;
+    int nr_voxels = size_t * size_z * size_y * size_x;
 
     // ========================================================================
     // Fix datatype issues
@@ -186,24 +184,33 @@ int main(int argc, char* argv[]) {
     /////////////////////////////////////////////////////////
     // Scaling UNI to range of -0.5 to 0.5 as in the paper //
     /////////////////////////////////////////////////////////
-    FOR_EACH_VOXEL_TZYX
-        unival = (*(nii_uni_data + VOXEL_ID) - SIEMENS_f * 0.5) / SIEMENS_f;
-        // inv1val = *(nii_inv1_data + VOXEL_ID);
-        inv2val = *(nii_inv2_data + VOXEL_ID);
-        wrong_unival = *(nii_inv1_data + VOXEL_ID) * *(nii_inv2_data + VOXEL_ID) / (*(nii_inv1_data + VOXEL_ID)* *(nii_inv1_data + VOXEL_ID) + *(nii_inv2_data + VOXEL_ID)* *(nii_inv2_data + VOXEL_ID));
+    for (int i = 0; i < nr_voxels; ++i) {
+        unival = (*(nii_uni_data + i) - SIEMENS_f * 0.5) / SIEMENS_f;
+        // inv1val = *(nii_inv1_data + i);
+        inv2val = *(nii_inv2_data + i);
+        wrong_unival = *(nii_inv1_data + i) * *(nii_inv2_data + i)
+                       / (*(nii_inv1_data + i) * *(nii_inv1_data + i)
+                          + *(nii_inv2_data + i) * *(nii_inv2_data + i));
 
         // sign_ = unival;
-        // *(nii_uni_data + VOXEL_ID) / *(phaseerror_data + VOXEL_ID);
+        // *(nii_uni_data + i) / *(phaseerror_data + i);
         // if (sign_ <= 0) {
-        //     *(nii_inv1_data + VOXEL_ID) = -1 * *(nii_inv1_data + VOXEL_ID);
+        //     *(nii_inv1_data + i) = -1 * *(nii_inv1_data + i);
         // }
 
-        // denoised_wrong = (*(nii_inv1_data + VOXEL_ID) * *(nii_inv2_data + VOXEL_ID) - beta) / (*(nii_inv1_data + VOXEL_ID) * *(nii_inv1_data + VOXEL_ID) + *(nii_inv2_data + VOXEL_ID) * *(nii_inv2_data + VOXEL_ID) + 2. * beta);
+        // denoised_wrong =
+        //     (*(nii_inv1_data + i) * *(nii_inv2_data + i) - beta)
+        //     / (*(nii_inv1_data + i) * *(nii_inv1_data + i)
+        //        + *(nii_inv2_data + i) * *(nii_inv2_data + i) + 2. * beta);
         // denoised_wrong = (denoised_wrong +0.5) * SIEMENS_f;
-        *(phaseerror_data + VOXEL_ID) = wrong_unival;
+        *(phaseerror_data + i) = wrong_unival;
 
-        uni1val_calc = inv2val * (1 / (2 * unival) + sqrt(1 / (4 * unival * unival) - 1));
-        uni2val_calc = inv2val * (1 / (2 * unival) - sqrt(1 / (4 * unival * unival) - 1));
+        uni1val_calc =
+            inv2val * (1. / (2. * unival)
+                       + sqrt(1. / (4. * unival * unival) - 1.));
+        uni2val_calc =
+            inv2val * (1. / (2. * unival)
+                       - sqrt(1. / (4. * unival * unival) - 1.));
 
         if (unival > 0) {
             uni1val_calc = uni2val_calc;
@@ -211,12 +218,15 @@ int main(int argc, char* argv[]) {
 
         // if (!(uni1val_calc > SIEMENS_f || uni1val_calc < SIEMENS_f)) uni1val_calc = inv1val;
 
-        // *(uni1_data + VOXEL_ID) = uni1val_calc;
-        // *(uni2_data + VOXEL_ID) = uni2val_calc;
-        // *(phaseerror_data + VOXEL_ID) = unival;
+        // *(uni1_data + i) = uni1val_calc;
+        // *(uni2_data + i) = uni2val_calc;
+        // *(phaseerror_data + i) = unival;
 
-        *(dddenoised_data + VOXEL_ID) = ((uni1val_calc * inv2val - beta) / (uni1val_calc * uni1val_calc + inv2val * inv2val + 2. * beta) + 0.5) * SIEMENS_f;
-    END_FOR_EACH_VOXEL_TZYX
+        *(dddenoised_data + i) =
+            ((uni1val_calc * inv2val - beta)
+             / (uni1val_calc * uni1val_calc + inv2val * inv2val + 2. * beta)
+             + 0.5) * SIEMENS_f;
+    }
 
     dddenoised->scl_slope = nii_uni->scl_slope;
 
