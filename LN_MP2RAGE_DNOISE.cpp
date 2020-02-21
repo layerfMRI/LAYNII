@@ -137,62 +137,72 @@ int main(int argc, char* argv[]) {
     float* nii_uni_data = static_cast<float*>(nii_uni->data);
 
     // Allocate output nifti files
-    nifti_image* dddenoised = recreate_nii_with_float_datatype(nii_uni);
+    nifti_image* dddenoised = recreate_nii_with_float_datatype(nii1);
     float* dddenoised_data = static_cast<float*>(dddenoised->data);
 
-    nifti_image* phaseerror = recreate_nii_with_float_datatype(nii_uni);
+    nifti_image* phaseerror = recreate_nii_with_float_datatype(nii1);
     float* phaseerror_data = static_cast<float*>(phaseerror->data);
 
     // ========================================================================
     // Big calculation across all voxels
 
     beta = beta * SIEMENS_f;
-    float val_inv1, val_inv2, val_uni, val_uni_wrong, new_uni1, new_uni2;
+    double val_inv1, val_inv2, val_uni, val_uni_wrong, new_uni1, new_uni2;
 
     for (int i = 0; i < nr_voxels; ++i) {
-        // Scale UNI to range of -0.5 to 0.5 (as in O’Brien et al. [2014])
-        val_uni = *(nii_uni_data + i) / SIEMENS_f - 0.5;
+        val_uni = *(nii_uni_data + i);
 
-        val_inv1 = *(nii_inv1_data + i);
-        val_inv2 = *(nii_inv2_data + i);
+        // Skip nan or zero voxels
+        if (isnan(val_uni) || val_uni == 0 || val_uni == 0.0) {
+            *(phaseerror_data + i) = 0;
+            *(dddenoised_data + i) = 0;
+        } else {
+            // Scale UNI to range of -0.5 to 0.5 (as in O’Brien et al. [2014])
+            val_uni = val_uni / SIEMENS_f - 0.5;
 
-        val_uni_wrong =
-            val_inv1 * val_inv2 / (val_inv1 * val_inv1 + val_inv2 * val_inv2);
+            val_inv1 = *(nii_inv1_data + i);
+            val_inv2 = *(nii_inv2_data + i);
 
-        // sign_ = val_uni;
-        // *(nii_uni_data + i) / *(phaseerror_data + i);
-        // if (sign_ <= 0) {
-        //     val_inv1 = -1 * val_inv1;
-        // }
 
-        // denoised_wrong =
-        //     (val_inv1 * val_inv2 - beta)
-        //     / (val_inv1 * val_inv1
-        //        + val_inv2 * val_inv2 + 2. * beta);
-        // denoised_wrong = (denoised_wrong +0.5) * SIEMENS_f;
-        *(phaseerror_data + i) = val_uni_wrong;
+            if (val_uni < 0) {
+                new_uni1 = val_inv2
+                    * (1. / (2. * val_uni) + sqrt(1. / pow(2 * val_uni, 2) - 1.));
+            } else {
+                new_uni1 = val_inv2
+                    * (1. / (2. * val_uni) - sqrt(1. / pow(2 * val_uni, 2) - 1.));
+            }
 
-        new_uni1 = val_inv2
-            * (1. / (2. * val_uni) + sqrt(1. / (4. * val_uni * val_uni) - 1.));
-        new_uni2 = val_inv2
-            * (1. / (2. * val_uni) - sqrt(1. / (4. * val_uni * val_uni) - 1.));
+            // if (!(new_uni1 > SIEMENS_f || new_uni1 < SIEMENS_f)) {
+            //     new_uni1 = val_inv1;
+            // }
 
-        if (val_uni > 0) {
-            new_uni1 = new_uni2;
+            // *(uni1_data + i) = new_uni1;
+            // *(uni2_data + i) = new_uni2;
+            // *(phaseerror_data + i) = val_uni;
+
+            // Eq. 2 in O’Brien et al. [2014].
+            new_uni2 = (new_uni1 * val_inv2 - beta)
+                / ((pow(new_uni1, 2) + pow(val_inv2, 2) + 2. * beta));
+
+            // Scale back the value range
+            *(dddenoised_data + i) =  (new_uni2 + 0.5) * SIEMENS_f;
+
+            // ----------------------------------------------------------------
+            val_uni_wrong = val_inv1 * val_inv2
+                            / (pow(val_inv1, 2) + pow(val_inv2, 2));
+
+            // sign_ = val_uni;
+            // *(nii_uni_data + i) / *(phaseerror_data + i);
+            // if (sign_ <= 0) {
+            //     val_inv1 = -1 * val_inv1;
+            // }
+
+            // denoised_wrong = (val_inv1 * val_inv2 - beta)
+            //     / (val_inv1 * val_inv1 + val_inv2 * val_inv2 + 2. * beta);
+            // denoised_wrong = (denoised_wrong +0.5) * SIEMENS_f;
+            *(phaseerror_data + i) = val_uni_wrong;
+            // ----------------------------------------------------------------
         }
-
-        // if (!(new_uni1 > SIEMENS_f || new_uni1 < SIEMENS_f)) {
-        //     new_uni1 = val_inv1;
-        // }
-
-        // *(uni1_data + i) = new_uni1;
-        // *(uni2_data + i) = new_uni2;
-        // *(phaseerror_data + i) = val_uni;
-
-        *(dddenoised_data + i) =
-            ((new_uni1 * val_inv2 - beta)
-             / (new_uni1 * new_uni1 + val_inv2 * val_inv2 + 2. * beta)
-             + 0.5) * SIEMENS_f;
     }
 
     dddenoised->scl_slope = nii_uni->scl_slope;
