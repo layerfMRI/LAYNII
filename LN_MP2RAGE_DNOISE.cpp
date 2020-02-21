@@ -147,40 +147,37 @@ int main(int argc, char* argv[]) {
     // Big calculation across all voxels
 
     beta = beta * SIEMENS_f;
-    float val_inv2, unival, val_uni_wrong, new_uni1, new_uni2;
+    float val_inv1, val_inv2, val_uni, val_uni_wrong, new_uni1, new_uni2;
 
     for (int i = 0; i < nr_voxels; ++i) {
-        // Scale UNI to range of -0.5 to 0.5 as in the paper
-        unival = (*(nii_uni_data + i) / SIEMENS_f) - 0.5;
+        // Scale UNI to range of -0.5 to 0.5 (as in O’Brien et al. [2014])
+        val_uni = *(nii_uni_data + i) / SIEMENS_f - 0.5;
 
-        // val_inv1 = *(nii_inv1_data + i);
+        val_inv1 = *(nii_inv1_data + i);
         val_inv2 = *(nii_inv2_data + i);
 
-        val_uni_wrong = *(nii_inv1_data + i) * *(nii_inv2_data + i)
-                       / (*(nii_inv1_data + i) * *(nii_inv1_data + i)
-                          + *(nii_inv2_data + i) * *(nii_inv2_data + i));
+        val_uni_wrong =
+            val_inv1 * val_inv2 / (val_inv1 * val_inv1 + val_inv2 * val_inv2);
 
-        // sign_ = unival;
+        // sign_ = val_uni;
         // *(nii_uni_data + i) / *(phaseerror_data + i);
         // if (sign_ <= 0) {
-        //     *(nii_inv1_data + i) = -1 * *(nii_inv1_data + i);
+        //     val_inv1 = -1 * val_inv1;
         // }
 
         // denoised_wrong =
-        //     (*(nii_inv1_data + i) * *(nii_inv2_data + i) - beta)
-        //     / (*(nii_inv1_data + i) * *(nii_inv1_data + i)
-        //        + *(nii_inv2_data + i) * *(nii_inv2_data + i) + 2. * beta);
+        //     (val_inv1 * val_inv2 - beta)
+        //     / (val_inv1 * val_inv1
+        //        + val_inv2 * val_inv2 + 2. * beta);
         // denoised_wrong = (denoised_wrong +0.5) * SIEMENS_f;
         *(phaseerror_data + i) = val_uni_wrong;
 
-        new_uni1 =
-            val_inv2 * (1. / (2. * unival)
-                       + sqrt(1. / (4. * unival * unival) - 1.));
-        new_uni2 =
-            val_inv2 * (1. / (2. * unival)
-                       - sqrt(1. / (4. * unival * unival) - 1.));
+        new_uni1 = val_inv2
+            * (1. / (2. * val_uni) + sqrt(1. / (4. * val_uni * val_uni) - 1.));
+        new_uni2 = val_inv2
+            * (1. / (2. * val_uni) - sqrt(1. / (4. * val_uni * val_uni) - 1.));
 
-        if (unival > 0) {
+        if (val_uni > 0) {
             new_uni1 = new_uni2;
         }
 
@@ -190,7 +187,7 @@ int main(int argc, char* argv[]) {
 
         // *(uni1_data + i) = new_uni1;
         // *(uni2_data + i) = new_uni2;
-        // *(phaseerror_data + i) = unival;
+        // *(phaseerror_data + i) = val_uni;
 
         *(dddenoised_data + i) =
             ((new_uni1 * val_inv2 - beta)
