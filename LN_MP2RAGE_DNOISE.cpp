@@ -149,29 +149,12 @@ int main(int argc, char* argv[]) {
     beta = beta * SIEMENS_f;
     float inv2val, unival, wrong_unival, uni1val_calc, uni2val_calc;
 
-    /////////////////////////////////////////////////////////
-    // Scaling UNI to range of -0.5 to 0.5 as in the paper //
-    /////////////////////////////////////////////////////////
     for (int i = 0; i < nr_voxels; ++i) {
-        unival = (*(nii_uni_data + i) - SIEMENS_f * 0.5) / SIEMENS_f;
+        // Scale UNI to range of -0.5 to 0.5 as in the paper
+        unival = (*(nii_uni_data + i) / SIEMENS_f) - 0.5;
+
         // inv1val = *(nii_inv1_data + i);
         inv2val = *(nii_inv2_data + i);
-        wrong_unival = *(nii_inv1_data + i) * *(nii_inv2_data + i)
-                       / (*(nii_inv1_data + i) * *(nii_inv1_data + i)
-                          + *(nii_inv2_data + i) * *(nii_inv2_data + i));
-
-        // sign_ = unival;
-        // *(nii_uni_data + i) / *(phaseerror_data + i);
-        // if (sign_ <= 0) {
-        //     *(nii_inv1_data + i) = -1 * *(nii_inv1_data + i);
-        // }
-
-        // denoised_wrong =
-        //     (*(nii_inv1_data + i) * *(nii_inv2_data + i) - beta)
-        //     / (*(nii_inv1_data + i) * *(nii_inv1_data + i)
-        //        + *(nii_inv2_data + i) * *(nii_inv2_data + i) + 2. * beta);
-        // denoised_wrong = (denoised_wrong +0.5) * SIEMENS_f;
-        *(phaseerror_data + i) = wrong_unival;
 
         uni1val_calc =
             inv2val * (1. / (2. * unival)
@@ -194,6 +177,24 @@ int main(int argc, char* argv[]) {
             ((uni1val_calc * inv2val - beta)
              / (uni1val_calc * uni1val_calc + inv2val * inv2val + 2. * beta)
              + 0.5) * SIEMENS_f;
+
+        // Border enhance calculation
+        wrong_unival = *(nii_inv1_data + i) * *(nii_inv2_data + i)
+                       / (*(nii_inv1_data + i) * *(nii_inv1_data + i)
+                          + *(nii_inv2_data + i) * *(nii_inv2_data + i));
+
+        // sign_ = unival;
+        // *(nii_uni_data + i) / *(phaseerror_data + i);
+        // if (sign_ <= 0) {
+        //     *(nii_inv1_data + i) = -1 * *(nii_inv1_data + i);
+        // }
+
+        // denoised_wrong =
+        //     (*(nii_inv1_data + i) * *(nii_inv2_data + i) - beta)
+        //     / (*(nii_inv1_data + i) * *(nii_inv1_data + i)
+        //        + *(nii_inv2_data + i) * *(nii_inv2_data + i) + 2. * beta);
+        // denoised_wrong = (denoised_wrong +0.5) * SIEMENS_f;
+        *(phaseerror_data + i) = wrong_unival;
     }
 
     dddenoised->scl_slope = nii_uni->scl_slope;
@@ -219,15 +220,17 @@ int main(int argc, char* argv[]) {
         string filename = (string) (finfi_3);
         string outfilename = prefix + filename;
         log_output(outfilename.c_str());
-        const char* fout_1 = outfilename.c_str();
-        if (nifti_set_filenames(dddenoised, fout_1, 1, 1)) {
+        if (nifti_set_filenames(dddenoised, outfilename.c_str(), 1, 1)) {
             return 1;
         }
     }
     nifti_image_write(dddenoised);
 
-    const char* fout_2 = "Border_enhance.nii";
-    if (nifti_set_filenames(phaseerror, fout_2, 1, 1)) {
+    // const char* fout_2 = "border_enhance";
+    string prefix = "border_enhance_";
+    string filename = (string) (finfi_3);
+    string outfilename = prefix + filename;
+    if (nifti_set_filenames(phaseerror, outfilename.c_str(), 1, 1)) {
         return 1;
     }
     nifti_image_write(phaseerror);
