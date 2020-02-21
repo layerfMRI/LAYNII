@@ -136,34 +136,14 @@ int main(int argc, char* argv[]) {
     nifti_image* nii_uni = recreate_nii_with_float_datatype(nii3);
     float* nii_uni_data = static_cast<float*>(nii_uni->data);
 
-    // ========================================================================
-
-    /////////////////////////////////////
-    // Make allocating necessary files //
-    /////////////////////////////////////
-    nifti_image* dddenoised = nifti_copy_nim_info(nii_inv1);
-    dddenoised->datatype = NIFTI_TYPE_FLOAT32;
-    dddenoised->nbyper = sizeof(float);
-    dddenoised->data = calloc(dddenoised->nvox, dddenoised->nbyper);
+    // Allocate output nifti files
+    nifti_image* dddenoised = recreate_nii_with_float_datatype(nii_uni);
     float* dddenoised_data = static_cast<float*>(dddenoised->data);
 
-    nifti_image* phaseerror = nifti_copy_nim_info(nii_inv1);
-    phaseerror->datatype = NIFTI_TYPE_FLOAT32;
-    phaseerror->nbyper = sizeof(float);
-    phaseerror->data = calloc(phaseerror->nvox, phaseerror->nbyper);
+    nifti_image* phaseerror = recreate_nii_with_float_datatype(nii_uni);
     float* phaseerror_data = static_cast<float*>(phaseerror->data);
 
-    nifti_image* uni1  = nifti_copy_nim_info(nii_inv1);
-    uni1->datatype = NIFTI_TYPE_FLOAT32;
-    uni1->nbyper = sizeof(float);
-    uni1->data = calloc(uni1->nvox, uni1->nbyper);
-    // float* uni1_data = static_cast<float*>(uni1->data);
-
-    nifti_image* uni2  = nifti_copy_nim_info(nii_inv1);
-    uni2->datatype = NIFTI_TYPE_FLOAT32;
-    uni2->nbyper = sizeof(float);
-    uni2->data = calloc(uni2->nvox, uni2->nbyper);
-    // float* uni2_data = static_cast<float*>(uni2->data);
+    // ========================================================================
 
     ///////////////////////////////////////
     // Big calculation across all voxels //
