@@ -146,14 +146,13 @@ int main(int argc, char* argv[]) {
     // ========================================================================
     // Big calculation across all voxels
 
-    int i = 0;
-    float val_uni = *(nii_uni_data + i);
-    float val_inv1 = *(nii_inv1_data + i);
-    float val_inv2 = *(nii_inv2_data + i);
-    float new_uni1, new_uni2, val_uni_wrong;
-
     beta = beta * SIEMENS_f;
-    for (i = 0; i < nr_voxels; ++i) {
+    for (int i = 0; i < nr_voxels; ++i) {
+        float val_uni = *(nii_uni_data + i);
+        float val_inv1 = *(nii_inv1_data + i);
+        float val_inv2 = *(nii_inv2_data + i);
+        float new_uni1, new_uni2, val_uni_wrong;
+
         // Skip nan or zero voxels
         if (isnan(val_uni) || val_uni == 0 || val_uni == 0.0) {
             *(phaseerror_data + i) = 0;
