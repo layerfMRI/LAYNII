@@ -144,22 +144,10 @@ int main(int argc, char* argv[]) {
     float* phaseerror_data = static_cast<float*>(phaseerror->data);
 
     // ========================================================================
-
-    ///////////////////////////////////////
-    // Big calculation across all voxels //
-    ///////////////////////////////////////
-    // float sign_ = 0;
+    // Big calculation across all voxels
 
     beta = beta * SIEMENS_f;
-
-    float inv2val = 0;
-    // float inv1val = 0;
-    float unival = 0;
-    float wrong_unival = 0;
-
-    float uni1val_calc = 0;
-    float uni2val_calc = 0;
-    // float denoised_wrong = 0;
+    float inv2val, unival, wrong_unival, uni1val_calc, uni2val_calc;
 
     /////////////////////////////////////////////////////////
     // Scaling UNI to range of -0.5 to 0.5 as in the paper //
