@@ -143,26 +143,28 @@ int main(int argc, char* argv[]) {
     /////////////////////////////////////
     // Make allocating necessary files //
     /////////////////////////////////////
-    nifti_image* phaseerror = nifti_copy_nim_info(nii_inv1);
     nifti_image* dddenoised = nifti_copy_nim_info(nii_inv1);
-    phaseerror->datatype = NIFTI_TYPE_FLOAT32;
     dddenoised->datatype = NIFTI_TYPE_FLOAT32;
-    phaseerror->nbyper = sizeof(float);
     dddenoised->nbyper = sizeof(float);
-    phaseerror->data = calloc(phaseerror->nvox, phaseerror->nbyper);
     dddenoised->data = calloc(dddenoised->nvox, dddenoised->nbyper);
-    float* phaseerror_data = static_cast<float*>(phaseerror->data);
     float* dddenoised_data = static_cast<float*>(dddenoised->data);
 
+    nifti_image* phaseerror = nifti_copy_nim_info(nii_inv1);
+    phaseerror->datatype = NIFTI_TYPE_FLOAT32;
+    phaseerror->nbyper = sizeof(float);
+    phaseerror->data = calloc(phaseerror->nvox, phaseerror->nbyper);
+    float* phaseerror_data = static_cast<float*>(phaseerror->data);
+
     nifti_image* uni1  = nifti_copy_nim_info(nii_inv1);
-    nifti_image* uni2  = nifti_copy_nim_info(nii_inv1);
     uni1->datatype = NIFTI_TYPE_FLOAT32;
-    uni2->datatype = NIFTI_TYPE_FLOAT32;
     uni1->nbyper = sizeof(float);
-    uni2->nbyper = sizeof(float);
     uni1->data = calloc(uni1->nvox, uni1->nbyper);
-    uni2->data = calloc(uni2->nvox, uni2->nbyper);
     // float* uni1_data = static_cast<float*>(uni1->data);
+
+    nifti_image* uni2  = nifti_copy_nim_info(nii_inv1);
+    uni2->datatype = NIFTI_TYPE_FLOAT32;
+    uni2->nbyper = sizeof(float);
+    uni2->data = calloc(uni2->nvox, uni2->nbyper);
     // float* uni2_data = static_cast<float*>(uni2->data);
 
     ///////////////////////////////////////
@@ -220,10 +222,10 @@ int main(int argc, char* argv[]) {
 
     if (nii_uni->scl_inter != 0) {
         cout << " ########################################## " << endl;
-        cout << " #####   WARNING   WANRING   WANRING  ##### " << endl;
+        cout << " #####   WARNING   WARNING   WARNING  ##### " << endl;
         cout << " ## the NIFTI scale factor is asymmetric ## " << endl;
-        cout << " ## Why would you do such a thing????    ## " << endl;
-        cout << " #####   WARNING   WANRING   WANRING  ##### " << endl;
+        cout << " ##    Why would you do such a thing?    ## " << endl;
+        cout << " #####   WARNING   WARNING   WARNING  ##### " << endl;
         cout << " ########################################## " << endl;
     }
 
@@ -237,14 +239,13 @@ int main(int argc, char* argv[]) {
     } else {
         string prefix = "denoised_";
         string filename = (string) (finfi_3);
-        string outfilename = prefix+filename;
+        string outfilename = prefix + filename;
         log_output(outfilename.c_str());
         const char* fout_1 = outfilename.c_str();
         if (nifti_set_filenames(dddenoised, fout_1, 1, 1)) {
             return 1;
         }
     }
-
     nifti_image_write(dddenoised);
 
     const char* fout_2 = "Border_enhance.nii";
