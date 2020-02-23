@@ -32,7 +32,7 @@ int show_help(void) {
 
 int main(int argc, char* argv[]) {
     float SIEMENS_f = 4095.0;  // uint12 range 0-4095
-    char* fmaski = NULL, *fout = NULL, *finfi_1 = NULL, *finfi_2 = NULL;
+    char* fout = NULL, *finfi_1 = NULL, *finfi_2 = NULL;
     char* finfi_3 = NULL;
     int ac, custom_output = 0;
     float beta = 0.2;
@@ -147,7 +147,7 @@ int main(int argc, char* argv[]) {
     // Big calculation across all voxels
 
     beta = beta * SIEMENS_f;
-    for (int i = 0; i < nr_voxels; ++i) {
+    for (int i = 0; i != nr_voxels; ++i) {
         float val_uni = *(nii_uni_data + i);
         float val_inv1 = *(nii_inv1_data + i);
         float val_inv2 = *(nii_inv2_data + i);
