@@ -177,7 +177,6 @@ int main(int argc, char*  argv[]) {
 
     for (int grow_i = 1; grow_i != vinc; grow_i++) {
         for (int i = 0; i != nr_voxels; ++i) {
-
             if (*(growfromWM0_data + i) == grow_i) {
                 int ix, iy, iz;
                 tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
@@ -230,46 +229,57 @@ int main(int argc, char*  argv[]) {
     for (int i = 0; i != nr_voxels; ++i) {
         if (*(nim_input_data + i) == 1) {
             *(growfromGM0_data + i) = 1.;
-            int ix, iy, iz;
-            tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
-            *(GMkoordx1_data + i) = ix;
-            *(GMkoordy1_data + i) = iy;
-            *(GMkoordz1_data + i) = iz;
+        } else {
+            *(growfromGM0_data + i) = 0.;
         }
     }
 
     for (int grow_i = 1; grow_i != vinc; grow_i++) {
         for (int i = 0; i != nr_voxels; ++i) {
-            if (*(nim_input_data + i) == 3 && *(growfromGM0_data + i) == 0) {
+            if (*(growfromGM0_data + i) == grow_i) {
                 dist_min2 = 10000.;
                 x1g = 0, y1g = 0, z1g = 0;
                 int ix, iy, iz;
                 tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
 
-                for (int iz_i = max(0, iz - grow_vinc); iz_i < min(iz + grow_vinc, size_z); ++iz_i) {
-                    for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc, size_y); ++iy_i) {
-                        for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc, size_x); ++ix_i) {
-                            if (*(growfromGM0_data + nxy * iz_i + nx * iy_i + ix_i) == (float)grow_i) {
-                                dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                if (dist_i < dist_min2) {
-                                    dist_min2 = dist_i;
-                                    x1g = ix_i;
-                                    y1g = iy_i;
-                                    z1g = iz_i;
-                                }
+                // 1-jump neighbours
+                int n[6] = {-1, -1, -1, -1, -1, -1};
+                if (ix != 0) {
+                    n[0] = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                }
+                if (ix != size_x) {
+                    n[1] = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                }
+                if (iy != 0) {
+                    n[2] = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                }
+                if (iy != size_y) {
+                    n[3] = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                }
+                if (iz != 0) {
+                    n[4] = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                }
+                if (ix != size_z) {
+                    n[5] = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                }
+
+                // Loop 1-jump neighbour voxels add distance in terms of voxels
+                for (int j : n) {
+                    if (j != -1) {  // Valid neighbour
+                        if (*(nim_input_data + j) == 3) {  // Input mask
+                            if (*(growfromGM0_data + j) == 0) {
+                                *(growfromGM0_data + j) = grow_i + 1;
                             }
                         }
                     }
                 }
-                if (dist_min2 < 1.4) {
-                    *(growfromGM0_data + i) = (float)grow_i + 1;
-                    *(GMkoordx1_data + i) = *(GMkoordx1_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
-                    *(GMkoordy1_data + i) = *(GMkoordy1_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
-                    *(GMkoordz1_data + i) = *(GMkoordz1_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
-                }
             }
         }
     }
+    if (nifti_set_filenames(growfromGM0, "growfromGM0.nii", 1, 1)) {
+        return 1;
+    }
+    nifti_image_write(growfromGM0);
 
     // ========================================================================
     // Wabble across neigbour voxels of closest WM to account for Pythagoras errors
