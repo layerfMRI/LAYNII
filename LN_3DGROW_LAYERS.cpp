@@ -101,9 +101,6 @@ int main(int argc, char*  argv[]) {
     nifti_image* growfromGM1 = copy_nifti_header_as_float(nim_input);
     float* growfromGM1_data = static_cast<float*>(growfromGM1->data);
 
-
-    // ========================================================================
-
     nifti_image* WMkoordx1 = copy_nifti_header_as_int(nim_input);
     nifti_image* WMkoordy1 = copy_nifti_header_as_int(nim_input);
     nifti_image* WMkoordz1 = copy_nifti_header_as_int(nim_input);
@@ -132,26 +129,15 @@ int main(int argc, char*  argv[]) {
     int* GMkoordy2_data = static_cast<int*>(GMkoordy2->data);
     int* GMkoordz2_data = static_cast<int*>(GMkoordz2->data);
 
+    // ========================================================================
+
     nifti_image* equi_dist_layers  = copy_nifti_header_as_int(nim_input);
     int* equi_dist_layers_data = static_cast<int*>(equi_dist_layers->data);
 
-    // nifti_image* equi_dist_layers = nifti_image_read(fin, 1);
-    // short  *equi_dist_layers_data = (short *) equi_dist_layers->data;
-    // equi_dist_layers->dim[4] = 1;
-    // nifti_update_dims_from_array(equi_dist_layers);  // changing according sizes nt etc.
-
     // Coordinates
-    float x1g = 0.;
-    float y1g = 0.;
-    float z1g = 0.;
-
-    float x2g = 0.;
-    float y2g = 0.;
-    float z2g = 0.;
-
-    float x3g = 0.;
-    float y3g = 0.;
-    float z3g = 0.;
+    float x1g = 0., y1g = 0., z1g = 0.;
+    float x2g = 0., y2g = 0., z2g = 0.;
+    float x3g = 0., y3g = 0., z3g = 0.;
 
     float dist(float x1, float y1, float z1, float x2, float y2, float z2,
                float dX, float dY, float dZ);
@@ -525,8 +511,8 @@ int main(int argc, char*  argv[]) {
 
 float dist(float x1, float y1, float z1, float x2, float y2, float z2,
            float dX, float dY, float dZ) {
-    return sqrt((x1 - x2) * (x1 - x2) * dX * dX + (y1 - y2) * (y1 - y2)
-                * dY * dY + (z1 - z2) * (z1 - z2) * dZ * dZ);
+    return sqrt(pow((x1 - x2) * dX, 2) + pow((y1 - y2) * dY, 2)
+                + pow((z1 - z2) * dZ, 2));
 }
 
 float angle(float a, float b, float c) {
