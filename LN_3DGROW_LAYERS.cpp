@@ -60,6 +60,7 @@ int main(int argc, char*  argv[]) {
         fprintf(stderr, "** failed to read NIfTI image from '%s'\n", fin);
         return 2;
     }
+    int16_t *nim_input_data = static_cast<__int16_t*>(nim_input->data);
 
     log_welcome("LN_3DGROW_LAYERS");
     log_nifti_descriptives(nim_input);
@@ -79,158 +80,60 @@ int main(int argc, char*  argv[]) {
     const float dY = nim_input->pixdim[2];
     float dZ = nim_input->pixdim[3];
 
-
-    // if (!fout) { fprintf(stderr, "-- no output requested \n"); return 0; }
-    // assign nifti_image fname/iname pair, based on output filename
-    //   (request to 'check' image and 'set_byte_order' here)
-    // if (nifti_set_filenames(nim_input, fout, 1, 1)) return 1;
-
     // Get access to data of nim_input
     if (nim_input->datatype != 4) {
         // nim_input->datatype = NIFTI_TYPE_INT16;
         cout << "  !!!WRONG DATATYPE!!!" << endl;
     }
 
-    cout << "  Datatype 1 " << nim_input->datatype << endl;
+    // ========================================================================
+    // Fix datatype issues
 
-    // nim_input->datatype = 8;
-    // nim_input->nbyper = sizeof(int);
-    // nim_input->data = calloc(nim_input->nvox, nim_input->nbyper);
+    nifti_image* growfromWM0 = copy_nifti_header_as_float(nim_input);
+    float* growfromWM0_data = static_cast<float*>(growfromWM0->data);
 
-    // float* nim_input_data = (float*) nim_input->data;
-    // int* nim_input_data = (int*) nim_input->data;
-    // short *nim_input_data = (short *) nim_input->data;
-    // int16_t *nim_input_data = (__int16_t *) nim_input->data;
-    int16_t *nim_input_data = (__int16_t *) nim_input->data;
+    nifti_image* growfromWM1 = copy_nifti_header_as_float(nim_input);
+    float* growfromWM1_data = static_cast<float*>(growfromWM1->data);
 
-    cout << "  Datatype 2 " << nim_input->datatype << endl;
+    nifti_image* growfromGM0 = copy_nifti_header_as_float(nim_input);
+    float* growfromGM0_data = static_cast<float*>(growfromGM0->data);
 
-    // nifti_brick_list   NB_orig, NB_select;
-    // nifti_image      * nim_orig, * nim_select;
-    // const int64_t                blist[5] = { 0, 0, 0, 0, 0 };
+    nifti_image* growfromGM1 = copy_nifti_header_as_float(nim_input);
+    float* growfromGM1_data = static_cast<float*>(growfromGM1->data);
 
-    // nim_orig   = nifti_image_read_bricks("rim.nii", 0, NULL,  &NB_orig);
-    // nim_select = nifti_image_read_bricks("rim.nii", 5, blist, &NB_select);
-    // update_nifti_image_for_brick_list(nim_orig,  1);
 
-    // allocating an additional nii
-    // const int64_t blist_2[1] = { 0};
-    // nifti_brick_list NB_select_2;
-    // nifti_image* growfromWM = nifti_image_read_bricks("rim.nii", 0, NULL, &NB_select_2);
+    // ========================================================================
 
-    nifti_image* growfromWM0 = nifti_copy_nim_info(nim_input);
-    growfromWM0->datatype = NIFTI_TYPE_FLOAT32;
-    growfromWM0->nbyper = sizeof(float);
-    growfromWM0->data = calloc(growfromWM0->nvox, growfromWM0->nbyper);
-    float* growfromWM0_data = (float*) growfromWM0->data;
+    nifti_image* WMkoordx1 = copy_nifti_header_as_int(nim_input);
+    nifti_image* WMkoordy1 = copy_nifti_header_as_int(nim_input);
+    nifti_image* WMkoordz1 = copy_nifti_header_as_int(nim_input);
+    nifti_image* WMkoordx2 = copy_nifti_header_as_int(nim_input);
+    nifti_image* WMkoordy2 = copy_nifti_header_as_int(nim_input);
+    nifti_image* WMkoordz2 = copy_nifti_header_as_int(nim_input);
 
-    nifti_image* growfromWM1 = nifti_copy_nim_info(nim_input);
-    growfromWM1->datatype = NIFTI_TYPE_FLOAT32;
-    growfromWM1->nbyper = sizeof(float);
-    growfromWM1->data = calloc(growfromWM1->nvox, growfromWM1->nbyper);
-    float* growfromWM1_data = (float*) growfromWM1->data;
+    int* WMkoordx1_data = static_cast<int*>(WMkoordx1->data);
+    int* WMkoordy1_data = static_cast<int*>(WMkoordy1->data);
+    int* WMkoordz1_data = static_cast<int*>(WMkoordz1->data);
+    int* WMkoordx2_data = static_cast<int*>(WMkoordx2->data);
+    int* WMkoordy2_data = static_cast<int*>(WMkoordy2->data);
+    int* WMkoordz2_data = static_cast<int*>(WMkoordz2->data);
 
-    // nifti_image* growfromWM1 = nifti_image_read(fin, 1);
-    // float* growfromWM1_data = (float*) growfromWM1->data;
-    // nifti_image* growfromWM0 = nifti_image_read(fin, 1);
-    // float* growfromWM0_data = (float*) growfromWM0->data;
-    // growfromWM->dim[4] = 1;
-    // nifti_update_dims_from_array(growfromWM);  // changing according sizes nt etc.
+    nifti_image* GMkoordx1 = copy_nifti_header_as_int(nim_input);
+    nifti_image* GMkoordy1 = copy_nifti_header_as_int(nim_input);
+    nifti_image* GMkoordz1 = copy_nifti_header_as_int(nim_input);
+    nifti_image* GMkoordx2 = copy_nifti_header_as_int(nim_input);
+    nifti_image* GMkoordy2 = copy_nifti_header_as_int(nim_input);
+    nifti_image* GMkoordz2 = copy_nifti_header_as_int(nim_input);
 
-    nifti_image* WMkoordx1 = nifti_copy_nim_info(nim_input);
-    nifti_image* WMkoordy1 = nifti_copy_nim_info(nim_input);
-    nifti_image* WMkoordz1 = nifti_copy_nim_info(nim_input);
-    nifti_image* WMkoordx2 = nifti_copy_nim_info(nim_input);
-    nifti_image* WMkoordy2 = nifti_copy_nim_info(nim_input);
-    nifti_image* WMkoordz2 = nifti_copy_nim_info(nim_input);
+    int* GMkoordx1_data = static_cast<int*>(GMkoordx1->data);
+    int* GMkoordy1_data = static_cast<int*>(GMkoordy1->data);
+    int* GMkoordz1_data = static_cast<int*>(GMkoordz1->data);
+    int* GMkoordx2_data = static_cast<int*>(GMkoordx2->data);
+    int* GMkoordy2_data = static_cast<int*>(GMkoordy2->data);
+    int* GMkoordz2_data = static_cast<int*>(GMkoordz2->data);
 
-    WMkoordx1->datatype = NIFTI_TYPE_INT32;
-    WMkoordy1->datatype = NIFTI_TYPE_INT32;
-    WMkoordz1->datatype = NIFTI_TYPE_INT32;
-    WMkoordx2->datatype = NIFTI_TYPE_INT32;
-    WMkoordy2->datatype = NIFTI_TYPE_INT32;
-    WMkoordz2->datatype = NIFTI_TYPE_INT32;
-
-    WMkoordx1->nbyper = sizeof(int);
-    WMkoordy1->nbyper = sizeof(int);
-    WMkoordz1->nbyper = sizeof(int);
-    WMkoordx2->nbyper = sizeof(int);
-    WMkoordy2->nbyper = sizeof(int);
-    WMkoordz2->nbyper = sizeof(int);
-
-    WMkoordx1->data = calloc(WMkoordx1->nvox, WMkoordx1->nbyper);
-    WMkoordy1->data = calloc(WMkoordy1->nvox, WMkoordy1->nbyper);
-    WMkoordz1->data = calloc(WMkoordz1->nvox, WMkoordz1->nbyper);
-    WMkoordx2->data = calloc(WMkoordx2->nvox, WMkoordx2->nbyper);
-    WMkoordy2->data = calloc(WMkoordy2->nvox, WMkoordy2->nbyper);
-    WMkoordz2->data = calloc(WMkoordz2->nvox, WMkoordz2->nbyper);
-
-    int* WMkoordx1_data = (int*) WMkoordx1->data;
-    int* WMkoordy1_data = (int*) WMkoordy1->data;
-    int* WMkoordz1_data = (int*) WMkoordz1->data;
-    int* WMkoordx2_data = (int*) WMkoordx2->data;
-    int* WMkoordy2_data = (int*) WMkoordy2->data;
-    int* WMkoordz2_data = (int*) WMkoordz2->data;
-
-    nifti_image* growfromGM0  = nifti_copy_nim_info(nim_input);
-    growfromGM0->datatype = NIFTI_TYPE_FLOAT32;
-    growfromGM0->nbyper = sizeof(float);
-    growfromGM0->data = calloc(growfromGM0->nvox, growfromGM0->nbyper);
-    float* growfromGM0_data = (float*) growfromGM0->data;
-
-    nifti_image* growfromGM1  = nifti_copy_nim_info(nim_input);
-    growfromGM1->datatype = NIFTI_TYPE_FLOAT32;
-    growfromGM1->nbyper = sizeof(float);
-    growfromGM1->data = calloc(growfromGM1->nvox, growfromGM1->nbyper);
-    float* growfromGM1_data = (float*) growfromGM1->data;
-
-    // nifti_image* growfromGM1 = nifti_image_read(fin, 1);
-    // float* growfromGM1_data = (float*) growfromGM1->data;
-    // nifti_image* growfromGM0 = nifti_image_read(fin, 1);
-    // float* growfromGM0_data = (float*) growfromGM0->data;
-    // growfromWM->dim[4] = 2;
-    // nifti_update_dims_from_array(growfromGM);  // changing according sizes nt etc.
-
-    nifti_image* GMkoordx1 = nifti_copy_nim_info(nim_input);
-    nifti_image* GMkoordy1 = nifti_copy_nim_info(nim_input);
-    nifti_image* GMkoordz1 = nifti_copy_nim_info(nim_input);
-    nifti_image* GMkoordx2 = nifti_copy_nim_info(nim_input);
-    nifti_image* GMkoordy2 = nifti_copy_nim_info(nim_input);
-    nifti_image* GMkoordz2 = nifti_copy_nim_info(nim_input);
-
-    GMkoordx1->datatype = NIFTI_TYPE_INT32;
-    GMkoordy1->datatype = NIFTI_TYPE_INT32;
-    GMkoordz1->datatype = NIFTI_TYPE_INT32;
-    GMkoordx2->datatype = NIFTI_TYPE_INT32;
-    GMkoordy2->datatype = NIFTI_TYPE_INT32;
-    GMkoordz2->datatype = NIFTI_TYPE_INT32;
-
-    GMkoordx1->nbyper = sizeof(int);
-    GMkoordy1->nbyper = sizeof(int);
-    GMkoordz1->nbyper = sizeof(int);
-    GMkoordx2->nbyper = sizeof(int);
-    GMkoordy2->nbyper = sizeof(int);
-    GMkoordz2->nbyper = sizeof(int);
-
-    GMkoordx1->data = calloc(GMkoordx1->nvox, GMkoordx1->nbyper);
-    GMkoordy1->data = calloc(GMkoordy1->nvox, GMkoordy1->nbyper);
-    GMkoordz1->data = calloc(GMkoordz1->nvox, GMkoordz1->nbyper);
-    GMkoordx2->data = calloc(GMkoordx2->nvox, GMkoordx2->nbyper);
-    GMkoordy2->data = calloc(GMkoordy2->nvox, GMkoordy2->nbyper);
-    GMkoordz2->data = calloc(GMkoordz2->nvox, GMkoordz2->nbyper);
-
-    int* GMkoordx1_data = (int*) GMkoordx1->data;
-    int* GMkoordy1_data = (int*) GMkoordy1->data;
-    int* GMkoordz1_data = (int*) GMkoordz1->data;
-    int* GMkoordx2_data = (int*) GMkoordx2->data;
-    int* GMkoordy2_data = (int*) GMkoordy2->data;
-    int* GMkoordz2_data = (int*) GMkoordz2->data;
-
-    nifti_image* equi_dist_layers  = nifti_copy_nim_info(nim_input);
-    equi_dist_layers->datatype = NIFTI_TYPE_INT32;
-    equi_dist_layers->nbyper = sizeof(int);
-    equi_dist_layers->data = calloc(equi_dist_layers->nvox, equi_dist_layers->nbyper);
-    int* equi_dist_layers_data = (int*) equi_dist_layers->data;
+    nifti_image* equi_dist_layers  = copy_nifti_header_as_int(nim_input);
+    int* equi_dist_layers_data = static_cast<int*>(equi_dist_layers->data);
 
     // nifti_image* equi_dist_layers = nifti_image_read(fin, 1);
     // short  *equi_dist_layers_data = (short *) equi_dist_layers->data;

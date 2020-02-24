@@ -121,7 +121,7 @@ void log_nifti_descriptives(nifti_image* nii) {
 // ============================================================================
 // Utility functions
 
-nifti_image* recreate_nii_with_float_datatype(nifti_image* nii) {
+nifti_image* copy_nifti_header_as_float(nifti_image* nii) {
     ///////////////////////////////////////////////////////////////////////////
     // NOTE(Renzo): Fixing potential problems with different input datatypes //
     // here, I am loading them in their native datatype and translate them   //
@@ -145,36 +145,44 @@ nifti_image* recreate_nii_with_float_datatype(nifti_image* nii) {
     nii_new->datatype = NIFTI_TYPE_FLOAT32;
     nii_new->nbyper = sizeof(float);
     nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
-    float* nii_new_data = static_cast<float*>(nii_new->data);
+    // float* nii_new_data = static_cast<float*>(nii_new->data);
 
-    if (nii->datatype == NIFTI_TYPE_INT8
-        || nii->datatype == DT_UINT8) {
-        int8_t* temp = static_cast<int8_t*>(nii->data);
-        for (int i = 0; i < nr_voxels; ++i) {
-            *(nii_new_data + i) = static_cast<float>(*(temp + i));
-        }
-    } else if (nii->datatype == NIFTI_TYPE_INT16
-               || nii->datatype == DT_UINT16) {
-        int16_t* temp = static_cast<int16_t*>(nii->data);
-        for (int i = 0; i < nr_voxels; ++i) {
-            *(nii_new_data + i) = static_cast<float>(*(temp + i));
-        }
-    } else if (nii->datatype == NIFTI_TYPE_INT32) {
-        int* temp = static_cast<int*>(nii->data);
-        for (int i = 0; i < nr_voxels; ++i) {
-            *(nii_new_data + i) = static_cast<float>(*(temp + i));
-        }
-    } else if (nii->datatype == NIFTI_TYPE_FLOAT32) {
-        float* temp = static_cast<float*>(nii->data);
-        for (int i = 0; i < nr_voxels; ++i) {
-            *(nii_new_data + i) = static_cast<float>(*(temp + i));
-        }
-    } else if (nii->datatype == NIFTI_TYPE_FLOAT64
-               || nii->datatype == DT_FLOAT64) {
-        double* temp = static_cast<double*>(nii->data);
-    for (int i = 0; i < nr_voxels; ++i) {
-            *(nii_new_data + i) = static_cast<float>(*(temp + i));
-        }
-    }
+    // if (nii->datatype == NIFTI_TYPE_INT8
+    //     || nii->datatype == DT_UINT8) {
+    //     int8_t* temp = static_cast<int8_t*>(nii->data);
+    //     for (int i = 0; i < nr_voxels; ++i) {
+    //         *(nii_new_data + i) = static_cast<float>(*(temp + i));
+    //     }
+    // } else if (nii->datatype == NIFTI_TYPE_INT16
+    //            || nii->datatype == DT_UINT16) {
+    //     int16_t* temp = static_cast<int16_t*>(nii->data);
+    //     for (int i = 0; i < nr_voxels; ++i) {
+    //         *(nii_new_data + i) = static_cast<float>(*(temp + i));
+    //     }
+    // } else if (nii->datatype == NIFTI_TYPE_INT32) {
+    //     int* temp = static_cast<int*>(nii->data);
+    //     for (int i = 0; i < nr_voxels; ++i) {
+    //         *(nii_new_data + i) = static_cast<float>(*(temp + i));
+    //     }
+    // } else if (nii->datatype == NIFTI_TYPE_FLOAT32) {
+    //     float* temp = static_cast<float*>(nii->data);
+    //     for (int i = 0; i < nr_voxels; ++i) {
+    //         *(nii_new_data + i) = static_cast<float>(*(temp + i));
+    //     }
+    // } else if (nii->datatype == NIFTI_TYPE_FLOAT64
+    //            || nii->datatype == DT_FLOAT64) {
+    //     double* temp = static_cast<double*>(nii->data);
+    //     for (int i = 0; i < nr_voxels; ++i) {
+    //         *(nii_new_data + i) = static_cast<float>(*(temp + i));
+    //     }
+    // }
+    return nii_new;
+}
+
+nifti_image* copy_nifti_header_as_int(nifti_image* nii) {
+    nifti_image* nii_new = nifti_copy_nim_info(nii);
+    nii_new->datatype = NIFTI_TYPE_INT32;
+    nii_new->nbyper = sizeof(int);
+    nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
     return nii_new;
 }
