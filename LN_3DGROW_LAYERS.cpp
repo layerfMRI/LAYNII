@@ -65,13 +65,16 @@ int main(int argc, char*  argv[]) {
     log_nifti_descriptives(nim_input);
 
     // Get dimensions of input
-    const int sizeSlice = nim_input->nz;
-    const int sizePhase = nim_input->nx;
-    const int sizeRead = nim_input->ny;
+    const int size_z = nim_input->nz;
+    const int size_x = nim_input->nx;
+    const int size_y = nim_input->ny;
     // const int nrep = nim_input->nt;
     const int nx = nim_input->nx;
     const int nxy = nim_input->nx * nim_input->ny;
     // const int nxyz = nim_input->nx * nim_input->ny * nim_input->nz;
+
+    const int nr_voxels = size_z * size_y * size_x;
+
     const float dX = nim_input->pixdim[1];
     const float dY = nim_input->pixdim[2];
     float dZ = nim_input->pixdim[3];
@@ -266,21 +269,16 @@ int main(int argc, char*  argv[]) {
     float dist_max = 0.;
     float dist_p1 = 0.;
 
-    int number_of_layers = 20;
+    int nr_layers = 20;
 
     cout << "  Start growing from WM..." << endl;
 
     // Setting zero
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead - 0; ++ix) {
-                *(growfromWM0_data + VOXEL_ID_3D) = 0;
-                *(growfromWM1_data + VOXEL_ID_3D) = 0;
-
-                *(growfromGM0_data + VOXEL_ID_3D) = 0;
-                *(growfromGM1_data + VOXEL_ID_3D) = 0;
-            }
-        }
+    for (int i = 0; i != nr_voxels; ++i) {
+        *(growfromWM0_data + i) = 0;
+        *(growfromWM1_data + i) = 0;
+        *(growfromGM0_data + i) = 0;
+        *(growfromGM1_data + i) = 0;
     }
 
     /////////////////////////
@@ -292,16 +290,16 @@ int main(int argc, char*  argv[]) {
     // int isWMb, isCSFb, isb;
     //
     // for (int iterations = 0; iterations< 100; ++iterations) {
-    //     for (int iz=0; iz<sizeSlice; ++iz) {
-    //         for (int iy=0; iy<sizePhase; ++iy) {
-    //             for (int ix=0; ix<sizeRead-0; ++ix) {
+    //     for (int iz=0; iz<size_z; ++iz) {
+    //         for (int iy=0; iy<size_x; ++iy) {
+    //             for (int ix=0; ix<size_y-0; ++ix) {
     //                 if (*(nim_input_data + VOXEL_ID_3D) == 0) {
     //                     isWMb=0;
     //                     isCSFb=0;
     //                     isb=0;
-    //                     for (int iz_i=max(0,iz-2); iz_i<min(sizeSlice,iz+2); ++iz_i) {
-    //                         for (int iy_i=max(0,iy-2); iy_i<minxy * izn(sizePhase,iy+2); ++iy_i) {
-    //                             for (int ix_i=max(0,ix-2); ix_i<min(sizeRead,ix+2); ++ix_i) {
+    //                     for (int iz_i=max(0,iz-2); iz_i<min(size_z,iz+2); ++iz_i) {
+    //                         for (int iy_i=max(0,iy-2); iy_i<minxy * izn(size_x,iy+2); ++iy_i) {
+    //                             for (int ix_i=max(0,ix-2); ix_i<min(size_y,ix+2); ++ix_i) {
     //                                 if (*(nim_input_data + nxy * iz_i + nx * ix_i + iy_i) == 3) isb = 1;
     //                                 if (*(nim_input_data + nxy * iz_i + nx * ix_i + iy_i) == 1) isCSFb = 1;
     //                                 if (*(nim_input_data + nxy * iz_i + nx * ix_i + iy_i) == 2) isWMb = 1;
@@ -324,9 +322,9 @@ int main(int argc, char*  argv[]) {
     // Grow from WM //
     //////////////////
     int grow_vinc = 2;
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead-0; ++ix) {
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
                 if (*(nim_input_data + VOXEL_ID_3D) == 2) {
                     *(growfromWM0_data + VOXEL_ID_3D) = 1.;
                     *(WMkoordx1_data + VOXEL_ID_3D) = ix;
@@ -338,19 +336,19 @@ int main(int argc, char*  argv[]) {
     }
 
     for (int grow_i = 1; grow_i < vinc; grow_i++) {
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead - 0; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x; ++ix) {
                     dist_min2 = 10000.;
                     x1g = 0;
                     y1g = 0;
                     z1g = 0;
                     if (*(nim_input_data + VOXEL_ID_3D) == 3 && *(growfromWM0_data + VOXEL_ID_3D) == 0) {
                         // cout << "  True   " << *(growfromWM0_data + nxy*islice + nx * ix + iy)<< endl;
-                        for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc, sizePhase); ++iy_i) {
-                            for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc, sizeRead); ++ix_i) {
-                                for (int iz_i = max(0, iz - grow_vinc); iz_i < min(iz + grow_vinc, sizeRead); ++iz_i) {
-                                    if (*(growfromWM0_data + nxy * iz_i + nx * ix_i + iy_i) == (float)grow_i) {
+                        for (int iz_i = max(0, iz - grow_vinc); iz_i < min(iz + grow_vinc, size_z); ++iz_i) {
+                            for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc, size_y); ++iy_i) {
+                                for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc, size_x); ++ix_i) {
+                                    if (*(growfromWM0_data + nxy * iz_i + nx * iy_i + ix_i) == (float)grow_i) {
                                         dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                         if (dist_i < dist_min2) {
                                             dist_min2 = dist_i;
@@ -365,13 +363,11 @@ int main(int argc, char*  argv[]) {
                         }
                         if (dist_min2 < 1.4) {
                             // distDebug(0,islice,iy,ix) = dist_min2;
-                            *(growfromWM0_data + VOXEL_ID_3D) = (float)grow_i+1;
-                            *(WMkoordx1_data + VOXEL_ID_3D) = *(WMkoordx1_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
-                            *(WMkoordy1_data + VOXEL_ID_3D) = *(WMkoordy1_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
-                            *(WMkoordz1_data + VOXEL_ID_3D) = *(WMkoordz1_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
-
+                            *(growfromWM0_data + VOXEL_ID_3D) = (float)grow_i + 1;
+                            *(WMkoordx1_data + VOXEL_ID_3D) = *(WMkoordx1_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
+                            *(WMkoordy1_data + VOXEL_ID_3D) = *(WMkoordy1_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
+                            *(WMkoordz1_data + VOXEL_ID_3D) = *(WMkoordz1_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
                         }
-                        //cout << " ix   "  << ix << " iy   "  << iy  << "    " << *(WMkoordx1_data + nxy*islice + nx*(int)x1g + (int)y1g)<< endl;
                     }
                 }
             }
@@ -382,9 +378,9 @@ int main(int argc, char*  argv[]) {
     // Grow from CSF //
     ///////////////////
     cout << "  Start growing from CSF ..." << endl;
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead-0; ++ix) {
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
                 if (*(nim_input_data + VOXEL_ID_3D) == 1) {
                     *(growfromGM0_data + VOXEL_ID_3D) = 1.;
                     *(GMkoordx1_data + VOXEL_ID_3D) = ix;
@@ -396,18 +392,18 @@ int main(int argc, char*  argv[]) {
     }
 
     for (int grow_i = 1; grow_i < vinc; grow_i++) {
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x; ++ix) {
                     dist_min2 = 10000.;
                     x1g = 0.;
                     y1g = 0;
                     z1g = 0;
                     if (*(nim_input_data + VOXEL_ID_3D) == 3 && *(growfromGM0_data + VOXEL_ID_3D) == 0) {
-                        for (int iz_i = max(0, iz - grow_vinc); iz_i < min(iz + grow_vinc, sizeRead); ++iz_i) {
-                            for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc, sizePhase); ++iy_i) {
-                                for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc, sizeRead); ++ix_i) {
-                                    if (*(growfromGM0_data + nxy * iz_i + nx * ix_i + iy_i) == (float)grow_i) {
+                        for (int iz_i = max(0, iz - grow_vinc); iz_i < min(iz + grow_vinc, size_z); ++iz_i) {
+                            for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc, size_y); ++iy_i) {
+                                for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc, size_x); ++ix_i) {
+                                    if (*(growfromGM0_data + nxy * iz_i + nx * iy_i + ix_i) == (float)grow_i) {
                                         dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                         if (dist_i < dist_min2) {
                                             dist_min2 = dist_i;
@@ -422,9 +418,9 @@ int main(int argc, char*  argv[]) {
                         }
                         if (dist_min2 < 1.4) {
                             *(growfromGM0_data + VOXEL_ID_3D) = (float)grow_i + 1;
-                            *(GMkoordx1_data + VOXEL_ID_3D) = *(GMkoordx1_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
-                            *(GMkoordy1_data + VOXEL_ID_3D) = *(GMkoordy1_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
-                            *(GMkoordz1_data + VOXEL_ID_3D) = *(GMkoordz1_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
+                            *(GMkoordx1_data + VOXEL_ID_3D) = *(GMkoordx1_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
+                            *(GMkoordy1_data + VOXEL_ID_3D) = *(GMkoordy1_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
+                            *(GMkoordz1_data + VOXEL_ID_3D) = *(GMkoordz1_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
                         }
                     }
                 }
@@ -434,12 +430,12 @@ int main(int argc, char*  argv[]) {
 
     ////////////////////////////////////////////////////
     // Wabble across neigbouring voxles of closest WM //
-    // to account for Pytagoras errors /////////////////
+    // to account for Pythagoras errors               //
     ////////////////////////////////////////////////////
-    cout << "  Correct for Pytagoras error..." << endl;
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead - 0; ++ix) {
+    cout << "  Correct for Pythagoras error..." << endl;
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
                 *(growfromWM1_data + VOXEL_ID_3D) = *(growfromWM0_data + VOXEL_ID_3D);
                 *(WMkoordx2_data + VOXEL_ID_3D) = *(WMkoordx1_data + VOXEL_ID_3D);
                 *(WMkoordy2_data + VOXEL_ID_3D) = *(WMkoordy1_data + VOXEL_ID_3D);
@@ -449,19 +445,19 @@ int main(int argc, char*  argv[]) {
     }
 
     for (int grow_i = 1; grow_i < vinc; grow_i++) {
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x; ++ix) {
                     if (*(WMkoordy1_data + VOXEL_ID_3D) != 0) {
                         dist_min2 = 10000.;
                         x1g = 0;
                         y1g = 0;
                         z1g = 0;
 
-                        for (int iy_i = max(0, (*(WMkoordy2_data + VOXEL_ID_3D)) - grow_vinc); iy_i < min((*(WMkoordy2_data + VOXEL_ID_3D)) + grow_vinc, sizePhase); ++iy_i) {
-                            for (int ix_i = max(0, (*(WMkoordx2_data + VOXEL_ID_3D)) - grow_vinc); ix_i < min((*(WMkoordx2_data + VOXEL_ID_3D)) + grow_vinc, sizeRead); ++ix_i) {
-                                for (int iz_i = max(0, (*(WMkoordz2_data + VOXEL_ID_3D)) - grow_vinc); iz_i < min((*(WMkoordz2_data + VOXEL_ID_3D)) + grow_vinc, sizeSlice); ++iz_i) {
-                                    if (*(nim_input_data + nxy * iz_i + nx * ix_i + iy_i) == 2) {
+                        for (int iz_i = max(0, (*(WMkoordz2_data + VOXEL_ID_3D)) - grow_vinc); iz_i < min((*(WMkoordz2_data + VOXEL_ID_3D)) + grow_vinc, size_z); ++iz_i) {
+                            for (int iy_i = max(0, (*(WMkoordy2_data + VOXEL_ID_3D)) - grow_vinc); iy_i < min((*(WMkoordy2_data + VOXEL_ID_3D)) + grow_vinc, size_y); ++iy_i) {
+                                for (int ix_i = max(0, (*(WMkoordx2_data + VOXEL_ID_3D)) - grow_vinc); ix_i < min((*(WMkoordx2_data + VOXEL_ID_3D)) + grow_vinc, size_x); ++ix_i) {
+                                    if (*(nim_input_data + nxy * iz_i + nx * iy_i + ix_i) == 2) {
                                         dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                         if (dist_i < dist_min2) {
                                             dist_min2 = dist_i;
@@ -475,9 +471,9 @@ int main(int argc, char*  argv[]) {
                             }
                         }
                         *(growfromWM1_data + VOXEL_ID_3D) = dist((float)ix, (float)iy, (float)iz, (float)x1g, (float)y1g, (float)z1g, dX, dY, dZ);
-                        *(WMkoordx2_data + VOXEL_ID_3D) = *(WMkoordx2_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
-                        *(WMkoordy2_data + VOXEL_ID_3D) = *(WMkoordy2_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
-                        *(WMkoordz2_data + VOXEL_ID_3D) = *(WMkoordz2_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
+                        *(WMkoordx2_data + VOXEL_ID_3D) = *(WMkoordx2_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
+                        *(WMkoordy2_data + VOXEL_ID_3D) = *(WMkoordy2_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
+                        *(WMkoordz2_data + VOXEL_ID_3D) = *(WMkoordz2_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
                     }
                 }
             }
@@ -487,11 +483,11 @@ int main(int argc, char*  argv[]) {
 
     //////////////////////////////////////////////////////
     // Wabble accross neigbouring voexles of closest GM //
-    // to account for Pytagoras errors ///////////////////
+    // to account for Pythagoras errors                 //
     //////////////////////////////////////////////////////
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead-0; ++ix) {
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
                 *(growfromGM1_data + VOXEL_ID_3D) = *(growfromGM0_data + VOXEL_ID_3D);
                 *(GMkoordx2_data + VOXEL_ID_3D) = *(GMkoordx1_data + VOXEL_ID_3D);
                 *(GMkoordy2_data + VOXEL_ID_3D) = *(GMkoordy1_data + VOXEL_ID_3D);
@@ -502,18 +498,18 @@ int main(int argc, char*  argv[]) {
     cout << "  Running until stage 2..." << endl;
 
     for (int grow_i = 1; grow_i < vinc; grow_i++) {
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix=0; ix < sizeRead - 0; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x; ++ix) {
                     if (*(GMkoordy1_data + VOXEL_ID_3D) != 0) {
                         dist_min2 = 10000.;
                         x1g = 0;
                         y1g = 0;
                         z1g = 0;
-                        for (int iy_i = max(0, (*(GMkoordy2_data + VOXEL_ID_3D)) - grow_vinc); iy_i < min((*(GMkoordy2_data + VOXEL_ID_3D)) + grow_vinc, sizePhase); ++iy_i) {
-                            for (int ix_i=max(0, (*(GMkoordx2_data + VOXEL_ID_3D)) - grow_vinc); ix_i < min((*(GMkoordx2_data + VOXEL_ID_3D)) + grow_vinc, sizeRead); ++ix_i) {
-                                for (int iz_i=max(0, (*(GMkoordz2_data + VOXEL_ID_3D)) - grow_vinc); iz_i < min((*(GMkoordz2_data + VOXEL_ID_3D)) + grow_vinc, sizeRead); ++iz_i) {
-                                    if (*(nim_input_data + nxy * iz_i + nx * ix_i + iy_i)  == 1) {
+                        for (int iz_i = max(0, (*(GMkoordz2_data + VOXEL_ID_3D)) - grow_vinc); iz_i < min((*(GMkoordz2_data + VOXEL_ID_3D)) + grow_vinc, size_z); ++iz_i) {
+                            for (int iy_i = max(0, (*(GMkoordy2_data + VOXEL_ID_3D)) - grow_vinc); iy_i < min((*(GMkoordy2_data + VOXEL_ID_3D)) + grow_vinc, size_y); ++iy_i) {
+                                for (int ix_i = max(0, (*(GMkoordx2_data + VOXEL_ID_3D)) - grow_vinc); ix_i < min((*(GMkoordx2_data + VOXEL_ID_3D)) + grow_vinc, size_x); ++ix_i) {
+                                    if (*(nim_input_data + nxy * iz_i + nx * iy_i + ix_i)  == 1) {
                                         dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                         if (dist_i < dist_min2) {
                                             dist_min2 = dist_i;
@@ -527,9 +523,9 @@ int main(int argc, char*  argv[]) {
                             }
                         }
                         *(growfromGM1_data + VOXEL_ID_3D) = dist((float)ix, (float)iy, (float)iz, (float)x1g, (float)y1g, (float)z1g, dX, dY, dZ);
-                        *(GMkoordx2_data + VOXEL_ID_3D) = *(GMkoordx2_data + nxy*(int)z1g + nx * (int)x1g + (int)y1g);
-                        *(GMkoordy2_data + VOXEL_ID_3D) = *(GMkoordy2_data + nxy*(int)z1g + nx * (int)x1g + (int)y1g);
-                        *(GMkoordz2_data + VOXEL_ID_3D) = *(GMkoordz2_data + nxy*(int)z1g + nx * (int)x1g + (int)y1g);
+                        *(GMkoordx2_data + VOXEL_ID_3D) = *(GMkoordx2_data + nxy*(int)z1g + nx * (int)y1g + (int)x1g);
+                        *(GMkoordy2_data + VOXEL_ID_3D) = *(GMkoordy2_data + nxy*(int)z1g + nx * (int)y1g + (int)x1g);
+                        *(GMkoordz2_data + VOXEL_ID_3D) = *(GMkoordz2_data + nxy*(int)z1g + nx * (int)y1g + (int)x1g);
                     }
                 }
             }
@@ -540,9 +536,9 @@ int main(int argc, char*  argv[]) {
     int GMK2_i, GMKz2_i, GMK3_i, WMK2_i, WMKz2_i, WMK3_i;
     float GMK2_f, GMKz2_f, GMK3_f, WMK2_f, WMKz2_f, WMK3_f, ix_f, iy_f, iz_f;
 
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead - 0; ++ix) {
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
                 if (*(nim_input_data + VOXEL_ID_3D) == 3) {
                     // equi_dist_layers(0,iz,iy,ix) = 19 * (1 - dist((float)ix, (float)iy, (float)GMkoord(2, iz, iy, ix), (float)GMkoord(3, iz, iy, ix)) / (dist((float)ix,(float)iy,(float)GMkoord(2, iz, iy, ix),(float)GMkoord(3, iz, iy, ix)) + dist((float)ix,(float)iy,(float)WMkoord(2,iz,iy,ix), (float)WMkoord(3, iz, iy, ix)))) + 2;
                     GMK2_i = *(GMkoordx2_data + VOXEL_ID_3D);
@@ -575,9 +571,9 @@ int main(int argc, char*  argv[]) {
     cout << "  Running until stage 4..." << endl;
 
     // Cleaning negative layers and layers ov more than 20
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead - 0; ++ix) {
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
                 if (*(nim_input_data + VOXEL_ID_3D) == 1
                     && *(equi_dist_layers_data + VOXEL_ID_3D) == 0) {
                     *(equi_dist_layers_data + VOXEL_ID_3D) = 21;
