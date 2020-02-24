@@ -1,13 +1,9 @@
 
-// TODO(@Renzo): Check the vincinity loops. the "+1" are missing and
-// the z_dimensions is limited by REAN dimension????
-
-
 #include "./laynii_lib.h"
 
 int show_help(void) {
     printf(
-    "LN_3DGROW_LAYERS: Short exmample of cortical gray matter layering.\n"
+    "LN_3DGROW_LAYERS: Cortical gray matter layering.\n"
     "\n"
     "Usage:\n"
     "    LN_3DGROW_LAYERS -rim rim.nii \n"
@@ -27,7 +23,7 @@ int show_help(void) {
 
 int main(int argc, char*  argv[]) {
     nifti_image*nim_input = NULL;
-    char* fin = NULL, *fout = NULL;
+    char* fin = NULL;
     int ac, disp_float_eg = 0;
     if (argc < 2) {
         return show_help();   // typing '-help' is sooo much work
@@ -78,7 +74,7 @@ int main(int argc, char*  argv[]) {
 
     const float dX = nim_input->pixdim[1];
     const float dY = nim_input->pixdim[2];
-    float dZ = nim_input->pixdim[3];
+    const float dZ = nim_input->pixdim[3];
 
     // Get access to data of nim_input
     if (nim_input->datatype != 4) {
@@ -136,8 +132,6 @@ int main(int argc, char*  argv[]) {
 
     // Coordinates
     float x1g = 0., y1g = 0., z1g = 0.;
-    float x2g = 0., y2g = 0., z2g = 0.;
-    float x3g = 0., y3g = 0., z3g = 0.;
 
     float dist(float x1, float y1, float z1, float x2, float y2, float z2,
                float dX, float dY, float dZ);
@@ -148,15 +142,12 @@ int main(int argc, char*  argv[]) {
 
     // This is the distance from every voxel that the algorithm is applied on.
     // Just to make it faster and not loop over all voxels.
-    int vinc = 80;
+    int vinc = 81;
 
     float dist_i = 0.;
-    float dist_min = 0.;
-    float dist_min1 = 0.;
     float dist_min2 = 0.;
     float dist_min3 = 0.;
     float dist_max = 0.;
-    float dist_p1 = 0.;
 
     int nr_layers = 20;
 
@@ -170,62 +161,70 @@ int main(int argc, char*  argv[]) {
         *(growfromGM1_data + i) = 0;
     }
 
-    //////////////////
-    // Grow from WM //
-    //////////////////
+    // ========================================================================
+    // Grow from WM
+    // ========================================================================
     int grow_vinc = 2;
 
+    // Initialize grow volume
     for (int i = 0; i != nr_voxels; ++i) {
-        if (*(nim_input_data + i) == 2) {
-            int ix, iy, iz;
-            tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+        if (*(nim_input_data + i) == 2) {  // WM boundary voxels within GM
             *(growfromWM0_data + i) = 1.;
-            *(WMkoordx1_data + i) = ix;
-            *(WMkoordy1_data + i) = iy;
-            *(WMkoordz1_data + i) = iz;
+        } else {
+            *(growfromWM0_data + i) = 0.;
         }
     }
 
-    for (int grow_i = 1; grow_i < vinc; grow_i++) {
+    for (int grow_i = 1; grow_i != vinc; grow_i++) {
         for (int i = 0; i != nr_voxels; ++i) {
 
-            if (*(nim_input_data + i) == 3 && *(growfromWM0_data + i) == 0) {
-                dist_min2 = 10000.;
-                x1g = 0, y1g = 0, z1g = 0;
+            if (*(growfromWM0_data + i) == grow_i) {
                 int ix, iy, iz;
                 tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
 
-                for (int iz_i = max(0, iz - grow_vinc); iz_i != min(iz + grow_vinc, size_z); ++iz_i) {
-                    for (int iy_i = max(0, iy - grow_vinc); iy_i != min(iy + grow_vinc, size_y); ++iy_i) {
-                        for (int ix_i = max(0, ix - grow_vinc); ix_i != min(ix + grow_vinc, size_x); ++ix_i) {
+                // 1-jump neighbours
+                int n[6] = {-1, -1, -1, -1, -1, -1};
+                if (ix != 0) {
+                    n[0] = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                }
+                if (ix != size_x) {
+                    n[1] = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                }
+                if (iy != 0) {
+                    n[2] = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                }
+                if (iy != size_y) {
+                    n[3] = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                }
+                if (iz != 0) {
+                    n[4] = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                }
+                if (ix != size_z) {
+                    n[5] = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                }
 
-                            if (*(growfromWM0_data + nxy * iz_i + nx * iy_i + ix_i) == (float)grow_i) {
-                                dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                if (dist_i < dist_min2) {
-                                    dist_min2 = dist_i;
-                                    x1g = ix_i;
-                                    y1g = iy_i;
-                                    z1g = iz_i;
-                                    dist_p1 = dist_min2;
-                                }
+                // Loop 1-jump neighbour voxels add distance in terms of voxels
+                for (int j : n) {
+                    if (j != -1) {  // Valid neighbour
+                        if (*(nim_input_data + j) == 3) {  // Input mask
+                            if (*(growfromWM0_data + j) == 0) {
+                                *(growfromWM0_data + j) = grow_i + 1;
                             }
                         }
                     }
-                }
-                if (dist_min2 < 1.4) {
-                    // distDebug(0,islice,iy,ix) = dist_min2;
-                    *(growfromWM0_data + i) = (float)grow_i + 1;
-                    *(WMkoordx1_data + i) = *(WMkoordx1_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
-                    *(WMkoordy1_data + i) = *(WMkoordy1_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
-                    *(WMkoordz1_data + i) = *(WMkoordz1_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
                 }
             }
         }
     }
 
-    ///////////////////
-    // Grow from CSF //
-    ///////////////////
+    if (nifti_set_filenames(growfromWM0, "growfromWM0.nii", 1, 1)) {
+        return 1;
+    }
+    nifti_image_write(growfromWM0);
+
+    // ========================================================================
+    // Grow from CSF
+    // ========================================================================
     cout << "  Start growing from CSF ..." << endl;
 
     for (int i = 0; i != nr_voxels; ++i) {
@@ -239,13 +238,14 @@ int main(int argc, char*  argv[]) {
         }
     }
 
-    for (int grow_i = 1; grow_i < vinc; grow_i++) {
+    for (int grow_i = 1; grow_i != vinc; grow_i++) {
         for (int i = 0; i != nr_voxels; ++i) {
             if (*(nim_input_data + i) == 3 && *(growfromGM0_data + i) == 0) {
                 dist_min2 = 10000.;
                 x1g = 0, y1g = 0, z1g = 0;
                 int ix, iy, iz;
                 tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+
                 for (int iz_i = max(0, iz - grow_vinc); iz_i < min(iz + grow_vinc, size_z); ++iz_i) {
                     for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc, size_y); ++iy_i) {
                         for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc, size_x); ++ix_i) {
@@ -256,7 +256,6 @@ int main(int argc, char*  argv[]) {
                                     x1g = ix_i;
                                     y1g = iy_i;
                                     z1g = iz_i;
-                                    dist_p1 = dist_min2;
                                 }
                             }
                         }
@@ -272,10 +271,9 @@ int main(int argc, char*  argv[]) {
         }
     }
 
-    ////////////////////////////////////////////////////
-    // Wabble across neigbouring voxles of closest WM //
-    // to account for Pythagoras errors               //
-    ////////////////////////////////////////////////////
+    // ========================================================================
+    // Wabble across neigbour voxels of closest WM to account for Pythagoras errors
+    // ========================================================================
     cout << "  Correct for Pythagoras error..." << endl;
     for (int i = 0; i != nr_voxels; ++i) {
         *(growfromWM1_data + i) = *(growfromWM0_data + i);
@@ -284,7 +282,7 @@ int main(int argc, char*  argv[]) {
         *(WMkoordz2_data + i) = *(WMkoordz1_data + i);
     }
 
-    for (int grow_i = 1; grow_i < vinc; grow_i++) {
+    for (int grow_i = 1; grow_i != vinc; grow_i++) {
         for (int i = 0; i != nr_voxels; ++i) {
             if (*(WMkoordy1_data + i) != 0) {
                 dist_min2 = 10000.;
@@ -302,7 +300,6 @@ int main(int argc, char*  argv[]) {
                                     x1g = ix_i;
                                     y1g = iy_i;
                                     z1g = iz_i;
-                                    dist_p1 = dist_min2;
                                 }
                             }
                         }
@@ -331,7 +328,7 @@ int main(int argc, char*  argv[]) {
 
     cout << "  Running until stage 2..." << endl;
 
-    for (int grow_i = 1; grow_i < vinc; grow_i++) {
+    for (int grow_i = 1; grow_i != vinc; grow_i++) {
         for (int i = 0; i != nr_voxels; ++i) {
             if (*(GMkoordy1_data + i) != 0) {
                 dist_min2 = 10000.;
@@ -348,23 +345,22 @@ int main(int argc, char*  argv[]) {
                                     x1g = ix_i;
                                     y1g = iy_i;
                                     z1g = iz_i;
-                                    dist_p1 = dist_min2;
                                 }
                             }
                         }
                     }
                 }
                 *(growfromGM1_data + i) = dist((float)ix, (float)iy, (float)iz, (float)x1g, (float)y1g, (float)z1g, dX, dY, dZ);
-                *(GMkoordx2_data + i) = *(GMkoordx2_data + nxy*(int)z1g + nx * (int)y1g + (int)x1g);
-                *(GMkoordy2_data + i) = *(GMkoordy2_data + nxy*(int)z1g + nx * (int)y1g + (int)x1g);
-                *(GMkoordz2_data + i) = *(GMkoordz2_data + nxy*(int)z1g + nx * (int)y1g + (int)x1g);
+                *(GMkoordx2_data + i) = *(GMkoordx2_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
+                *(GMkoordy2_data + i) = *(GMkoordy2_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
+                *(GMkoordz2_data + i) = *(GMkoordz2_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
             }
         }
     }
     cout << "  Running until stage 3..." << endl;
 
     int GMK2_i, GMKz2_i, GMK3_i, WMK2_i, WMKz2_i, WMK3_i;
-    float GMK2_f, GMKz2_f, GMK3_f, WMK2_f, WMKz2_f, WMK3_f, ix_f, iy_f, iz_f;
+    float GMK2_f, GMKz2_f, GMK3_f, WMK2_f, WMKz2_f, WMK3_f;
 
     for (int i = 0; i != nr_voxels; ++i) {
         if (*(nim_input_data + i) == 3) {
@@ -387,10 +383,6 @@ int main(int argc, char*  argv[]) {
             int ix, iy, iz;
             tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
 
-            iy_f = static_cast<float>(iy);
-            ix_f = static_cast<float>(ix);
-            iz_f = static_cast<float>(iz);
-
             *(equi_dist_layers_data + i) = 19 * (1 - dist((float)ix, (float)iy, (float)iz, GMK2_f, GMK3_f, GMKz2_f, dX, dY, dZ) / (dist((float)ix, (float)iy, (float)iz, GMK2_f, GMK3_f, GMKz2_f, dX, dY, dZ) + dist((float)ix, (float)iy, (float)iz, WMK2_f, WMK3_f, WMKz2_f, dX, dY, dZ))) + 2;
         }
     }
@@ -398,12 +390,10 @@ int main(int argc, char*  argv[]) {
 
     // Cleaning negative layers and layers of more than 20
     for (int i = 0; i != nr_voxels; ++i) {
-        if (*(nim_input_data + i) == 1
-            && *(equi_dist_layers_data + i) == 0) {
+        if (*(nim_input_data + i) == 1 && *(equi_dist_layers_data + i) == 0) {
             *(equi_dist_layers_data + i) = 21;
         }
-        if (*(nim_input_data + i) == 2
-            && *(equi_dist_layers_data + i) == 0) {
+        if (*(nim_input_data + i) == 2 && *(equi_dist_layers_data + i) == 0) {
             *(equi_dist_layers_data + i) = 1;
         }
     }
