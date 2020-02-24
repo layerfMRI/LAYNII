@@ -32,6 +32,9 @@ nifti_image* copy_nifti_header_as_int(nifti_image* nii);
 std::tuple<int, int, int> ind2sub_3D(const int linear_index, const int size_x,
                                      const int size_y);
 
+int sub2ind_3D(const int x, const int y, const int z,
+               const int size_x, const int size_y);
+
 // ============================================================================
 // ============================================================================
 // ============================================================================

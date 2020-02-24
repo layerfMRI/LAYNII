@@ -195,3 +195,8 @@ std::tuple<int, int, int> ind2sub_3D(const int linear_index, const int size_x,
     int x = temp % size_x;
     return std::make_tuple(x, y, z);
 }
+
+int sub2ind_3D(const int x, const int y, const int z,
+               const int size_x, const int size_y) {
+    return size_x * size_y * z + size_x * y + x;
+}
