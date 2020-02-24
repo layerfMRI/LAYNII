@@ -188,10 +188,10 @@ int main(int argc, char*  argv[]) {
 
     for (int grow_i = 1; grow_i < vinc; grow_i++) {
         for (int i = 0; i != nr_voxels; ++i) {
-            dist_min2 = 10000.;
-            x1g = 0, y1g = 0, z1g = 0;
 
             if (*(nim_input_data + i) == 3 && *(growfromWM0_data + i) == 0) {
+                dist_min2 = 10000.;
+                x1g = 0, y1g = 0, z1g = 0;
                 int ix, iy, iz;
                 tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
 
@@ -227,51 +227,46 @@ int main(int argc, char*  argv[]) {
     // Grow from CSF //
     ///////////////////
     cout << "  Start growing from CSF ..." << endl;
-    for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_y; ++iy) {
-            for (int ix = 0; ix < size_x; ++ix) {
-                if (*(nim_input_data + VOXEL_ID_3D) == 1) {
-                    *(growfromGM0_data + VOXEL_ID_3D) = 1.;
-                    *(GMkoordx1_data + VOXEL_ID_3D) = ix;
-                    *(GMkoordy1_data + VOXEL_ID_3D) = iy;
-                    *(GMkoordz1_data + VOXEL_ID_3D) = iz;
-                }
-            }
+
+    for (int i = 0; i != nr_voxels; ++i) {
+        if (*(nim_input_data + i) == 1) {
+            *(growfromGM0_data + i) = 1.;
+            int ix, iy, iz;
+            tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+            *(GMkoordx1_data + i) = ix;
+            *(GMkoordy1_data + i) = iy;
+            *(GMkoordz1_data + i) = iz;
         }
     }
 
     for (int grow_i = 1; grow_i < vinc; grow_i++) {
-        for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_y; ++iy) {
-                for (int ix = 0; ix < size_x; ++ix) {
-                    dist_min2 = 10000.;
-                    x1g = 0.;
-                    y1g = 0;
-                    z1g = 0;
-                    if (*(nim_input_data + VOXEL_ID_3D) == 3 && *(growfromGM0_data + VOXEL_ID_3D) == 0) {
-                        for (int iz_i = max(0, iz - grow_vinc); iz_i < min(iz + grow_vinc, size_z); ++iz_i) {
-                            for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc, size_y); ++iy_i) {
-                                for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc, size_x); ++ix_i) {
-                                    if (*(growfromGM0_data + nxy * iz_i + nx * iy_i + ix_i) == (float)grow_i) {
-                                        dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                        if (dist_i < dist_min2) {
-                                            dist_min2 = dist_i;
-                                            x1g = ix_i;
-                                            y1g = iy_i;
-                                            z1g = iz_i;
-                                            dist_p1 = dist_min2;
-                                        }
-                                    }
+        for (int i = 0; i != nr_voxels; ++i) {
+            if (*(nim_input_data + i) == 3 && *(growfromGM0_data + i) == 0) {
+                dist_min2 = 10000.;
+                x1g = 0, y1g = 0, z1g = 0;
+                int ix, iy, iz;
+                tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+                for (int iz_i = max(0, iz - grow_vinc); iz_i < min(iz + grow_vinc, size_z); ++iz_i) {
+                    for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc, size_y); ++iy_i) {
+                        for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc, size_x); ++ix_i) {
+                            if (*(growfromGM0_data + nxy * iz_i + nx * iy_i + ix_i) == (float)grow_i) {
+                                dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
+                                if (dist_i < dist_min2) {
+                                    dist_min2 = dist_i;
+                                    x1g = ix_i;
+                                    y1g = iy_i;
+                                    z1g = iz_i;
+                                    dist_p1 = dist_min2;
                                 }
                             }
                         }
-                        if (dist_min2 < 1.4) {
-                            *(growfromGM0_data + VOXEL_ID_3D) = (float)grow_i + 1;
-                            *(GMkoordx1_data + VOXEL_ID_3D) = *(GMkoordx1_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
-                            *(GMkoordy1_data + VOXEL_ID_3D) = *(GMkoordy1_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
-                            *(GMkoordz1_data + VOXEL_ID_3D) = *(GMkoordz1_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
-                        }
                     }
+                }
+                if (dist_min2 < 1.4) {
+                    *(growfromGM0_data + i) = (float)grow_i + 1;
+                    *(GMkoordx1_data + i) = *(GMkoordx1_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
+                    *(GMkoordy1_data + i) = *(GMkoordy1_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
+                    *(GMkoordz1_data + i) = *(GMkoordz1_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
                 }
             }
         }
@@ -282,49 +277,41 @@ int main(int argc, char*  argv[]) {
     // to account for Pythagoras errors               //
     ////////////////////////////////////////////////////
     cout << "  Correct for Pythagoras error..." << endl;
-    for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_y; ++iy) {
-            for (int ix = 0; ix < size_x; ++ix) {
-                *(growfromWM1_data + VOXEL_ID_3D) = *(growfromWM0_data + VOXEL_ID_3D);
-                *(WMkoordx2_data + VOXEL_ID_3D) = *(WMkoordx1_data + VOXEL_ID_3D);
-                *(WMkoordy2_data + VOXEL_ID_3D) = *(WMkoordy1_data + VOXEL_ID_3D);
-                *(WMkoordz2_data + VOXEL_ID_3D) = *(WMkoordz1_data + VOXEL_ID_3D);
-            }
-        }
+    for (int i = 0; i != nr_voxels; ++i) {
+        *(growfromWM1_data + i) = *(growfromWM0_data + i);
+        *(WMkoordx2_data + i) = *(WMkoordx1_data + i);
+        *(WMkoordy2_data + i) = *(WMkoordy1_data + i);
+        *(WMkoordz2_data + i) = *(WMkoordz1_data + i);
     }
 
     for (int grow_i = 1; grow_i < vinc; grow_i++) {
-        for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_y; ++iy) {
-                for (int ix = 0; ix < size_x; ++ix) {
-                    if (*(WMkoordy1_data + VOXEL_ID_3D) != 0) {
-                        dist_min2 = 10000.;
-                        x1g = 0;
-                        y1g = 0;
-                        z1g = 0;
+        for (int i = 0; i != nr_voxels; ++i) {
+            if (*(WMkoordy1_data + i) != 0) {
+                dist_min2 = 10000.;
+                x1g = 0, y1g = 0, z1g = 0;
+                int ix, iy, iz;
+                tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
 
-                        for (int iz_i = max(0, (*(WMkoordz2_data + VOXEL_ID_3D)) - grow_vinc); iz_i < min((*(WMkoordz2_data + VOXEL_ID_3D)) + grow_vinc, size_z); ++iz_i) {
-                            for (int iy_i = max(0, (*(WMkoordy2_data + VOXEL_ID_3D)) - grow_vinc); iy_i < min((*(WMkoordy2_data + VOXEL_ID_3D)) + grow_vinc, size_y); ++iy_i) {
-                                for (int ix_i = max(0, (*(WMkoordx2_data + VOXEL_ID_3D)) - grow_vinc); ix_i < min((*(WMkoordx2_data + VOXEL_ID_3D)) + grow_vinc, size_x); ++ix_i) {
-                                    if (*(nim_input_data + nxy * iz_i + nx * iy_i + ix_i) == 2) {
-                                        dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                        if (dist_i < dist_min2) {
-                                            dist_min2 = dist_i;
-                                            x1g = ix_i;
-                                            y1g = iy_i;
-                                            z1g = iz_i;
-                                            dist_p1 = dist_min2;
-                                        }
-                                    }
+                for (int iz_i = max(0, (*(WMkoordz2_data + i)) - grow_vinc); iz_i < min((*(WMkoordz2_data + i)) + grow_vinc, size_z); ++iz_i) {
+                    for (int iy_i = max(0, (*(WMkoordy2_data + i)) - grow_vinc); iy_i < min((*(WMkoordy2_data + i)) + grow_vinc, size_y); ++iy_i) {
+                        for (int ix_i = max(0, (*(WMkoordx2_data + i)) - grow_vinc); ix_i < min((*(WMkoordx2_data + i)) + grow_vinc, size_x); ++ix_i) {
+                            if (*(nim_input_data + nxy * iz_i + nx * iy_i + ix_i) == 2) {
+                                dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
+                                if (dist_i < dist_min2) {
+                                    dist_min2 = dist_i;
+                                    x1g = ix_i;
+                                    y1g = iy_i;
+                                    z1g = iz_i;
+                                    dist_p1 = dist_min2;
                                 }
                             }
                         }
-                        *(growfromWM1_data + VOXEL_ID_3D) = dist((float)ix, (float)iy, (float)iz, (float)x1g, (float)y1g, (float)z1g, dX, dY, dZ);
-                        *(WMkoordx2_data + VOXEL_ID_3D) = *(WMkoordx2_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
-                        *(WMkoordy2_data + VOXEL_ID_3D) = *(WMkoordy2_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
-                        *(WMkoordz2_data + VOXEL_ID_3D) = *(WMkoordz2_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
                     }
                 }
+                *(growfromWM1_data + i) = dist((float)ix, (float)iy, (float)iz, (float)x1g, (float)y1g, (float)z1g, dX, dY, dZ);
+                *(WMkoordx2_data + i) = *(WMkoordx2_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
+                *(WMkoordy2_data + i) = *(WMkoordy2_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
+                *(WMkoordz2_data + i) = *(WMkoordz2_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
             }
         }
     }
@@ -334,49 +321,43 @@ int main(int argc, char*  argv[]) {
     // Wabble accross neigbouring voexles of closest GM //
     // to account for Pythagoras errors                 //
     //////////////////////////////////////////////////////
-    for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_y; ++iy) {
-            for (int ix = 0; ix < size_x; ++ix) {
-                *(growfromGM1_data + VOXEL_ID_3D) = *(growfromGM0_data + VOXEL_ID_3D);
-                *(GMkoordx2_data + VOXEL_ID_3D) = *(GMkoordx1_data + VOXEL_ID_3D);
-                *(GMkoordy2_data + VOXEL_ID_3D) = *(GMkoordy1_data + VOXEL_ID_3D);
-                *(GMkoordz2_data + VOXEL_ID_3D) = *(GMkoordz1_data + VOXEL_ID_3D);
-            }
-        }
+
+    for (int i = 0; i != nr_voxels; ++i) {
+        *(growfromGM1_data + i) = *(growfromGM0_data + i);
+        *(GMkoordx2_data + i) = *(GMkoordx1_data + i);
+        *(GMkoordy2_data + i) = *(GMkoordy1_data + i);
+            *(GMkoordz2_data + i) = *(GMkoordz1_data + i);
     }
+
     cout << "  Running until stage 2..." << endl;
 
     for (int grow_i = 1; grow_i < vinc; grow_i++) {
-        for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_y; ++iy) {
-                for (int ix = 0; ix < size_x; ++ix) {
-                    if (*(GMkoordy1_data + VOXEL_ID_3D) != 0) {
-                        dist_min2 = 10000.;
-                        x1g = 0;
-                        y1g = 0;
-                        z1g = 0;
-                        for (int iz_i = max(0, (*(GMkoordz2_data + VOXEL_ID_3D)) - grow_vinc); iz_i < min((*(GMkoordz2_data + VOXEL_ID_3D)) + grow_vinc, size_z); ++iz_i) {
-                            for (int iy_i = max(0, (*(GMkoordy2_data + VOXEL_ID_3D)) - grow_vinc); iy_i < min((*(GMkoordy2_data + VOXEL_ID_3D)) + grow_vinc, size_y); ++iy_i) {
-                                for (int ix_i = max(0, (*(GMkoordx2_data + VOXEL_ID_3D)) - grow_vinc); ix_i < min((*(GMkoordx2_data + VOXEL_ID_3D)) + grow_vinc, size_x); ++ix_i) {
-                                    if (*(nim_input_data + nxy * iz_i + nx * iy_i + ix_i)  == 1) {
-                                        dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                        if (dist_i < dist_min2) {
-                                            dist_min2 = dist_i;
-                                            x1g = ix_i;
-                                            y1g = iy_i;
-                                            z1g = iz_i;
-                                            dist_p1 = dist_min2;
-                                        }
-                                    }
+        for (int i = 0; i != nr_voxels; ++i) {
+            if (*(GMkoordy1_data + i) != 0) {
+                dist_min2 = 10000.;
+                x1g = 0, y1g = 0, z1g = 0;
+                int ix, iy, iz;
+                tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+                for (int iz_i = max(0, (*(GMkoordz2_data + i)) - grow_vinc); iz_i < min((*(GMkoordz2_data + i)) + grow_vinc, size_z); ++iz_i) {
+                    for (int iy_i = max(0, (*(GMkoordy2_data + i)) - grow_vinc); iy_i < min((*(GMkoordy2_data + i)) + grow_vinc, size_y); ++iy_i) {
+                        for (int ix_i = max(0, (*(GMkoordx2_data + i)) - grow_vinc); ix_i < min((*(GMkoordx2_data + i)) + grow_vinc, size_x); ++ix_i) {
+                            if (*(nim_input_data + nxy * iz_i + nx * iy_i + ix_i)  == 1) {
+                                dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
+                                if (dist_i < dist_min2) {
+                                    dist_min2 = dist_i;
+                                    x1g = ix_i;
+                                    y1g = iy_i;
+                                    z1g = iz_i;
+                                    dist_p1 = dist_min2;
                                 }
                             }
                         }
-                        *(growfromGM1_data + VOXEL_ID_3D) = dist((float)ix, (float)iy, (float)iz, (float)x1g, (float)y1g, (float)z1g, dX, dY, dZ);
-                        *(GMkoordx2_data + VOXEL_ID_3D) = *(GMkoordx2_data + nxy*(int)z1g + nx * (int)y1g + (int)x1g);
-                        *(GMkoordy2_data + VOXEL_ID_3D) = *(GMkoordy2_data + nxy*(int)z1g + nx * (int)y1g + (int)x1g);
-                        *(GMkoordz2_data + VOXEL_ID_3D) = *(GMkoordz2_data + nxy*(int)z1g + nx * (int)y1g + (int)x1g);
                     }
                 }
+                *(growfromGM1_data + i) = dist((float)ix, (float)iy, (float)iz, (float)x1g, (float)y1g, (float)z1g, dX, dY, dZ);
+                *(GMkoordx2_data + i) = *(GMkoordx2_data + nxy*(int)z1g + nx * (int)y1g + (int)x1g);
+                *(GMkoordy2_data + i) = *(GMkoordy2_data + nxy*(int)z1g + nx * (int)y1g + (int)x1g);
+                *(GMkoordz2_data + i) = *(GMkoordz2_data + nxy*(int)z1g + nx * (int)y1g + (int)x1g);
             }
         }
     }
@@ -385,58 +366,47 @@ int main(int argc, char*  argv[]) {
     int GMK2_i, GMKz2_i, GMK3_i, WMK2_i, WMKz2_i, WMK3_i;
     float GMK2_f, GMKz2_f, GMK3_f, WMK2_f, WMKz2_f, WMK3_f, ix_f, iy_f, iz_f;
 
-    for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_y; ++iy) {
-            for (int ix = 0; ix < size_x; ++ix) {
-                if (*(nim_input_data + VOXEL_ID_3D) == 3) {
-                    // equi_dist_layers(0,iz,iy,ix) = 19 * (1 - dist((float)ix, (float)iy, (float)GMkoord(2, iz, iy, ix), (float)GMkoord(3, iz, iy, ix)) / (dist((float)ix,(float)iy,(float)GMkoord(2, iz, iy, ix),(float)GMkoord(3, iz, iy, ix)) + dist((float)ix,(float)iy,(float)WMkoord(2,iz,iy,ix), (float)WMkoord(3, iz, iy, ix)))) + 2;
-                    GMK2_i = *(GMkoordx2_data + VOXEL_ID_3D);
-                    GMK3_i = *(GMkoordy2_data + VOXEL_ID_3D);
-                    GMKz2_i = *(GMkoordz2_data+ VOXEL_ID_3D);
+    for (int i = 0; i != nr_voxels; ++i) {
+        if (*(nim_input_data + i) == 3) {
+            GMK2_i = *(GMkoordx2_data + i);
+            GMK3_i = *(GMkoordy2_data + i);
+            GMKz2_i = *(GMkoordz2_data+ i);
 
-                    WMK2_i = *(WMkoordx2_data + VOXEL_ID_3D);
-                    WMK3_i = *(WMkoordy2_data + VOXEL_ID_3D);
-                    WMKz2_i = *(WMkoordz2_data + VOXEL_ID_3D);
+            WMK2_i = *(WMkoordx2_data + i);
+            WMK3_i = *(WMkoordy2_data + i);
+            WMKz2_i = *(WMkoordz2_data + i);
 
-                    GMK2_f = (float)GMK2_i;
-                    GMK3_f = (float)GMK3_i;
-                    GMKz2_f = (float)GMKz2_i;
+            GMK2_f = static_cast<float>(GMK2_i);
+            GMK3_f = static_cast<float>(GMK3_i);
+            GMKz2_f = static_cast<float>(GMKz2_i);
 
-                    WMK2_f = (float)WMK2_i;
-                    WMK3_f = (float)WMK3_i;
-                    WMKz2_f = (float)WMKz2_i;
+            WMK2_f = static_cast<float>(WMK2_i);
+            WMK3_f = static_cast<float>(WMK3_i);
+            WMKz2_f = static_cast<float>(WMKz2_i);
 
-                    ix_f = (float)ix;
-                    iy_f = (float)iy;
-                    iz_f = (float)iz;
+            int ix, iy, iz;
+            tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
 
-                    // cout << " rix_f,iy_f,GMK2_f,GMK3_f " << "   "  << ix_f << "   "  <<iy_f << "   "  <<GMK2_f << "   "  <<*(GMkoordx2_data + VOXEL_ID_3D)<< endl;
-                    *(equi_dist_layers_data + VOXEL_ID_3D) = 19 * (1 - dist((float)ix, (float)iy, (float)iz, GMK2_f, GMK3_f, GMKz2_f, dX, dY, dZ) / (dist((float)ix, (float)iy, (float)iz, GMK2_f, GMK3_f, GMKz2_f, dX, dY, dZ) + dist((float)ix, (float)iy, (float)iz, WMK2_f, WMK3_f, WMKz2_f, dX, dY, dZ))) + 2;
-                    //*(equi_dist_layers_data + VOXEL_ID_3D) =  100 * dist(ix_f,iy_f,GMK2_f,GMK3_f);
-                }
-            }
+            iy_f = static_cast<float>(iy);
+            ix_f = static_cast<float>(ix);
+            iz_f = static_cast<float>(iz);
+
+            *(equi_dist_layers_data + i) = 19 * (1 - dist((float)ix, (float)iy, (float)iz, GMK2_f, GMK3_f, GMKz2_f, dX, dY, dZ) / (dist((float)ix, (float)iy, (float)iz, GMK2_f, GMK3_f, GMKz2_f, dX, dY, dZ) + dist((float)ix, (float)iy, (float)iz, WMK2_f, WMK3_f, WMKz2_f, dX, dY, dZ))) + 2;
         }
     }
     cout << "  Running until stage 4..." << endl;
 
-    // Cleaning negative layers and layers ov more than 20
-    for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_y; ++iy) {
-            for (int ix = 0; ix < size_x; ++ix) {
-                if (*(nim_input_data + VOXEL_ID_3D) == 1
-                    && *(equi_dist_layers_data + VOXEL_ID_3D) == 0) {
-                    *(equi_dist_layers_data + VOXEL_ID_3D) = 21;
-                }
-                if (*(nim_input_data + VOXEL_ID_3D) == 2
-                    && *(equi_dist_layers_data + VOXEL_ID_3D) == 0) {
-                    *(equi_dist_layers_data + VOXEL_ID_3D) = 1;
-                }
-            }
+    // Cleaning negative layers and layers of more than 20
+    for (int i = 0; i != nr_voxels; ++i) {
+        if (*(nim_input_data + i) == 1
+            && *(equi_dist_layers_data + i) == 0) {
+            *(equi_dist_layers_data + i) = 21;
+        }
+        if (*(nim_input_data + i) == 2
+            && *(equi_dist_layers_data + i) == 0) {
+            *(equi_dist_layers_data + i) = 1;
         }
     }
-    cout << "  Running until stage 4.5..." << endl;
-
-    // equi_dist_layers.autowrite("equi_dist_layers.nii", wopts, &prot);
     cout << "  Running until stage 5..." << endl;
 
     // Output file name
