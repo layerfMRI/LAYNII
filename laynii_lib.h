@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string>
+#include <tuple>
 #include "./nifti2_io.h"
 
 using namespace std;
@@ -27,6 +28,9 @@ void log_nifti_descriptives(nifti_image* nii);
 
 nifti_image* copy_nifti_header_as_float(nifti_image* nii);
 nifti_image* copy_nifti_header_as_int(nifti_image* nii);
+
+std::tuple<int, int, int> ind2sub_3D(const int linear_index, const int size_x,
+                                     const int size_y, const int size_z);
 
 // ============================================================================
 // ============================================================================

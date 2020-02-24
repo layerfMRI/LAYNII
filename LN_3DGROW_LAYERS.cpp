@@ -211,16 +211,15 @@ int main(int argc, char*  argv[]) {
     // Grow from WM //
     //////////////////
     int grow_vinc = 2;
-    for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_y; ++iy) {
-            for (int ix = 0; ix < size_x; ++ix) {
-                if (*(nim_input_data + VOXEL_ID_3D) == 2) {
-                    *(growfromWM0_data + VOXEL_ID_3D) = 1.;
-                    *(WMkoordx1_data + VOXEL_ID_3D) = ix;
-                    *(WMkoordy1_data + VOXEL_ID_3D) = iy;
-                    *(WMkoordz1_data + VOXEL_ID_3D) = iz;
-                }
-            }
+
+    for (int i = 0; i != nr_voxels; ++i) {
+        if (*(nim_input_data + i) == 2) {
+            int x, y, z;
+            tie(x, y, z) = ind2sub_3D(i, size_x, size_y, size_z);
+            *(growfromWM0_data + i) = 1.;
+            *(WMkoordx1_data + i) = x;
+            *(WMkoordy1_data + i) = y;
+            *(WMkoordz1_data + i) = z;
         }
     }
 
