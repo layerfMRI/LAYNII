@@ -22,6 +22,10 @@ double ren_skew(double arr[], int size);
 double ren_kurt(double arr[], int size);
 double ren_autocor(double arr[], int size);
 
+float dist(float x1, float y1, float z1, float x2, float y2, float z2,
+           float dX, float dY, float dZ);
+float angle(float a, float b, float c);
+
 void log_welcome(const char* programname);
 void log_output(const char* filename);
 void log_nifti_descriptives(nifti_image* nii);

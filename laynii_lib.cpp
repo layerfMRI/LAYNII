@@ -88,6 +88,20 @@ double ren_autocor(double arr[], int size) {
     return sum1/sum2;
 }
 
+float dist(float x1, float y1, float z1, float x2, float y2, float z2,
+           float dX, float dY, float dZ) {
+    return sqrt(pow((x1 - x2) * dX, 2) + pow((y1 - y2) * dY, 2)
+                + pow((z1 - z2) * dZ, 2));
+}
+
+float angle(float a, float b, float c) {
+    if (a * a + b * b - c * c <= 0) {
+        return 3.141592;
+    } else {
+        return acos((a * a + b * b - c * c) / (2. * a * b));
+    }
+}
+
 // ============================================================================
 // ============================================================================
 // ============================================================================
