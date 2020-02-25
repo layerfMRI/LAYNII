@@ -10,13 +10,11 @@ int show_help(void) {
     "\n"
     "Options:\n"
     "    -help               : Show this help. \n"
-    "    -disp_float_example : Show some voxel's data.\n"
     "    -rim  border        : Specify input dataset.\n"
     "\n"
     "Notes:\n"
-    "    - rim.nii file always needs to be in datatype INT16. \n"
-    "    - This is 3D. Hence rim.nii file should be dmsmooth in all \n"
-    "      three dimensions.\n"
+    "    - Datatype of 'rim.nii' needs to be INT16.\n"
+    "    - This is 3D. Hence rim.nii file should be dmsmooth in all 3D.\n"
     "\n");
     return 0;
 }
@@ -24,16 +22,15 @@ int show_help(void) {
 int main(int argc, char*  argv[]) {
     nifti_image*nim_input = NULL;
     char* fin = NULL;
-    int ac, disp_float_eg = 0;
+    int ac;
     if (argc < 2) {
         return show_help();   // typing '-help' is sooo much work
     }
-    // Process user options: 4 are valid presently
+
+    // Process user options
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
-        } else if (!strcmp(argv[ac], "-disp_float_example")) {
-            disp_float_eg = 1;
         } else if (!strcmp(argv[ac], "-rim")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -input\n");
@@ -50,6 +47,7 @@ int main(int argc, char*  argv[]) {
         fprintf(stderr, "** missing option '-rim'\n");
         return 1;
     }
+
     // Read input dataset, including data
     nim_input = nifti_image_read(fin, 1);
     if (!nim_input) {
@@ -61,22 +59,24 @@ int main(int argc, char*  argv[]) {
     log_welcome("LN_3DGROW_LAYERS");
     log_nifti_descriptives(nim_input);
 
+    // User options
+    const int nr_layers = 3;
+
+    // NOTE(Faruk): This is mostly redundant now, probably will take out. This
+    // is the distance from every voxel the algorithm is applied on to make it
+    // not loop over all voxels.
+    int vinc = 200;
+
     // Get dimensions of input
     const int size_z = nim_input->nz;
     const int size_x = nim_input->nx;
     const int size_y = nim_input->ny;
-    // const int nrep = nim_input->nt;
-    const int nx = nim_input->nx;
-    const int nxy = nim_input->nx * nim_input->ny;
-    // const int nxyz = nim_input->nx * nim_input->ny * nim_input->nz;
 
     const int nr_voxels = size_z * size_y * size_x;
 
     const float dX = nim_input->pixdim[1];
     const float dY = nim_input->pixdim[2];
     const float dZ = nim_input->pixdim[3];
-
-    const float min_dim = min(min(dX, dY), dZ);
 
     // Get access to data of nim_input
     if (nim_input->datatype != 4) {
@@ -85,7 +85,7 @@ int main(int argc, char*  argv[]) {
     }
 
     // ========================================================================
-    // Fix datatype issues
+    // Prepare required nifti images
 
     nifti_image* fromWM_steps = copy_nifti_header_as_float(nim_input);
     float* fromWM_steps_data = static_cast<float*>(fromWM_steps->data);
@@ -102,61 +102,8 @@ int main(int argc, char*  argv[]) {
     nifti_image* fromGM_id = copy_nifti_header_as_uint(nim_input);
     unsigned int* fromGM_id_data = static_cast<unsigned int*>(fromGM_id->data);
 
-    nifti_image* WMkoordx1 = copy_nifti_header_as_int(nim_input);
-    nifti_image* WMkoordy1 = copy_nifti_header_as_int(nim_input);
-    nifti_image* WMkoordz1 = copy_nifti_header_as_int(nim_input);
-    nifti_image* WMkoordx2 = copy_nifti_header_as_int(nim_input);
-    nifti_image* WMkoordy2 = copy_nifti_header_as_int(nim_input);
-    nifti_image* WMkoordz2 = copy_nifti_header_as_int(nim_input);
-
-    int* WMkoordx1_data = static_cast<int*>(WMkoordx1->data);
-    int* WMkoordy1_data = static_cast<int*>(WMkoordy1->data);
-    int* WMkoordz1_data = static_cast<int*>(WMkoordz1->data);
-    int* WMkoordx2_data = static_cast<int*>(WMkoordx2->data);
-    int* WMkoordy2_data = static_cast<int*>(WMkoordy2->data);
-    int* WMkoordz2_data = static_cast<int*>(WMkoordz2->data);
-
-    nifti_image* GMkoordx1 = copy_nifti_header_as_int(nim_input);
-    nifti_image* GMkoordy1 = copy_nifti_header_as_int(nim_input);
-    nifti_image* GMkoordz1 = copy_nifti_header_as_int(nim_input);
-    nifti_image* GMkoordx2 = copy_nifti_header_as_int(nim_input);
-    nifti_image* GMkoordy2 = copy_nifti_header_as_int(nim_input);
-    nifti_image* GMkoordz2 = copy_nifti_header_as_int(nim_input);
-
-    int* GMkoordx1_data = static_cast<int*>(GMkoordx1->data);
-    int* GMkoordy1_data = static_cast<int*>(GMkoordy1->data);
-    int* GMkoordz1_data = static_cast<int*>(GMkoordz1->data);
-    int* GMkoordx2_data = static_cast<int*>(GMkoordx2->data);
-    int* GMkoordy2_data = static_cast<int*>(GMkoordy2->data);
-    int* GMkoordz2_data = static_cast<int*>(GMkoordz2->data);
-
-    // ========================================================================
-
     nifti_image* equi_dist_layers  = copy_nifti_header_as_int(nim_input);
     int* equi_dist_layers_data = static_cast<int*>(equi_dist_layers->data);
-
-    // Coordinates
-    float x1g = 0., y1g = 0., z1g = 0.;
-
-    float dist(float x1, float y1, float z1, float x2, float y2, float z2,
-               float dX, float dY, float dZ);
-    float angle(float a, float b, float c);
-
-    // Reduce mask to contain only Areas close to the curface.
-    cout << "  Select GM regions..." << endl;
-
-    // This is the distance from every voxel that the algorithm is applied on.
-    // Just to make it faster and not loop over all voxels.
-    int vinc = 200;
-
-    float dist_i = 0.;
-    float dist_min2 = 0.;
-    float dist_min3 = 0.;
-    float dist_max = 0.;
-
-    int nr_layers = 20;
-    int grow_vinc = 2;
-
 
     // Setting zero
     for (int i = 0; i != nr_voxels; ++i) {
@@ -396,103 +343,45 @@ int main(int argc, char*  argv[]) {
         return 1;
     }
     nifti_image_write(fromGM_id);
-    // ========================================================================
-    // ========================================================================
-    // ========================================================================
-
-
 
     // ========================================================================
     // ========================================================================
     // ========================================================================
-    cout << "  Running until stage 3..." << endl;
-
-    int GMK2_i, GMKz2_i, GMK3_i, WMK2_i, WMKz2_i, WMK3_i;
-    float GMK2_f, GMKz2_f, GMK3_f, WMK2_f, WMKz2_f, WMK3_f;
+    cout << "  Doing layering..." << endl;
 
     for (int i = 0; i != nr_voxels; ++i) {
         if (*(nim_input_data + i) == 3) {
-            GMK2_i  = *(GMkoordx2_data + i);
-            GMK3_i  = *(GMkoordy2_data + i);
-            GMKz2_i = *(GMkoordz2_data+ i);
+            float x, y, z, wm_x, wm_y, wm_z, gm_x, gm_y, gm_z;
+            tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
+            tie(wm_x, wm_y, wm_z) = ind2sub_3D(*(fromWM_id_data + i),
+                                               size_x, size_y);
+            tie(gm_x, gm_y, gm_z) = ind2sub_3D(*(fromGM_id_data + i),
+                                               size_x, size_y);
 
-            WMK2_i  = *(WMkoordx2_data + i);
-            WMK3_i  = *(WMkoordy2_data + i);
-            WMKz2_i = *(WMkoordz2_data + i);
+            // TODO(Faruk): Might think about cleaning too long distances here.
 
-            GMK2_f  = static_cast<float>(GMK2_i);
-            GMK3_f  = static_cast<float>(GMK3_i);
-            GMKz2_f = static_cast<float>(GMKz2_i);
+            // Normalize distance
+            float dist1, dist2;
+            dist1 = dist(x, y, z, wm_x, wm_y, wm_z, dX, dY, dZ);
+            dist2 = dist(x, y, z, gm_x, gm_y, gm_z, dX, dY, dZ);
+            float norm_dist = dist1 / (dist1 + dist2);
 
-            WMK2_f  = static_cast<float>(WMK2_i);
-            WMK3_f  = static_cast<float>(WMK3_i);
-            WMKz2_f = static_cast<float>(WMKz2_i);
-
-            int ix, iy, iz;
-            tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
-
-
-            float dist1, dist2, dist3;
-            dist1 = dist((float)ix, (float)iy, (float)iz, GMK2_f, GMK3_f, GMKz2_f, dX, dY, dZ);
-            dist2 = dist((float)ix, (float)iy, (float)iz, GMK2_f, GMK3_f, GMKz2_f, dX, dY, dZ);
-            dist3 = dist((float)ix, (float)iy, (float)iz, WMK2_f, WMK3_f, WMKz2_f, dX, dY, dZ);
-
-            *(equi_dist_layers_data + i) = 19 * (1 - dist1 / (dist2 + dist3)) + 2;
+            // Cast distances to integers as number of desired layers
+            *(equi_dist_layers_data + i) = (nr_layers + 1) * norm_dist;
         }
     }
-    cout << "  Running until stage 4..." << endl;
 
-    // Cleaning negative layers and layers of more than 20
-    for (int i = 0; i != nr_voxels; ++i) {
-        if (*(nim_input_data + i) == 1 && *(equi_dist_layers_data + i) == 0) {
-            *(equi_dist_layers_data + i) = 21;
-        }
-        if (*(nim_input_data + i) == 2 && *(equi_dist_layers_data + i) == 0) {
-            *(equi_dist_layers_data + i) = 1;
-        }
-    }
-    cout << "  Running until stage 5..." << endl;
+    // ========================================================================
+    // ========================================================================
+    // ========================================================================
+    cout << "  Saving outputs..." << endl;
 
-    // Output file name
     const char* fout_4 = "equi_dist_layers.nii";
     if (nifti_set_filenames(equi_dist_layers, fout_4, 1, 1)) {
         return 1;
     }
     nifti_image_write(equi_dist_layers);
 
-    const char* fout_5 = "rim_closed.nii";
-    if (nifti_set_filenames(nim_input, fout_5, 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(nim_input);
-
-    // const char* fout_6 = "kootrGMx.nii";
-    // if (nifti_set_filenames(GMkoordx1, fout_6 , 1, 1)) {
-    //     return 1;
-    // }
-    // nifti_image_write(GMkoordx1);
-
-    // const char* fout_7 = "kootrGMz.nii";
-    // if (nifti_set_filenames(GMkoordz1, fout_7 , 1, 1)) {
-    //     return 1;
-    //     }
-    // nifti_image_write(GMkoordz1);
-
-    // koord.autowrite("koordinaten.nii", wopts, &prot);
     cout << "  Finished." << endl;
     return 0;
-}
-
-float dist(float x1, float y1, float z1, float x2, float y2, float z2,
-           float dX, float dY, float dZ) {
-    return sqrt(pow((x1 - x2) * dX, 2) + pow((y1 - y2) * dY, 2)
-                + pow((z1 - z2) * dZ, 2));
-}
-
-float angle(float a, float b, float c) {
-    if (a * a + b * b - c * c <= 0) {
-        return 3.141592;
-    } else {
-        return acos((a * a + b * b - c * c) / (2. * a * b));
-    }
 }
