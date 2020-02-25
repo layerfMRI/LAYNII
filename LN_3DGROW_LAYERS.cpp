@@ -78,6 +78,13 @@ int main(int argc, char*  argv[]) {
     const float dY = nim_input->pixdim[2];
     const float dZ = nim_input->pixdim[3];
 
+    // Short diagonals
+    const float dia_xy = sqrt(dX * dX + dY * dY);
+    const float dia_xz = sqrt(dX * dX + dZ * dZ);
+    const float dia_yz = sqrt(dY * dY + dZ * dZ);
+    // Long diagonals
+    const float dia_xyz = sqrt(dX * dX + dY * dY + dZ * dZ);
+
     // Get access to data of nim_input
     if (nim_input->datatype != 4) {
         // nim_input->datatype = NIFTI_TYPE_INT16;
@@ -104,6 +111,9 @@ int main(int argc, char*  argv[]) {
 
     nifti_image* equi_dist_layers  = copy_nifti_header_as_int(nim_input);
     int* equi_dist_layers_data = static_cast<int*>(equi_dist_layers->data);
+
+    nifti_image* nii_columns = copy_nifti_header_as_int(nim_input);
+    int* nii_columns_data = static_cast<int*>(nii_columns->data);
 
     // Setting zero
     for (int i = 0; i != nr_voxels; ++i) {
@@ -203,6 +213,252 @@ int main(int argc, char*  argv[]) {
                     j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
                     if (*(nim_input_data + j) == 3) {
                         d = *(fromWM_dist_data + i) + dZ;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+
+                // ------------------------------------------------------------
+                // 2-jump neighbours
+                if (ix != 0 && iy != 0) {
+                    j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_xy;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != 0 && iy != size_y) {
+                    j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_xy;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != size_x && iy != 0) {
+                    j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_xy;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != size_x && iy != size_y) {
+                    j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_xy;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+                if (iy != 0 && iz != 0) {
+                    j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_yz;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+                if (iy != 0 && iz != size_z) {
+                    j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_yz;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+                if (iy != size_z && iz != 0) {
+                    j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_yz;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+                if (iy != size_z && iz != size_z) {
+                    j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_yz;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != 0 && iz != 0) {
+                    j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_xz;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != size_x && iz != 0) {
+                    j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_xz;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != 0 && iz != size_z) {
+                    j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_xz;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != size_x && iz != size_z) {
+                    j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_xz;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+
+                // ------------------------------------------------------------
+                // 3-jump neighbours
+                if (ix != 0 && iy != 0 && iz != 0) {
+                    j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_xyz;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != 0 && iy != 0 && iz != size_z) {
+                    j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_xyz;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != 0 && iy != size_y && iz != 0) {
+                    j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_xyz;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != size_x && iy != 0 && iz != 0) {
+                    j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_xyz;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != 0 && iy != size_y && iz != size_z) {
+                    j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_xyz;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != size_x && iy != size_y && iz != size_z) {
+                    j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_xyz;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != size_x && iy != size_y && iz != 0) {
+                    j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_xyz;
+                        if (d < *(fromWM_dist_data + j)
+                            || *(fromWM_dist_data + j) == 0) {
+                            *(fromWM_dist_data + j) = d;
+                            *(fromWM_steps_data + j) = grow_i + 1;
+                            *(fromWM_id_data + j) = *(fromWM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != size_x && iy != size_y && iz != size_z) {
+                    j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromWM_dist_data + i) + dia_xyz;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
                             *(fromWM_dist_data + j) = d;
@@ -326,6 +582,251 @@ int main(int argc, char*  argv[]) {
                         }
                     }
                 }
+                // ------------------------------------------------------------
+                // 2-jump neighbours
+                if (ix != 0 && iy != 0) {
+                    j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_xy;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != 0 && iy != size_y) {
+                    j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_xy;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != size_x && iy != 0) {
+                    j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_xy;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != size_x && iy != size_y) {
+                    j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_xy;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+                if (iy != 0 && iz != 0) {
+                    j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_yz;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+                if (iy != 0 && iz != size_z) {
+                    j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_yz;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+                if (iy != size_z && iz != 0) {
+                    j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_yz;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+                if (iy != size_z && iz != size_z) {
+                    j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_yz;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != 0 && iz != 0) {
+                    j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_xz;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != size_x && iz != 0) {
+                    j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_xz;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != 0 && iz != size_z) {
+                    j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_xz;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != size_x && iz != size_z) {
+                    j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_xz;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+
+                // ------------------------------------------------------------
+                // 3-jump neighbours
+                if (ix != 0 && iy != 0 && iz != 0) {
+                    j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_xyz;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != 0 && iy != 0 && iz != size_z) {
+                    j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_xyz;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != 0 && iy != size_y && iz != 0) {
+                    j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_xyz;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != size_x && iy != 0 && iz != 0) {
+                    j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_xyz;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != 0 && iy != size_y && iz != size_z) {
+                    j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_xyz;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != size_x && iy != size_y && iz != size_z) {
+                    j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_xyz;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != size_x && iy != size_y && iz != 0) {
+                    j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_xyz;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
+                if (ix != size_x && iy != size_y && iz != size_z) {
+                    j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(fromGM_dist_data + i) + dia_xyz;
+                        if (d < *(fromGM_dist_data + j)
+                            || *(fromGM_dist_data + j) == 0) {
+                            *(fromGM_dist_data + j) = d;
+                            *(fromGM_steps_data + j) = grow_i + 1;
+                            *(fromGM_id_data + j) = *(fromGM_id_data + i);
+                        }
+                    }
+                }
             }
         }
     }
@@ -360,6 +861,32 @@ int main(int argc, char*  argv[]) {
 
             // TODO(Faruk): Might think about cleaning too long distances here.
 
+            //-----------------------------------------------------------------
+            // NOTE(Faruk): Point onto line projections, wip...
+            // float temp1 = (x - wm_x) * (gm_x - wm_x)
+            //     + (y - wm_y) * (gm_y - wm_y)
+            //     + (z - wm_z) * (gm_z - wm_z);
+            //
+            // float temp2 = pow(gm_x - wm_x, 2)
+            //     + pow(gm_y - wm_y, 2)
+            //     + pow(gm_z - wm_z, 2);
+            //
+            // temp1 /= temp2;
+            //
+            // float r_x = wm_x + (temp1 * (wm_x - gm_x));
+            // float r_y = wm_y + (temp1 * (wm_y - gm_y));
+            // float r_z = wm_z + (temp1 * (wm_z - gm_z));
+            // float dist_3 = dist(x, y, z, r_x, r_y, r_z, dX, dY, dZ);
+
+            int mid_x = (wm_x + gm_x)/2;
+            int mid_y = (wm_y + gm_y)/2;
+            int mid_z = (wm_z + gm_z)/2;
+            int j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
+
+            *(nii_columns_data + i) = static_cast<int>(j);
+
+            //-----------------------------------------------------------------
+
             // Normalize distance
             float dist1, dist2;
             dist1 = dist(x, y, z, wm_x, wm_y, wm_z, dX, dY, dZ);
@@ -367,13 +894,19 @@ int main(int argc, char*  argv[]) {
             float norm_dist = dist1 / (dist1 + dist2);
 
             // Cast distances to integers as number of desired layers
-            *(equi_dist_layers_data + i) = (nr_layers + 1) * norm_dist;
+            *(equi_dist_layers_data + i) = ceil(nr_layers * norm_dist);
         }
     }
 
     // ========================================================================
     // ========================================================================
     // ========================================================================
+
+    if (nifti_set_filenames(nii_columns, "test_columns.nii", 1, 1)) {
+        return 1;
+    }
+    nifti_image_write(nii_columns);
+
     cout << "  Saving outputs..." << endl;
 
     const char* fout_4 = "equi_dist_layers.nii";
