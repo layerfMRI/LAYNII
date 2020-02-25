@@ -187,6 +187,14 @@ nifti_image* copy_nifti_header_as_int(nifti_image* nii) {
     return nii_new;
 }
 
+nifti_image* copy_nifti_header_as_uint(nifti_image* nii) {
+    nifti_image* nii_new = nifti_copy_nim_info(nii);
+    nii_new->datatype = NIFTI_TYPE_UINT32;
+    nii_new->nbyper = sizeof(unsigned int);
+    nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
+    return nii_new;
+}
+
 std::tuple<int, int, int> ind2sub_3D(const int linear_index, const int size_x,
                                      const int size_y) {
     int z = linear_index / (size_x * size_y);
