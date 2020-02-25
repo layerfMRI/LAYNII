@@ -76,6 +76,8 @@ int main(int argc, char*  argv[]) {
     const float dY = nim_input->pixdim[2];
     const float dZ = nim_input->pixdim[3];
 
+    const float min_dim = min(min(dX, dY), dZ);
+
     // Get access to data of nim_input
     if (nim_input->datatype != 4) {
         // nim_input->datatype = NIFTI_TYPE_INT16;
@@ -85,14 +87,18 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Fix datatype issues
 
-    nifti_image* growfromWM0 = copy_nifti_header_as_float(nim_input);
-    float* growfromWM0_data = static_cast<float*>(growfromWM0->data);
+    nifti_image* stepsfromWM0 = copy_nifti_header_as_float(nim_input);
+    float* stepsfromWM0_data = static_cast<float*>(stepsfromWM0->data);
+    nifti_image* distfromWM0 = copy_nifti_header_as_float(nim_input);
+    float* distfromWM0_data = static_cast<float*>(distfromWM0->data);
 
     nifti_image* growfromWM1 = copy_nifti_header_as_float(nim_input);
     float* growfromWM1_data = static_cast<float*>(growfromWM1->data);
 
-    nifti_image* growfromGM0 = copy_nifti_header_as_float(nim_input);
-    float* growfromGM0_data = static_cast<float*>(growfromGM0->data);
+    nifti_image* stepsfromGM0 = copy_nifti_header_as_float(nim_input);
+    float* stepsfromGM0_data = static_cast<float*>(stepsfromGM0->data);
+    nifti_image* distfromGM0 = copy_nifti_header_as_float(nim_input);
+    float* distfromGM0_data = static_cast<float*>(distfromGM0->data);
 
     nifti_image* growfromGM1 = copy_nifti_header_as_float(nim_input);
     float* growfromGM1_data = static_cast<float*>(growfromGM1->data);
@@ -142,7 +148,7 @@ int main(int argc, char*  argv[]) {
 
     // This is the distance from every voxel that the algorithm is applied on.
     // Just to make it faster and not loop over all voxels.
-    int vinc = 81;
+    int vinc = 200;
 
     float dist_i = 0.;
     float dist_min2 = 0.;
@@ -155,9 +161,9 @@ int main(int argc, char*  argv[]) {
 
     // Setting zero
     for (int i = 0; i != nr_voxels; ++i) {
-        *(growfromWM0_data + i) = 0;
+        *(stepsfromWM0_data + i) = 0;
         *(growfromWM1_data + i) = 0;
-        *(growfromGM0_data + i) = 0;
+        *(stepsfromGM0_data + i) = 0;
         *(growfromGM1_data + i) = 0;
     }
 
@@ -169,57 +175,101 @@ int main(int argc, char*  argv[]) {
     // Initialize grow volume
     for (int i = 0; i != nr_voxels; ++i) {
         if (*(nim_input_data + i) == 2) {  // WM boundary voxels within GM
-            *(growfromWM0_data + i) = 1.;
+            *(stepsfromWM0_data + i) = 1.;
+            *(distfromWM0_data + i) = 1.;
         } else {
-            *(growfromWM0_data + i) = 0.;
+            *(stepsfromWM0_data + i) = 0.;
+            *(distfromWM0_data + i) = 0.;
         }
     }
 
     for (int grow_i = 1; grow_i != vinc; grow_i++) {
         for (int i = 0; i != nr_voxels; ++i) {
-            if (*(growfromWM0_data + i) == grow_i) {
+            if (*(stepsfromWM0_data + i) == grow_i) {
                 int ix, iy, iz;
                 tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
 
+                int j;
+                float d;
                 // 1-jump neighbours
-                int n[6] = {-1, -1, -1, -1, -1, -1};
                 if (ix != 0) {
-                    n[0] = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                    j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(distfromWM0_data + i) + dX;
+                        if (d < *(distfromWM0_data + j)
+                            || *(distfromWM0_data + j) == 0) {
+                            *(distfromWM0_data + j) = d;
+                            *(stepsfromWM0_data + j) = grow_i + 1;
+                        }
+                    }
                 }
                 if (ix != size_x) {
-                    n[1] = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                    j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(distfromWM0_data + i) + dX;
+                        if (d < *(distfromWM0_data + j)
+                            || *(distfromWM0_data + j) == 0) {
+                            *(distfromWM0_data + j) = d;
+                            *(stepsfromWM0_data + j) = grow_i + 1;
+                        }
+                    }
                 }
                 if (iy != 0) {
-                    n[2] = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                    j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(distfromWM0_data + i) + dY;
+                        if (d < *(distfromWM0_data + j)
+                            || *(distfromWM0_data + j) == 0) {
+                            *(distfromWM0_data + j) = d;
+                            *(stepsfromWM0_data + j) = grow_i + 1;
+                        }
+                    }
                 }
                 if (iy != size_y) {
-                    n[3] = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                    j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(distfromWM0_data + i) + dY;
+                        if (d < *(distfromWM0_data + j)
+                            || *(distfromWM0_data + j) == 0) {
+                            *(distfromWM0_data + j) = d;
+                            *(stepsfromWM0_data + j) = grow_i + 1;
+                        }
+                    }
                 }
                 if (iz != 0) {
-                    n[4] = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                    j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(distfromWM0_data + i) + dZ;
+                        if (d < *(distfromWM0_data + j)
+                            || *(distfromWM0_data + j) == 0) {
+                            *(distfromWM0_data + j) = d;
+                            *(stepsfromWM0_data + j) = grow_i + 1;
+                        }
+                    }
                 }
-                if (ix != size_z) {
-                    n[5] = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-                }
-
-                // Loop 1-jump neighbour voxels add distance in terms of voxels
-                for (int j : n) {
-                    if (j != -1) {  // Valid neighbour
-                        if (*(nim_input_data + j) == 3) {  // Input mask
-                            if (*(growfromWM0_data + j) == 0) {
-                                *(growfromWM0_data + j) = grow_i + 1;
-                            }
+                if (iz != size_z) {
+                    j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(distfromWM0_data + i) + dZ;
+                        if (d < *(distfromWM0_data + j)
+                            || *(distfromWM0_data + j) == 0) {
+                            *(distfromWM0_data + j) = d;
+                            *(stepsfromWM0_data + j) = grow_i + 1;
                         }
                     }
                 }
             }
         }
     }
-
-    if (nifti_set_filenames(growfromWM0, "growfromWM0.nii", 1, 1)) {
+    if (nifti_set_filenames(stepsfromWM0, "stepsfromWM0.nii", 1, 1)) {
         return 1;
     }
-    nifti_image_write(growfromWM0);
+    nifti_image_write(stepsfromWM0);
+
+    if (nifti_set_filenames(distfromWM0, "distfromWM0.nii", 1, 1)) {
+        return 1;
+    }
+    nifti_image_write(distfromWM0);
 
     // ========================================================================
     // Grow from CSF
@@ -228,145 +278,110 @@ int main(int argc, char*  argv[]) {
 
     for (int i = 0; i != nr_voxels; ++i) {
         if (*(nim_input_data + i) == 1) {
-            *(growfromGM0_data + i) = 1.;
+            *(stepsfromGM0_data + i) = 1.;
+            *(distfromGM0_data + i) = 1.;
         } else {
-            *(growfromGM0_data + i) = 0.;
+            *(stepsfromGM0_data + i) = 0.;
+            *(distfromGM0_data + i) = 0.;
         }
     }
 
     for (int grow_i = 1; grow_i != vinc; grow_i++) {
         for (int i = 0; i != nr_voxels; ++i) {
-            if (*(growfromGM0_data + i) == grow_i) {
-                dist_min2 = 10000.;
-                x1g = 0, y1g = 0, z1g = 0;
+            if (*(stepsfromGM0_data + i) == grow_i) {
                 int ix, iy, iz;
                 tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
 
+                int j;
+                float d;
                 // 1-jump neighbours
-                int n[6] = {-1, -1, -1, -1, -1, -1};
                 if (ix != 0) {
-                    n[0] = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                    j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(distfromGM0_data + i) + dX;
+                        if (d < *(distfromGM0_data + j)
+                            || *(distfromGM0_data + j) == 0) {
+                            *(distfromGM0_data + j) = d;
+                            *(stepsfromGM0_data + j) = grow_i + 1;
+                        }
+                    }
                 }
                 if (ix != size_x) {
-                    n[1] = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                    j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(distfromGM0_data + i) + dX;
+                        if (d < *(distfromGM0_data + j)
+                            || *(distfromGM0_data + j) == 0) {
+                            *(distfromGM0_data + j) = d;
+                            *(stepsfromGM0_data + j) = grow_i + 1;
+                        }
+                    }
                 }
                 if (iy != 0) {
-                    n[2] = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                    j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(distfromGM0_data + i) + dY;
+                        if (d < *(distfromGM0_data + j)
+                            || *(distfromGM0_data + j) == 0) {
+                            *(distfromGM0_data + j) = d;
+                            *(stepsfromGM0_data + j) = grow_i + 1;
+                        }
+                    }
                 }
                 if (iy != size_y) {
-                    n[3] = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                    j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(distfromGM0_data + i) + dY;
+                        if (d < *(distfromGM0_data + j)
+                            || *(distfromGM0_data + j) == 0) {
+                            *(distfromGM0_data + j) = d;
+                            *(stepsfromGM0_data + j) = grow_i + 1;
+                        }
+                    }
                 }
                 if (iz != 0) {
-                    n[4] = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                    j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(distfromGM0_data + i) + dZ;
+                        if (d < *(distfromGM0_data + j)
+                            || *(distfromGM0_data + j) == 0) {
+                            *(distfromGM0_data + j) = d;
+                            *(stepsfromGM0_data + j) = grow_i + 1;
+                        }
+                    }
                 }
-                if (ix != size_z) {
-                    n[5] = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-                }
-
-                // Loop 1-jump neighbour voxels add distance in terms of voxels
-                for (int j : n) {
-                    if (j != -1) {  // Valid neighbour
-                        if (*(nim_input_data + j) == 3) {  // Input mask
-                            if (*(growfromGM0_data + j) == 0) {
-                                *(growfromGM0_data + j) = grow_i + 1;
-                            }
+                if (iz != size_z) {
+                    j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                    if (*(nim_input_data + j) == 3) {
+                        d = *(distfromGM0_data + i) + dZ;
+                        if (d < *(distfromGM0_data + j)
+                            || *(distfromGM0_data + j) == 0) {
+                            *(distfromGM0_data + j) = d;
+                            *(stepsfromGM0_data + j) = grow_i + 1;
                         }
                     }
                 }
             }
         }
     }
-    if (nifti_set_filenames(growfromGM0, "growfromGM0.nii", 1, 1)) {
+    if (nifti_set_filenames(stepsfromGM0, "stepsfromGM0.nii", 1, 1)) {
         return 1;
     }
-    nifti_image_write(growfromGM0);
+    nifti_image_write(stepsfromGM0);
+
+    if (nifti_set_filenames(distfromGM0, "distfromGM0.nii", 1, 1)) {
+        return 1;
+    }
+    nifti_image_write(distfromGM0);
+    // ========================================================================
+    // ========================================================================
+    // ========================================================================
+
+
 
     // ========================================================================
-    // Wabble across neigbour voxels of closest WM to account for Pythagoras errors
     // ========================================================================
-    cout << "  Correct for Pythagoras error..." << endl;
-    for (int i = 0; i != nr_voxels; ++i) {
-        *(growfromWM1_data + i) = *(growfromWM0_data + i);
-        *(WMkoordx2_data + i) = *(WMkoordx1_data + i);
-        *(WMkoordy2_data + i) = *(WMkoordy1_data + i);
-        *(WMkoordz2_data + i) = *(WMkoordz1_data + i);
-    }
-
-    for (int grow_i = 1; grow_i != vinc; grow_i++) {
-        for (int i = 0; i != nr_voxels; ++i) {
-            if (*(WMkoordy1_data + i) != 0) {
-                dist_min2 = 10000.;
-                x1g = 0, y1g = 0, z1g = 0;
-                int ix, iy, iz;
-                tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
-
-                for (int iz_i = max(0, (*(WMkoordz2_data + i)) - grow_vinc); iz_i < min((*(WMkoordz2_data + i)) + grow_vinc, size_z); ++iz_i) {
-                    for (int iy_i = max(0, (*(WMkoordy2_data + i)) - grow_vinc); iy_i < min((*(WMkoordy2_data + i)) + grow_vinc, size_y); ++iy_i) {
-                        for (int ix_i = max(0, (*(WMkoordx2_data + i)) - grow_vinc); ix_i < min((*(WMkoordx2_data + i)) + grow_vinc, size_x); ++ix_i) {
-                            if (*(nim_input_data + nxy * iz_i + nx * iy_i + ix_i) == 2) {
-                                dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                if (dist_i < dist_min2) {
-                                    dist_min2 = dist_i;
-                                    x1g = ix_i;
-                                    y1g = iy_i;
-                                    z1g = iz_i;
-                                }
-                            }
-                        }
-                    }
-                }
-                *(growfromWM1_data + i) = dist((float)ix, (float)iy, (float)iz, (float)x1g, (float)y1g, (float)z1g, dX, dY, dZ);
-                *(WMkoordx2_data + i) = *(WMkoordx2_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
-                *(WMkoordy2_data + i) = *(WMkoordy2_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
-                *(WMkoordz2_data + i) = *(WMkoordz2_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
-            }
-        }
-    }
-    cout << "  Running until stage 1..." << endl;
-
-    //////////////////////////////////////////////////////
-    // Wabble accross neigbouring voexles of closest GM //
-    // to account for Pythagoras errors                 //
-    //////////////////////////////////////////////////////
-
-    for (int i = 0; i != nr_voxels; ++i) {
-        *(growfromGM1_data + i) = *(growfromGM0_data + i);
-        *(GMkoordx2_data + i) = *(GMkoordx1_data + i);
-        *(GMkoordy2_data + i) = *(GMkoordy1_data + i);
-            *(GMkoordz2_data + i) = *(GMkoordz1_data + i);
-    }
-
-    cout << "  Running until stage 2..." << endl;
-
-    for (int grow_i = 1; grow_i != vinc; grow_i++) {
-        for (int i = 0; i != nr_voxels; ++i) {
-            if (*(GMkoordy1_data + i) != 0) {
-                dist_min2 = 10000.;
-                x1g = 0, y1g = 0, z1g = 0;
-                int ix, iy, iz;
-                tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
-                for (int iz_i = max(0, (*(GMkoordz2_data + i)) - grow_vinc); iz_i < min((*(GMkoordz2_data + i)) + grow_vinc, size_z); ++iz_i) {
-                    for (int iy_i = max(0, (*(GMkoordy2_data + i)) - grow_vinc); iy_i < min((*(GMkoordy2_data + i)) + grow_vinc, size_y); ++iy_i) {
-                        for (int ix_i = max(0, (*(GMkoordx2_data + i)) - grow_vinc); ix_i < min((*(GMkoordx2_data + i)) + grow_vinc, size_x); ++ix_i) {
-                            if (*(nim_input_data + nxy * iz_i + nx * iy_i + ix_i)  == 1) {
-                                dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                if (dist_i < dist_min2) {
-                                    dist_min2 = dist_i;
-                                    x1g = ix_i;
-                                    y1g = iy_i;
-                                    z1g = iz_i;
-                                }
-                            }
-                        }
-                    }
-                }
-                *(growfromGM1_data + i) = dist((float)ix, (float)iy, (float)iz, (float)x1g, (float)y1g, (float)z1g, dX, dY, dZ);
-                *(GMkoordx2_data + i) = *(GMkoordx2_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
-                *(GMkoordy2_data + i) = *(GMkoordy2_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
-                *(GMkoordz2_data + i) = *(GMkoordz2_data + nxy * (int)z1g + nx * (int)y1g + (int)x1g);
-            }
-        }
-    }
+    // ========================================================================
     cout << "  Running until stage 3..." << endl;
 
     int GMK2_i, GMKz2_i, GMK3_i, WMK2_i, WMKz2_i, WMK3_i;
