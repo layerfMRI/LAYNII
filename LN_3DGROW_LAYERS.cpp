@@ -830,9 +830,9 @@ int main(int argc, char*  argv[]) {
     save_output_nifti(fin, "fromWM_id", fromGM_dist, false);
 
     // ========================================================================
+    // Layers
     // ========================================================================
-    // ========================================================================
-    cout << "  Doing layering..." << endl;
+    cout << "  Doing layers..." << endl;
 
     for (int i = 0; i != nr_voxels; ++i) {
         if (*(nim_input_data + i) == 3) {
@@ -842,18 +842,6 @@ int main(int argc, char*  argv[]) {
                                                size_x, size_y);
             tie(gm_x, gm_y, gm_z) = ind2sub_3D(*(fromGM_id_data + i),
                                                size_x, size_y);
-
-            // TODO(Faruk): Might think about cleaning too long distances here.
-
-            //-----------------------------------------------------------------
-            // NOTE(Faruk): Columns, WIP...
-            int mid_x = (wm_x + gm_x)/2;
-            int mid_y = (wm_y + gm_y)/2;
-            int mid_z = (wm_z + gm_z)/2;
-            int j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
-
-            *(nii_columns_data + i) = round(j);
-            //-----------------------------------------------------------------
 
             // Normalize distance
             float dist1, dist2;
@@ -865,9 +853,33 @@ int main(int argc, char*  argv[]) {
             *(layers_equidist_data + i) = ceil(nr_layers * norm_dist);
         }
     }
-
     save_output_nifti(fin, "layers_equidist", layers_equidist);
+
+    // ========================================================================
+    // Columns
+    // ========================================================================
+    cout << "  Doing columns..." << endl;
+
+    for (int i = 0; i != nr_voxels; ++i) {
+        if (*(nim_input_data + i) == 3) {
+            float x, y, z, wm_x, wm_y, wm_z, gm_x, gm_y, gm_z;
+            tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
+            tie(wm_x, wm_y, wm_z) = ind2sub_3D(*(fromWM_id_data + i),
+                                               size_x, size_y);
+            tie(gm_x, gm_y, gm_z) = ind2sub_3D(*(fromGM_id_data + i),
+                                               size_x, size_y);
+
+            // NOTE(Faruk): Columns, WIP...
+            int mid_x = (wm_x + gm_x)/2;
+            int mid_y = (wm_y + gm_y)/2;
+            int mid_z = (wm_z + gm_z)/2;
+            int j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
+
+            *(nii_columns_data + i) = round(j);
+        }
+    }
     save_output_nifti(fin, "columns", nii_columns);
+
     cout << "  Finished." << endl;
     return 0;
 }
