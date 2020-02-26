@@ -152,13 +152,6 @@ nifti_image* copy_nifti_header_as_float(nifti_image* nii) {
     // to the datatime I like best.                                          //
     ///////////////////////////////////////////////////////////////////////////
 
-    // Get dimensions of input
-    const int size_x = nii->nx;
-    const int size_y = nii->ny;
-    const int size_z = nii->nz;
-    const int size_t = nii->nt;
-    const int nr_voxels = size_t * size_z * size_y * size_x;
-
     // NOTE(for future reference): Rick's comments:
     // nifti_copy_nim_info(). It will return with data == NULL.
     // If you need the data allocated, memory use would not change once you do
@@ -169,35 +162,36 @@ nifti_image* copy_nifti_header_as_float(nifti_image* nii) {
     nii_new->datatype = NIFTI_TYPE_FLOAT32;
     nii_new->nbyper = sizeof(float);
     nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
-    // float* nii_new_data = static_cast<float*>(nii_new->data);
 
+    // float* nii_new_data = static_cast<float*>(nii_new->data);
+    // const unsigned int nr_voxels = nii->nt * nii->nz * nii->ny * nii->nx;
     // if (nii->datatype == NIFTI_TYPE_INT8
     //     || nii->datatype == DT_UINT8) {
     //     int8_t* temp = static_cast<int8_t*>(nii->data);
     //     for (int i = 0; i < nr_voxels; ++i) {
-    //         *(nii_new_data + i) = static_cast<float>(*(temp + i));
+    //         *(nii_new_data + i) = 0;
     //     }
     // } else if (nii->datatype == NIFTI_TYPE_INT16
     //            || nii->datatype == DT_UINT16) {
     //     int16_t* temp = static_cast<int16_t*>(nii->data);
     //     for (int i = 0; i < nr_voxels; ++i) {
-    //         *(nii_new_data + i) = static_cast<float>(*(temp + i));
+    //         *(nii_new_data + i) = 0;
     //     }
     // } else if (nii->datatype == NIFTI_TYPE_INT32) {
     //     int* temp = static_cast<int*>(nii->data);
     //     for (int i = 0; i < nr_voxels; ++i) {
-    //         *(nii_new_data + i) = static_cast<float>(*(temp + i));
+    //         *(nii_new_data + i) = 0;
     //     }
     // } else if (nii->datatype == NIFTI_TYPE_FLOAT32) {
     //     float* temp = static_cast<float*>(nii->data);
     //     for (int i = 0; i < nr_voxels; ++i) {
-    //         *(nii_new_data + i) = static_cast<float>(*(temp + i));
+    //         *(nii_new_data + i) = 0;
     //     }
     // } else if (nii->datatype == NIFTI_TYPE_FLOAT64
     //            || nii->datatype == DT_FLOAT64) {
     //     double* temp = static_cast<double*>(nii->data);
     //     for (int i = 0; i < nr_voxels; ++i) {
-    //         *(nii_new_data + i) = static_cast<float>(*(temp + i));
+    //         *(nii_new_data + i) = 0;
     //     }
     // }
     return nii_new;
