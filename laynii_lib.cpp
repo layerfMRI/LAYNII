@@ -135,6 +135,16 @@ void log_nifti_descriptives(nifti_image* nii) {
 // ============================================================================
 // Utility functions
 
+void save_output_nifti(string filename, string prefix, nifti_image* nii,
+                       bool log) {
+    string outfilename = prefix + "_" + filename;
+    nifti_set_filenames(nii, outfilename.c_str(), 1, 1);
+    nifti_image_write(nii);
+    if (log) {
+        log_output(outfilename.c_str());
+    }
+}
+
 nifti_image* copy_nifti_header_as_float(nifti_image* nii) {
     ///////////////////////////////////////////////////////////////////////////
     // NOTE(Renzo): Fixing potential problems with different input datatypes //

@@ -89,12 +89,6 @@ int main(int argc, char*  argv[]) {
     // Long diagonals
     const float dia_xyz = sqrt(dX * dX + dY * dY + dZ * dZ);
 
-    // Get access to data of nim_input
-    if (nim_input->datatype != 4) {
-        // nim_input->datatype = NIFTI_TYPE_INT16;
-        cout << "  !!!WRONG DATATYPE!!!" << endl;
-    }
-
     // ========================================================================
     // Prepare required nifti images
 
@@ -113,8 +107,8 @@ int main(int argc, char*  argv[]) {
     nifti_image* fromGM_id = copy_nifti_header_as_uint(nim_input);
     unsigned int* fromGM_id_data = static_cast<unsigned int*>(fromGM_id->data);
 
-    nifti_image* equi_dist_layers  = copy_nifti_header_as_int(nim_input);
-    int* equi_dist_layers_data = static_cast<int*>(equi_dist_layers->data);
+    nifti_image* layers_equidist  = copy_nifti_header_as_int(nim_input);
+    int* layers_equidist_data = static_cast<int*>(layers_equidist->data);
 
     nifti_image* nii_columns = copy_nifti_header_as_int(nim_input);
     int* nii_columns_data = static_cast<int*>(nii_columns->data);
@@ -477,20 +471,9 @@ int main(int argc, char*  argv[]) {
             }
         }
     }
-    if (nifti_set_filenames(fromWM_steps, "fromWM_steps.nii", 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(fromWM_steps);
-
-    if (nifti_set_filenames(fromWM_dist, "fromWM_dist.nii", 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(fromWM_dist);
-
-    if (nifti_set_filenames(fromWM_id, "fromWM_id.nii", 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(fromWM_id);
+    save_output_nifti(fin, "fromWM_steps", fromWM_steps, false);
+    save_output_nifti(fin, "fromWM_dist", fromWM_dist, false);
+    save_output_nifti(fin, "fromWM_id", fromWM_dist, false);
 
     // ========================================================================
     // Grow from CSF
@@ -842,20 +825,9 @@ int main(int argc, char*  argv[]) {
             }
         }
     }
-    if (nifti_set_filenames(fromGM_steps, "fromGM_steps.nii", 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(fromGM_steps);
-
-    if (nifti_set_filenames(fromGM_dist, "fromGM_dist.nii", 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(fromGM_dist);
-
-    if (nifti_set_filenames(fromGM_id, "fromGM_id.nii", 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(fromGM_id);
+    save_output_nifti(fin, "fromWM_steps", fromGM_steps, false);
+    save_output_nifti(fin, "fromWM_dist", fromGM_dist, false);
+    save_output_nifti(fin, "fromWM_id", fromGM_dist, false);
 
     // ========================================================================
     // ========================================================================
@@ -881,7 +853,6 @@ int main(int argc, char*  argv[]) {
             int j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
 
             *(nii_columns_data + i) = round(j);
-
             //-----------------------------------------------------------------
 
             // Normalize distance
@@ -891,27 +862,12 @@ int main(int argc, char*  argv[]) {
             float norm_dist = dist1 / (dist1 + dist2);
 
             // Cast distances to integers as number of desired layers
-            *(equi_dist_layers_data + i) = ceil(nr_layers * norm_dist);
+            *(layers_equidist_data + i) = ceil(nr_layers * norm_dist);
         }
     }
 
-    // ========================================================================
-    // ========================================================================
-    // ========================================================================
-
-    if (nifti_set_filenames(nii_columns, "test_columns.nii", 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(nii_columns);
-
-    cout << "  Saving outputs..." << endl;
-
-    const char* fout_4 = "equi_dist_layers.nii";
-    if (nifti_set_filenames(equi_dist_layers, fout_4, 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(equi_dist_layers);
-
+    save_output_nifti(fin, "layers_equidist", layers_equidist);
+    save_output_nifti(fin, "columns", nii_columns);
     cout << "  Finished." << endl;
     return 0;
 }
