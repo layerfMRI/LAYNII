@@ -9,8 +9,9 @@ int show_help(void) {
     "    LN_3DGROW_LAYERS -rim rim.nii \n"
     "\n"
     "Options:\n"
-    "    -help               : Show this help. \n"
-    "    -rim  border        : Specify input dataset.\n"
+    "    -help       : Show this help. \n"
+    "    -rim        : Specify input dataset.\n"
+    "    -nr_layers  : Number of layers. Default is 3.\n"
     "\n"
     "Notes:\n"
     "    - Datatype of 'rim.nii' needs to be INT16.\n"
@@ -22,7 +23,7 @@ int show_help(void) {
 int main(int argc, char*  argv[]) {
     nifti_image*nim_input = NULL;
     char* fin = NULL;
-    int ac;
+    int ac, nr_layers = 3;
     if (argc < 2) {
         return show_help();   // typing '-help' is sooo much work
     }
@@ -36,7 +37,13 @@ int main(int argc, char*  argv[]) {
                 fprintf(stderr, "** missing argument for -input\n");
                 return 1;
             }
-            fin = argv[ac];  // no string copy, just pointer assignment
+            fin = argv[ac];
+        } else if (!strcmp(argv[ac], "-nr_layers")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -input\n");
+            } else {
+                nr_layers = atof(argv[ac]);
+            }
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -59,12 +66,9 @@ int main(int argc, char*  argv[]) {
     log_welcome("LN_3DGROW_LAYERS");
     log_nifti_descriptives(nim_input);
 
-    // User options
-    const int nr_layers = 3;
+    cout << "  Nr. layers: " << nr_layers << endl;
 
-    // NOTE(Faruk): This is mostly redundant now, probably will take out. This
-    // is the distance from every voxel the algorithm is applied on to make it
-    // not loop over all voxels.
+    // NOTE(Faruk): This is mostly redundant now, probably will take out
     int vinc = 200;
 
     // Get dimensions of input
@@ -145,10 +149,11 @@ int main(int argc, char*  argv[]) {
             if (*(fromWM_steps_data + i) == grow_i) {
                 int ix, iy, iz;
                 tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
-
                 int j;
                 float d;
+                // ------------------------------------------------------------
                 // 1-jump neighbours
+                // ------------------------------------------------------------
                 if (ix != 0) {
                     j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
                     if (*(nim_input_data + j) == 3) {
@@ -224,6 +229,7 @@ int main(int argc, char*  argv[]) {
 
                 // ------------------------------------------------------------
                 // 2-jump neighbours
+                // ------------------------------------------------------------
                 if (ix != 0 && iy != 0) {
                     j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
                     if (*(nim_input_data + j) == 3) {
@@ -371,6 +377,7 @@ int main(int argc, char*  argv[]) {
 
                 // ------------------------------------------------------------
                 // 3-jump neighbours
+                // ------------------------------------------------------------
                 if (ix != 0 && iy != 0 && iz != 0) {
                     j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
                     if (*(nim_input_data + j) == 3) {
@@ -509,7 +516,9 @@ int main(int argc, char*  argv[]) {
 
                 int j;
                 float d;
+                // ------------------------------------------------------------
                 // 1-jump neighbours
+                // ------------------------------------------------------------
                 if (ix != 0) {
                     j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
                     if (*(nim_input_data + j) == 3) {
@@ -582,8 +591,10 @@ int main(int argc, char*  argv[]) {
                         }
                     }
                 }
+
                 // ------------------------------------------------------------
                 // 2-jump neighbours
+                // ------------------------------------------------------------
                 if (ix != 0 && iy != 0) {
                     j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
                     if (*(nim_input_data + j) == 3) {
@@ -731,6 +742,7 @@ int main(int argc, char*  argv[]) {
 
                 // ------------------------------------------------------------
                 // 3-jump neighbours
+                // ------------------------------------------------------------
                 if (ix != 0 && iy != 0 && iz != 0) {
                     j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
                     if (*(nim_input_data + j) == 3) {
@@ -862,28 +874,13 @@ int main(int argc, char*  argv[]) {
             // TODO(Faruk): Might think about cleaning too long distances here.
 
             //-----------------------------------------------------------------
-            // NOTE(Faruk): Point onto line projections, wip...
-            // float temp1 = (x - wm_x) * (gm_x - wm_x)
-            //     + (y - wm_y) * (gm_y - wm_y)
-            //     + (z - wm_z) * (gm_z - wm_z);
-            //
-            // float temp2 = pow(gm_x - wm_x, 2)
-            //     + pow(gm_y - wm_y, 2)
-            //     + pow(gm_z - wm_z, 2);
-            //
-            // temp1 /= temp2;
-            //
-            // float r_x = wm_x + (temp1 * (wm_x - gm_x));
-            // float r_y = wm_y + (temp1 * (wm_y - gm_y));
-            // float r_z = wm_z + (temp1 * (wm_z - gm_z));
-            // float dist_3 = dist(x, y, z, r_x, r_y, r_z, dX, dY, dZ);
-
+            // NOTE(Faruk): Columns, WIP...
             int mid_x = (wm_x + gm_x)/2;
             int mid_y = (wm_y + gm_y)/2;
             int mid_z = (wm_z + gm_z)/2;
             int j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
 
-            *(nii_columns_data + i) = static_cast<int>(j);
+            *(nii_columns_data + i) = round(j);
 
             //-----------------------------------------------------------------
 
