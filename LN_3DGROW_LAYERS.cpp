@@ -24,6 +24,7 @@ int main(int argc, char*  argv[]) {
     nifti_image*nim_input = NULL;
     char* fin = NULL;
     int ac, nr_layers = 3;
+    float column_size = 7;
     if (argc < 2) {
         return show_help();   // typing '-help' is sooo much work
     }
@@ -34,15 +35,21 @@ int main(int argc, char*  argv[]) {
             return show_help();
         } else if (!strcmp(argv[ac], "-rim")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -input\n");
+                fprintf(stderr, "** missing argument for -rim\n");
                 return 1;
             }
             fin = argv[ac];
         } else if (!strcmp(argv[ac], "-nr_layers")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -input\n");
+                fprintf(stderr, "** missing argument for -nr_layers\n");
             } else {
                 nr_layers = atof(argv[ac]);
+            }
+        } else if (!strcmp(argv[ac], "-column_size")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -column_size\n");
+            } else {
+                column_size = atof(argv[ac]);
             }
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
@@ -869,13 +876,20 @@ int main(int argc, char*  argv[]) {
             tie(gm_x, gm_y, gm_z) = ind2sub_3D(*(fromGM_id_data + i),
                                                size_x, size_y);
 
-            // NOTE(Faruk): Columns, WIP...
-            int mid_x = (wm_x + gm_x)/2;
-            int mid_y = (wm_y + gm_y)/2;
-            int mid_z = (wm_z + gm_z)/2;
-            int j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
+            // Find middle point of columns
+            float mid_x = (wm_x + gm_x) / 2;
+            float mid_y = (wm_y + gm_y) / 2;
+            float mid_z = (wm_z + gm_z) / 2;
 
-            *(nii_columns_data + i) = round(j);
+            // Downsample middle point coordinate (makes columns larger)
+            mid_x = round(mid_x / column_size) * column_size;
+            mid_y = round(mid_y / column_size) * column_size;
+            mid_z = round(mid_z / column_size) * column_size;
+
+            int j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
+            j = round(j);
+
+            *(nii_columns_data + i) = static_cast<int>(j);
         }
     }
     save_output_nifti(fin, "columns", nii_columns);
