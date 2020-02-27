@@ -488,7 +488,7 @@ int main(int argc, char*  argv[]) {
     }
     save_output_nifti(fin, "fromWM_steps", fromWM_steps, false);
     save_output_nifti(fin, "fromWM_dist", fromWM_dist, false);
-    save_output_nifti(fin, "fromWM_id", fromWM_dist, false);
+    save_output_nifti(fin, "fromWM_id", fromWM_id, false);
 
     // ========================================================================
     // Grow from CSF
@@ -843,7 +843,7 @@ int main(int argc, char*  argv[]) {
     }
     save_output_nifti(fin, "fromGM_steps", fromGM_steps, false);
     save_output_nifti(fin, "fromGM_dist", fromGM_dist, false);
-    save_output_nifti(fin, "fromGM_id", fromGM_dist, false);
+    save_output_nifti(fin, "fromGM_id", fromGM_id, false);
 
     // ========================================================================
     // Layers
