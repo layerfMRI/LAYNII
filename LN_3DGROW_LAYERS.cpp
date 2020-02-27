@@ -21,7 +21,7 @@ int show_help(void) {
 }
 
 int main(int argc, char*  argv[]) {
-    nifti_image*nim_input = NULL;
+    nifti_image*nii_rim = NULL;
     char* fin = NULL;
     int ac, nr_layers = 3;
     float column_size = 7;
@@ -63,28 +63,28 @@ int main(int argc, char*  argv[]) {
     }
 
     // Read input dataset, including data
-    nim_input = nifti_image_read(fin, 1);
-    if (!nim_input) {
+    nii_rim = nifti_image_read(fin, 1);
+    if (!nii_rim) {
         fprintf(stderr, "** failed to read NIfTI image from '%s'\n", fin);
         return 2;
     }
-    int16_t *nim_input_data = static_cast<__int16_t*>(nim_input->data);
+    int16_t *nii_rim_data = static_cast<__int16_t*>(nii_rim->data);
 
     log_welcome("LN_3DGROW_LAYERS");
-    log_nifti_descriptives(nim_input);
+    log_nifti_descriptives(nii_rim);
 
     cout << "  Nr. layers: " << nr_layers << endl;
 
     // Get dimensions of input
-    const int size_z = nim_input->nz;
-    const int size_x = nim_input->nx;
-    const int size_y = nim_input->ny;
+    const int size_z = nii_rim->nz;
+    const int size_x = nii_rim->nx;
+    const int size_y = nii_rim->ny;
 
     const int nr_voxels = size_z * size_y * size_x;
 
-    const float dX = nim_input->pixdim[1];
-    const float dY = nim_input->pixdim[2];
-    const float dZ = nim_input->pixdim[3];
+    const float dX = nii_rim->pixdim[1];
+    const float dY = nii_rim->pixdim[2];
+    const float dZ = nii_rim->pixdim[3];
 
     // Short diagonals
     const float dia_xy = sqrt(dX * dX + dY * dY);
@@ -96,26 +96,29 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Prepare required nifti images
 
-    nifti_image* fromWM_steps = copy_nifti_header_as_float(nim_input);
+    nifti_image* fromWM_steps = copy_nifti_header_as_float(nii_rim);
     float* fromWM_steps_data = static_cast<float*>(fromWM_steps->data);
-    nifti_image* fromWM_dist = copy_nifti_header_as_float(nim_input);
+    nifti_image* fromWM_dist = copy_nifti_header_as_float(nii_rim);
     float* fromWM_dist_data = static_cast<float*>(fromWM_dist->data);
 
-    nifti_image* fromGM_steps = copy_nifti_header_as_float(nim_input);
+    nifti_image* fromGM_steps = copy_nifti_header_as_float(nii_rim);
     float* fromGM_steps_data = static_cast<float*>(fromGM_steps->data);
-    nifti_image* fromGM_dist = copy_nifti_header_as_float(nim_input);
+    nifti_image* fromGM_dist = copy_nifti_header_as_float(nii_rim);
     float* fromGM_dist_data = static_cast<float*>(fromGM_dist->data);
 
-    nifti_image* fromWM_id = copy_nifti_header_as_uint(nim_input);
+    nifti_image* fromWM_id = copy_nifti_header_as_uint(nii_rim);
     unsigned int* fromWM_id_data = static_cast<unsigned int*>(fromWM_id->data);
-    nifti_image* fromGM_id = copy_nifti_header_as_uint(nim_input);
+    nifti_image* fromGM_id = copy_nifti_header_as_uint(nii_rim);
     unsigned int* fromGM_id_data = static_cast<unsigned int*>(fromGM_id->data);
 
-    nifti_image* layers_equidist  = copy_nifti_header_as_int(nim_input);
+    nifti_image* layers_equidist  = copy_nifti_header_as_int(nii_rim);
     int* layers_equidist_data = static_cast<int*>(layers_equidist->data);
 
-    nifti_image* nii_columns = copy_nifti_header_as_int(nim_input);
+    nifti_image* nii_columns = copy_nifti_header_as_int(nii_rim);
     int* nii_columns_data = static_cast<int*>(nii_columns->data);
+
+    nifti_image* middle_gm = copy_nifti_header_as_int(nii_rim);
+    int* middle_gm_data = static_cast<int*>(middle_gm->data);
 
     // Setting zero
     for (int i = 0; i != nr_voxels; ++i) {
@@ -123,6 +126,7 @@ int main(int argc, char*  argv[]) {
         *(fromWM_id_data + i) = 0;
         *(fromGM_steps_data + i) = 0;
         *(fromGM_id_data + i) = 0;
+        *(middle_gm_data + i) = 0;
     }
 
     // ========================================================================
@@ -132,9 +136,9 @@ int main(int argc, char*  argv[]) {
 
     // Initialize grow volume
     for (int i = 0; i != nr_voxels; ++i) {
-        if (*(nim_input_data + i) == 2) {  // WM boundary voxels within GM
+        if (*(nii_rim_data + i) == 2) {  // WM boundary voxels within GM
             *(fromWM_steps_data + i) = 1.;
-            *(fromWM_dist_data + i) = 1.;
+            *(fromWM_dist_data + i) = 0.;
             *(fromWM_id_data + i) = i;
         } else {
             *(fromWM_steps_data + i) = 0.;
@@ -157,7 +161,7 @@ int main(int argc, char*  argv[]) {
                 // ------------------------------------------------------------
                 if (ix != 0) {
                     j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dX;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -169,7 +173,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != size_x) {
                     j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dX;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -181,7 +185,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy != 0) {
                     j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dY;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -193,7 +197,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy != size_y) {
                     j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dY;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -205,7 +209,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iz != 0) {
                     j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dZ;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -217,7 +221,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iz != size_z) {
                     j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dZ;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -233,7 +237,7 @@ int main(int argc, char*  argv[]) {
                 // ------------------------------------------------------------
                 if (ix != 0 && iy != 0) {
                     j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_xy;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -245,7 +249,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != 0 && iy != size_y) {
                     j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_xy;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -257,7 +261,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != size_x && iy != 0) {
                     j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_xy;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -269,7 +273,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != size_x && iy != size_y) {
                     j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_xy;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -281,7 +285,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy != 0 && iz != 0) {
                     j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_yz;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -293,7 +297,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy != 0 && iz != size_z) {
                     j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_yz;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -305,7 +309,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy != size_z && iz != 0) {
                     j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_yz;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -317,7 +321,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy != size_z && iz != size_z) {
                     j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_yz;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -329,7 +333,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != 0 && iz != 0) {
                     j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_xz;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -341,7 +345,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != size_x && iz != 0) {
                     j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_xz;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -353,7 +357,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != 0 && iz != size_z) {
                     j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_xz;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -365,7 +369,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != size_x && iz != size_z) {
                     j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_xz;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -381,7 +385,7 @@ int main(int argc, char*  argv[]) {
                 // ------------------------------------------------------------
                 if (ix != 0 && iy != 0 && iz != 0) {
                     j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_xyz;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -393,7 +397,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != 0 && iy != 0 && iz != size_z) {
                     j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_xyz;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -405,7 +409,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != 0 && iy != size_y && iz != 0) {
                     j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_xyz;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -417,7 +421,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != size_x && iy != 0 && iz != 0) {
                     j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_xyz;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -429,7 +433,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != 0 && iy != size_y && iz != size_z) {
                     j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_xyz;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -441,7 +445,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != size_x && iy != size_y && iz != size_z) {
                     j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_xyz;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -453,7 +457,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != size_x && iy != size_y && iz != 0) {
                     j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_xyz;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -465,7 +469,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != size_x && iy != size_y && iz != size_z) {
                     j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1) {
                         d = *(fromWM_dist_data + i) + dia_xyz;
                         if (d < *(fromWM_dist_data + j)
                             || *(fromWM_dist_data + j) == 0) {
@@ -489,9 +493,9 @@ int main(int argc, char*  argv[]) {
     cout << "  Start growing from outer GM..." << endl;
 
     for (int i = 0; i != nr_voxels; ++i) {
-        if (*(nim_input_data + i) == 1) {
+        if (*(nii_rim_data + i) == 1) {
             *(fromGM_steps_data + i) = 1.;
-            *(fromGM_dist_data + i) = 1.;
+            *(fromGM_dist_data + i) = 0.;
             *(fromGM_id_data + i) = i;
         } else {
             *(fromGM_steps_data + i) = 0.;
@@ -512,7 +516,7 @@ int main(int argc, char*  argv[]) {
                 // ------------------------------------------------------------
                 if (ix != 0) {
                     j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dX;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -524,7 +528,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != size_x) {
                     j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dX;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -536,7 +540,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy != 0) {
                     j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dY;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -548,7 +552,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy != size_y) {
                     j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dY;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -560,7 +564,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iz != 0) {
                     j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dZ;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -572,7 +576,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iz != size_z) {
                     j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dZ;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -588,7 +592,7 @@ int main(int argc, char*  argv[]) {
                 // ------------------------------------------------------------
                 if (ix != 0 && iy != 0) {
                     j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_xy;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -600,7 +604,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != 0 && iy != size_y) {
                     j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_xy;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -612,7 +616,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != size_x && iy != 0) {
                     j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_xy;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -624,7 +628,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != size_x && iy != size_y) {
                     j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_xy;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -636,7 +640,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy != 0 && iz != 0) {
                     j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_yz;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -648,7 +652,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy != 0 && iz != size_z) {
                     j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_yz;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -660,7 +664,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy != size_z && iz != 0) {
                     j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_yz;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -672,7 +676,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy != size_z && iz != size_z) {
                     j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_yz;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -684,7 +688,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != 0 && iz != 0) {
                     j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_xz;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -696,7 +700,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != size_x && iz != 0) {
                     j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_xz;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -708,7 +712,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != 0 && iz != size_z) {
                     j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_xz;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -720,7 +724,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != size_x && iz != size_z) {
                     j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_xz;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -736,7 +740,7 @@ int main(int argc, char*  argv[]) {
                 // ------------------------------------------------------------
                 if (ix != 0 && iy != 0 && iz != 0) {
                     j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_xyz;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -748,7 +752,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != 0 && iy != 0 && iz != size_z) {
                     j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_xyz;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -760,7 +764,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != 0 && iy != size_y && iz != 0) {
                     j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_xyz;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -772,7 +776,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != size_x && iy != 0 && iz != 0) {
                     j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_xyz;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -784,7 +788,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != 0 && iy != size_y && iz != size_z) {
                     j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_xyz;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -796,7 +800,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != size_x && iy != size_y && iz != size_z) {
                     j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_xyz;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -808,7 +812,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != size_x && iy != size_y && iz != 0) {
                     j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_xyz;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -820,7 +824,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix != size_x && iy != size_y && iz != size_z) {
                     j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
-                    if (*(nim_input_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2) {
                         d = *(fromGM_dist_data + i) + dia_xyz;
                         if (d < *(fromGM_dist_data + j)
                             || *(fromGM_dist_data + j) == 0) {
@@ -844,8 +848,14 @@ int main(int argc, char*  argv[]) {
     cout << "  Doing layers..." << endl;
     float x, y, z, wm_x, wm_y, wm_z, gm_x, gm_y, gm_z, mid_x, mid_y, mid_z;
 
+    // Repurpose data arrays
     for (int i = 0; i != nr_voxels; ++i) {
-        if (*(nim_input_data + i) == 3) {
+        *(fromWM_dist_data + i) = 0.;
+        *(fromGM_dist_data + i) = 0.;
+    }
+
+    for (int i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) == 3) {
             tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
             tie(wm_x, wm_y, wm_z) = ind2sub_3D(*(fromWM_id_data + i),
                                                size_x, size_y);
@@ -860,9 +870,24 @@ int main(int argc, char*  argv[]) {
 
             // Cast distances to integers as number of desired layers
             *(layers_equidist_data + i) = ceil(nr_layers * norm_dist);
+
+            // Middle gray matter
+            mid_x = round((gm_x + wm_x) / 2.);
+            mid_y = round((gm_y + wm_y) / 2.);
+            mid_z = round((gm_z + wm_z) / 2.);
+            j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
+            *(middle_gm_data + j) = 1;
+
+            j = *(fromWM_id_data + i);
+            *(fromWM_dist_data + j) += 1;
+            j = *(fromGM_id_data + i);
+            *(fromGM_dist_data + j) += 1;
         }
     }
     save_output_nifti(fin, "layers_equidist", layers_equidist);
+    save_output_nifti(fin, "middle_gm", middle_gm);
+    save_output_nifti(fin, "WM_hotspots", fromWM_dist);
+    save_output_nifti(fin, "GM_hotspots", fromGM_dist);
 
     // ========================================================================
     // Columns
@@ -870,7 +895,7 @@ int main(int argc, char*  argv[]) {
     cout << "  Doing columns..." << endl;
 
     for (int i = 0; i != nr_voxels; ++i) {
-        if (*(nim_input_data + i) == 3) {
+        if (*(nii_rim_data + i) == 3) {
             tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
             tie(wm_x, wm_y, wm_z) = ind2sub_3D(*(fromWM_id_data + i),
                                                size_x, size_y);
