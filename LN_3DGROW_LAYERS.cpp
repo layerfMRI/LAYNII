@@ -24,7 +24,7 @@ int main(int argc, char*  argv[]) {
     nifti_image*nii_rim = NULL;
     char* fin = NULL;
     int ac, nr_layers = 3;
-    float column_size = 7;
+    float column_size = 3;
     if (argc < 2) {
         return show_help();   // typing '-help' is sooo much work
     }
@@ -119,6 +119,9 @@ int main(int argc, char*  argv[]) {
 
     nifti_image* middle_gm = copy_nifti_header_as_int(nii_rim);
     int* middle_gm_data = static_cast<int*>(middle_gm->data);
+
+    nifti_image* hotspots = copy_nifti_header_as_int(nii_rim);
+    int* hotspots_data = static_cast<int*>(hotspots->data);
 
     // Setting zero
     for (int i = 0; i != nr_voxels; ++i) {
@@ -878,28 +881,36 @@ int main(int argc, char*  argv[]) {
             j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
             *(middle_gm_data + j) = 1;
 
+            // Count WM and GM anchor voxels
             j = *(fromWM_id_data + i);
-            *(fromWM_dist_data + j) += 1;
+            *(hotspots_data + j) += 1;
             j = *(fromGM_id_data + i);
-            *(fromGM_dist_data + j) += 1;
+            *(hotspots_data + j) -= 1;
         }
     }
     save_output_nifti(fin, "layers_equidist", layers_equidist);
-    save_output_nifti(fin, "middle_gm", middle_gm);
-    save_output_nifti(fin, "WM_hotspots", fromWM_dist);
-    save_output_nifti(fin, "GM_hotspots", fromGM_dist);
+    save_output_nifti(fin, "middle_gm", middle_gm, false);
+    save_output_nifti(fin, "hotspots", hotspots, false);
 
     // ========================================================================
     // Columns
     // ========================================================================
     cout << "  Doing columns..." << endl;
-
+    int m, n;
     for (int i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
-            tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
-            tie(wm_x, wm_y, wm_z) = ind2sub_3D(*(fromWM_id_data + i),
+            // Use column of the hotspot (accounts for sulci gyri columns)
+            m = *(fromWM_id_data + i);
+            n = *(fromGM_id_data + i);
+            if (*(hotspots_data + m) > -*(hotspots_data + n)) {
+                j = *(fromWM_id_data + m);
+            } else {
+                j = *(fromGM_id_data + n);
+            }
+
+            tie(wm_x, wm_y, wm_z) = ind2sub_3D(*(fromWM_id_data + j),
                                                size_x, size_y);
-            tie(gm_x, gm_y, gm_z) = ind2sub_3D(*(fromGM_id_data + i),
+            tie(gm_x, gm_y, gm_z) = ind2sub_3D(*(fromGM_id_data + j),
                                                size_x, size_y);
 
             // Find middle point of columns
@@ -908,9 +919,9 @@ int main(int argc, char*  argv[]) {
             mid_z = (wm_z + gm_z) / 2.;
 
             // Downsample middle point coordinate (makes columns larger)
-            mid_x = round(mid_x / column_size) * column_size;
-            mid_y = round(mid_y / column_size) * column_size;
-            mid_z = round(mid_z / column_size) * column_size;
+            mid_x = floor(mid_x / column_size) * column_size;
+            mid_y = floor(mid_y / column_size) * column_size;
+            mid_z = floor(mid_z / column_size) * column_size;
 
             j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
             *(nii_columns_data + i) = j;
