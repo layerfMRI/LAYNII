@@ -200,29 +200,29 @@ nifti_image* copy_nifti_header_as_float(nifti_image* nii) {
 nifti_image* copy_nifti_header_as_int(nifti_image* nii) {
     nifti_image* nii_new = nifti_copy_nim_info(nii);
     nii_new->datatype = NIFTI_TYPE_INT32;
-    nii_new->nbyper = sizeof(int);
+    nii_new->nbyper = sizeof(int32_t);
     nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
     return nii_new;
 }
 
 nifti_image* copy_nifti_header_as_uint(nifti_image* nii) {
     nifti_image* nii_new = nifti_copy_nim_info(nii);
-    nii_new->datatype = NIFTI_TYPE_UINT32;
-    nii_new->nbyper = sizeof(unsigned int);
+    nii_new->datatype = NIFTI_TYPE_UINT64;
+    nii_new->nbyper = sizeof(uint32_t);
     nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
     return nii_new;
 }
 
-std::tuple<int, int, int> ind2sub_3D(const int linear_index, const int size_x,
-                                     const int size_y) {
-    int z = linear_index / (size_x * size_y);
-    int temp = linear_index % (size_x * size_y);
-    int y = temp / size_x;
-    int x = temp % size_x;
+std::tuple<uint32_t, uint32_t, uint32_t> ind2sub_3D(
+    const uint32_t linear_index, const uint32_t size_x, const uint32_t size_y) {
+    uint32_t z = linear_index / (size_x * size_y);
+    uint32_t temp = linear_index % (size_x * size_y);
+    uint32_t y = temp / size_x;
+    uint32_t x = temp % size_x;
     return std::make_tuple(x, y, z);
 }
 
-int sub2ind_3D(const int x, const int y, const int z,
-               const int size_x, const int size_y) {
+uint32_t sub2ind_3D(const uint32_t x, const uint32_t y, const uint32_t z,
+                    const uint32_t size_x, const uint32_t size_y) {
     return size_x * size_y * z + size_x * y + x;
 }

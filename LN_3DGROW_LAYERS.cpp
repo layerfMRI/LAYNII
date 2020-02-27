@@ -76,11 +76,11 @@ int main(int argc, char*  argv[]) {
     cout << "  Nr. layers: " << nr_layers << endl;
 
     // Get dimensions of input
-    const int size_z = nii_rim->nz;
-    const int size_x = nii_rim->nx;
-    const int size_y = nii_rim->ny;
+    const uint32_t size_z = nii_rim->nz;
+    const uint32_t size_x = nii_rim->nx;
+    const uint32_t size_y = nii_rim->ny;
 
-    const int nr_voxels = size_z * size_y * size_x;
+    const uint32_t nr_voxels = size_z * size_y * size_x;
 
     const float dX = nii_rim->pixdim[1];
     const float dY = nii_rim->pixdim[2];
@@ -107,24 +107,24 @@ int main(int argc, char*  argv[]) {
     float* fromGM_dist_data = static_cast<float*>(fromGM_dist->data);
 
     nifti_image* fromWM_id = copy_nifti_header_as_uint(nii_rim);
-    unsigned int* fromWM_id_data = static_cast<unsigned int*>(fromWM_id->data);
+    uint32_t* fromWM_id_data = static_cast<uint32_t*>(fromWM_id->data);
     nifti_image* fromGM_id = copy_nifti_header_as_uint(nii_rim);
-    unsigned int* fromGM_id_data = static_cast<unsigned int*>(fromGM_id->data);
+    uint32_t* fromGM_id_data = static_cast<uint32_t*>(fromGM_id->data);
 
-    nifti_image* layers_equidist  = copy_nifti_header_as_int(nii_rim);
-    int* layers_equidist_data = static_cast<int*>(layers_equidist->data);
+    nifti_image* nii_layers  = copy_nifti_header_as_int(nii_rim);
+    int32_t* nii_layers_data = static_cast<int32_t*>(nii_layers->data);
 
     nifti_image* nii_columns = copy_nifti_header_as_int(nii_rim);
-    int* nii_columns_data = static_cast<int*>(nii_columns->data);
+    int32_t* nii_columns_data = static_cast<int32_t*>(nii_columns->data);
 
     nifti_image* middle_gm = copy_nifti_header_as_int(nii_rim);
-    int* middle_gm_data = static_cast<int*>(middle_gm->data);
+    int32_t* middle_gm_data = static_cast<int32_t*>(middle_gm->data);
 
     nifti_image* hotspots = copy_nifti_header_as_int(nii_rim);
-    int* hotspots_data = static_cast<int*>(hotspots->data);
+    int32_t* hotspots_data = static_cast<int32_t*>(hotspots->data);
 
     // Setting zero
-    for (int i = 0; i != nr_voxels; ++i) {
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
         *(fromWM_steps_data + i) = 0;
         *(fromWM_id_data + i) = 0;
         *(fromGM_steps_data + i) = 0;
@@ -138,7 +138,7 @@ int main(int argc, char*  argv[]) {
     cout << "  Start growing from inner GM (WM-facing border)..." << endl;
 
     // Initialize grow volume
-    for (int i = 0; i != nr_voxels; ++i) {
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 2) {  // WM boundary voxels within GM
             *(fromWM_steps_data + i) = 1.;
             *(fromWM_dist_data + i) = 0.;
@@ -149,12 +149,12 @@ int main(int argc, char*  argv[]) {
         }
     }
 
-    unsigned int grow_step = 1, voxel_counter = nr_voxels;
-    int ix, iy, iz, j;
+    uint32_t grow_step = 1, voxel_counter = nr_voxels;
+    uint32_t ix, iy, iz, j;
     float d;
     while (voxel_counter != 0) {
         voxel_counter = 0;
-        for (int i = 0; i != nr_voxels; ++i) {
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
             if (*(fromWM_steps_data + i) == grow_step) {
                 tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
                 voxel_counter += 1;
@@ -495,7 +495,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     cout << "  Start growing from outer GM..." << endl;
 
-    for (int i = 0; i != nr_voxels; ++i) {
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 1) {
             *(fromGM_steps_data + i) = 1.;
             *(fromGM_dist_data + i) = 0.;
@@ -509,7 +509,7 @@ int main(int argc, char*  argv[]) {
     grow_step = 1, voxel_counter = nr_voxels;
     while (voxel_counter != 0) {
         voxel_counter = 0;
-        for (int i = 0; i != nr_voxels; ++i) {
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
             if (*(fromGM_steps_data + i) == grow_step) {
                 tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
                 voxel_counter += 1;
@@ -852,12 +852,12 @@ int main(int argc, char*  argv[]) {
     float x, y, z, wm_x, wm_y, wm_z, gm_x, gm_y, gm_z, mid_x, mid_y, mid_z;
 
     // Repurpose data arrays
-    for (int i = 0; i != nr_voxels; ++i) {
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
         *(fromWM_dist_data + i) = 0.;
         *(fromGM_dist_data + i) = 0.;
     }
 
-    for (int i = 0; i != nr_voxels; ++i) {
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
             tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
             tie(wm_x, wm_y, wm_z) = ind2sub_3D(*(fromWM_id_data + i),
@@ -872,7 +872,7 @@ int main(int argc, char*  argv[]) {
             float norm_dist = dist1 / (dist1 + dist2);
 
             // Cast distances to integers as number of desired layers
-            *(layers_equidist_data + i) = ceil(nr_layers * norm_dist);
+            *(nii_layers_data + i) = ceil(nr_layers * norm_dist);
 
             // Middle gray matter
             mid_x = round((gm_x + wm_x) / 2.);
@@ -888,7 +888,7 @@ int main(int argc, char*  argv[]) {
             *(hotspots_data + j) -= 1;
         }
     }
-    save_output_nifti(fin, "layers_equidist", layers_equidist);
+    save_output_nifti(fin, "layers", nii_layers);
     save_output_nifti(fin, "middle_gm", middle_gm, false);
     save_output_nifti(fin, "hotspots", hotspots, false);
 
@@ -896,8 +896,8 @@ int main(int argc, char*  argv[]) {
     // Columns
     // ========================================================================
     cout << "  Doing columns..." << endl;
-    int m, n;
-    for (int i = 0; i != nr_voxels; ++i) {
+    uint32_t m, n;
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
             // Use column of the hotspot (accounts for sulci gyri columns)
             m = *(fromWM_id_data + i);
