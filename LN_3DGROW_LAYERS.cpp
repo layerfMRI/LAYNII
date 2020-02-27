@@ -15,10 +15,6 @@ int show_help(void) {
     "    -help       : Show this help. \n"
     "    -rim        : Specify input dataset.\n"
     "    -nr_layers  : Number of layers. Default is 3.\n"
-    "\n"
-    "Notes:\n"
-    "    - Datatype of 'rim.nii' needs to be INT16.\n"
-    "    - This is 3D. Hence rim.nii file should be dmsmooth in all 3D.\n"
     "\n");
     return 0;
 }
@@ -26,7 +22,7 @@ int show_help(void) {
 int main(int argc, char*  argv[]) {
     nifti_image*nii_rim = NULL;
     char* fin = NULL;
-    int ac, nr_layers = 3;
+    uint16_t ac, nr_layers = 3;
     float column_size = 1;
     if (argc < 2) {
         return show_help();   // typing '-help' is sooo much work
