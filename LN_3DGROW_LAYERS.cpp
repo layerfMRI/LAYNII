@@ -24,7 +24,7 @@ int main(int argc, char*  argv[]) {
     nifti_image*nii_rim = NULL;
     char* fin = NULL;
     int ac, nr_layers = 3;
-    float column_size = 3;
+    float column_size = 1;
     if (argc < 2) {
         return show_help();   // typing '-help' is sooo much work
     }
@@ -904,8 +904,10 @@ int main(int argc, char*  argv[]) {
             n = *(fromGM_id_data + i);
             if (*(hotspots_data + m) > -*(hotspots_data + n)) {
                 j = *(fromWM_id_data + m);
+                *(hotspots_data + i) = *(hotspots_data + m);
             } else {
                 j = *(fromGM_id_data + n);
+                *(hotspots_data + i) = *(hotspots_data + n);
             }
 
             tie(wm_x, wm_y, wm_z) = ind2sub_3D(*(fromWM_id_data + j),
@@ -928,6 +930,7 @@ int main(int argc, char*  argv[]) {
         }
     }
     save_output_nifti(fin, "columns", nii_columns);
+    save_output_nifti(fin, "curvature", hotspots, false);
 
     cout << "  Finished." << endl;
     return 0;
