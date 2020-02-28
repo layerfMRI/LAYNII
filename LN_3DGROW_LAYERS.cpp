@@ -106,6 +106,9 @@ int main(int argc, char*  argv[]) {
     nifti_image* outerGM_dist = copy_nifti_header_as_float(nii_rim);
     float* outerGM_dist_data = static_cast<float*>(outerGM_dist->data);
 
+    nifti_image* err_dist = copy_nifti_header_as_float(nii_rim);
+    float* err_dist_data = static_cast<float*>(err_dist->data);
+
     nifti_image* innerGM_id = copy_nifti_header_as_uint(nii_rim);
     uint32_t* innerGM_id_data = static_cast<uint32_t*>(innerGM_id->data);
     nifti_image* outerGM_id = copy_nifti_header_as_uint(nii_rim);
@@ -866,19 +869,33 @@ int main(int argc, char*  argv[]) {
                                                size_x, size_y);
 
             // Normalize distance
-            float dist1, dist2;
-            dist1 = dist(x, y, z, wm_x, wm_y, wm_z, dX, dY, dZ);
-            dist2 = dist(x, y, z, gm_x, gm_y, gm_z, dX, dY, dZ);
+            float dist1 = dist(x, y, z, wm_x, wm_y, wm_z, dX, dY, dZ);
+            float dist2 = dist(x, y, z, gm_x, gm_y, gm_z, dX, dY, dZ);
             float norm_dist = dist1 / (dist1 + dist2);
 
             // Cast distances to integers as number of desired layers
             *(nii_layers_data + i) = ceil(nr_layers * norm_dist);
+            // NOTE: for debugging purposes
+            float dist3 = dist(wm_x, wm_y, wm_z, gm_x, gm_y, gm_z, dX, dY, dZ);
+            *(err_dist_data + i) = (dist1 + dist2) - dist3;
 
-            // Middle gray matter
-            mid_x = round((gm_x + wm_x) / 2.);
-            mid_y = round((gm_y + wm_y) / 2.);
-            mid_z = round((gm_z + wm_z) / 2.);
-            j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
+            // Middle gray matter (discrete middle)
+            float mid_dist = (dist1 + dist2) / 2.;
+            if (mid_dist < dist1) {
+                float t = 1 - (mid_dist / dist1);
+                mid_x = round((wm_x - x) * t + x);
+                mid_y = round((wm_y - y) * t + y);
+                mid_z = round((wm_z - z) * t + z);
+                j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
+            } else if (mid_dist > dist1) {
+                float t = 1 - (mid_dist / dist2);
+                mid_x = round((gm_x - x) * t + x);
+                mid_y = round((gm_y - y) * t + y);
+                mid_z = round((gm_z - z) * t + z);
+                j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
+            } else {
+                j = i;
+            }
             *(middle_gm_data + j) = 1;
 
             // Count WM and GM anchor voxels
@@ -891,6 +908,7 @@ int main(int argc, char*  argv[]) {
     save_output_nifti(fin, "layers", nii_layers);
     save_output_nifti(fin, "middle_gm", middle_gm, false);
     save_output_nifti(fin, "hotspots", hotspots, false);
+    save_output_nifti(fin, "disterror", err_dist, false);
 
     // ========================================================================
     // Columns
