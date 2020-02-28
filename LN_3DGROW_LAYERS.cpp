@@ -129,10 +129,14 @@ int main(int argc, char*  argv[]) {
     // Setting zero
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         *(innerGM_step_data + i) = 0;
-        *(innerGM_id_data + i) = 0;
         *(outerGM_step_data + i) = 0;
+        *(err_dist_data + i) = 0;
+        *(innerGM_id_data + i) = 0;
         *(outerGM_id_data + i) = 0;
         *(middle_gm_data + i) = 0;
+        *(nii_layers_data + i) = 0;
+        *(nii_columns_data + i) = 0;
+        *(hotspots_data + i) = 0;
     }
 
     // ========================================================================
@@ -854,12 +858,6 @@ int main(int argc, char*  argv[]) {
     cout << "  Doing layers..." << endl;
     float x, y, z, wm_x, wm_y, wm_z, gm_x, gm_y, gm_z, mid_x, mid_y, mid_z;
 
-    // Repurpose data arrays
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        *(innerGM_dist_data + i) = 0.;
-        *(outerGM_dist_data + i) = 0.;
-    }
-
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
             tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
@@ -869,15 +867,21 @@ int main(int argc, char*  argv[]) {
                                                size_x, size_y);
 
             // Normalize distance
-            float dist1 = dist(x, y, z, wm_x, wm_y, wm_z, dX, dY, dZ);
-            float dist2 = dist(x, y, z, gm_x, gm_y, gm_z, dX, dY, dZ);
+            // float dist1 = dist(x, y, z, wm_x, wm_y, wm_z, dX, dY, dZ);
+            // float dist2 = dist(x, y, z, gm_x, gm_y, gm_z, dX, dY, dZ);
+            // float norm_dist = dist1 / (dist1 + dist2);
+
+            // Normalize distance (completely discrete)
+            float dist1 = *(innerGM_dist_data + i);
+            float dist2 = *(outerGM_dist_data + i);
             float norm_dist = dist1 / (dist1 + dist2);
 
-            // Cast distances to integers as number of desired layers
-            *(nii_layers_data + i) = ceil(nr_layers * norm_dist);
             // NOTE: for debugging purposes
             float dist3 = dist(wm_x, wm_y, wm_z, gm_x, gm_y, gm_z, dX, dY, dZ);
             *(err_dist_data + i) = (dist1 + dist2) - dist3;
+
+            // Cast distances to integers as number of desired layers
+            *(nii_layers_data + i) = ceil(nr_layers * norm_dist);
 
             // Middle gray matter (discrete middle)
             float mid_dist = (dist1 + dist2) / 2.;
@@ -898,7 +902,7 @@ int main(int argc, char*  argv[]) {
             }
             *(middle_gm_data + j) = 1;
 
-            // Count WM and GM anchor voxels
+            // Count inner and outer GM anchor voxels
             j = *(innerGM_id_data + i);
             *(hotspots_data + j) += 1;
             j = *(outerGM_id_data + i);
