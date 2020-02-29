@@ -127,6 +127,8 @@ int main(int argc, char*  argv[]) {
 
     nifti_image* hotspots = copy_nifti_header_as_int(nii_rim);
     int32_t* hotspots_data = static_cast<int32_t*>(hotspots->data);
+    nifti_image* curvature = copy_nifti_header_as_int(nii_rim);
+    int32_t* curvature_data = static_cast<int32_t*>(curvature->data);
 
     // Setting zero
     for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -139,6 +141,7 @@ int main(int argc, char*  argv[]) {
         *(nii_layers_data + i) = 0;
         *(nii_columns_data + i) = 0;
         *(hotspots_data + i) = 0;
+        *(curvature_data + i) = 0;
     }
 
     // ========================================================================
@@ -933,17 +936,16 @@ int main(int argc, char*  argv[]) {
             // Use column of the hotspot (accounts for sulci gyri columns)
             uint32_t m = *(innerGM_id_data + i);
             uint32_t n = *(outerGM_id_data + i);
-            if (*(hotspots_data + m) > -*(hotspots_data + n)) {
+            int32_t curv = *(hotspots_data + m) + *(hotspots_data + n);
+            if (curv >= 0) {
                 j = *(innerGM_id_data + m);
-                *(hotspots_data + i) = *(hotspots_data + m);
             } else {
                 j = *(outerGM_id_data + n);
-                *(hotspots_data + i) = *(hotspots_data + n);
             }
 
             // Find middle point of columns
-            tie(mid_x, mid_y, mid_z) = ind2sub_3D(*(middleGM_id_data + j),
-                                                  size_x, size_y);
+            uint32_t k = *(middleGM_id_data + j);
+            tie(mid_x, mid_y, mid_z) = ind2sub_3D(k, size_x, size_y);
 
             // Downsample middle point coordinate (makes columns larger)
             mid_x = floor(mid_x / column_size) * column_size;
@@ -952,10 +954,17 @@ int main(int argc, char*  argv[]) {
 
             j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
             *(nii_columns_data + i) = j;
+
+            // ----------------------------------------------------------------
+            // Approximate curvature measurement from middle GM
+            m = *(innerGM_id_data + k);
+            n = *(outerGM_id_data + k);
+            *(curvature_data + i) = *(hotspots_data + m) + *(hotspots_data + n);
+            // ----------------------------------------------------------------
         }
     }
     save_output_nifti(fin, "columns", nii_columns);
-    save_output_nifti(fin, "curvature", hotspots, false);
+    save_output_nifti(fin, "curvature", curvature, false);
 
     cout << "  Finished." << endl;
     return 0;
