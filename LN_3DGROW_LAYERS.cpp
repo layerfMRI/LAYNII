@@ -120,8 +120,10 @@ int main(int argc, char*  argv[]) {
     nifti_image* nii_columns = copy_nifti_header_as_int(nii_rim);
     int32_t* nii_columns_data = static_cast<int32_t*>(nii_columns->data);
 
-    nifti_image* middle_gm = copy_nifti_header_as_int(nii_rim);
-    int32_t* middle_gm_data = static_cast<int32_t*>(middle_gm->data);
+    nifti_image* middleGM = copy_nifti_header_as_int(nii_rim);
+    int32_t* middleGM_data = static_cast<int32_t*>(middleGM->data);
+    nifti_image* middleGM_id = copy_nifti_header_as_int(nii_rim);
+    int32_t* middleGM_id_data = static_cast<int32_t*>(middleGM_id->data);
 
     nifti_image* hotspots = copy_nifti_header_as_int(nii_rim);
     int32_t* hotspots_data = static_cast<int32_t*>(hotspots->data);
@@ -133,7 +135,7 @@ int main(int argc, char*  argv[]) {
         *(err_dist_data + i) = 0;
         *(innerGM_id_data + i) = 0;
         *(outerGM_id_data + i) = 0;
-        *(middle_gm_data + i) = 0;
+        *(middleGM_data + i) = 0;
         *(nii_layers_data + i) = 0;
         *(nii_columns_data + i) = 0;
         *(hotspots_data + i) = 0;
@@ -856,10 +858,11 @@ int main(int argc, char*  argv[]) {
     // Layers
     // ========================================================================
     cout << "  Doing layers..." << endl;
-    float x, y, z, wm_x, wm_y, wm_z, gm_x, gm_y, gm_z, mid_x, mid_y, mid_z;
+    float x, y, z, wm_x, wm_y, wm_z, gm_x, gm_y, gm_z;
+    uint32_t mid_x, mid_y, mid_z;
 
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_rim_data + i) == 3) {
+        if (*(nii_rim_data + i) != 0) {
             tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
             tie(wm_x, wm_y, wm_z) = ind2sub_3D(*(innerGM_id_data + i),
                                                size_x, size_y);
@@ -876,13 +879,18 @@ int main(int argc, char*  argv[]) {
             float dist2 = *(outerGM_dist_data + i);
             float norm_dist = dist1 / (dist1 + dist2);
 
+            // Cast distances to integers as number of desired layers
+            if (norm_dist != 0) {
+                *(nii_layers_data + i) = ceil(nr_layers * norm_dist);
+            } else {
+                *(nii_layers_data + i) = 1;
+            }
+
             // NOTE: for debugging purposes
             float dist3 = dist(wm_x, wm_y, wm_z, gm_x, gm_y, gm_z, dX, dY, dZ);
             *(err_dist_data + i) = (dist1 + dist2) - dist3;
 
-            // Cast distances to integers as number of desired layers
-            *(nii_layers_data + i) = ceil(nr_layers * norm_dist);
-
+            // ----------------------------------------------------------------
             // Middle gray matter (discrete middle)
             float mid_dist = (dist1 + dist2) / 2.;
             if (mid_dist < dist1) {
@@ -900,7 +908,9 @@ int main(int argc, char*  argv[]) {
             } else {
                 j = i;
             }
-            *(middle_gm_data + j) = 1;
+            *(middleGM_data + j) = 1;
+            *(middleGM_id_data + i) = j;  // Useful to identify columns
+            // ----------------------------------------------------------------
 
             // Count inner and outer GM anchor voxels
             j = *(innerGM_id_data + i);
@@ -910,7 +920,7 @@ int main(int argc, char*  argv[]) {
         }
     }
     save_output_nifti(fin, "layers", nii_layers);
-    save_output_nifti(fin, "middle_gm", middle_gm, false);
+    save_output_nifti(fin, "middleGM", middleGM, false);
     save_output_nifti(fin, "hotspots", hotspots, false);
     save_output_nifti(fin, "disterror", err_dist, false);
 
@@ -918,12 +928,11 @@ int main(int argc, char*  argv[]) {
     // Columns
     // ========================================================================
     cout << "  Doing columns..." << endl;
-    uint32_t m, n;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_rim_data + i) == 3) {
+        if (*(nii_rim_data + i) != 0) {
             // Use column of the hotspot (accounts for sulci gyri columns)
-            m = *(innerGM_id_data + i);
-            n = *(outerGM_id_data + i);
+            uint32_t m = *(innerGM_id_data + i);
+            uint32_t n = *(outerGM_id_data + i);
             if (*(hotspots_data + m) > -*(hotspots_data + n)) {
                 j = *(innerGM_id_data + m);
                 *(hotspots_data + i) = *(hotspots_data + m);
@@ -932,15 +941,9 @@ int main(int argc, char*  argv[]) {
                 *(hotspots_data + i) = *(hotspots_data + n);
             }
 
-            tie(wm_x, wm_y, wm_z) = ind2sub_3D(*(innerGM_id_data + j),
-                                               size_x, size_y);
-            tie(gm_x, gm_y, gm_z) = ind2sub_3D(*(outerGM_id_data + j),
-                                               size_x, size_y);
-
             // Find middle point of columns
-            mid_x = (wm_x + gm_x) / 2.;
-            mid_y = (wm_y + gm_y) / 2.;
-            mid_z = (wm_z + gm_z) / 2.;
+            tie(mid_x, mid_y, mid_z) = ind2sub_3D(*(middleGM_id_data + j),
+                                                  size_x, size_y);
 
             // Downsample middle point coordinate (makes columns larger)
             mid_x = floor(mid_x / column_size) * column_size;
