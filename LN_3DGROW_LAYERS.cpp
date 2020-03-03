@@ -933,9 +933,14 @@ int main(int argc, char*  argv[]) {
     cout << "  Doing columns..." << endl;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) != 0) {
+            // Use anchoring middle GM voxel
+            j = *(middleGM_id_data + i);
+
+            // Use hotspot voxels of the anchored middle GM voxel
+            uint32_t m = *(innerGM_id_data + j);
+            uint32_t n = *(outerGM_id_data + j);
+
             // Use column of the hotspot (accounts for sulci gyri columns)
-            uint32_t m = *(innerGM_id_data + i);
-            uint32_t n = *(outerGM_id_data + i);
             int32_t curv = *(hotspots_data + m) + *(hotspots_data + n);
             if (curv >= 0) {
                 j = *(innerGM_id_data + m);
