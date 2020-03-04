@@ -865,14 +865,14 @@ int main(int argc, char*  argv[]) {
     uint32_t mid_x, mid_y, mid_z;
 
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_rim_data + i) != 0) {
+        if (*(nii_rim_data + i) == 3) {
             tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
             tie(wm_x, wm_y, wm_z) = ind2sub_3D(*(innerGM_id_data + i),
                                                size_x, size_y);
             tie(gm_x, gm_y, gm_z) = ind2sub_3D(*(outerGM_id_data + i),
                                                size_x, size_y);
 
-            // Normalize distance
+            // // Normalize distance
             // float dist1 = dist(x, y, z, wm_x, wm_y, wm_z, dX, dY, dZ);
             // float dist2 = dist(x, y, z, gm_x, gm_y, gm_z, dX, dY, dZ);
             // float norm_dist = dist1 / (dist1 + dist2);
@@ -930,7 +930,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     cout << "  Doing columns..." << endl;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_rim_data + i) != 0) {
+        if (*(nii_rim_data + i) == 3) {
             // Use middle GM voxel to identify column
             j = *(middleGM_id_data + i);
 
