@@ -896,7 +896,7 @@ int main(int argc, char*  argv[]) {
             // ----------------------------------------------------------------
             // Middle gray matter (discrete middle)
             float mid_dist = (dist1 + dist2) / 2.;
-            if (mid_dist < dist1) {
+            if (mid_dist <= dist1) {
                 float t = 1 - (mid_dist / dist1);
                 mid_x = round((wm_x - x) * t + x);
                 mid_y = round((wm_y - y) * t + y);
@@ -908,8 +908,6 @@ int main(int argc, char*  argv[]) {
                 mid_y = round((gm_y - y) * t + y);
                 mid_z = round((gm_z - z) * t + z);
                 j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
-            } else {
-                j = i;
             }
             *(middleGM_data + j) = 1;
             *(middleGM_id_data + i) = j;  // Useful to identify columns
@@ -933,14 +931,12 @@ int main(int argc, char*  argv[]) {
     cout << "  Doing columns..." << endl;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) != 0) {
-            // Use anchoring middle GM voxel
+            // Use middle GM voxel to identify column
             j = *(middleGM_id_data + i);
 
-            // Use hotspot voxels of the anchored middle GM voxel
+            // Use column of the middle GM hotspot (accounts for sulci gyri)
             uint32_t m = *(innerGM_id_data + j);
             uint32_t n = *(outerGM_id_data + j);
-
-            // Use column of the hotspot (accounts for sulci gyri columns)
             int32_t curv = *(hotspots_data + m) + *(hotspots_data + n);
             if (curv >= 0) {
                 j = *(innerGM_id_data + m);
@@ -948,22 +944,19 @@ int main(int argc, char*  argv[]) {
                 j = *(outerGM_id_data + n);
             }
 
-            // Find middle point of columns
-            uint32_t k = *(middleGM_id_data + j);
-            tie(mid_x, mid_y, mid_z) = ind2sub_3D(k, size_x, size_y);
-
+            // ----------------------------------------------------------------
             // Downsample middle point coordinate (makes columns larger)
-            mid_x = floor(mid_x / column_size) * column_size;
-            mid_y = floor(mid_y / column_size) * column_size;
-            mid_z = floor(mid_z / column_size) * column_size;
-
-            j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
+            if (column_size != 1) {
+                tie(mid_x, mid_y, mid_z) = ind2sub_3D(j, size_x, size_y);
+                mid_x = floor(mid_x / column_size) * column_size;
+                mid_y = floor(mid_y / column_size) * column_size;
+                mid_z = floor(mid_z / column_size) * column_size;
+                j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
+            }
             *(nii_columns_data + i) = j;
 
             // ----------------------------------------------------------------
             // Approximate curvature measurement from middle GM
-            m = *(innerGM_id_data + k);
-            n = *(outerGM_id_data + k);
             *(curvature_data + i) = *(hotspots_data + m) + *(hotspots_data + n);
             // ----------------------------------------------------------------
         }
