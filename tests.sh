@@ -1,7 +1,6 @@
 # For internal testing. Just to check whether programs execute.
 
-./LN_3DGROW_LAYERS -rim rim_test
-./LN_LAYER_SMOOTH -input activity_map_example.nii -layer_file equi_dist_layers.nii -FWHM 2
+./LN_LAYER_SMOOTH -input UNI.nii -layer_file layers_rim.nii -FWHM 1
 ./LN_BOCO -Nulled Nulled_intemp.nii -BOLD BOLD_intemp.nii -trialBOCO 40 -shift
 ./LN_MP2RAGE_DNOISE -INV1 INV1.nii -INV2 INV2.nii -UNI UNI.nii
 
