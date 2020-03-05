@@ -1,5 +1,4 @@
 
-
 #include "../dep/laynii_lib.h"
 
 int show_help(void) {
@@ -32,19 +31,19 @@ int show_help(void) {
 
 int main(int argc, char* argv[]) {
     float SIEMENS_f = 4095.0;  // uint12 range 0-4095
-    char* fout = NULL, *finfi_1 = NULL, *finfi_2 = NULL;
-    char* finfi_3 = NULL;
+    char* fout = NULL, *f_in1 = NULL, *f_in2 = NULL;
+    char* f_in3 = NULL;
     int ac, custom_output = 0;
     float beta = 0.2;
     if (argc < 3) return show_help();
 
-    // Process user options: 4 are valid presently
+    // Process user options
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
         } else if (!strcmp(argv[ac], "-beta")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -betan");
+                fprintf(stderr, "** missing argument for -beta");
                 return 1;
             }
             beta = atof(argv[ac]);
@@ -54,19 +53,19 @@ int main(int argc, char* argv[]) {
                 fprintf(stderr, "** missing argument for -INV1\n");
                 return 1;
             }
-            finfi_1 = argv[ac];
+            f_in1 = argv[ac];
         } else if (!strcmp(argv[ac], "-INV2")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -INV2\n");
                 return 1;
             }
-            finfi_2 = argv[ac];
+            f_in2 = argv[ac];
         } else if (!strcmp(argv[ac], "-UNI")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -UNI\n");
                 return 1;
             }
-            finfi_3 = argv[ac];
+            f_in3 = argv[ac];
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -80,35 +79,33 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (!finfi_1) {
+    if (!f_in1) {
         fprintf(stderr, "** missing option '-INV1'\n");
         return 1;
     }
-    if (!finfi_2) {
+    if (!f_in2) {
         fprintf(stderr, "** missing option '-INV2'\n");
         return 1;
     }
-    if (!finfi_3) {
+    if (!f_in3) {
         fprintf(stderr, "** missing option '-UNI '\n");
         return 1;
     }
 
-    // Read input dataset, including data
-    nifti_image* nii1 = nifti_image_read(finfi_1, 1);
+    // Read input dataset
+    nifti_image* nii1 = nifti_image_read(f_in1, 1);
     if (!nii1) {
-        fprintf(stderr, "** failed to read NIfTI from '%s'\n", finfi_1);
+        fprintf(stderr, "** failed to read NIfTI from '%s'\n", f_in1);
         return 2;
     }
-
-    nifti_image* nii2 = nifti_image_read(finfi_2, 1);
+    nifti_image* nii2 = nifti_image_read(f_in2, 1);
     if (!nii2) {
-        fprintf(stderr, "** failed to read NIfTI from '%s'\n", finfi_2);
+        fprintf(stderr, "** failed to read NIfTI from '%s'\n", f_in2);
         return 2;
     }
-
-    nifti_image* nii3 = nifti_image_read(finfi_3, 1);
+    nifti_image* nii3 = nifti_image_read(f_in3, 1);
     if (!nii3) {
-        fprintf(stderr, "** failed to read NIfTI from '%s'\n", finfi_3);
+        fprintf(stderr, "** failed to read NIfTI from '%s'\n", f_in3);
         return 2;
     }
 
@@ -118,11 +115,11 @@ int main(int argc, char* argv[]) {
     log_nifti_descriptives(nii3);
 
     // Get dimensions of input
-    int size_x = nii1->nx;  // phase
-    int size_y = nii1->ny;  // read
-    int size_z = nii1->nz;  // slice
-    int size_t = nii1->nt;  // time
-    int nr_voxels = size_t * size_z * size_y * size_x;
+    const int size_x = nii1->nx;  // phase
+    const int size_y = nii1->ny;  // read
+    const int size_z = nii1->nz;  // slice
+    const int size_t = nii1->nt;  // time
+    const int nr_voxels = size_t * size_z * size_y * size_x;
 
     // ========================================================================
     // Fix datatype issues
@@ -134,14 +131,13 @@ int main(int argc, char* argv[]) {
     float* nii_uni_data = static_cast<float*>(nii_uni->data);
 
     // Allocate output nifti files
-    nifti_image* dddenoised = copy_nifti_header_as_float(nii1);
-    float* dddenoised_data = static_cast<float*>(dddenoised->data);
-    nifti_image* phaseerror = copy_nifti_header_as_float(nii1);
-    float* phaseerror_data = static_cast<float*>(phaseerror->data);
+    nifti_image* nii_denoised = copy_nifti_header_as_float(nii1);
+    float* nii_denoised_data = static_cast<float*>(nii_denoised->data);
+    nifti_image* nii_phaseerr = copy_nifti_header_as_float(nii1);
+    float* nii_phaseerr_data = static_cast<float*>(nii_phaseerr->data);
 
     // ========================================================================
     // Big calculation across all voxels
-
     beta = beta * SIEMENS_f;
     for (int i = 0; i != nr_voxels; ++i) {
         float val_uni = *(nii_uni_data + i);
@@ -151,8 +147,8 @@ int main(int argc, char* argv[]) {
 
         // Skip nan or zero voxels
         if (isnan(val_uni) || val_uni == 0 || val_uni == 0.0) {
-            *(phaseerror_data + i) = 0;
-            *(dddenoised_data + i) = 0;
+            *(nii_phaseerr_data + i) = 0;
+            *(nii_denoised_data + i) = 0;
         } else {
             // Scale UNI to range of -0.5 to 0.5 (as in O’Brien et al. [2014])
             val_uni = val_uni / SIEMENS_f - 0.5;
@@ -170,19 +166,19 @@ int main(int argc, char* argv[]) {
                        / ((pow(new_uni1, 2) + pow(val_inv2, 2) + 2. * beta));
 
             // Scale back the value range
-            *(dddenoised_data + i) =  (new_uni2 + 0.5) * SIEMENS_f;
+            *(nii_denoised_data + i) =  (new_uni2 + 0.5) * SIEMENS_f;
 
             // ----------------------------------------------------------------
             // Border enhance
             val_uni_wrong = val_inv1 * val_inv2
                             / (pow(val_inv1, 2) + pow(val_inv2, 2));
 
-            *(phaseerror_data + i) = val_uni_wrong;
+            *(nii_phaseerr_data + i) = val_uni_wrong;
             // ----------------------------------------------------------------
         }
     }
 
-    dddenoised->scl_slope = nii_uni->scl_slope;
+    nii_denoised->scl_slope = nii_uni->scl_slope;
 
     if (nii_uni->scl_inter != 0) {
         cout << " ########################################## " << endl;
@@ -197,28 +193,27 @@ int main(int argc, char* argv[]) {
         string outfilename = (string) (fout);
         log_output(outfilename.c_str());
         const char* fout_1 = outfilename.c_str();
-        if (nifti_set_filenames(dddenoised, fout_1, 1, 1)) {
+        if (nifti_set_filenames(nii_denoised, fout_1, 1, 1)) {
             return 1;
         }
     } else {
         string prefix = "denoised_";
-        string filename = (string) (finfi_3);
+        string filename = (string) (f_in3);
         string outfilename = prefix + filename;
         log_output(outfilename.c_str());
-        if (nifti_set_filenames(dddenoised, outfilename.c_str(), 1, 1)) {
+        if (nifti_set_filenames(nii_denoised, outfilename.c_str(), 1, 1)) {
             return 1;
         }
     }
-    nifti_image_write(dddenoised);
+    nifti_image_write(nii_denoised);
 
-    // const char* fout_2 = "border_enhance";
     string prefix = "border_enhance_";
-    string filename = (string) (finfi_3);
+    string filename = (string) (f_in3);
     string outfilename = prefix + filename;
-    if (nifti_set_filenames(phaseerror, outfilename.c_str(), 1, 1)) {
+    if (nifti_set_filenames(nii_phaseerr, outfilename.c_str(), 1, 1)) {
         return 1;
     }
-    nifti_image_write(phaseerror);
+    nifti_image_write(nii_phaseerr);
 
     cout << "  Finished." << endl;
     return 0;
