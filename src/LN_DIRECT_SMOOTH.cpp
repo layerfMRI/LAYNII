@@ -109,7 +109,7 @@ int main(int argc, char* argv[]) {
     // ========================================================================
     // Fix datatype issues
 
-    nifti_image* nii1_temp = recreate_nii_with_float_datatype(nii1);
+    nifti_image* nii1_temp = copy_nifti_header_as_float(nii1);
     float* nii1_temp_data = static_cast<float*>(nii1_temp->data);
 
     // ========================================================================
