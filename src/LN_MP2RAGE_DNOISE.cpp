@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
     char* finfi_3 = NULL;
     int ac, custom_output = 0;
     float beta = 0.2;
-    if (argc < 3) return show_help();  // Typing '-help' is sooo much work
+    if (argc < 3) return show_help();
 
     // Process user options: 4 are valid presently
     for (ac = 1; ac < argc; ac++) {
@@ -126,21 +126,17 @@ int main(int argc, char* argv[]) {
 
     // ========================================================================
     // Fix datatype issues
-
-    nifti_image* nii_inv1 = recreate_nii_with_float_datatype(nii1);
+    nifti_image* nii_inv1 = copy_nifti_header_as_float(nii1);
     float* nii_inv1_data = static_cast<float*>(nii_inv1->data);
-
-    nifti_image* nii_inv2 = recreate_nii_with_float_datatype(nii2);
+    nifti_image* nii_inv2 = copy_nifti_header_as_float(nii2);
     float* nii_inv2_data = static_cast<float*>(nii_inv2->data);
-
-    nifti_image* nii_uni = recreate_nii_with_float_datatype(nii3);
+    nifti_image* nii_uni = copy_nifti_header_as_float(nii3);
     float* nii_uni_data = static_cast<float*>(nii_uni->data);
 
     // Allocate output nifti files
-    nifti_image* dddenoised = recreate_nii_with_float_datatype(nii1);
+    nifti_image* dddenoised = copy_nifti_header_as_float(nii1);
     float* dddenoised_data = static_cast<float*>(dddenoised->data);
-
-    nifti_image* phaseerror = recreate_nii_with_float_datatype(nii1);
+    nifti_image* phaseerror = copy_nifti_header_as_float(nii1);
     float* phaseerror_data = static_cast<float*>(phaseerror->data);
 
     // ========================================================================
