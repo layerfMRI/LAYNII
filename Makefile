@@ -19,11 +19,11 @@ LOW_PRIORITY	=	LN_CORREL2FILES \
 					LN_DIRECT_SMOOTH \
 					LN_GRADSMOOTH \
 					LN_ZOOM \
+					LN_FLOAT_ME \
 					# LN_EXTREMETR \
 					# LN_3DCOLUMNS \
 					# LN_COLUMNAR_DIST \
 					# LN_DEBUGGING \
-					# LN_FLOAT_ME \
 					# LN_GFACTOR \
 					# LN_GROW_LAYERS \
 					# LN_IMAGIRO \
@@ -87,14 +87,15 @@ LN_ZOOM:
 	$(CC) -c -o obj/LN_ZOOM.o src/LN_ZOOM.cpp
 	$(CC) -o $@ $(CFLAGS) obj/LN_ZOOM.o $(LIBRARIES)
 
+LN_FLOAT_ME:
+	$(CC) -c -o obj/LN_FLOAT_ME.o src/LN_FLOAT_ME.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_FLOAT_ME.o $(LIBRARIES)
 
 # LN_3DCOLUMNS: obj/LN_3DCOLUMNS.o objs
 # 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
 # LN_COLUMNAR_DIST: obj/LN_COLUMNAR_DIST.o objs
 # 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
 # LN_EXTREMETR: obj/LN_EXTREMETR.o objs
-# 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
-# LN_FLOAT_ME: obj/LN_FLOAT_ME.o objs
 # 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
 # LN_GFACTOR: obj/LN_GFACTOR.o objs
 # 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
