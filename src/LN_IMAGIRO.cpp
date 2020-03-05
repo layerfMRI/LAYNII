@@ -2,7 +2,7 @@
 // TODO(Faruk): Requires columnar_coordinated.nii and data2unfold.nii from Renzo for tests.
 
 
-#include "./laynii_lib.h"
+#include "../dep/laynii_lib.h"
 
 int show_help(void) {
     printf(

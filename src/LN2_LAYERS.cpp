@@ -3,14 +3,16 @@
 // TODO(Faruk): Put neighbour visits into a function.
 // TODO(Faruk): Add debug flag to reduce memory usage.
 
-#include "./laynii_lib.h"
+#include "../dep/laynii_lib.h"
 
 int show_help(void) {
     printf(
-    "LN_3DGROW_LAYERS: Cortical gray matter layering.\n"
+    "LN_LAYERS: Cortical gray matter layering.\n"
+    "\n"
+    "BEWARE! WORK IN PROGRESS... USE WITH CAUTION!\n"
     "\n"
     "Usage:\n"
-    "    LN_3DGROW_LAYERS -rim rim.nii \n"
+    "    LN_LAYERS -rim rim.nii \n"
     "\n"
     "Options:\n"
     "    -help       : Show this help. \n"

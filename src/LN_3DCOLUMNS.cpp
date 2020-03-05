@@ -2,7 +2,7 @@
 // TODO(@Faruk): Test requires `layers.nii` I need to get it from Renzo.
 
 
-#include "./laynii_lib.h"
+#include "../dep/laynii_lib.h"
 
 int show_help(void) {
     printf(

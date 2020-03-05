@@ -1,7 +1,7 @@
 
 
 
-#include "./laynii_lib.h"
+#include "../dep/laynii_lib.h"
 
 int show_help(void) {
     printf(

@@ -4,7 +4,7 @@
 // Also seems to give the same error in the old version. Check with Renzo.
 
 
-#include "./laynii_lib.h"
+#include "../dep/laynii_lib.h"
 
 int show_help(void) {
     printf(

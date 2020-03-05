@@ -1,6 +1,6 @@
 
 
-#include "./laynii_lib.h"
+#include "../dep/laynii_lib.h"
 
 int N_rand = 1000;
 double_t lower = -10;

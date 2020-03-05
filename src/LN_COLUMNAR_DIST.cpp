@@ -2,7 +2,7 @@
 // TODO(Faruk): Requires layers.nii from Renzo for testing.
 
 
-#include "./laynii_lib.h"
+#include "../dep/laynii_lib.h"
 
 int show_help(void) {
     printf(
