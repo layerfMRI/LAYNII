@@ -23,7 +23,7 @@ int show_help(void) {
 }
 
 int main(int argc, char * argv[]) {
-    char *input_filename = NULL, *fout = NULL;
+    char *f_in = NULL, *f_out = NULL;
     int ac, do_outputnaming = 0;
     if (argc < 3) {  // Typing '-help' is sooo much work
         return show_help();
@@ -35,131 +35,89 @@ int main(int argc, char * argv[]) {
             return show_help();
         } else if (!strcmp(argv[ac], "-input")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -layer_file\n");
+                fprintf(stderr, "** missing argument for -input\n");
                 return 1;
             }
-            input_filename = argv[ac];  // Assign pointer, no string copy
+            f_in = argv[ac];  // Assign pointer, no string copy
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
                 return 2;
             }
             do_outputnaming = 1;
-            cout << "  Will write output file with a different name." << endl;
-            fout = argv[ac];
+            cout << "  Writing output file with a different name." << endl;
+            f_out = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
         }
     }
 
-    if (!input_filename) {
-        fprintf(stderr, "** missing option '-landmarks'\n");
+    if (!f_in) {
+        fprintf(stderr, "** missing option '-input'\n");
         return 1;
     }
-    // Read input dataset, including data
-    nifti_image* nim_input_r = nifti_image_read(input_filename, 1);
-    if (!nim_input_r) {
-        fprintf(stderr, "** failed to read layer NIfTI image from '%s'\n", input_filename);
+
+    // Read input dataset
+    nifti_image* nii = nifti_image_read(f_in, 1);
+    if (!nii) {
+        fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", f_in);
         return 2;
     }
 
     log_welcome("LN_FLOAT_ME");
-    log_nifti_descriptives(nim_input_r);
+    log_nifti_descriptives(nii);
 
-    // Get dimsions of input
-    int sizeSlice = nim_input_r->nz;
-    int sizePhase = nim_input_r->nx;
-    int sizeRead = nim_input_r->ny;
-    int nrep = nim_input_r->nt;
-    int nx = nim_input_r->nx;
-    int nxy = nim_input_r->nx * nim_input_r->ny;
-    int nxyz = nim_input_r->nx * nim_input_r->ny * nim_input_r->nz;
+    // Get dimensions of input
+    const int size_z = nii->nz;
+    const int size_x = nii->nx;
+    const int size_y = nii->ny;
+    const int size_t = nii->nt;
+    const int nr_voxels = size_t * size_z * size_y * size_x;
 
-    // nim_mask->datatype = NIFTI_TYPE_FLOAT32;
-    // nim_mask->nbyper = sizeof(float);
-    // nim_mask->data = calloc(nim_mask->nvox, nim_mask->nbyper);
+    nifti_image* nii_new = nifti_copy_nim_info(nii);
+    nii_new->datatype = NIFTI_TYPE_FLOAT32;
+    nii_new->nbyper = sizeof(float);
+    nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
+    float* nii_new_data = static_cast<float*>(nii_new->data);
 
-    nifti_image* nim_input = nifti_copy_nim_info(nim_input_r);
-    nim_input->datatype = NIFTI_TYPE_FLOAT32;
-    nim_input->nbyper = sizeof(float);
-    nim_input->data = calloc(nim_input->nvox, nim_input->nbyper);
-    float *nim_input_data = (float *) nim_input->data;
-
-    //////////////////////////////////////////////////////////////
+    // ========================================================================
     // Fixing potential problems with different input datatypes //
-    //////////////////////////////////////////////////////////////
-    if (nim_input_r->datatype == NIFTI_TYPE_FLOAT32) {
-        float *nim_input_r_data = (float *) nim_input_r->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_input_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_input_r_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
+    if (nii->datatype == NIFTI_TYPE_FLOAT32) {
+        float* nii_data = static_cast<float*>(nii->data);
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     }
-    if (nim_input_r->datatype == NIFTI_TYPE_FLOAT64) {
-        double  *nim_input_r_data = (double *) nim_input_r->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_input_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_input_r_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
+    if (nii->datatype == NIFTI_TYPE_FLOAT64) {
+        double* nii_data = static_cast<double*>(nii->data);
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     }
-    if (nim_input_r->datatype == NIFTI_TYPE_INT16) {
-        short *nim_input_r_data = (short *) nim_input_r->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_input_data + nxyz * it + nxy * islice + nx * ix + iy) = (float)(*(nim_input_r_data + nxyz * it + nxy * islice + nx * ix + iy));
-                        //if (*(nim_input_data + nxyz * 0 + nxy * islice + nx * ix + iy) > 0) cout << * (nim_input_r_data + nxyz * 0 + nxy * islice + nx * ix + iy) << endl;
-                    }
-                }
-            }
+    if (nii->datatype == NIFTI_TYPE_INT16) {
+        int16_t* nii_data = static_cast<int16_t*>(nii->data);
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     }
-    if (nim_input_r->datatype == NIFTI_TYPE_INT32) {
-        int *nim_input_r_data = (int *) nim_input_r->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy <sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_input_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_input_r_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
+    if (nii->datatype == NIFTI_TYPE_INT32) {
+        int32_t* nii_data = static_cast<int32_t*>(nii->data);
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     }
+
+    // ------------------------------------------------------------------------
     cout << "  Writing output... " << endl;
-    // Output file name
-    // const char *fout_4 = "leaky_layers.nii";
-    // if (nifti_set_filenames(leak_layer, fout_4, 1, 1)) {
-    //     return 1;
-    // }
-    // nifti_image_write(leak_layer);
-
-// const char *fout_5 = "input_file.nii";
-// if (nifti_set_filenames(nim_inputf, fout_5, 1, 1)) {
-//     return 1;
-// }
-// nifti_image_write(nim_inputf);
-
     if (do_outputnaming) {
         // Assign nifti_image fname/iname pair, based on output filename
         // (request to 'check' image and 'set_byte_order' here)
-        if (nifti_set_filenames(nim_input, fout, 1, 1)) {
+        if (nifti_set_filenames(nii_new, f_out, 1, 1)) {
             return 1;
         }
     }
-    nifti_image_write(nim_input);
+    nifti_image_write(nii_new);
     cout << "  Finished." << endl;
     return 0;
 }
