@@ -102,6 +102,12 @@ float angle(float a, float b, float c) {
     }
 }
 
+float gaus(float distance, float sigma) {
+    return 1. / (sigma * sqrt(2. * 3.141592))
+           * exp(-0.5 * distance * distance / (sigma * sigma));
+}
+
+
 // ============================================================================
 // ============================================================================
 // ============================================================================
@@ -162,38 +168,6 @@ nifti_image* copy_nifti_header_as_float(nifti_image* nii) {
     nii_new->datatype = NIFTI_TYPE_FLOAT32;
     nii_new->nbyper = sizeof(float);
     nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
-
-    // float* nii_new_data = static_cast<float*>(nii_new->data);
-    // const unsigned int nr_voxels = nii->nt * nii->nz * nii->ny * nii->nx;
-    // if (nii->datatype == NIFTI_TYPE_INT8
-    //     || nii->datatype == DT_UINT8) {
-    //     int8_t* temp = static_cast<int8_t*>(nii->data);
-    //     for (int i = 0; i < nr_voxels; ++i) {
-    //         *(nii_new_data + i) = 0;
-    //     }
-    // } else if (nii->datatype == NIFTI_TYPE_INT16
-    //            || nii->datatype == DT_UINT16) {
-    //     int16_t* temp = static_cast<int16_t*>(nii->data);
-    //     for (int i = 0; i < nr_voxels; ++i) {
-    //         *(nii_new_data + i) = 0;
-    //     }
-    // } else if (nii->datatype == NIFTI_TYPE_INT32) {
-    //     int* temp = static_cast<int*>(nii->data);
-    //     for (int i = 0; i < nr_voxels; ++i) {
-    //         *(nii_new_data + i) = 0;
-    //     }
-    // } else if (nii->datatype == NIFTI_TYPE_FLOAT32) {
-    //     float* temp = static_cast<float*>(nii->data);
-    //     for (int i = 0; i < nr_voxels; ++i) {
-    //         *(nii_new_data + i) = 0;
-    //     }
-    // } else if (nii->datatype == NIFTI_TYPE_FLOAT64
-    //            || nii->datatype == DT_FLOAT64) {
-    //     double* temp = static_cast<double*>(nii->data);
-    //     for (int i = 0; i < nr_voxels; ++i) {
-    //         *(nii_new_data + i) = 0;
-    //     }
-    // }
     return nii_new;
 }
 
@@ -205,14 +179,8 @@ nifti_image* copy_nifti_header_as_int(nifti_image* nii) {
     return nii_new;
 }
 
-nifti_image* copy_nifti_header_as_uint(nifti_image* nii) {
-    nifti_image* nii_new = nifti_copy_nim_info(nii);
-    nii_new->datatype = NIFTI_TYPE_UINT64;
-    nii_new->nbyper = sizeof(uint32_t);
-    nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
-    return nii_new;
-}
-
+// ============================================================================
+// Faruk's favorite functions
 std::tuple<uint32_t, uint32_t, uint32_t> ind2sub_3D(
     const uint32_t linear_index, const uint32_t size_x, const uint32_t size_y) {
     uint32_t z = linear_index / (size_x * size_y);

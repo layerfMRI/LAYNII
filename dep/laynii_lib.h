@@ -25,6 +25,7 @@ double ren_autocor(double arr[], int size);
 float dist(float x1, float y1, float z1, float x2, float y2, float z2,
            float dX, float dY, float dZ);
 float angle(float a, float b, float c);
+float gaus(float distance, float sigma);
 
 void log_welcome(const char* programname);
 void log_output(const char* filename);
@@ -35,7 +36,6 @@ void save_output_nifti(string filename, string prefix, nifti_image* nii,
 
 nifti_image* copy_nifti_header_as_float(nifti_image* nii);
 nifti_image* copy_nifti_header_as_int(nifti_image* nii);
-nifti_image* copy_nifti_header_as_uint(nifti_image* nii);
 
 std::tuple<uint32_t, uint32_t, uint32_t> ind2sub_3D(
     const uint32_t linear_index, const uint32_t size_x, const uint32_t size_y);

@@ -426,8 +426,3 @@ int main(int argc, char * argv[]) {
     cout << "  Finished." << endl;
     return 0;
 }
-
-float gaus(float distance, float sigma) {
-    return (1./(sigma * sqrt(2. * 3.141592))
-            * exp(-0.5 * distance * distance/(sigma * sigma)));
-}
