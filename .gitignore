@@ -36,6 +36,7 @@
 
 # Ignore nii at top level
 /*.nii
+/*.nii.gz
 
 # Test data (uncomment when pushing new nii to repo)
 test_data/*.nii
