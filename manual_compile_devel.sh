@@ -6,29 +6,29 @@ g++    -c -o obj/nifticdf.o nifticdf.cpp
 g++    -c -o obj/znzlib.o znzlib.cpp
 g++    -c -o obj/laynii_lib.o laynii_lib.cpp
 
-# LAYNII priority programs
-g++    -c -o obj/LN_MP2RAGE_DNOISE.o LN_MP2RAGE_DNOISE.cpp
-g++  -o LN_MP2RAGE_DNOISE -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_MP2RAGE_DNOISE.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
+# High priority LAYNII programs
+g++    -c -o obj/LN_MP2RAGE_DNOISE.o LN_MP2RAGE_DNOISE.cpp -O2
+g++  -o LN_MP2RAGE_DNOISE -Wall -pedantic -DHAVE_ZLIB -I. -O2  obj/LN_MP2RAGE_DNOISE.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
 g++    -c -o obj/LN_BOCO.o LN_BOCO.cpp
-g++  -o LN_BOCO -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_BOCO.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
+g++  -o LN_BOCO -Wall -pedantic -DHAVE_ZLIB -I. -O2  obj/LN_BOCO.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
 g++    -c -o obj/LN_LAYER_SMOOTH.o LN_LAYER_SMOOTH.cpp
 g++  -o LN_LAYER_SMOOTH -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_LAYER_SMOOTH.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
 g++    -c -o obj/LN_3DGROW_LAYERS.o LN_3DGROW_LAYERS.cpp
 g++  -o LN_3DGROW_LAYERS -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_3DGROW_LAYERS.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
 
-# LAYNII other programs
-g++    -c -o obj/LN_CORREL2FILES.o LN_CORREL2FILES.cpp
-g++  -o LN_CORREL2FILES -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_CORREL2FILES.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
-g++    -c -o obj/LN_DEBUGGING.o LN_DEBUGGING.cpp
-g++  -o LN_DEBUGGING -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_DEBUGGING.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
-g++    -c -o obj/LN_DIRECT_SMOOTH.o LN_DIRECT_SMOOTH.cpp
-g++  -o LN_DIRECT_SMOOTH -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_DIRECT_SMOOTH.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
-g++    -c -o obj/LN_EXTREMETR.o LN_EXTREMETR.cpp
-g++  -o LN_EXTREMETR -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_EXTREMETR.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
-g++    -c -o obj/LN_GFACTOR.o LN_GFACTOR.cpp
-g++  -o LN_GFACTOR -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_GFACTOR.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
-g++    -c -o obj/LN_GRADSMOOTH.o LN_GRADSMOOTH.cpp
-g++  -o LN_GRADSMOOTH -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_GRADSMOOTH.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
+# Other LAYNII programs
+# g++    -c -o obj/LN_CORREL2FILES.o LN_CORREL2FILES.cpp
+# g++  -o LN_CORREL2FILES -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_CORREL2FILES.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
+# g++    -c -o obj/LN_DEBUGGING.o LN_DEBUGGING.cpp
+# g++  -o LN_DEBUGGING -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_DEBUGGING.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
+# g++    -c -o obj/LN_DIRECT_SMOOTH.o LN_DIRECT_SMOOTH.cpp
+# g++  -o LN_DIRECT_SMOOTH -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_DIRECT_SMOOTH.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
+# g++    -c -o obj/LN_EXTREMETR.o LN_EXTREMETR.cpp
+# g++  -o LN_EXTREMETR -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_EXTREMETR.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
+# g++    -c -o obj/LN_GFACTOR.o LN_GFACTOR.cpp
+# g++  -o LN_GFACTOR -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_GFACTOR.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
+# g++    -c -o obj/LN_GRADSMOOTH.o LN_GRADSMOOTH.cpp
+# g++  -o LN_GRADSMOOTH -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_GRADSMOOTH.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
 
 # g++    -c -o obj/LN_GROW_LAYERS.o LN_GROW_LAYERS.cpp
 # g++  -o LN_GROW_LAYERS -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_GROW_LAYERS.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
@@ -63,8 +63,8 @@ g++  -o LN_GRADSMOOTH -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_GRADSMOOTH.o obj/n
 # g++  -o LN_FLOAT_ME -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_FLOAT_ME.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
 # g++    -c -o obj/LN_COLUMNAR_DIST.o LN_COLUMNAR_DIST.cpp
 # g++  -o LN_COLUMNAR_DIST -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_COLUMNAR_DIST.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
-g++    -c -o obj/LN_ZOOM.o LN_ZOOM.cpp
-g++  -o LN_ZOOM -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_ZOOM.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
+# g++    -c -o obj/LN_ZOOM.o LN_ZOOM.cpp
+# g++  -o LN_ZOOM -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_ZOOM.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
 
 # g++    -c -o obj/LN_PHYSIO_PARS.o LN_PHYSIO_PARS.cpp
 # g++  -o LN_PHYSIO_PARS -Wall -pedantic -DHAVE_ZLIB -I.  obj/LN_PHYSIO_PARS.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
