@@ -427,13 +427,6 @@ int main(int argc, char * argv[]) {
     return 0;
 }
 
-float dist(float x1, float y1, float z1, float x2, float y2, float z2,
-           float dX, float dY, float dZ) {
-    return sqrt((x1 - x2) * (x1-x2) * dX * dX
-                + (y1 - y2) * (y1 - y2) * dY * dY
-                + (z1 - z2) * (z1 - z2) * dZ * dZ);
-}
-
 float gaus(float distance, float sigma) {
     return (1./(sigma * sqrt(2. * 3.141592))
             * exp(-0.5 * distance * distance/(sigma * sigma)));
