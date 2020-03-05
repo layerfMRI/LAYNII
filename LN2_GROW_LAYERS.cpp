@@ -109,10 +109,10 @@ int main(int argc, char*  argv[]) {
     nifti_image* err_dist = copy_nifti_header_as_float(nii_rim);
     float* err_dist_data = static_cast<float*>(err_dist->data);
 
-    nifti_image* innerGM_id = copy_nifti_header_as_uint(nii_rim);
-    uint32_t* innerGM_id_data = static_cast<uint32_t*>(innerGM_id->data);
-    nifti_image* outerGM_id = copy_nifti_header_as_uint(nii_rim);
-    uint32_t* outerGM_id_data = static_cast<uint32_t*>(outerGM_id->data);
+    nifti_image* innerGM_id = copy_nifti_header_as_int(nii_rim);
+    int32_t* innerGM_id_data = static_cast<int32_t*>(innerGM_id->data);
+    nifti_image* outerGM_id = copy_nifti_header_as_int(nii_rim);
+    int32_t* outerGM_id_data = static_cast<int32_t*>(outerGM_id->data);
 
     nifti_image* nii_layers  = copy_nifti_header_as_int(nii_rim);
     int32_t* nii_layers_data = static_cast<int32_t*>(nii_layers->data);
