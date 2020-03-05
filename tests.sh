@@ -3,7 +3,7 @@
 ./LN_3DGROW_LAYERS -rim rim_test
 ./LN_LAYER_SMOOTH -input activity_map_example.nii -layer_file equi_dist_layers.nii -FWHM 2
 ./LN_BOCO -Nulled Nulled_intemp.nii -BOLD BOLD_intemp.nii -trialBOCO 40 -shift
-./LN_MP2RAGE_DNOISE -INV1 sub-001_inv1_defaced.nii -INV2 sub-001_inv2_defaced.nii -UNI sub-001_uni_defaced.nii
+./LN_MP2RAGE_DNOISE -INV1 INV1.nii -INV2 INV2.nii -UNI UNI.nii
 
 ./LN_3DCOLUMNS -layer_file layers_large.nii -landmarks landmarks.nii
 ./LN_CORREL2FILES -file1 VASO_LN.nii -file2 BOLD_intemp.nii
