@@ -151,6 +151,7 @@ int main(int argc, char*  argv[]) {
         *(innerGM_prevstep_id_data + i) = 0;
         *(outerGM_prevstep_id_data + i) = 0;
         *(middleGM_data + i) = 0;
+        *(normdistdiff_data + i) = 0;
         *(nii_layers_data + i) = 0;
         *(nii_columns_data + i) = 0;
         *(hotspots_data + i) = 0;
@@ -978,72 +979,119 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
-            // Select next step voxel based on curvature to have more
-            // approximately correct column paths
-            if (*(curvature_data + i) < 0) {
-                j = *(innerGM_prevstep_id_data + i);
-            } else {
-                j = *(outerGM_prevstep_id_data + i);
-            }
+            // ----------------------------------------------------------------
+            // Approximate curvature measurement
+            j = *(innerGM_id_data + i);
+            k = *(outerGM_id_data + i);
+            *(curvature_data + i) = *(hotspots_data + j) + *(hotspots_data + k);
 
+            // ----------------------------------------------------------------
             // Check sign changes in normalized distance differences between
             // neighbouring voxels on a column path (a.k.a. streamline)
-            float m = *(normdistdiff_data + i);
-            float n = *(normdistdiff_data + j);
-            if (m == 0) {
+            if (*(normdistdiff_data + i) == 0) {
                 *(middleGM_data + i) = 1;
                 *(middleGM_id_data + i) = i;
-            } else if (signbit(m) - signbit(n) != 0) {
-                if (abs(m) < abs(n)) {
-                    *(middleGM_data + i) = 1;
-                    *(middleGM_id_data + i) = i;
-                } else {
-                    *(middleGM_data + j) = 1;
-                    *(middleGM_id_data + j) = j;
+            } else {
+                float m = *(normdistdiff_data + i);
+                float n;
+
+                // Inner neighbour
+                j = *(innerGM_prevstep_id_data + i);
+                if (*(nii_rim_data + j) == 3) {
+                    n = *(normdistdiff_data + j);
+                    if (signbit(m) - signbit(n) != 0) {
+                        if (abs(m) < abs(n)) {
+                            *(middleGM_data + i) = 1;
+                            *(middleGM_id_data + i) = i;
+                        } else if (abs(m) > abs(n)) {  // Closer to prev. step
+                            *(middleGM_data + j) = 1;
+                            *(middleGM_id_data + j) = j;
+                        } else {  // Equal +/- normalized distance
+                            *(middleGM_data + i) = 1;
+                            *(middleGM_id_data + i) = i;
+                            *(middleGM_data + j) = 1;
+                            *(middleGM_id_data + j) = i;  // On purpose
+                        }
+                    }
+                }
+
+                // Outer neighbour
+                j = *(outerGM_prevstep_id_data + i);
+                if (*(nii_rim_data + j) == 3) {
+                    n = *(normdistdiff_data + j);
+                    if (signbit(m) - signbit(n) != 0) {
+                        if (abs(m) < abs(n)) {
+                            *(middleGM_data + i) = 1;
+                            *(middleGM_id_data + i) = i;
+                        } else if (abs(m) > abs(n)) {  // Closer to prev. step
+                            *(middleGM_data + j) = 1;
+                            *(middleGM_id_data + j) = j;
+                        } else {  // Equal +/- normalized distance
+                            *(middleGM_data + i) = 1;
+                            *(middleGM_id_data + i) = i;
+                            *(middleGM_data + j) = 1;
+                            *(middleGM_id_data + j) = i;  // On purpose
+                        }
+                    }
                 }
             }
         }
     }
+
+    // TODO: Fill gaps by 1-jump dilate and counting new voxels
+
+    save_output_nifti(fin, "curvature", curvature, false);
     save_output_nifti(fin, "middleGM", middleGM, false);
+    save_output_nifti(fin, "middleGM_id", middleGM_id, false);
 
     // ========================================================================
     // Columns
     // ========================================================================
     cout << "  Doing columns..." << endl;
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_rim_data + i) == 3) {
-            // Use middle GM voxel to identify column
-            j = *(middleGM_id_data + i);
+    // for (uint32_t i = 0; i != nr_voxels; ++i) {
+    //     if (*(nii_rim_data + i) == 3 && *(curvature_data + i) >= 0) {
+    //         // Use middle GM voxel to identify column
+    //         j = i;
+    //         while (*(middleGM_id_data + j) == -1 && *(nii_rim_data + j) == 3) {
+    //             k = *(innerGM_prevstep_id_data + j);
+    //             *(middleGM_id_data + j) = *(middleGM_id_data + k);
+    //             j = k;
+    //         }
+    //         *(nii_columns_data + i) = *(middleGM_id_data + j);
+    //     } else if (*(nii_rim_data + j) == 3 && *(curvature_data + j) < 0) {
+    //         while (*(middleGM_id_data + j) == -1 && *(nii_rim_data + j) == 3) {
+    //             k = *(outerGM_prevstep_id_data + j);
+    //             *(middleGM_id_data + j) = *(middleGM_id_data + k);
+    //             j = k;
+    //         }
+    //         *(nii_columns_data + i) = *(middleGM_id_data + j);
+    //     }
+    // }
 
-            // Use column of the middle GM hotspot (accounts for sulci gyri)
-            uint32_t m = *(innerGM_id_data + j);
-            uint32_t n = *(outerGM_id_data + j);
-            int32_t curv = *(hotspots_data + m) + *(hotspots_data + n);
-            if (curv >= 0) {
-                j = *(innerGM_id_data + m);
-            } else {
-                j = *(outerGM_id_data + n);
-            }
+            // // Use column of the middle GM hotspot (accounts for sulci gyri)
+            // uint32_t m = *(innerGM_id_data + j);
+            // uint32_t n = *(outerGM_id_data + j);
+            // int32_t curv = *(hotspots_data + m) + *(hotspots_data + n);
+            // if (curv >= 0) {
+            //     j = *(innerGM_id_data + m);
+            // } else {
+            //     j = *(outerGM_id_data + n);
+            // }
 
             // ----------------------------------------------------------------
             // Downsample middle point coordinate (makes columns larger)
-            if (column_size != 1) {
-                tie(mid_x, mid_y, mid_z) = ind2sub_3D(j, size_x, size_y);
-                mid_x = floor(mid_x / column_size) * column_size;
-                mid_y = floor(mid_y / column_size) * column_size;
-                mid_z = floor(mid_z / column_size) * column_size;
-                j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
-            }
-            *(nii_columns_data + i) = j;
+            // if (column_size != 1) {
+            //     tie(mid_x, mid_y, mid_z) = ind2sub_3D(j, size_x, size_y);
+            //     mid_x = floor(mid_x / column_size) * column_size;
+            //     mid_y = floor(mid_y / column_size) * column_size;
+            //     mid_z = floor(mid_z / column_size) * column_size;
+            //     j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
+            // }
+            // *(nii_columns_data + i) = j;
+    //     }
+    // }
 
-            // ----------------------------------------------------------------
-            // Approximate curvature measurement from middle GM
-            *(curvature_data + i) = *(hotspots_data + m) + *(hotspots_data + n);
-            // ----------------------------------------------------------------
-        }
-    }
-    save_output_nifti(fin, "columns", nii_columns);
-    save_output_nifti(fin, "curvature", curvature, false);
+    // save_output_nifti(fin, "columns", nii_columns);
 
     cout << "  Finished." << endl;
     return 0;
