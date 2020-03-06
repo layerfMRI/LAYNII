@@ -928,7 +928,6 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     cout << "  Doing layers..." << endl;
     float x, y, z, wm_x, wm_y, wm_z, gm_x, gm_y, gm_z;
-    uint32_t mid_x, mid_y, mid_z;
 
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
