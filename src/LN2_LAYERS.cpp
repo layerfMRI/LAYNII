@@ -7,14 +7,14 @@
 
 int show_help(void) {
     printf(
-    "LN_LAYERS: Cortical gray matter layering.\n"
+    "LN2_LAYERS: Cortical gray matter layering.\n"
     "\n"
     "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
     "!! BEWARE! WORK IN PROGRESS... USE WITH CAUTION !!\n"
     "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
     "\n"
     "Usage:\n"
-    "    LN_LAYERS -rim rim.nii \n"
+    "    LN2_LAYERS -rim rim.nii \n"
     "\n"
     "Options:\n"
     "    -help       : Show this help. \n"
