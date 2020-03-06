@@ -979,13 +979,6 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
-            // ----------------------------------------------------------------
-            // Approximate curvature measurement
-            j = *(innerGM_id_data + i);
-            k = *(outerGM_id_data + i);
-            *(curvature_data + i) = *(hotspots_data + j) + *(hotspots_data + k);
-
-            // ----------------------------------------------------------------
             // Check sign changes in normalized distance differences between
             // neighbouring voxels on a column path (a.k.a. streamline)
             if (*(normdistdiff_data + i) == 0) {
@@ -1037,11 +1030,23 @@ int main(int argc, char*  argv[]) {
             }
         }
     }
-
-    // TODO: Fill gaps by 1-jump dilate and counting new voxels
-
-    save_output_nifti(fin, "curvature", curvature, false);
     save_output_nifti(fin, "middleGM", middleGM, false);
+
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(middleGM_data + i) == 1) {
+            // Approximate curvature measurement
+            j = *(innerGM_id_data + i);
+            k = *(outerGM_id_data + i);
+            *(curvature_data + i) = *(hotspots_data + j) + *(hotspots_data + k);
+            // Re-assign mid-GM id based on curvature
+            if (*(curvature_data + i) >= 0) {  // Gyrus
+                *(middleGM_id_data + i) = j;
+            } else {
+                *(middleGM_id_data + i) = k;
+            }
+        }
+    }
+    save_output_nifti(fin, "curvature", curvature, false);
     save_output_nifti(fin, "middleGM_id", middleGM_id, false);
 
     // ========================================================================
