@@ -1032,71 +1032,35 @@ int main(int argc, char*  argv[]) {
     }
     save_output_nifti(fin, "middleGM", middleGM, false);
 
+    // ========================================================================
+    // Columns
+    // ========================================================================
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(middleGM_data + i) == 1) {
+        if (*(nii_rim_data + i) == 3) {
             // Approximate curvature measurement
             j = *(innerGM_id_data + i);
             k = *(outerGM_id_data + i);
             *(curvature_data + i) = *(hotspots_data + j) + *(hotspots_data + k);
             // Re-assign mid-GM id based on curvature
             if (*(curvature_data + i) >= 0) {  // Gyrus
-                *(middleGM_id_data + i) = j;
+                *(nii_columns_data + i) = j;
             } else {
-                *(middleGM_id_data + i) = k;
+                *(nii_columns_data + i) = k;
+            }
+
+            // TODO(Faruk): Think about re-id midGM as average of id-d voxels.
+            // This would be useful for later column downsampling
+            // TODO(Faruk): Mean coordinate of columns might be used in
+            // equivolume layering
+            if (*(middleGM_data + i) == 1) {
+                *(middleGM_id_data + i) = *(nii_columns_data + i);
             }
         }
     }
+
     save_output_nifti(fin, "curvature", curvature, false);
     save_output_nifti(fin, "middleGM_id", middleGM_id, false);
-
-    // ========================================================================
-    // Columns
-    // ========================================================================
-    cout << "  Doing columns..." << endl;
-    // for (uint32_t i = 0; i != nr_voxels; ++i) {
-    //     if (*(nii_rim_data + i) == 3 && *(curvature_data + i) >= 0) {
-    //         // Use middle GM voxel to identify column
-    //         j = i;
-    //         while (*(middleGM_id_data + j) == -1 && *(nii_rim_data + j) == 3) {
-    //             k = *(innerGM_prevstep_id_data + j);
-    //             *(middleGM_id_data + j) = *(middleGM_id_data + k);
-    //             j = k;
-    //         }
-    //         *(nii_columns_data + i) = *(middleGM_id_data + j);
-    //     } else if (*(nii_rim_data + j) == 3 && *(curvature_data + j) < 0) {
-    //         while (*(middleGM_id_data + j) == -1 && *(nii_rim_data + j) == 3) {
-    //             k = *(outerGM_prevstep_id_data + j);
-    //             *(middleGM_id_data + j) = *(middleGM_id_data + k);
-    //             j = k;
-    //         }
-    //         *(nii_columns_data + i) = *(middleGM_id_data + j);
-    //     }
-    // }
-
-            // // Use column of the middle GM hotspot (accounts for sulci gyri)
-            // uint32_t m = *(innerGM_id_data + j);
-            // uint32_t n = *(outerGM_id_data + j);
-            // int32_t curv = *(hotspots_data + m) + *(hotspots_data + n);
-            // if (curv >= 0) {
-            //     j = *(innerGM_id_data + m);
-            // } else {
-            //     j = *(outerGM_id_data + n);
-            // }
-
-            // ----------------------------------------------------------------
-            // Downsample middle point coordinate (makes columns larger)
-            // if (column_size != 1) {
-            //     tie(mid_x, mid_y, mid_z) = ind2sub_3D(j, size_x, size_y);
-            //     mid_x = floor(mid_x / column_size) * column_size;
-            //     mid_y = floor(mid_y / column_size) * column_size;
-            //     mid_z = floor(mid_z / column_size) * column_size;
-            //     j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
-            // }
-            // *(nii_columns_data + i) = j;
-    //     }
-    // }
-
-    // save_output_nifti(fin, "columns", nii_columns);
+    save_output_nifti(fin, "columns", nii_columns);
 
     cout << "  Finished." << endl;
     return 0;
