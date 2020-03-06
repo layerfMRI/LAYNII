@@ -961,26 +961,6 @@ int main(int argc, char*  argv[]) {
             float dist3 = dist(wm_x, wm_y, wm_z, gm_x, gm_y, gm_z, dX, dY, dZ);
             *(err_dist_data + i) = (dist1 + dist2) - dist3;
 
-            // ----------------------------------------------------------------
-            // // Middle gray matter (discrete middle)
-            // float mid_dist = (dist1 + dist2) / 2.;
-            // if (mid_dist <= dist1) {
-            //     float t = 1 - (mid_dist / dist1);
-            //     mid_x = round((wm_x - x) * t + x);
-            //     mid_y = round((wm_y - y) * t + y);
-            //     mid_z = round((wm_z - z) * t + z);
-            //     j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
-            // } else if (mid_dist > dist1) {
-            //     float t = 1 - (mid_dist / dist2);
-            //     mid_x = round((gm_x - x) * t + x);
-            //     mid_y = round((gm_y - y) * t + y);
-            //     mid_z = round((gm_z - z) * t + z);
-            //     j = sub2ind_3D(mid_x, mid_y, mid_z, size_x, size_y);
-            // }
-            // *(middleGM_data + j) = 1;
-            // *(middleGM_id_data + i) = j;  // Useful to identify columns
-            // ----------------------------------------------------------------
-
             // Count inner and outer GM anchor voxels
             j = *(innerGM_id_data + i);
             *(hotspots_data + j) += 1;
@@ -992,7 +972,6 @@ int main(int argc, char*  argv[]) {
     save_output_nifti(fin, "hotspots", hotspots, false);
     save_output_nifti(fin, "disterror", err_dist, false);
     save_output_nifti(fin, "normdistdiff_diff", normdistdiff, false);
-
 
     // ========================================================================
     // Middle gray matter
@@ -1025,7 +1004,6 @@ int main(int argc, char*  argv[]) {
             }
         }
     }
-
     save_output_nifti(fin, "middleGM", middleGM, false);
 
     // ========================================================================
