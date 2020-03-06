@@ -118,12 +118,12 @@ int main(int argc, char*  argv[]) {
     nifti_image* outerGM_id = copy_nifti_header_as_int(nii_rim);
     int32_t* outerGM_id_data = static_cast<int32_t*>(outerGM_id->data);
 
-    nifti_image* innerGM_nextstep_id = copy_nifti_header_as_int(nii_rim);
-    int32_t* innerGM_nextstep_id_data = static_cast<int32_t*>(innerGM_nextstep_id->data);
-    nifti_image* outerGM_nextstep_id = copy_nifti_header_as_int(nii_rim);
-    int32_t* outerGM_nextstep_id_data = static_cast<int32_t*>(outerGM_nextstep_id->data);
-    nifti_image* normdist = copy_nifti_header_as_float(nii_rim);
-    float* normdist_data = static_cast<float*>(normdist->data);
+    nifti_image* innerGM_prevstep_id = copy_nifti_header_as_int(nii_rim);
+    int32_t* innerGM_prevstep_id_data = static_cast<int32_t*>(innerGM_prevstep_id->data);
+    nifti_image* outerGM_prevstep_id = copy_nifti_header_as_int(nii_rim);
+    int32_t* outerGM_prevstep_id_data = static_cast<int32_t*>(outerGM_prevstep_id->data);
+    nifti_image* normdistdiff = copy_nifti_header_as_float(nii_rim);
+    float* normdistdiff_data = static_cast<float*>(normdistdiff->data);
 
     nifti_image* nii_layers  = copy_nifti_header_as_int(nii_rim);
     int32_t* nii_layers_data = static_cast<int32_t*>(nii_layers->data);
@@ -148,8 +148,8 @@ int main(int argc, char*  argv[]) {
         *(err_dist_data + i) = 0;
         *(innerGM_id_data + i) = 0;
         *(outerGM_id_data + i) = 0;
-        *(innerGM_nextstep_id_data + i) = 0;
-        *(outerGM_nextstep_id_data + i) = 0;
+        *(innerGM_prevstep_id_data + i) = 0;
+        *(outerGM_prevstep_id_data + i) = 0;
         *(middleGM_data + i) = 0;
         *(nii_layers_data + i) = 0;
         *(nii_columns_data + i) = 0;
@@ -196,7 +196,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -209,7 +209,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -222,7 +222,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -235,7 +235,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -248,7 +248,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -261,7 +261,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -278,7 +278,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -291,7 +291,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -304,7 +304,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -317,7 +317,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -330,7 +330,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -343,7 +343,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -356,7 +356,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -369,7 +369,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -382,7 +382,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -395,7 +395,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -408,7 +408,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -421,7 +421,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -438,7 +438,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -451,7 +451,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -464,7 +464,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -477,7 +477,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -490,7 +490,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -503,7 +503,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -516,7 +516,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -529,7 +529,7 @@ int main(int argc, char*  argv[]) {
                             *(innerGM_dist_data + j) = d;
                             *(innerGM_step_data + j) = grow_step + 1;
                             *(innerGM_id_data + j) = *(innerGM_id_data + i);
-                            *(innerGM_nextstep_id_data + i) = j;
+                            *(innerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -577,7 +577,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -590,7 +590,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -603,7 +603,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -616,7 +616,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -629,7 +629,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -642,7 +642,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -659,7 +659,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -672,7 +672,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -685,7 +685,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -698,7 +698,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -711,7 +711,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -724,7 +724,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -737,7 +737,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -750,7 +750,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -763,7 +763,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -776,7 +776,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -789,7 +789,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -802,7 +802,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -819,7 +819,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -832,7 +832,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -845,7 +845,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -858,7 +858,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -871,7 +871,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -884,7 +884,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -897,7 +897,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -910,7 +910,7 @@ int main(int argc, char*  argv[]) {
                             *(outerGM_dist_data + j) = d;
                             *(outerGM_step_data + j) = grow_step + 1;
                             *(outerGM_id_data + j) = *(outerGM_id_data + i);
-                            *(outerGM_nextstep_id_data + i) = j;
+                            *(outerGM_prevstep_id_data + j) = i;
                         }
                     }
                 }
@@ -937,18 +937,18 @@ int main(int argc, char*  argv[]) {
             tie(gm_x, gm_y, gm_z) = ind2sub_3D(*(outerGM_id_data + i),
                                                size_x, size_y);
 
-            // Normalize distance
-            float dist1 = dist(x, y, z, wm_x, wm_y, wm_z, dX, dY, dZ);
-            float dist2 = dist(x, y, z, gm_x, gm_y, gm_z, dX, dY, dZ);
-            float norm_dist = dist1 / (dist1 + dist2);
-
-            // // Normalize distance (completely discrete)
-            // float dist1 = *(innerGM_dist_data + i);
-            // float dist2 = *(outerGM_dist_data + i);
+            // // Normalize distance
+            // float dist1 = dist(x, y, z, wm_x, wm_y, wm_z, dX, dY, dZ);
+            // float dist2 = dist(x, y, z, gm_x, gm_y, gm_z, dX, dY, dZ);
             // float norm_dist = dist1 / (dist1 + dist2);
 
+            // Normalize distance (completely discrete)
+            float dist1 = *(innerGM_dist_data + i);
+            float dist2 = *(outerGM_dist_data + i);
+            float norm_dist = dist1 / (dist1 + dist2);
+
             // Difference of normalized distances
-            *(normdist_data + i) = (dist1 - dist2) / (dist1 + dist2);
+            *(normdistdiff_data + i) = (dist1 - dist2) / (dist1 + dist2);
 
             // Cast distances to integers as number of desired layers
             if (norm_dist != 0) {
@@ -991,7 +991,7 @@ int main(int argc, char*  argv[]) {
     save_output_nifti(fin, "layers", nii_layers);
     save_output_nifti(fin, "hotspots", hotspots, false);
     save_output_nifti(fin, "disterror", err_dist, false);
-    save_output_nifti(fin, "normdist_diff", normdist, false);
+    save_output_nifti(fin, "normdistdiff_diff", normdistdiff, false);
 
 
     // ========================================================================
@@ -999,28 +999,18 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
-            j = *(innerGM_nextstep_id_data + i);
-            float m = *(normdist_data + i);
-            float n = *(normdist_data + j);
-            if (m == 0) {
-                *(middleGM_data + i) = 1;
-                *(middleGM_id_data + i) = i;
-
-            } else if (signbit(m) - signbit(n) != 0) {
-                if (abs(m) < abs(n)) {
-                    *(middleGM_data + i) = 1;
-                    *(middleGM_id_data + i) = i;
-                } else {
-                    *(middleGM_data + j) = 1;
-                    *(middleGM_id_data + j) = j;
-                }
+            // Select next step voxel based on curvature to have more
+            // approximately correct column paths
+            if (*(curvature_data + i) < 0) {
+                j = *(innerGM_prevstep_id_data + i);
+            } else {
+                j = *(outerGM_prevstep_id_data + i);
             }
 
-            // TODO: Bind this to curvature
-
-            j = *(outerGM_nextstep_id_data + i);
-            m = *(normdist_data + i);
-            n = *(normdist_data + j);
+            // Check sign changes in normalized distance differences between
+            // neighbouring voxels on a column path (a.k.a. streamline)
+            float m = *(normdistdiff_data + i);
+            float n = *(normdistdiff_data + j);
             if (m == 0) {
                 *(middleGM_data + i) = 1;
                 *(middleGM_id_data + i) = i;
