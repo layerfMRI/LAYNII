@@ -21,10 +21,9 @@ LOW_PRIORITY	=	LN_CORREL2FILES \
 					LN_ZOOM \
 					LN_FLOAT_ME \
 					LN_EXTREMETR \
+					LN_GFACTOR \
 					# LN_3DCOLUMNS \
 					# LN_COLUMNAR_DIST \
-					# LN_DEBUGGING \
-					# LN_GFACTOR \
 					# LN_GROW_LAYERS \
 					# LN_IMAGIRO \
 					# LN_INTPRO \
@@ -100,8 +99,10 @@ LN_EXTREMETR:
 	$(CC) -c -o obj/LN_EXTREMETR.o src/LN_EXTREMETR.cpp
 	$(CC) -o $@ $(CFLAGS) obj/LN_EXTREMETR.o $(LIBRARIES)
 
-# LN_GFACTOR: obj/LN_GFACTOR.o objs
-# 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
+LN_GFACTOR:
+	$(CC) -c -o obj/LN_GFACTOR.o src/LN_GFACTOR.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_GFACTOR.o $(LIBRARIES)
+
 # LN_GROW_LAYERS: obj/LN_GROW_LAYERS.o objs
 # 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
 # LN_IMAGIRO: obj/LN_IMAGIRO.o objs
