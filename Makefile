@@ -20,7 +20,7 @@ LOW_PRIORITY	=	LN_CORREL2FILES \
 					LN_GRADSMOOTH \
 					LN_ZOOM \
 					LN_FLOAT_ME \
-					# LN_EXTREMETR \
+					LN_EXTREMETR \
 					# LN_3DCOLUMNS \
 					# LN_COLUMNAR_DIST \
 					# LN_DEBUGGING \
@@ -95,8 +95,11 @@ LN_FLOAT_ME:
 # 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
 # LN_COLUMNAR_DIST: obj/LN_COLUMNAR_DIST.o objs
 # 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
-# LN_EXTREMETR: obj/LN_EXTREMETR.o objs
-# 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
+
+LN_EXTREMETR:
+	$(CC) -c -o obj/LN_EXTREMETR.o src/LN_EXTREMETR.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_EXTREMETR.o $(LIBRARIES)
+
 # LN_GFACTOR: obj/LN_GFACTOR.o objs
 # 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
 # LN_GROW_LAYERS: obj/LN_GROW_LAYERS.o objs
