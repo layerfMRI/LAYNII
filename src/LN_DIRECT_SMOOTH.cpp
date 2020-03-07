@@ -19,9 +19,9 @@ int show_help(void) {
     "    -input         : Nifti (.nii) file that will be smooth. It \n"
     "                     should have same dimensions as layer file.\n"
     "    -FWHM          : Amount of smoothing in units of voxels.\n"
+    "    -direction     : Axis of smoothing. 1 for x, 2 for y or 3 for z. \n"
     "    -laurenzian    : Use Laurenzian smoothing. Default is Gaussian \n"
     "                   : only for division images.\n"
-    "    -direction     : Axis of smoothing. 1 for x, 2 for y or 3 for z. \n"
     "    -Anonymous_sri : You know what you did (no FWHM).\n"
     "\n");
     return 0;
@@ -108,13 +108,13 @@ int main(int argc, char* argv[]) {
 
     // ========================================================================
     // Fix datatype issues
-    nifti_image* nii1_temp = copy_nifti_as_float32(nii1);
-    float* nii1_temp_data = static_cast<float*>(nii1_temp->data);
+    nifti_image* nii_input = copy_nifti_as_float32(nii1);
+    float* nii_input_data = static_cast<float*>(nii_input->data);
 
     // Allocate new nifti images
-    nifti_image* smooth = copy_nifti_as_float32(nii1_temp);
-    float* smooth_data =   static_cast<float*>(smooth->data);
-    nifti_image* gaussw = copy_nifti_as_float32(nii1_temp);
+    nifti_image* smooth = copy_nifti_as_float32(nii_input);
+    float* smooth_data = static_cast<float*>(smooth->data);
+    nifti_image* gaussw = copy_nifti_as_float32(nii_input);
     float* gaussw_data = static_cast<float*>(gaussw->data);
 
     // ========================================================================
@@ -160,18 +160,18 @@ int main(int argc, char* argv[]) {
                     if (direction_i == 1) {
                         for (int ix_i = max(0, ix - vinc); ix_i < min(ix + vinc + 1, size_x); ++ix_i) {
                             int voxel_j = nxyz * it + nxy * iz + nx * iy + ix_i;
-                            if (*(nii1_temp_data + voxel_j) != 0) {
+                            if (*(nii_input_data + voxel_j) != 0) {
                                 dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy, (float)iz, dX, dY, dZ);
                                 if (do_gauss == 1) {
-                                    *(smooth_data + voxel_i) += *(nii1_temp_data + voxel_j) * gaus(dist_i, FWHM_val);
+                                    *(smooth_data + voxel_i) += *(nii_input_data + voxel_j) * gaus(dist_i, FWHM_val);
                                     *(gaussw_data + voxel_i) += gaus(dist_i, FWHM_val);
                                 }
                                 if (do_laurenz == 1) {
-                                    *(smooth_data + voxel_i) += *(nii1_temp_data + voxel_j) * laur(dist_i, FWHM_val);
+                                    *(smooth_data + voxel_i) += *(nii_input_data + voxel_j) * laur(dist_i, FWHM_val);
                                     *(gaussw_data + voxel_i) += laur(dist_i, FWHM_val);
                                 }
                                 if (do_sri == 1) {
-                                    *(smooth_data + voxel_i) += *(nii1_temp_data + voxel_j) * ASLFt(dist_i, strength);
+                                    *(smooth_data + voxel_i) += *(nii_input_data + voxel_j) * ASLFt(dist_i, strength);
                                     *(gaussw_data + voxel_i) += ASLFt(dist_i, strength);
                                 }
                             }
@@ -179,19 +179,19 @@ int main(int argc, char* argv[]) {
                     } else if (direction_i == 2) {
                         for (int iy_i = max(0, iy - vinc); iy_i < min(iy + vinc + 1, size_y); ++iy_i) {
                             int voxel_j = nxyz * it + nxy * iz + nx * iy_i + ix;
-                            if (*(nii1_temp_data + voxel_j) != 0) {
+                            if (*(nii_input_data + voxel_j) != 0) {
                                 dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix, (float)iy_i, (float)iz, dX, dY, dZ);
 
                                 if (do_gauss == 1) {
-                                    *(smooth_data + voxel_i) += *(nii1_temp_data + voxel_j) * gaus(dist_i, FWHM_val);
+                                    *(smooth_data + voxel_i) += *(nii_input_data + voxel_j) * gaus(dist_i, FWHM_val);
                                     *(gaussw_data + voxel_i) += gaus(dist_i, FWHM_val);
                                 }
                                 if (do_laurenz == 1) {
-                                    *(smooth_data + voxel_i) += *(nii1_temp_data + voxel_j) * laur(dist_i, FWHM_val);
+                                    *(smooth_data + voxel_i) += *(nii_input_data + voxel_j) * laur(dist_i, FWHM_val);
                                     *(gaussw_data + voxel_i) += laur(dist_i, FWHM_val);
                                 }
                                 if (do_sri == 1) {
-                                    *(smooth_data + voxel_i) += *(nii1_temp_data + voxel_j) * ASLFt(dist_i, strength);
+                                    *(smooth_data + voxel_i) += *(nii_input_data + voxel_j) * ASLFt(dist_i, strength);
                                     *(gaussw_data + voxel_i) += ASLFt(dist_i, strength);
                                 }
                             }
@@ -199,19 +199,19 @@ int main(int argc, char* argv[]) {
                     } else if (direction_i == 3) {
                         for (int iz_i = max(0, iz - vinc); iz_i < min(iz + vinc + 1, size_z); ++iz_i) {
                             int voxel_j = nxyz * it + nxy * iz_i + nx * iy + ix;
-                            if (*(nii1_temp_data + voxel_j) != 0) {
+                            if (*(nii_input_data + voxel_j) != 0) {
                                 dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix, (float)iy, (float)iz_i, dX, dY, dZ);
 
                                 if (do_gauss == 1) {
-                                    *(smooth_data + voxel_i) += *(nii1_temp_data + voxel_j) * gaus(dist_i, FWHM_val);
+                                    *(smooth_data + voxel_i) += *(nii_input_data + voxel_j) * gaus(dist_i, FWHM_val);
                                     *(gaussw_data + voxel_i) += gaus(dist_i, FWHM_val);
                                 }
                                 if (do_laurenz == 1) {
-                                    *(smooth_data + voxel_i) += *(nii1_temp_data + voxel_j) * laur(dist_i, FWHM_val);
+                                    *(smooth_data + voxel_i) += *(nii_input_data + voxel_j) * laur(dist_i, FWHM_val);
                                     *(gaussw_data + voxel_i) += laur(dist_i, FWHM_val);
                                 }
                                 if (do_sri == 1) {
-                                    *(smooth_data + voxel_i) += *(nii1_temp_data + voxel_j) * ASLFt(dist_i, strength);
+                                    *(smooth_data + voxel_i) += *(nii_input_data + voxel_j) * ASLFt(dist_i, strength);
                                     *(gaussw_data + voxel_i) += ASLFt(dist_i, strength);
                                 }
                             }
@@ -226,7 +226,7 @@ int main(int argc, char* argv[]) {
     // Correcting for edge error //
     ///////////////////////////////
     for (int i = 0; i < nr_voxels; ++i) {
-        *(smooth_data + i) = *(smooth_data + i) / *(gaussw_data + i);
+        *(smooth_data + i) /= *(gaussw_data + i);
     }
 
     smooth->scl_slope = nii1->scl_slope;
