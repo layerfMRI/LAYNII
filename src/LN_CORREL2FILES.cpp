@@ -22,10 +22,10 @@ int show_help(void) {
     return 0;
 }
 
-int main(int argc, char * argv[]) {
+int main(int argc, char* argv[]) {
     // nifti_image* nim_input=NULL;
-    char *fin_1 = NULL, *fin_2 = NULL;
-    int ac, disp_float_eg = 0;
+    char* fin_1 = NULL, *fin_2 = NULL;
+    int ac;
     if (argc < 2) {  // Typing '-help' is sooo much work
        return show_help();
     }
@@ -61,7 +61,7 @@ int main(int argc, char * argv[]) {
         return 1;
     }
 
-    // Read input dataset, including data
+    // Read input dataset
     nifti_image* nii1 = nifti_image_read(fin_1, 1);
     if (!nii1) {
         fprintf(stderr, "** failed to read NIfTI image from '%s'\n", fin_1);
@@ -88,22 +88,16 @@ int main(int argc, char * argv[]) {
 
     // ========================================================================
     // Fix datatype issues
-
     nifti_image* nii1_temp = copy_nifti_as_float32(nii1);
     float* nii1_temp_data = static_cast<float*>(nii1_temp->data);
-
     nifti_image* nii2_temp = copy_nifti_as_float32(nii2);
     float* nii2_temp_data = static_cast<float*>(nii2_temp->data);
 
-    // ========================================================================
+    // Allocate new nifti
+    nifti_image* correl_file = copy_nifti_as_float32(nii1_temp);
+    float* correl_file_data = static_cast<float*>(correl_file->data);
 
-    nifti_image* correl_file = nifti_copy_nim_info(nii1_temp);
-    correl_file->nt = 1;
-    correl_file->nvox = nii1_temp->nvox / size_t;
-    correl_file->datatype = NIFTI_TYPE_FLOAT32;
-    correl_file->nbyper = sizeof(float);
-    correl_file->data = calloc(correl_file->nvox, correl_file->nbyper);
-    float* correl_file_data = (float* ) correl_file->data;
+    // ========================================================================
 
     double vec_file1[size_t];
     double vec_file2[size_t];
@@ -112,38 +106,18 @@ int main(int argc, char * argv[]) {
     for (int iz = 0; iz < size_z; ++iz) {
         for (int iy = 0; iy < size_y; ++iy) {
             for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
                 for (int it = 0;  it < size_t; ++it) {
-                    vec_file1[it] = *(nii1_temp_data + VOXEL_ID);
-                    vec_file2[it] = *(nii2_temp_data + VOXEL_ID);
+                    vec_file1[it] = *(nii1_temp_data + voxel_i);
+                    vec_file2[it] = *(nii2_temp_data + voxel_i);
                 }
-                *(correl_file_data + VOXEL_ID_3D) = ren_correl(vec_file1, vec_file2, size_t);
+                *(correl_file_data + voxel_i) =
+                    ren_correl(vec_file1, vec_file2, size_t);
             }
         }
     }
 
-    string prefix = "correlated_";
-    string filename_1 = (string) (fin_1);
-    string outfilename = prefix+filename_1;
-
-    log_output(outfilename.c_str());
-
-    const char *fout_1 = outfilename.c_str();
-    if (nifti_set_filenames(correl_file, fout_1, 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(correl_file);
-
-    // const char *fout_5 = "debug_ing.nii";
-    // if (nifti_set_filenames(growfromWM0, fout_5, 1, 1)) {
-    //     return 1;
-    // }
-    // nifti_image_write(growfromWM0);
-
-    // const char *fout_6 = "kootrGM.nii";
-    // if (nifti_set_filenames(GMkoord2, fout_6, 1, 1)) {
-    //     return 1;
-    // }
-    // nifti_image_write(GMkoord2);
+    save_output_nifti(fin_1, "correlated", correl_file, true);
 
     cout << "  Finished." << endl;
     return 0;

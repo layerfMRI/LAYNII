@@ -115,10 +115,10 @@ int main(int argc, char* argv[]) {
     log_nifti_descriptives(nii3);
 
     // Get dimensions of input
-    const int size_x = nii1->nx;  // phase
-    const int size_y = nii1->ny;  // read
-    const int size_z = nii1->nz;  // slice
-    const int size_t = nii1->nt;  // time
+    const int size_x = nii1->nx;
+    const int size_y = nii1->ny;
+    const int size_z = nii1->nz;
+    const int size_t = nii1->nt;
     const int nr_voxels = size_t * size_z * size_y * size_x;
 
     // ========================================================================
@@ -180,6 +180,7 @@ int main(int argc, char* argv[]) {
 
     nii_denoised->scl_slope = nii_uni->scl_slope;
 
+    // TODO(Faruk): This looks redundant, need to ask Renzo why it is needed.
     if (nii_uni->scl_inter != 0) {
         cout << " ########################################## " << endl;
         cout << " #####   WARNING   WARNING   WARNING  ##### " << endl;
