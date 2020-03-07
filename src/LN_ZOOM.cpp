@@ -1,8 +1,4 @@
 
-// TODO(@Faruk): Compiles but gives error:
-// `** ERROR: nifti_image_write_hdr_img: no image data`
-// Also seems to give the same error in the old version. Check with Renzo.
-
 
 #include "../dep/laynii_lib.h"
 
@@ -28,13 +24,11 @@ int show_help(void) {
 }
 
 int main(int argc, char*  argv[]) {
-    // nifti_image* nim_input=NULL;
     char* fin_1 = NULL, *fin_2 = NULL;
-    int ac, disp_float_eg = 0, shift = 0;
-    int trialdur = 0;
-    if (argc < 2) return show_help();   // Typing '-help' is sooo much work
+    int ac;
+    if (argc < 2) return show_help();
 
-    // Process user options: 4 are valid presently
+    // Process user options
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
@@ -43,15 +37,15 @@ int main(int argc, char*  argv[]) {
                 fprintf(stderr, "** missing argument for -input\n");
                 return 1;
             }
-            fin_1 = argv[ac];  // no string copy, just pointer assignment
+            fin_1 = argv[ac];
         } else if (!strcmp(argv[ac], "-mask")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -mask\n");
                 return 1;
             }
-            fin_2 = argv[ac];  // no string copy, just pointer assignment
+            fin_2 = argv[ac];
         } else {
-            fprintf(stderr,"** invalid option, '%s'\n", argv[ac]);
+            fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
         }
     }
@@ -64,7 +58,7 @@ int main(int argc, char*  argv[]) {
         return 1;
     }
 
-    // Read input dataset, including data
+    // Read input dataset
     nifti_image* nii1 = nifti_image_read(fin_1, 1);
     if (!nii1) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin_1);
@@ -91,15 +85,12 @@ int main(int argc, char*  argv[]) {
 
     // ========================================================================
     // Fix datatype issues
-
     nifti_image* nim_file_1 = copy_nifti_as_float32(nii1);
     float* nii1_data = static_cast<float*>(nim_file_1->data);
-
     nifti_image* nim_file_2 = copy_nifti_as_float32(nii2);
     float* nii2_data = static_cast<float*>(nim_file_2->data);
 
     // ========================================================================
-
     // Initialize min-max inversely to increas-decrease in the loop
     int min_z = 10000, max_z = 0;
     int min_x = 10000, max_x = 0;
@@ -121,49 +112,44 @@ int main(int argc, char*  argv[]) {
     cout << "  x range is " << min_x << "-" << max_x << endl;
     cout << "  y range is " << min_y << "-" << max_y << endl;
     cout << "  z range is " << min_z << "-" << max_z << endl;
-    int zoomed_z_size = max_z - min_z + 1;
-    int zoomed_x_size = max_x - min_x + 1;
-    int zoomed_y_size = max_y - min_y + 1;
+    const int new_size_z = max_z - min_z + 1;
+    const int new_size_x = max_x - min_x + 1;
+    const int new_size_y = max_y - min_y + 1;
+    const int new_nr_voxels = new_size_x * new_size_y * new_size_z;
 
-    // Handle zoomed nifti
-    nifti_image* zoomed_file = nifti_copy_nim_info(nim_file_1);
-    // zoomed_file->nt = 7;
-    zoomed_file->nz = zoomed_z_size;
-    zoomed_file->nx = zoomed_x_size;
-    zoomed_file->ny = zoomed_y_size;
+    // ========================================================================
+    // Handle new (zoomed) nifti
+    nifti_image* nii_new = nifti_copy_nim_info(nim_file_1);
+    nii_new->nx = new_size_x;
+    nii_new->ny = new_size_y;
+    nii_new->nz = new_size_z;
+    nii_new->nvox = new_nr_voxels;
+    nii_new->datatype = NIFTI_TYPE_FLOAT32;
+    nii_new->nbyper = sizeof(float);
+    nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
+    float* nii_new_data = static_cast<float*>(nii_new->data);
 
-    zoomed_file->nvox = (nim_file_1->nvox * zoomed_x_size * zoomed_y_size * zoomed_z_size) / (nii1->nx * nii1->ny * nii1->nz);
-    zoomed_file->datatype = NIFTI_TYPE_FLOAT32;
-    zoomed_file->nbyper = sizeof(float);
-    zoomed_file->data = calloc(zoomed_file->nvox, zoomed_file->nbyper);
-    float* zoomed_file_data = static_cast<float*>(zoomed_file->data);
-
-    cout << "  Reduction " << (nim_file_1->nvox * zoomed_x_size * zoomed_y_size * zoomed_z_size) / (nii1->nx * nii1->ny * nii1->nz) << endl;
-
-    const int nx_2 = zoomed_file->nx;
-    const int nxy_2 = zoomed_file->nx * zoomed_file->ny;
-    const int nxyz_2 = zoomed_file->nx * zoomed_file->ny * zoomed_file->nz;
-
+    // ========================================================================
+    // Copy voxel from the bigger input nifti image
+    const int nx_2 = nii_new->nx;
+    const int nxy_2 = nii_new->nx * nii_new->ny;
+    const int nxyz_2 = nii_new->nx * nii_new->ny * nii_new->nz;
     for (int it = 0; it < size_t; ++it) {
-        for (int iz = min_z; iz < max_z+1; ++iz) {
-            for (int iy = min_y; iy < max_y+1; ++iy) {
-                for (int ix = min_x; ix < max_x+1; ++ix) {
-                    *(zoomed_file_data + nxyz_2 * it + nxy_2 * (iz - min_z) + nx_2 * (iy - min_y) + (ix - min_x))
-                        = *(nii1_data + nxyz * it + nxy * iz + nx * iy + ix);
+        for (int iz = min_z; iz <= max_z; ++iz) {
+            for (int iy = min_y; iy <= max_y; ++iy) {
+                for (int ix = min_x; ix <= max_x; ++ix) {
+                    int voxel_i = nxyz * it + nxy * iz + nx * iy + ix;
+                    int voxel_j = nxyz_2 * it
+                                  + nxy_2 * (iz - min_z)
+                                  + nx_2 * (iy - min_y)
+                                  + (ix - min_x);
+                    *(nii_new_data + voxel_j) = *(nii1_data + voxel_i);
                 }
             }
         }
     }
+    save_output_nifti(fin_1, "zoomed", nii_new, true);
 
-    string prefix = "zoomed_";
-    string filename_1 = (string) (fin_1);
-    string outfilename = prefix+filename_1;
-    const char* fout_1 = outfilename.c_str();
-    if (nifti_set_filenames(zoomed_file, fout_1, 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(zoomed_file);
-    log_output(outfilename.c_str());
-
+    cout << "Finished!" << endl;
     return 0;
 }
