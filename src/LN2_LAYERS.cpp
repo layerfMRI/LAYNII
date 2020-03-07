@@ -1,7 +1,7 @@
 
 // TODO(Faruk): Make columns optional output.
 // TODO(Faruk): Put neighbour visits into a function.
-// TODO(Faruk): Add debug flag to reduce memory usage.
+// TODO(Faruk): Add debug flag to reduce number of outputs.
 
 #include "../dep/laynii_lib.h"
 
@@ -25,7 +25,7 @@ int show_help(void) {
 }
 
 int main(int argc, char*  argv[]) {
-    nifti_image*nii_rim = NULL;
+    nifti_image*nii1 = NULL;
     char* fin = NULL;
     uint16_t ac, nr_layers = 3;
     float column_size = 1;
@@ -67,28 +67,27 @@ int main(int argc, char*  argv[]) {
     }
 
     // Read input dataset, including data
-    nii_rim = nifti_image_read(fin, 1);
-    if (!nii_rim) {
+    nii1 = nifti_image_read(fin, 1);
+    if (!nii1) {
         fprintf(stderr, "** failed to read NIfTI image from '%s'\n", fin);
         return 2;
     }
-    int16_t* nii_rim_data = static_cast<int16_t*>(nii_rim->data);
 
     log_welcome("LN_3DGROW_LAYERS");
-    log_nifti_descriptives(nii_rim);
+    log_nifti_descriptives(nii1);
 
     cout << "  Nr. layers: " << nr_layers << endl;
 
     // Get dimensions of input
-    const uint32_t size_z = nii_rim->nz;
-    const uint32_t size_x = nii_rim->nx;
-    const uint32_t size_y = nii_rim->ny;
+    const uint32_t size_z = nii1->nz;
+    const uint32_t size_x = nii1->nx;
+    const uint32_t size_y = nii1->ny;
 
     const uint32_t nr_voxels = size_z * size_y * size_x;
 
-    const float dX = nii_rim->pixdim[1];
-    const float dY = nii_rim->pixdim[2];
-    const float dZ = nii_rim->pixdim[3];
+    const float dX = nii1->pixdim[1];
+    const float dY = nii1->pixdim[2];
+    const float dZ = nii1->pixdim[3];
 
     // Short diagonals
     const float dia_xy = sqrt(dX * dX + dY * dY);
@@ -98,8 +97,11 @@ int main(int argc, char*  argv[]) {
     const float dia_xyz = sqrt(dX * dX + dY * dY + dZ * dZ);
 
     // ========================================================================
-    // Prepare required nifti images
+    // Fix input datatype issues
+    nifti_image* nii_rim = copy_nifti_header_as_int(nii1);
+    int32_t* nii_rim_data = static_cast<int32_t*>(nii_rim->data);
 
+    // Prepare required nifti images
     nifti_image* innerGM_step = copy_nifti_header_as_float(nii_rim);
     float* innerGM_step_data = static_cast<float*>(innerGM_step->data);
     nifti_image* innerGM_dist = copy_nifti_header_as_float(nii_rim);
@@ -926,7 +928,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Layers
     // ========================================================================
-    cout << "  Doing layers..." << endl;
+    cout << "  Start doing layers..." << endl;
     float x, y, z, wm_x, wm_y, wm_z, gm_x, gm_y, gm_z;
 
     for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -976,6 +978,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Middle gray matter
     // ========================================================================
+    cout << "  Start finding middle gray matter..." << endl;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
             // Check sign changes in normalized distance differences between
@@ -1034,6 +1037,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Columns
     // ========================================================================
+    cout << "  Start doing columns..." << endl;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
             // Approximate curvature measurement
@@ -1059,7 +1063,7 @@ int main(int argc, char*  argv[]) {
 
     save_output_nifti(fin, "curvature", curvature, false);
     save_output_nifti(fin, "middleGM_id", middleGM_id, false);
-    save_output_nifti(fin, "columns", nii_columns);
+    save_output_nifti(fin, "columns", nii_columns, false);
 
     cout << "  Finished." << endl;
     return 0;

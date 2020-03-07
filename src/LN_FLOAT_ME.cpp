@@ -4,13 +4,10 @@
 
 int show_help(void) {
     printf(
-    "LN_FLOAT_ME: Short convert dataset to FLOAT32. \n"
-    "\n"
-    "    This program convert any nii file in FLOATs. This is very useful \n"
-    "    when you want the reduce the file size after ANTS was applied and \n"
-    "    that have a small dynamic range.\n"
+    "LN_FLOAT_ME: Convert nifti datatype to FLOAT32. \n"
     "\n"
     "Usage:\n"
+    "    LN_FLOAT_ME -input data_file.nii \n"
     "    LN_FLOAT_ME -input data_file.nii -output output_filename.nii \n"
     "\n"
     "Options:\n"
@@ -68,47 +65,9 @@ int main(int argc, char * argv[]) {
     log_welcome("LN_FLOAT_ME");
     log_nifti_descriptives(nii);
 
-    // Get dimensions of input
-    const int size_z = nii->nz;
-    const int size_x = nii->nx;
-    const int size_y = nii->ny;
-    const int size_t = nii->nt;
-    const int nr_voxels = size_t * size_z * size_y * size_x;
+    // Cast input data to float
+    nifti_image* nii_new = copy_nifti_header_as_float(nii);
 
-    nifti_image* nii_new = nifti_copy_nim_info(nii);
-    nii_new->datatype = NIFTI_TYPE_FLOAT32;
-    nii_new->nbyper = sizeof(float);
-    nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
-    float* nii_new_data = static_cast<float*>(nii_new->data);
-
-    // ========================================================================
-    // Fixing potential problems with different input datatypes //
-    if (nii->datatype == NIFTI_TYPE_FLOAT32) {
-        float* nii_data = static_cast<float*>(nii->data);
-        for (int i = 0; i < nr_voxels; ++i) {
-            *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
-        }
-    }
-    if (nii->datatype == NIFTI_TYPE_FLOAT64) {
-        double* nii_data = static_cast<double*>(nii->data);
-        for (int i = 0; i < nr_voxels; ++i) {
-            *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
-        }
-    }
-    if (nii->datatype == NIFTI_TYPE_INT16) {
-        int16_t* nii_data = static_cast<int16_t*>(nii->data);
-        for (int i = 0; i < nr_voxels; ++i) {
-            *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
-        }
-    }
-    if (nii->datatype == NIFTI_TYPE_INT32) {
-        int32_t* nii_data = static_cast<int32_t*>(nii->data);
-        for (int i = 0; i < nr_voxels; ++i) {
-            *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
-        }
-    }
-
-    // ------------------------------------------------------------------------
     cout << "  Writing output... " << endl;
     if (do_outputnaming) {
         // Assign nifti_image fname/iname pair, based on output filename
