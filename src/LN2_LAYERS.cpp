@@ -98,49 +98,49 @@ int main(int argc, char*  argv[]) {
 
     // ========================================================================
     // Fix input datatype issues
-    nifti_image* nii_rim = copy_nifti_header_as_int(nii1);
+    nifti_image* nii_rim = copy_nifti_as_int32(nii1);
     int32_t* nii_rim_data = static_cast<int32_t*>(nii_rim->data);
 
     // Prepare required nifti images
-    nifti_image* innerGM_step = copy_nifti_header_as_float(nii_rim);
+    nifti_image* innerGM_step = copy_nifti_as_float32(nii_rim);
     float* innerGM_step_data = static_cast<float*>(innerGM_step->data);
-    nifti_image* innerGM_dist = copy_nifti_header_as_float(nii_rim);
+    nifti_image* innerGM_dist = copy_nifti_as_float32(nii_rim);
     float* innerGM_dist_data = static_cast<float*>(innerGM_dist->data);
 
-    nifti_image* outerGM_step = copy_nifti_header_as_float(nii_rim);
+    nifti_image* outerGM_step = copy_nifti_as_float32(nii_rim);
     float* outerGM_step_data = static_cast<float*>(outerGM_step->data);
-    nifti_image* outerGM_dist = copy_nifti_header_as_float(nii_rim);
+    nifti_image* outerGM_dist = copy_nifti_as_float32(nii_rim);
     float* outerGM_dist_data = static_cast<float*>(outerGM_dist->data);
 
-    nifti_image* err_dist = copy_nifti_header_as_float(nii_rim);
+    nifti_image* err_dist = copy_nifti_as_float32(nii_rim);
     float* err_dist_data = static_cast<float*>(err_dist->data);
 
-    nifti_image* innerGM_id = copy_nifti_header_as_int(nii_rim);
+    nifti_image* innerGM_id = copy_nifti_as_int32(nii_rim);
     int32_t* innerGM_id_data = static_cast<int32_t*>(innerGM_id->data);
-    nifti_image* outerGM_id = copy_nifti_header_as_int(nii_rim);
+    nifti_image* outerGM_id = copy_nifti_as_int32(nii_rim);
     int32_t* outerGM_id_data = static_cast<int32_t*>(outerGM_id->data);
 
-    nifti_image* innerGM_prevstep_id = copy_nifti_header_as_int(nii_rim);
+    nifti_image* innerGM_prevstep_id = copy_nifti_as_int32(nii_rim);
     int32_t* innerGM_prevstep_id_data = static_cast<int32_t*>(innerGM_prevstep_id->data);
-    nifti_image* outerGM_prevstep_id = copy_nifti_header_as_int(nii_rim);
+    nifti_image* outerGM_prevstep_id = copy_nifti_as_int32(nii_rim);
     int32_t* outerGM_prevstep_id_data = static_cast<int32_t*>(outerGM_prevstep_id->data);
-    nifti_image* normdistdiff = copy_nifti_header_as_float(nii_rim);
+    nifti_image* normdistdiff = copy_nifti_as_float32(nii_rim);
     float* normdistdiff_data = static_cast<float*>(normdistdiff->data);
 
-    nifti_image* nii_layers  = copy_nifti_header_as_int(nii_rim);
+    nifti_image* nii_layers  = copy_nifti_as_int32(nii_rim);
     int32_t* nii_layers_data = static_cast<int32_t*>(nii_layers->data);
 
-    nifti_image* nii_columns = copy_nifti_header_as_int(nii_rim);
+    nifti_image* nii_columns = copy_nifti_as_int32(nii_rim);
     int32_t* nii_columns_data = static_cast<int32_t*>(nii_columns->data);
 
-    nifti_image* middleGM = copy_nifti_header_as_int(nii_rim);
+    nifti_image* middleGM = copy_nifti_as_int32(nii_rim);
     int32_t* middleGM_data = static_cast<int32_t*>(middleGM->data);
-    nifti_image* middleGM_id = copy_nifti_header_as_int(nii_rim);
+    nifti_image* middleGM_id = copy_nifti_as_int32(nii_rim);
     int32_t* middleGM_id_data = static_cast<int32_t*>(middleGM_id->data);
 
-    nifti_image* hotspots = copy_nifti_header_as_int(nii_rim);
+    nifti_image* hotspots = copy_nifti_as_int32(nii_rim);
     int32_t* hotspots_data = static_cast<int32_t*>(hotspots->data);
-    nifti_image* curvature = copy_nifti_header_as_int(nii_rim);
+    nifti_image* curvature = copy_nifti_as_int32(nii_rim);
     int32_t* curvature_data = static_cast<int32_t*>(curvature->data);
 
     // Setting zero

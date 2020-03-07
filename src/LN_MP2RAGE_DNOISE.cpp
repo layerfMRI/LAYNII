@@ -123,17 +123,17 @@ int main(int argc, char* argv[]) {
 
     // ========================================================================
     // Fix datatype issues
-    nifti_image* nii_inv1 = copy_nifti_header_as_float(nii1);
+    nifti_image* nii_inv1 = copy_nifti_as_float32(nii1);
     float* nii_inv1_data = static_cast<float*>(nii_inv1->data);
-    nifti_image* nii_inv2 = copy_nifti_header_as_float(nii2);
+    nifti_image* nii_inv2 = copy_nifti_as_float32(nii2);
     float* nii_inv2_data = static_cast<float*>(nii_inv2->data);
-    nifti_image* nii_uni = copy_nifti_header_as_float(nii3);
+    nifti_image* nii_uni = copy_nifti_as_float32(nii3);
     float* nii_uni_data = static_cast<float*>(nii_uni->data);
 
     // Allocate output nifti files
-    nifti_image* nii_denoised = copy_nifti_header_as_float(nii1);
+    nifti_image* nii_denoised = copy_nifti_as_float32(nii1);
     float* nii_denoised_data = static_cast<float*>(nii_denoised->data);
-    nifti_image* nii_phaseerr = copy_nifti_header_as_float(nii1);
+    nifti_image* nii_phaseerr = copy_nifti_as_float32(nii1);
     float* nii_phaseerr_data = static_cast<float*>(nii_phaseerr->data);
 
     // ========================================================================

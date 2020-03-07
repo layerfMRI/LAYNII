@@ -66,7 +66,7 @@ int main(int argc, char * argv[]) {
     log_nifti_descriptives(nii);
 
     // Cast input data to float
-    nifti_image* nii_new = copy_nifti_header_as_float(nii);
+    nifti_image* nii_new = copy_nifti_as_float32(nii);
 
     cout << "  Writing output... " << endl;
     if (do_outputnaming) {

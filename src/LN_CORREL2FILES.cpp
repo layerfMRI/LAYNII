@@ -89,10 +89,10 @@ int main(int argc, char * argv[]) {
     // ========================================================================
     // Fix datatype issues
 
-    nifti_image* nii1_temp = copy_nifti_header_as_float(nii1);
+    nifti_image* nii1_temp = copy_nifti_as_float32(nii1);
     float* nii1_temp_data = static_cast<float*>(nii1_temp->data);
 
-    nifti_image* nii2_temp = copy_nifti_header_as_float(nii2);
+    nifti_image* nii2_temp = copy_nifti_as_float32(nii2);
     float* nii2_temp_data = static_cast<float*>(nii2_temp->data);
 
     // ========================================================================

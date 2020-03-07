@@ -116,15 +116,15 @@ int main(int argc, char* argv[]) {
 
     // ========================================================================
     // Fix datatype issues
-    nii_input = copy_nifti_header_as_float(nii_input);
+    nii_input = copy_nifti_as_float32(nii_input);
     float *nii_input_data = static_cast<float*>(nii_input->data);
-    nii_input = copy_nifti_header_as_int(nii_input);
+    nii_input = copy_nifti_as_int32(nii_input);
     int32_t *nii_layer_data = static_cast<int32_t*>(nii_layer->data);
 
     // Allocate new niftis
-    nifti_image* nii_smooth = copy_nifti_header_as_float(nii_input);
+    nifti_image* nii_smooth = copy_nifti_as_float32(nii_input);
     float* nii_smooth_data = static_cast<float*>(nii_smooth->data);
-    nifti_image* nii_gaussw = copy_nifti_header_as_float(nii_input);
+    nifti_image* nii_gaussw = copy_nifti_as_float32(nii_input);
     float* nii_gaussw_data = static_cast<float*>(nii_gaussw->data);
     // ========================================================================
 
@@ -198,7 +198,7 @@ int main(int argc, char* argv[]) {
 
     if (sulctouch == 1) {
         // Allocating local connected vincinity file
-        nifti_image* hairy_brain = copy_nifti_header_as_int(nii_layer);
+        nifti_image* hairy_brain = copy_nifti_as_int32(nii_layer);
         int* hairy_brain_data = static_cast<int*>(hairy_brain->data);
         hairy_brain->scl_slope = 1.;
         int vinc_steps = 1;

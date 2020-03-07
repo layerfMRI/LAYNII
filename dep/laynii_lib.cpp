@@ -151,7 +151,7 @@ void save_output_nifti(string filename, string prefix, nifti_image* nii,
     }
 }
 
-nifti_image* copy_nifti_header_as_float(nifti_image* nii) {
+nifti_image* copy_nifti_as_float32(nifti_image* nii) {
     ///////////////////////////////////////////////////////////////////////////
     // NOTE(Renzo): Fixing potential problems with different input datatypes //
     // here, I am loading them in their native datatype and cast them        //
@@ -239,7 +239,7 @@ nifti_image* copy_nifti_header_as_float(nifti_image* nii) {
     return nii_new;
 }
 
-nifti_image* copy_nifti_header_as_int(nifti_image* nii) {
+nifti_image* copy_nifti_as_int32(nifti_image* nii) {
     nifti_image* nii_new = nifti_copy_nim_info(nii);
     nii_new->datatype = NIFTI_TYPE_INT32;
     nii_new->nbyper = sizeof(int32_t);

@@ -161,13 +161,13 @@ int main(int argc, char * argv[]) {
 
     // ========================================================================
     // Fix datatype issues
-    nifti_image* nim_inputf = copy_nifti_header_as_float(nim_inputfi);
+    nifti_image* nim_inputf = copy_nifti_as_float32(nim_inputfi);
     float* nim_inputf_data = (float*) nim_inputf->data;
 
-    nifti_image* nim_mask = copy_nifti_header_as_float(nim_maski);
+    nifti_image* nim_mask = copy_nifti_as_float32(nim_maski);
     float* nim_mask_data = (float*) nim_mask->data;
 
-    nifti_image* nim_roi = copy_nifti_header_as_float(nim_maski);
+    nifti_image* nim_roi = copy_nifti_as_float32(nim_maski);
     float* nim_roi_data = (float*) nim_roi->data;
 
     // ========================================================================
