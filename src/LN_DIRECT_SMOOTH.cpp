@@ -28,7 +28,7 @@ int show_help(void) {
 }
 
 int main(int argc, char* argv[]) {
-    char* finfi = NULL;
+    char* fin_1 = NULL;
     int ac, direction_i = 0, do_laurenz = 0, do_gauss = 0, do_sri = 0;
     float FWHM_val = 10, strength = 1;
     if (argc < 3) {
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
                 fprintf(stderr, "** missing argument for -input\n");
                 return 1;
             }
-            finfi = argv[ac];  // Assign pointer, no string copy.
+            fin_1 = argv[ac];  // Assign pointer, no string copy.
         } else if (!strcmp(argv[ac], "-direction")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -direction\n");
@@ -73,15 +73,15 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (!finfi) {
+    if (!fin_1) {
         fprintf(stderr, "** missing option '-input'\n");
         return 1;
     }
 
     // Read input dataset, including data
-    nifti_image* nii1 = nifti_image_read(finfi, 1);
+    nifti_image* nii1 = nifti_image_read(fin_1, 1);
     if (!nii1) {
-        fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", finfi);
+        fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", fin_1);
         return 2;
     }
     if (direction_i == 0) {
@@ -239,16 +239,7 @@ int main(int argc, char* argv[]) {
         cout << " ########################################## " << endl;
     }
 
-    string prefix = "smooth_";
-    string filename = (string) (finfi);
-    string outfilename = prefix + filename;
-    log_output(outfilename.c_str());
-
-    const char*fout_1 = outfilename.c_str();
-    if (nifti_set_filenames(smooth, fout_1, 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(smooth);
+    save_output_nifti(fin_1, "smooth", smooth, true);
 
     cout << "  Finished." << endl;
     return 0;
