@@ -16,15 +16,13 @@ int show_help(void) {
     "\n"
     "Options:\n"
     "    -help          : Show this help.\n"
-    "    -input         : Nifti (.nii) file that will be smoothed. It \n"
+    "    -input         : Nifti (.nii) file that will be smooth. It \n"
     "                     should have same dimensions as layer file.\n"
     "    -FWHM          : Amount of smoothing in units of voxels.\n"
     "    -laurenzian    : Use Laurenzian smoothing. Default is Gaussian \n"
     "                   : only for division images.\n"
     "    -direction     : Axis of smoothing. 1 for x, 2 for y or 3 for z. \n"
     "    -Anonymous_sri : You know what you did (no FWHM).\n"
-    "\n"
-    "Note: This program supports INT16, INT32 and FLOAT32.\n"
     "\n");
     return 0;
 }
@@ -105,40 +103,22 @@ int main(int argc, char* argv[]) {
     const float dX = 1;  // nii1->pixdim[1];
     const float dY = 1;  // nii1->pixdim[2];
     const float dZ = 1;  // nii1->pixdim[3];
+    const int nr_voxels = size_t * size_z * size_y * size_x;
+
 
     // ========================================================================
     // Fix datatype issues
-
     nifti_image* nii1_temp = copy_nifti_as_float32(nii1);
     float* nii1_temp_data = static_cast<float*>(nii1_temp->data);
 
+    // Allocate new nifti images
+    nifti_image* smooth = copy_nifti_as_float32(nii1_temp);
+    float* smooth_data =   static_cast<float*>(smooth->data);
+    nifti_image* gaussw = copy_nifti_as_float32(nii1_temp);
+    float* gaussw_data = static_cast<float*>(gaussw->data);
+
     // ========================================================================
 
-    /////////////////////////////////////
-    // Make allocating necessary files //
-    /////////////////////////////////////
-    nifti_image* smoothed = nifti_copy_nim_info(nii1_temp);
-    nifti_image* gausweight = nifti_copy_nim_info(nii1_temp);
-    // nifti_image* layer = nifti_copy_nim_info(nim_input);
-    // nifti_image* leak_layer = nifti_copy_nim_info(nim_input);
-
-    smoothed->datatype = NIFTI_TYPE_FLOAT32;
-    gausweight->datatype = NIFTI_TYPE_FLOAT32;
-    // layer->datatype = NIFTI_TYPE_FLOAT32;
-    // leak_layer->datatype = NIFTI_TYPE_FLOAT32;
-
-    smoothed->nbyper = sizeof(float);
-    gausweight->nbyper = sizeof(float);
-    // layer->nbyper = sizeof(float);
-    // leak_layer->nbyper = sizeof(float);
-
-    smoothed->data = calloc(smoothed->nvox, smoothed->nbyper);
-    gausweight->data = calloc(gausweight->nvox, gausweight->nbyper);
-    // layer->data = calloc(layer->nvox, layer->nbyper);
-    // leak_layer->data = calloc(leak_layer->nvox, leak_layer->nbyper);
-
-    float* smoothed_data = (float*) smoothed->data;
-    float* gausweight_data = (float*) gausweight->data;
     // float* layer_data = (float*) layer->data;
     // float* leak_layer_data = (float*) leak_layer->data;
     float dist(float x1, float y1, float z1, float x2, float y2, float z2,
@@ -147,7 +127,7 @@ int main(int argc, char* argv[]) {
     float laur(float distance, float sigma);
     float ASLFt(float distance, float strength);
 
-    // Float kernal_size = 10;  // corresponds to one voxel sice.
+    // Float kernel_size = 10;  // corresponds to one voxel sice.
     int vinc = max(1., 2. * FWHM_val / dX);  // Ignore far voxels
     float dist_i = 0.;
     cout << "  vinc " << vinc<< endl;
@@ -171,87 +151,85 @@ int main(int argc, char* argv[]) {
         cout << "  " << ASLFt(i, strength) << endl;
     }
 
-    if (direction_i == 1) {
-        FOR_EACH_VOXEL_TZYX
-            *(gausweight_data + VOXEL_ID) = 0;
+    for (int it = 0; it < size_t; ++it) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x; ++ix) {
+                    int voxel_i = nxyz * it + nxy * iz + nx * iy + ix;
+                    *(gaussw_data + voxel_i) = 0;
+                    if (direction_i == 1) {
+                        for (int ix_i = max(0, ix - vinc); ix_i < min(ix + vinc + 1, size_x); ++ix_i) {
+                            int voxel_j = nxyz * it + nxy * iz + nx * iy + ix_i;
+                            if (*(nii1_temp_data + voxel_j) != 0) {
+                                dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy, (float)iz, dX, dY, dZ);
+                                if (do_gauss == 1) {
+                                    *(smooth_data + voxel_i) += *(nii1_temp_data + voxel_j) * gaus(dist_i, FWHM_val);
+                                    *(gaussw_data + voxel_i) += gaus(dist_i, FWHM_val);
+                                }
+                                if (do_laurenz == 1) {
+                                    *(smooth_data + voxel_i) += *(nii1_temp_data + voxel_j) * laur(dist_i, FWHM_val);
+                                    *(gaussw_data + voxel_i) += laur(dist_i, FWHM_val);
+                                }
+                                if (do_sri == 1) {
+                                    *(smooth_data + voxel_i) += *(nii1_temp_data + voxel_j) * ASLFt(dist_i, strength);
+                                    *(gaussw_data + voxel_i) += ASLFt(dist_i, strength);
+                                }
+                            }
+                        }
+                    } else if (direction_i == 2) {
+                        for (int iy_i = max(0, iy - vinc); iy_i < min(iy + vinc + 1, size_y); ++iy_i) {
+                            int voxel_j = nxyz * it + nxy * iz + nx * iy_i + ix;
+                            if (*(nii1_temp_data + voxel_j) != 0) {
+                                dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix, (float)iy_i, (float)iz, dX, dY, dZ);
 
-            for (int ix_i = max(0, ix - vinc); ix_i < min(ix + vinc + 1, size_x); ++ix_i) {
-                if (*(nii1_temp_data + nxyz * it + nxy * iz + nx * iy + ix_i) != 0) {
-                    dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy, (float)iz, dX, dY, dZ);
+                                if (do_gauss == 1) {
+                                    *(smooth_data + voxel_i) += *(nii1_temp_data + voxel_j) * gaus(dist_i, FWHM_val);
+                                    *(gaussw_data + voxel_i) += gaus(dist_i, FWHM_val);
+                                }
+                                if (do_laurenz == 1) {
+                                    *(smooth_data + voxel_i) += *(nii1_temp_data + voxel_j) * laur(dist_i, FWHM_val);
+                                    *(gaussw_data + voxel_i) += laur(dist_i, FWHM_val);
+                                }
+                                if (do_sri == 1) {
+                                    *(smooth_data + voxel_i) += *(nii1_temp_data + voxel_j) * ASLFt(dist_i, strength);
+                                    *(gaussw_data + voxel_i) += ASLFt(dist_i, strength);
+                                }
+                            }
+                        }
+                    } else if (direction_i == 3) {
+                        for (int iz_i = max(0, iz - vinc); iz_i < min(iz + vinc + 1, size_z); ++iz_i) {
+                            int voxel_j = nxyz * it + nxy * iz_i + nx * iy + ix;
+                            if (*(nii1_temp_data + voxel_j) != 0) {
+                                dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix, (float)iy, (float)iz_i, dX, dY, dZ);
 
-                    if (do_gauss == 1) {
-                        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) + *(nii1_temp_data + nxyz * it + nxy * iz + nx * iy + ix_i) * gaus(dist_i, FWHM_val);
-                        *(gausweight_data + VOXEL_ID) = *(gausweight_data + VOXEL_ID) + gaus(dist_i, FWHM_val);
-                    }
-                    if (do_laurenz == 1) {
-                        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) + *(nii1_temp_data + nxyz * it + nxy * iz + nx * iy + ix_i) * laur(dist_i, FWHM_val);
-                        *(gausweight_data + VOXEL_ID) = *(gausweight_data + VOXEL_ID) + laur(dist_i, FWHM_val);
-                    }
-                    if (do_sri == 1) {
-                        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) + *(nii1_temp_data + nxyz * it + nxy * iz + nx * iy + ix_i) * ASLFt(dist_i, strength);
-                        *(gausweight_data + VOXEL_ID) = *(gausweight_data + VOXEL_ID) + ASLFt(dist_i, strength);
+                                if (do_gauss == 1) {
+                                    *(smooth_data + voxel_i) += *(nii1_temp_data + voxel_j) * gaus(dist_i, FWHM_val);
+                                    *(gaussw_data + voxel_i) += gaus(dist_i, FWHM_val);
+                                }
+                                if (do_laurenz == 1) {
+                                    *(smooth_data + voxel_i) += *(nii1_temp_data + voxel_j) * laur(dist_i, FWHM_val);
+                                    *(gaussw_data + voxel_i) += laur(dist_i, FWHM_val);
+                                }
+                                if (do_sri == 1) {
+                                    *(smooth_data + voxel_i) += *(nii1_temp_data + voxel_j) * ASLFt(dist_i, strength);
+                                    *(gaussw_data + voxel_i) += ASLFt(dist_i, strength);
+                                }
+                            }
+                        }
                     }
                 }
             }
-        END_FOR_EACH_VOXEL_TZYX
-    }
-    if (direction_i == 2) {
-        FOR_EACH_VOXEL_TZYX
-            *(gausweight_data + VOXEL_ID) = 0;
-
-            for (int iy_i = max(0, iy - vinc); iy_i < min(iy + vinc + 1, size_y); ++iy_i) {
-                if (*(nii1_temp_data + nxyz * it + nxy * iz + nx * iy_i + ix) != 0) {
-                    dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix, (float)iy_i, (float)iz, dX, dY, dZ);
-
-                    if (do_gauss == 1) {
-                        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) + *(nii1_temp_data + nxyz * it + nxy * iz + nx * iy_i + ix) * gaus(dist_i, FWHM_val);
-                        *(gausweight_data + VOXEL_ID) = *(gausweight_data + VOXEL_ID) + gaus(dist_i, FWHM_val);
-                    }
-                    if (do_laurenz == 1) {
-                        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) + *(nii1_temp_data + nxyz * it + nxy * iz + nx * iy_i + ix) * laur(dist_i, FWHM_val);
-                        *(gausweight_data + VOXEL_ID) = *(gausweight_data + VOXEL_ID) + laur(dist_i, FWHM_val);
-                    }
-                    if (do_sri == 1) {
-                        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) + *(nii1_temp_data + nxyz * it + nxy * iz + nx * iy_i + ix) * ASLFt(dist_i, strength);
-                        *(gausweight_data + VOXEL_ID) = *(gausweight_data + VOXEL_ID) + ASLFt(dist_i, strength);
-                    }
-                }
-            }
-        END_FOR_EACH_VOXEL_TZYX
-    }
-    if (direction_i == 3) {
-        FOR_EACH_VOXEL_TZYX
-            *(gausweight_data + VOXEL_ID) = 0;
-
-            for (int iz_i = max(0, iz - vinc); iz_i < min(iz + vinc + 1, size_z); ++iz_i) {
-                if (*(nii1_temp_data + nxyz * it + nxy * iz_i + nx * iy + ix) != 0) {
-                    dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix, (float)iy, (float)iz_i, dX, dY, dZ);
-
-                    if (do_gauss == 1) {
-                        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) + *(nii1_temp_data + nxyz * it + nxy * iz_i + nx * iy + ix) * gaus(dist_i, FWHM_val);
-                        *(gausweight_data + VOXEL_ID) = *(gausweight_data + VOXEL_ID) + gaus(dist_i, FWHM_val);
-                    }
-                    if (do_laurenz == 1) {
-                        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) + *(nii1_temp_data + nxyz * it + nxy * iz_i + nx * iy + ix) * laur(dist_i, FWHM_val);
-                        *(gausweight_data + VOXEL_ID) = *(gausweight_data + VOXEL_ID) + laur(dist_i, FWHM_val);
-                    }
-                    if (do_sri == 1) {
-                        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) + *(nii1_temp_data + nxyz * it + nxy * iz_i + nx * iy + ix) * ASLFt(dist_i, strength);
-                        *(gausweight_data + VOXEL_ID) = *(gausweight_data + VOXEL_ID) + ASLFt(dist_i, strength);
-                    }
-                }
-            }
-        END_FOR_EACH_VOXEL_TZYX
+        }
     }
 
     ///////////////////////////////
     // Correcting for edge error //
     ///////////////////////////////
-    FOR_EACH_VOXEL_TZYX
-        *(smoothed_data + VOXEL_ID) = *(smoothed_data + VOXEL_ID) / *(gausweight_data + VOXEL_ID);
-    END_FOR_EACH_VOXEL_TZYX
+    for (int i = 0; i < nr_voxels; ++i) {
+        *(smooth_data + i) = *(smooth_data + i) / *(gaussw_data + i);
+    }
 
-    smoothed->scl_slope = nii1->scl_slope;
+    smooth->scl_slope = nii1->scl_slope;
 
     if (nii1->scl_inter != 0) {
         cout << " ########################################## " << endl;
@@ -261,33 +239,16 @@ int main(int argc, char* argv[]) {
         cout << " ########################################## " << endl;
     }
 
-    // output file name
-    // const char*fout_4 ="leaky_layers.nii";
-    // if (nifti_set_filenames(leak_layer, fout_4, 1, 1)) return 1;
-    // nifti_image_write(leak_layer);
-    //
-    // const char*fout_5 = "input_file.nii";
-    // if (nifti_set_filenames(nii1_temp, fout_5, 1, 1)) return 1;
-    // nifti_image_write(nii1_temp);
-    //
-    // const char*fout_2 = "mask.nii";
-    // if (nifti_set_filenames(nim_mask, fout_2, 1, 1)) return 1;
-    // nifti_image_write(nim_mask);
-
-    string prefix = "smoothed_";
+    string prefix = "smooth_";
     string filename = (string) (finfi);
     string outfilename = prefix + filename;
     log_output(outfilename.c_str());
 
     const char*fout_1 = outfilename.c_str();
-    if (nifti_set_filenames(smoothed, fout_1, 1, 1)) {
+    if (nifti_set_filenames(smooth, fout_1, 1, 1)) {
         return 1;
     }
-    nifti_image_write(smoothed);
-
-    // const char*fout_1 = "layer.nii";
-    // if (nifti_set_filenames(layer, fout_1, 1, 1)) return 1;
-    // nifti_image_write(layer);
+    nifti_image_write(smooth);
 
     cout << "  Finished." << endl;
     return 0;
