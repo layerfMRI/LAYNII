@@ -19,76 +19,63 @@ int show_help(void) {
         "LN_GFACTOR: Simulating where the g-factor penalty would be largest.\n"
         "\n"
         "Usage:\n"
-        "    LN_GFACTOR -input MEAN.nii -output GFACTOR.nii -variance 1 -direction 1 -grappa 2 -cutoff 150 \n"
+        "    LN_GFACTOR -input MEAN.nii -variance 1 -direction 1 -grappa 2 -cutoff 150 \n"
         "\n"
         "Options:\n"
-        "    -help               : Show this help.\n"
-        "    -disp_float_example : Show some voxel's data.\n"
-        "    -input  INFILE      : Specify input dataset.\n"
-        "    -output OUTFILE     : Specify output dataset.\n"
-        "    -variance value     : How much noise there will be.\n"
-        "    -direction          : Phase encoding direction [0=x, 1=y, 2=z].\n"
-        "    -grappa             : TODO(Renzo): Missing description."
-        "    -cutoff value       : Value to seperate noise from signal.\n"
-        "    -verb LEVEL         : Set the verbose level to LEVEL.\n"
+        "    -help       : Show this help.\n"
+        "    -input      : Specify input dataset.\n"
+        "    -variance   : How much noise there will be.\n"
+        "    -direction  : Phase encoding direction [0=x, 1=y, 2=z].\n"
+        "    -grappa     : GRAPPA factor."
+        "    -cutoff     : Value to seperate noise from signal.\n"
         "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
-    nifti_image* nim_input = NULL;
+    nifti_image* nii = NULL;
     char * fin = NULL, * fout = NULL;
-    int grappa_int, direction_int, ac, disp_float_eg = 0;
+    int grappa_int, direction_int, ac;
     float cutoff, variance_val;
-    if (argc < 2) {  // Typing '-help' is sooo much work
-        return show_help();
-    }
+    if (argc < 2) return show_help();
 
     // Process user options
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
-        } else if (!strcmp(argv[ac], "-disp_float_example")) {
-            disp_float_eg = 1;
         } else if (!strcmp(argv[ac], "-input")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -input\n");
                 return 1;
             }
-            fin = argv[ac];  // Assign pointer, no string copy
-        } else if (!strcmp(argv[ac], "-output")) {
-            if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -output\n");
-                return 2;
-            }
-            fout = argv[ac];
+            fin = argv[ac];
         } else if (!strcmp(argv[ac], "-variance")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -input\n");
                 return 1;
             }
-            variance_val = atof(argv[ac]);  // Assign pointer, no string copy
+            variance_val = atof(argv[ac]);
             cout << "Variance  = " << variance_val << endl;
         } else if (!strcmp(argv[ac], "-direction")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -direction\n");
                 return 1;
             }
-            direction_int = atof(argv[ac]);  // Assign pointer, no string copy
+            direction_int = atof(argv[ac]);
             cout << "Direction = " << direction_int << endl;
         } else if (!strcmp(argv[ac], "-grappa")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -grappa\n");
                 return 1;
             }
-            grappa_int = atof(argv[ac]);  // Assign pointer, no string copy
+            grappa_int = atof(argv[ac]);
             cout << "GRAPPA    = " << grappa_int << endl;
         } else if (!strcmp(argv[ac], "-cutoff")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -cutoff\n");
                 return 1;
             }
-            cutoff = atof(argv[ac]);  // Assign pointer, no string copy
+            cutoff = atof(argv[ac]);
             cout << "Cut-off   = " << cutoff << endl;
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
@@ -100,108 +87,83 @@ int main(int argc, char * argv[]) {
         fprintf(stderr, "** missing option '-input'\n");
         return 1;
     }
-    // Read input dataset, including data
-    nim_input = nifti_image_read(fin, 1);
-    if (!nim_input) {
+
+    // Read input dataset
+    nii = nifti_image_read(fin, 1);
+    if (!nii) {
         fprintf(stderr, "** failed to read NIfTI image from '%s'\n", fin);
         return 2;
     }
 
     log_welcome("LN_GFACTOR");
-    log_nifti_descriptives(nim_input);
+    log_nifti_descriptives(nii);
 
     // Get dimensions of input
-    int sizeSlice = nim_input->nz;
-    int sizePhase = nim_input->nx;
-    int sizeRead = nim_input->ny;
-    int nrep = nim_input->nt;
-    int nx = nim_input->nx;
-    int nxy = nim_input->nx * nim_input->ny;
-    int nxyz = nim_input->nx * nim_input->ny * nim_input->nz;
+    int size_x = nii->nx;
+    int size_y = nii->ny;
+    int size_z = nii->nz;
+    int size_t = nii->nt;
+    int nx = nii->nx;
+    int nxy = nii->nx * nii->ny;
+    int nxyz = nii->nx * nii->ny * nii->nz;
 
     if (direction_int == 0) {
-        sizePhase = sizePhase - (sizePhase %grappa_int);
+        size_x = size_x - (size_x % grappa_int);
     }
     if (direction_int == 1) {
-        sizeRead = sizeRead  - (sizeRead  %grappa_int);
+        size_y = size_y - (size_y % grappa_int);
     }
     if (direction_int == 2) {
-        sizeSlice = sizeSlice - (sizeSlice %grappa_int);
+        size_z = size_z - (size_z % grappa_int);
     }
 
-    if (!fout) {
-        fprintf(stderr, "-- no output requested. \n");
-        return 0;
-    }
-
-    // Assign nifti_image fname/iname pair, based on output filename
-    // (request to 'check' image and 'set_byte_order' here)
-    if (nifti_set_filenames(nim_input, fout, 1, 1)) {
-        return 1;
-    }
-
-    // Get access to data of nim_input
-    float* nim_input_data = (float*) nim_input->data;
+    // ========================================================================
+    nifti_image* nii_input = copy_nifti_as_float32(nii);
+    float* nii_input_data = static_cast<float*>(nii_input->data);
 
     // Allocating additional images
-    nifti_image* gfactormap = nifti_copy_nim_info(nim_input);
-    gfactormap->datatype = NIFTI_TYPE_FLOAT32;
-    gfactormap->nbyper = sizeof(float);
-    gfactormap->data = calloc(gfactormap->nvox, gfactormap->nbyper);
-    float* gfactormap_data = (float*) gfactormap->data;
+    nifti_image* nii_gfactormap = copy_nifti_as_float32(nii);
+    float* nii_gfactormap_data = static_cast<float*>(nii_gfactormap->data);
+    nifti_image* nii_binary = copy_nifti_as_float32(nii);
+    float* nii_binary_data = static_cast<float*>(nii_binary->data);
+    nifti_image* nii_noise = copy_nifti_as_float32(nii);
+    float* nii_noise_data = static_cast<float*>(nii_noise->data);
 
-    // allocating additional images
-    nifti_image* binary = nifti_copy_nim_info(nim_input);
-    binary->datatype = NIFTI_TYPE_FLOAT32;
-    binary->nbyper = sizeof(float);
-    binary->data = calloc(binary->nvox, binary->nbyper);
-    float* binary_data = (float*) binary->data;
+    // ========================================================================
 
-    // noise_image
-    nifti_image* noise_image = nifti_copy_nim_info(nim_input);
-    noise_image->datatype = NIFTI_TYPE_FLOAT32;
-    noise_image->nbyper = sizeof(float);
-    noise_image->data = calloc(noise_image->nvox, noise_image->nbyper);
-    float* noise_image_data = (float*) noise_image->data;
-
-    // for (int timestep = 0; timestep < nrep; ++timestep) {
-    //     for (int islice = 0; islice < sizeSlice; ++islice) {
-    //         for (int iy = 0; iy < sizePhase; ++iy) {
-    //             for (int ix = 0; ix < sizeRead; ++ix) {
-    //                 *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) = *(nim_input_data + nxyz * timestep + nxy * islice + nx * ix + iy) + adjusted_rand_numbers(0, variance_val, arb_pdf_num(N_rand, pFunc, lower, upper));
+    // for (int it = 0; it < size_t; ++it) {
+    //     for (int iz = 0; iz < size_z; ++iz) {
+    //         for (int iy = 0; iy < size_x; ++iy) {
+    //             for (int ix = 0; ix < size_y; ++ix) {
+    //                 *(nii_gfactormap_data + nxyz * it + nxy * iz + nx * ix + iy) = *(nii_input_data + nxyz * it + nxy * iz + nx * ix + iy) + adjusted_rand_numbers(0, variance_val, arb_pdf_num(N_rand, pFunc, lower, upper));
     //                 //cout << adjusted_rand_numbers(0, variance_val, arb_pdf_num(N_rand, pFunc, lower, upper)) << " noise    " << endl;
     //             }
     //         }
     //     }
     // }
 
-    for (int timestep = 0; timestep < nrep; ++timestep) {
-        for (int islice = 0; islice < sizeSlice; ++islice) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead; ++ix) {
-                    if (cutoff <= *(nim_input_data + nxyz * timestep + nxy * islice + nx * ix + iy)) {
-                        *(binary_data + nxyz * timestep + nxy * islice + nx * ix + iy) = 1;
+    for (int it = 0; it < size_t; ++it) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
+                    if (cutoff <= *(nii_input_data + nxyz * it + nxy * iz + nx * ix + iy)) {
+                        *(nii_binary_data + nxyz * it + nxy * iz + nx * ix + iy) = 1;
                     } else {
-                        *(binary_data + nxyz * timestep + nxy * islice + nx * ix + iy) = 0;
+                        *(nii_binary_data + nxyz * it + nxy * iz + nx * ix + iy) = 0;
                     }
                     // cout << adjusted_rand_numbers(0, variance_val, arb_pdf_num(N_rand, pFunc, lower, upper)) << " noise    " << endl;
                 }
             }
         }
     }
-
-    const char * fout_7 = "binary.nii";
-    if (nifti_set_filenames(binary, fout_7, 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(binary);
+    save_output_nifti(fin, "binary", nii_binary, false);
 
     // Setting initial condition
-    for (int timestep = 0; timestep < nrep; ++timestep) {
-        for (int islice = 0; islice < sizeSlice; ++islice) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead; ++ix) {
-                    *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) = 0.;
+    for (int it = 0; it < size_t; ++it) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
+                    *(nii_gfactormap_data + nxyz * it + nxy * iz + nx * ix + iy) = 0.;
                     // cout << adjusted_rand_numbers(0, variance_val, arb_pdf_num(N_rand, pFunc, lower, upper)) << " noise    " << endl;
                 }
             }
@@ -214,11 +176,11 @@ int main(int argc, char * argv[]) {
 
     if (direction_int == 0) {
         for (int grappa_seg = 0; grappa_seg < grappa_int; ++grappa_seg) {
-            for (int timestep = 0; timestep < nrep; ++timestep) {
-                for (int islice = 0; islice < sizeSlice; ++islice) {
-                    for (int iy = 0; iy < sizePhase/grappa_int; ++iy) {
-                        for (int ix = 0; ix < sizeRead; ++ix) {
-                            *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) = *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) + *(binary_data + nxyz * timestep + nxy * islice + nx * ix + iy + grappa_seg * sizePhase / grappa_int) / grappa_int;
+            for (int it = 0; it < size_t; ++it) {
+                for (int iz = 0; iz < size_z; ++iz) {
+                    for (int iy = 0; iy < size_x / grappa_int; ++iy) {
+                        for (int ix = 0; ix < size_y; ++ix) {
+                            *(nii_gfactormap_data + nxyz * it + nxy * iz + nx * ix + iy) = *(nii_gfactormap_data + nxyz * it + nxy * iz + nx * ix + iy) + *(nii_binary_data + nxyz * it + nxy * iz + nx * ix + iy + grappa_seg * size_x / grappa_int) / grappa_int;
                         }
                     }
                 }
@@ -226,11 +188,11 @@ int main(int argc, char * argv[]) {
         }
         // Completing dataset to full slice
         for (int grappa_seg=1; grappa_seg < grappa_int; ++grappa_seg) {
-            for (int timestep = 0; timestep < nrep; ++timestep) {
-                for (int islice = 0; islice < sizeSlice; ++islice) {
-                    for (int iy = 0; iy < sizePhase/grappa_int; ++iy) {
-                        for (int ix = 0; ix < sizeRead; ++ix) {
-                            *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy+ grappa_seg * sizePhase / grappa_int) = *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy);
+            for (int it = 0; it < size_t; ++it) {
+                for (int iz = 0; iz < size_z; ++iz) {
+                    for (int iy = 0; iy < size_x / grappa_int; ++iy) {
+                        for (int ix = 0; ix < size_y; ++ix) {
+                            *(nii_gfactormap_data + nxyz * it + nxy * iz + nx * ix + iy+ grappa_seg * size_x / grappa_int) = *(nii_gfactormap_data + nxyz * it + nxy * iz + nx * ix + iy);
                         }
                     }
                 }
@@ -240,11 +202,11 @@ int main(int argc, char * argv[]) {
 
     if (direction_int == 1) {
         for (int grappa_seg = 0; grappa_seg < grappa_int; ++grappa_seg) {
-            for (int timestep = 0; timestep < nrep; ++timestep) {
-                for (int islice = 0; islice < sizeSlice; ++islice) {
-                    for (int iy = 0; iy < sizePhase; ++iy) {
-                        for (int ix = 0; ix < sizeRead/grappa_int; ++ix) {
-                            *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) = *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) + *(binary_data + nxyz * timestep + nxy * islice + nx * (ix+ grappa_seg * sizeRead / grappa_int) + iy) / grappa_int;
+            for (int it = 0; it < size_t; ++it) {
+                for (int iz = 0; iz < size_z; ++iz) {
+                    for (int iy = 0; iy < size_x; ++iy) {
+                        for (int ix = 0; ix < size_y / grappa_int; ++ix) {
+                            *(nii_gfactormap_data + nxyz * it + nxy * iz + nx * ix + iy) = *(nii_gfactormap_data + nxyz * it + nxy * iz + nx * ix + iy) + *(nii_binary_data + nxyz * it + nxy * iz + nx * (ix+ grappa_seg * size_y / grappa_int) + iy) / grappa_int;
                         }
                     }
                 }
@@ -252,11 +214,11 @@ int main(int argc, char * argv[]) {
         }
         // Completing dataset to full slice
         for (int grappa_seg = 0; grappa_seg < grappa_int; ++grappa_seg) {
-            for (int timestep = 0; timestep < nrep; ++timestep) {
-                for (int islice = 0; islice < sizeSlice; ++islice) {
-                    for (int iy = 0; iy < sizePhase; ++iy) {
-                        for (int ix = 0; ix < sizeRead/grappa_int; ++ix) {
-                            *(gfactormap_data + nxyz * timestep + nxy * islice + nx * (ix+ grappa_seg * sizeRead / grappa_int) + iy) = *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy);
+            for (int it = 0; it < size_t; ++it) {
+                for (int iz = 0; iz < size_z; ++iz) {
+                    for (int iy = 0; iy < size_x; ++iy) {
+                        for (int ix = 0; ix < size_y / grappa_int; ++ix) {
+                            *(nii_gfactormap_data + nxyz * it + nxy * iz + nx * (ix+ grappa_seg * size_y / grappa_int) + iy) = *(nii_gfactormap_data + nxyz * it + nxy * iz + nx * ix + iy);
                         }
                     }
                 }
@@ -266,11 +228,11 @@ int main(int argc, char * argv[]) {
 
     if (direction_int == 2) {
         for (int grappa_seg = 0; grappa_seg < grappa_int; ++grappa_seg) {
-            for (int timestep = 0; timestep < nrep; ++timestep) {
-                for (int islice = 0; islice < sizeSlice/grappa_int; ++islice) {
-                    for (int iy = 0; iy < sizePhase; ++iy) {
-                        for (int ix = 0; ix < sizeRead; ++ix) {
-                            *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) = *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) + *(binary_data + nxyz * timestep + nxy * (islice+ grappa_seg * sizeSlice / grappa_int) + nx * ix + iy) / grappa_int;
+            for (int it = 0; it < size_t; ++it) {
+                for (int iz = 0; iz < size_z / grappa_int; ++iz) {
+                    for (int iy = 0; iy < size_x; ++iy) {
+                        for (int ix = 0; ix < size_y; ++ix) {
+                            *(nii_gfactormap_data + nxyz * it + nxy * iz + nx * ix + iy) = *(nii_gfactormap_data + nxyz * it + nxy * iz + nx * ix + iy) + *(nii_binary_data + nxyz * it + nxy * (iz+ grappa_seg * size_z / grappa_int) + nx * ix + iy) / grappa_int;
                         }
                     }
                 }
@@ -278,11 +240,11 @@ int main(int argc, char * argv[]) {
         }
         // Completing dataset to full slice
         for (int grappa_seg = 0; grappa_seg < grappa_int; ++grappa_seg) {
-            for (int timestep = 0; timestep < nrep; ++timestep) {
-                for (int islice = 0; islice < sizeSlice/grappa_int; ++islice) {
-                    for (int iy = 0; iy < sizePhase; ++iy) {
-                        for (int ix = 0; ix < sizeRead; ++ix) {
-                            *(gfactormap_data + nxyz * timestep +nxy * (islice+ grappa_seg * sizeSlice / grappa_int) + nx * ix + iy) = *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy);
+            for (int it = 0; it < size_t; ++it) {
+                for (int iz = 0; iz < size_z / grappa_int; ++iz) {
+                    for (int iy = 0; iy < size_x; ++iy) {
+                        for (int ix = 0; ix < size_y; ++ix) {
+                            *(nii_gfactormap_data + nxyz * it +nxy * (iz+ grappa_seg * size_z / grappa_int) + nx * ix + iy) = *(nii_gfactormap_data + nxyz * it + nxy * iz + nx * ix + iy);
                         }
                     }
                 }
@@ -290,48 +252,29 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    for (int timestep = 0; timestep < nrep; ++timestep) {
-        for (int islice = 0; islice < sizeSlice; ++islice) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead; ++ix) {
-                    *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) = *(binary_data + nxyz * timestep + nxy * islice + nx * ix + iy) **(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy);
+    for (int it = 0; it < size_t; ++it) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
+                    *(nii_gfactormap_data + nxyz * it + nxy * iz + nx * ix + iy) = *(nii_binary_data + nxyz * it + nxy * iz + nx * ix + iy) **(nii_gfactormap_data + nxyz * it + nxy * iz + nx * ix + iy);
                 }
             }
         }
     }
-    for (int timestep = 0; timestep < nrep; ++timestep) {
-        for (int islice = 0; islice < sizeSlice; ++islice) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead; ++ix) {
-                    *(noise_image_data + nxyz * timestep + nxy * islice + nx * ix + iy) = *(nim_input_data + nxyz * timestep + nxy * islice + nx * ix + iy) + *(gfactormap_data + nxyz * timestep + nxy * islice + nx * ix + iy) * cutoff * adjusted_rand_numbers(0, variance_val, arb_pdf_num(N_rand, pFunc, lower, upper));
+    for (int it = 0; it < size_t; ++it) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
+                    *(nii_noise_data + nxyz * it + nxy * iz + nx * ix + iy) = *(nii_input_data + nxyz * it + nxy * iz + nx * ix + iy) + *(nii_gfactormap_data + nxyz * it + nxy * iz + nx * ix + iy) * cutoff * adjusted_rand_numbers(0, variance_val, arb_pdf_num(N_rand, pFunc, lower, upper));
                     // cout << adjusted_rand_numbers(0, variance_val, arb_pdf_num(N_rand, pFunc, lower, upper)) << " noise    " << endl;
                 }
             }
         }
     }
 
-    // Output file name
-    if (nifti_set_filenames(gfactormap, fout, 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(gfactormap);
+    save_output_nifti(fin, "Gfactormap", nii_gfactormap, true);
+    save_output_nifti(fin, "Amplified_GRAPPA", nii_noise, true);
 
-    const char * fout_2 = "amplified_GRAPPA.nii";
-    if (nifti_set_filenames(noise_image, fout_2, 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(noise_image);
-
-    // Writing out input file
-    // if we get here, write the output dataset
-
-    // if (nifti_set_filenames(nim_input, fout , 1, 1)) {
-    //     return 1;
-    // }
-    // nifti_image_write(nim_input);
-    //  and clean up memory
-    nifti_image_free(gfactormap);
-    // nifti_image_free(nim_input);
     cout << "  Finished." << endl;
     return 0;
 }
