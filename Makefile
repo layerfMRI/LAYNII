@@ -26,14 +26,14 @@ LOW_PRIORITY	=	LN_CORREL2FILES \
 					LN_IMAGIRO \
 					LN_INTPRO \
 					LN_LEAKY_LAYERS \
+					LN_NOISEME \
 					# LN_3DCOLUMNS \
 					# LN_COLUMNAR_DIST \
-					# LN_NOISEME \
-					# LN_PHYSIO_PARS \
 					# LN_RAGRUG \
 					# LN_SKEW \
 					# LN_TEMPSMOOTH \
 					# LN_TRIAL
+					# LN_PHYSIO_PARS \
 
 LAYNII2	= LN2_LAYERS
 
@@ -119,10 +119,10 @@ LN_LEAKY_LAYERS:
 	$(CC) -c -o obj/LN_LEAKY_LAYERS.o src/LN_LEAKY_LAYERS.cpp
 	$(CC) -o $@ $(CFLAGS) obj/LN_LEAKY_LAYERS.o $(LIBRARIES)
 
-# LN_NOISEME: obj/LN_NOISEME.o objs
-# 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
-# LN_PHYSIO_PARS: obj/LN_PHYSIO_PARS.o objs
-# 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
+LN_NOISEME:
+	$(CC) -c -o obj/LN_NOISEME.o src/LN_NOISEME.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_NOISEME.o $(LIBRARIES)
+
 # LN_RAGRUG: obj/LN_RAGRUG.o objs
 # 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
 # LN_SKEW: obj/LN_SKEW.o objs
@@ -130,6 +130,9 @@ LN_LEAKY_LAYERS:
 # LN_TEMPSMOOTH: obj/LN_TEMPSMOOTH.o objs
 # 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
 # LN_TRIAL: obj/LN_TRIAL.o objs
+# 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
+
+# LN_PHYSIO_PARS: obj/LN_PHYSIO_PARS.o objs
 # 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
 
 clean:
