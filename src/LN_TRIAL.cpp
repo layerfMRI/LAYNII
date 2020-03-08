@@ -86,13 +86,15 @@ int main(int argc, char * argv[]) {
     nii_trials->data = calloc(nii_trials->nvox, nii_trials->nbyper);
     float* nii_trials_data = static_cast<float*>(nii_trials->data);
 
+    // ========================================================================
+
     for (int it = 0; it < trial_dur * nr_trials; ++it) {
         for (int iz = 0; iz < size_z; ++iz) {
             for (int iy = 0; iy < size_x; ++iy) {
                 for (int ix = 0; ix < size_y; ++ix) {
-
                     int voxel_i = nxy * iz + nx * ix + iy;
-                    *(nii_trials_data + nxyz * (it % trial_dur) + voxel_i) = (*(nii_trials_data + nxyz * (it % trial_dur) + voxel_i)) + (*(nii_data + nxyz * it + voxel_i)) / nr_trials;
+                    *(nii_trials_data + nxyz * (it % trial_dur) + voxel_i) +=
+                        (*(nii_data + nxyz * it + voxel_i)) / nr_trials;
                 }
             }
         }
