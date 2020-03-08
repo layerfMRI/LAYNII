@@ -25,9 +25,9 @@ LOW_PRIORITY	=	LN_CORREL2FILES \
 					LN_GROW_LAYERS \
 					LN_IMAGIRO \
 					LN_INTPRO \
+					LN_LEAKY_LAYERS \
 					# LN_3DCOLUMNS \
 					# LN_COLUMNAR_DIST \
-					# LN_LEAKY_LAYERS \
 					# LN_NOISEME \
 					# LN_PHYSIO_PARS \
 					# LN_RAGRUG \
@@ -115,8 +115,10 @@ LN_INTPRO:
 	$(CC) -c -o obj/LN_INTPRO.o src/LN_INTPRO.cpp
 	$(CC) -o $@ $(CFLAGS) obj/LN_INTPRO.o $(LIBRARIES)
 
-# LN_LEAKY_LAYERS: obj/LN_LEAKY_LAYERS.o objs
-# 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
+LN_LEAKY_LAYERS:
+	$(CC) -c -o obj/LN_LEAKY_LAYERS.o src/LN_LEAKY_LAYERS.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_LEAKY_LAYERS.o $(LIBRARIES)
+
 # LN_NOISEME: obj/LN_NOISEME.o objs
 # 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
 # LN_PHYSIO_PARS: obj/LN_PHYSIO_PARS.o objs
