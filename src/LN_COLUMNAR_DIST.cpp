@@ -36,11 +36,9 @@ int show_help(void) {
 }
 
 int main(int argc, char * argv[]) {
-    char * layer_filename = NULL, * fout = NULL, * landmarks_filename = NULL;
+    char* fin_layer = NULL, * fin_landmark = NULL;
     int ac, twodim = 0, do_masking = 0, vinc_max = 40, Ncolumns = 0, verbose = 0;
-    if (argc < 3) {  // Typing '-help' is sooo much work
-        return show_help();
-    }
+    if (argc < 3) return show_help();
 
     // process user options: 4 are valid presently
     for (ac = 1; ac < argc; ac++) {
@@ -48,56 +46,58 @@ int main(int argc, char * argv[]) {
             return show_help();
         } else if (!strcmp(argv[ac], "-layer_file")) {
             if (++ac >= argc) {
-                fprintf(stderr, " ** missing argument for -layer_file\n");
+                fprintf(stderr, "** missing argument for -layer_file\n");
                 return 1;
             }
-            layer_filename = argv[ac];  // Assign pointer, no string copy
+            fin_layer = argv[ac];  // Assign pointer, no string copy
         } else if (!strcmp(argv[ac], "-landmarks")) {
             if (++ac >= argc) {
-                fprintf(stderr, " ** missing argument for -input\n");
+                fprintf(stderr, "** missing argument for -landmarks\n");
                 return 1;
             }
-            landmarks_filename = argv[ac];  // Assign pointer, no string copy
+            fin_landmark = argv[ac];  // Assign pointer, no string copy
         } else if (!strcmp(argv[ac], "-twodim")) {
             twodim = 1;
             cout << " I will do smoothing only in 2D" << endl;
         } else if (!strcmp(argv[ac], " - vinc")) {
             if (++ac >= argc) {
-                fprintf(stderr, " ** missing argument for  - vinc\n");
+                fprintf(stderr, "** missing argument for -vinc\n");
                 return 1;
             }
             vinc_max = atof(argv[ac]);  // Assign pointer, no string copy
         } else if (!strcmp(argv[ac], "-Ncolumns")) {
             if (++ac >= argc) {
-                fprintf(stderr, " ** missing argument for -Ncolumns\n");
+                fprintf(stderr, "** missing argument for -Ncolumns\n");
                 return 1;
             }
             Ncolumns = atof(argv[ac]);  // Assign pointer, no string copy
         } else if (!strcmp(argv[ac], "-verbose")) {
             verbose = 1;
-            cout << " I will give you everything I have, happy debugging" << endl;
+            cout << "  Debug mode active. More outputs." << endl;
         } else {
-            fprintf(stderr, " ** invalid option, '%s'\n", argv[ac]);
+            fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
         }
     }
 
-    if (!landmarks_filename) {
-        fprintf(stderr, " ** missing option '-landmarks'\n");
+    if (!fin_landmark) {
+        fprintf(stderr, "** missing option '-landmarks'\n");
         return 1;
     }
-    // Read input dataset, including data
-    nifti_image * nim_landmarks_r = nifti_image_read(landmarks_filename, 1);
-    if (!nim_landmarks_r) {
-        fprintf(stderr, " ** failed to read layer NIfTI image from '%s'\n", landmarks_filename);
-        return 2;
+    if (!fin_layer) {
+        fprintf(stderr, "** missing option '-layer_file'\n");
+        return 1;
     }
 
-    if (!layer_filename) { fprintf(stderr, " ** missing option '-layer_file'\n");  return 1; }
-    // read input dataset, including data
-    nifti_image * nim_layers_r = nifti_image_read(layer_filename, 1);
+    // Read input dataset
+    nifti_image * nim_landmarks_r = nifti_image_read(fin_landmark, 1);
+    if (!nim_landmarks_r) {
+        fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin_landmark);
+        return 2;
+    }
+    nifti_image * nim_layers_r = nifti_image_read(fin_layer, 1);
     if (!nim_layers_r) {
-        fprintf(stderr, " ** failed to read layer NIfTI image from '%s'\n", layer_filename);
+        fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin_layer);
         return 2;
     }
 
@@ -346,12 +346,8 @@ int main(int argc, char * argv[]) {
     cout << endl << "  Growing is done." << flush;
 
     if (verbose == 1) {
-        cout << "  Writing output " << endl;
-        const char * fout_5 = "coordinates_1_path.nii";
-        if (nifti_set_filenames(growfromCenter, fout_5, 1, 1)) {
-            return 1;
-        }
-        nifti_image_write(growfromCenter);
+        save_output_nifti(fin_layer, "coordinates_1_path",
+                          growfromCenter, true);
     }
 
     /////////////////////
@@ -429,9 +425,8 @@ int main(int argc, char * argv[]) {
     }
 
     if (verbose == 1) {
-        const char * fout_6 = "coordinates_2_path_smooth.nii";
-        if (nifti_set_filenames(growfromCenter, fout_6, 1, 1)) return 1;
-        nifti_image_write(growfromCenter);
+        save_output_nifti(fin_layer, "coordinates_2_path_smooth",
+                          growfromCenter, true);
     }
 
     /////////////////////////////////////
@@ -562,9 +557,8 @@ int main(int argc, char * argv[]) {
     cout << endl;  // to close the online output
 
     if (verbose == 1) {
-        const char * fout_7 = "coordinates_3_ thick.nii";
-        if (nifti_set_filenames(growfromCenter_thick, fout_7, 1, 1)) return 1;
-        nifti_image_write(growfromCenter_thick);
+        save_output_nifti(fin_layer, "coordinates_3_thick",
+                          growfromCenter_thick, true);
     }
 
     ////////////////////////////////////////////////////////////
@@ -666,11 +660,8 @@ int main(int argc, char * argv[]) {
     cout << "    Smoothing done." << endl;
 
     if (verbose == 1) {
-        const char * fout_9 = "coordinates_4_thick_smoothed.nii";
-        if (nifti_set_filenames(growfromCenter_thick, fout_9, 1, 1)) {
-            return 1;
-        }
-        nifti_image_write(growfromCenter_thick);
+        save_output_nifti(fin_layer, "coordinates_4_thick_smoothed",
+                          growfromCenter_thick, true);
     }
 
     //////////////////////////
@@ -723,9 +714,7 @@ int main(int argc, char * argv[]) {
     }
 
     if (verbose == 1) {
-        const char * fout_3 = "coordinates_5_extended.nii";
-        if (nifti_set_filenames(hairy_brain, fout_3, 1, 1)) return 1;
-        nifti_image_write(hairy_brain);
+        save_output_nifti(fin_layer, "coordinates_5_extended", hairy_brain, true);
     }
 
     ////////////////////////////////////////////////////////////
@@ -757,26 +746,8 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-
-    const char * fout_4 = "coordinates_final.nii";
-    if (nifti_set_filenames(hairy_brain, fout_4, 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(hairy_brain);
+    save_output_nifti(fin_layer, "coordinates_final", hairy_brain, true);
 
     cout << "  Finished." << endl;
     return 0;
-}
-
-float dist(float x1, float y1, float z1, float x2, float y2, float z2,
-           float dX, float dY, float dZ) {
-    return sqrt((x1 - x2) * (x1 - x2) * dX * dX
-                + (y1 - y2) * (y1 - y2) * dY * dY
-                + (z1 - z2) * (z1-z2) * dZ * dZ);
-}
-
-
-float gaus(float distance, float sigma) {
-    return (1./(sigma * sqrt(2. * 3.141592))
-            * exp(-0.5 * distance * distance / (sigma * sigma)));
 }
