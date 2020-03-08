@@ -8,178 +8,97 @@ int show_help(void) {
     "          equi-distant blocks with identical rest and activity periods.\n"
     "\n"
     "Usage:\n"
-    "    LN_TRIAL -file file.nii -trialdur 12 \n"
+    "    LN_TRIAL -input timeseries.nii -trial_dur 12 \n"
     "\n"
     "Options:\n"
     "    -help     : Show this help.\n"
-    "    -file     : Input time series.\n"
-    "    -trialdur : Duration of activity-rest trial in TRs.\n"
+    "    -input    : Input time series.\n"
+    "    -trial_dur : Duration of activity-rest trial in TRs.\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
-    // nifti_image * nim_input=NULL;
-    char *fin_1 = NULL, *fin_2 = NULL;
-    int ac, disp_float_eg = 0, trialdur;
-    if (argc < 2) {  // Typing '-help' is sooo much work
-       return show_help();
-    }
+    char *fin = NULL;
+    int ac, trial_dur;
+    if (argc < 2) return show_help();
 
     // Process user options
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
-        } else if (!strcmp(argv[ac], "-trialdur")) {
+        } else if (!strcmp(argv[ac], "-trial_dur")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -trialdur\n");
+                fprintf(stderr, "** missing argument for -trial_dur\n");
                 return 1;
             }
-            trialdur = atof(argv[ac]);  // Assign pointer, no string copy
-        } else if (!strcmp(argv[ac], "-file")) {
+            trial_dur = atof(argv[ac]);
+        } else if (!strcmp(argv[ac], "-input")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -file1\n");
+                fprintf(stderr, "** missing argument for -input\n");
                 return 1;
             }
-            fin_1 = argv[ac];  // Assign pointer, no string copy
+            fin = argv[ac];
         }
     }
 
-    if (!fin_1) {
-        fprintf(stderr, "** missing option '-file1'\n");
+    if (!fin) {
+        fprintf(stderr, "** missing option '-input'\n");
         return 1;
     }
-    // Read input dataset, including data
-    nifti_image * nim_file_1i = nifti_image_read(fin_1, 1);
-    if (!nim_file_1i) {
-        fprintf(stderr, "** failed to read NIfTI image from '%s'\n", fin_1);
+
+    // Read input dataset
+    nifti_image * nii_input = nifti_image_read(fin, 1);
+    if (!nii_input) {
+        fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin);
         return 2;
     }
 
     log_welcome("LN_TRIAL");
-    log_nifti_descriptives(nim_file_1i);
+    log_nifti_descriptives(nii_input);
 
     // Get dimensions of input
-    int sizeSlice = nim_file_1i->nz;
-    int sizePhase = nim_file_1i->nx;
-    int sizeRead = nim_file_1i->ny;
-    int nrep = nim_file_1i->nt;
-    int nx = nim_file_1i->nx;
-    int nxy = nim_file_1i->nx * nim_file_1i->ny;
-    int nxyz = nim_file_1i->nx * nim_file_1i->ny * nim_file_1i->nz;
+    int size_x = nii_input->nx;
+    int size_y = nii_input->ny;
+    int size_z = nii_input->nz;
+    int size_t = nii_input->nt;
+    int nx = nii_input->nx;
+    int nxy = nii_input->nx * nii_input->ny;
+    int nxyz = nii_input->nx * nii_input->ny * nii_input->nz;
 
-    int numberofTrials = nrep/trialdur;
+    int nr_trials = size_t / trial_dur;
 
-    cout << "  Trial duration is " << trialdur
-         << ". This means there are " << (float)nrep/(float)trialdur
-         <<  " trials recorded here." << endl;
+    cout << "  Trial duration is " << trial_dur << ". This means there are "
+         << static_cast<float>(size_t) / static_cast<float>(trial_dur)
+         << " trials recorded here." << endl;
 
+    // ========================================================================
+    // Fix data type issues
+    nifti_image* nii = copy_nifti_as_float32(nii_input);
+    float* nii_data = static_cast<float*>(nii->data);
 
-    nifti_image * nim_file_1 = nifti_copy_nim_info(nim_file_1i);
-    nim_file_1->datatype = NIFTI_TYPE_FLOAT32;
-    nim_file_1->nbyper = sizeof(float);
-    nim_file_1->data = calloc(nim_file_1->nvox, nim_file_1->nbyper);
-    float *nim_file_1_data = (float *) nim_file_1->data;
+    // Allocate trial average file
+    nifti_image* nii_trials = nifti_copy_nim_info(nii);
+    nii_trials->nt = trial_dur;
+    nii_trials->nvox = nii->nvox / size_t * trial_dur;
+    nii_trials->datatype = NIFTI_TYPE_FLOAT32;
+    nii_trials->nbyper = sizeof(float);
+    nii_trials->data = calloc(nii_trials->nvox, nii_trials->nbyper);
+    float* nii_trials_data = static_cast<float*>(nii_trials->data);
 
-    // if (!fout) {
-    //     fprintf(stderr, "-- no output requested \n");
-    //     return 0;
-    // }
-    // // Assign nifti_image fname/iname pair, based on output filename
-    // // (request to 'check' image and 'set_byte_order' here)
-    // if (nifti_set_filenames(nim_input, fout, 1, 1)) {
-    //     return 1;
-    // }
+    for (int it = 0; it < trial_dur * nr_trials; ++it) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
 
-    if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
-        float *nim_file_1i_data = (float *) nim_file_1i->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
+                    int voxel_i = nxy * iz + nx * ix + iy;
+                    *(nii_trials_data + nxyz * (it % trial_dur) + voxel_i) = (*(nii_trials_data + nxyz * (it % trial_dur) + voxel_i)) + (*(nii_data + nxyz * it + voxel_i)) / nr_trials;
                 }
             }
         }
     }
-    if (nim_file_1i->datatype == NIFTI_TYPE_INT16) {
-        short *nim_file_1i_data = (short *) nim_file_1i->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice =0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_file_1i->datatype == NIFTI_TYPE_FLOAT32) {
-        float *nim_file_1i_data = (float *) nim_file_1i->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_file_1i_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
+    save_output_nifti(fin, "TrialAverage", nii_trials, true);
 
-    // Trial averave file
-    nifti_image * triav_file = nifti_copy_nim_info(nim_file_1);
-    triav_file->nt = trialdur;
-    triav_file->nvox = nim_file_1->nvox / nrep * trialdur;
-    triav_file->datatype = NIFTI_TYPE_FLOAT32;
-    triav_file->nbyper = sizeof(float);
-    triav_file->data = calloc(triav_file->nvox, triav_file->nbyper);
-    float *triav_file_data = (float *) triav_file->data;
-
-    for (int it = 0; it < trialdur * numberofTrials; ++it) {
-        for (int islice = 0; islice < sizeSlice; ++islice) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead; ++ix) {
-                    *(triav_file_data + nxyz * (it % trialdur) + nxy * islice + nx * ix + iy) = (*(triav_file_data + nxyz * (it % trialdur) + nxy * islice + nx * ix + iy)) + (*(nim_file_1_data + nxyz * it + nxy * islice + nx * ix + iy)) / numberofTrials;
-                }
-            }
-        }
-    }
-
-    string prefix_1 = "TralAverage_";
-    // string prefix_2 = "min_TR_";
-    string filename_1 = (string) (fin_1);
-    string outfilename_1 = prefix_1+filename_1;
-    // string outfilename_2 = prefix_2+filename_1;
-
-    cout << "  Writing as = " << outfilename_1.c_str() << endl;  //" and "<< outfilename_2.c_str() << endl;
-
-    const char  *fout_1 = outfilename_1.c_str();
-    if (nifti_set_filenames(triav_file, fout_1, 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(triav_file);
-
-    // const char *fout_2 = outfilename_2.c_str();
-    // if (nifti_set_filenames(min_file, fout_2, 1, 1)) {
-    //     return 1;
-    // }
-    // nifti_image_write(min_file);
-
-    // const char *fout_5 = "debug_ing.nii";
-    // if (nifti_set_filenames(growfromWM0, fout_5, 1, 1)) {
-    //     return 1;
-    // }
-    // nifti_image_write(growfromWM0);
-
-    // const char *fout_6="kootrGM.nii";
-    // if (nifti_set_filenames(GMkoord2, fout_6, 1, 1)) {
-    //     return 1;
-    // }
-    // nifti_image_write(GMkoord2);
-
-    // koord.autowrite("koordinaten.nii", wopts, &prot);
     cout << "  Finished." << endl;
     return 0;
 }
