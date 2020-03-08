@@ -1,20 +1,18 @@
 
-// TODO(Faruk): Requires layers.nii from Renzo for testing.
-
 
 #include "../dep/laynii_lib.h"
 
 int show_help(void) {
     printf(
     "LN_COLUMNAR_DIST : Calculates cortical distances (columnar structures) \n"
-    "                   based on the gray matter geometry."
+    "                   based on the gray matter geometry.\n"
     "\n"
     "Usage:\n"
-    "    LN_COLUMNAR_DIST -layer_file layers.nii -landmarks landmarks.nii \n"
+    "    LN_COLUMNAR_DIST -layers layers.nii -landmarks landmarks.nii \n"
     "\n"
     "Options:\n"
     "    -help       : Show this help.\n"
-    "    -layer_file : Nifti (.nii) that contains layer or column masks. \n"
+    "    -layers     : Nifti (.nii) that contains layer or column masks. \n"
     "    -landmarks  : Nifti (.nii) with landmarks (use value 1 as origin). \n"
     "                  Landmarks should be at least 4 voxels thick. \n"
     "    -vinc       : Maximal length of cortical distance. Bigger values \n"
@@ -43,9 +41,9 @@ int main(int argc, char * argv[]) {
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
-        } else if (!strcmp(argv[ac], "-layer_file")) {
+        } else if (!strcmp(argv[ac], "-layers")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -layer_file\n");
+                fprintf(stderr, "** missing argument for -layers\n");
                 return 1;
             }
             fin_layer = argv[ac];
@@ -84,7 +82,7 @@ int main(int argc, char * argv[]) {
         return 1;
     }
     if (!fin_layer) {
-        fprintf(stderr, "** missing option '-layer_file'\n");
+        fprintf(stderr, "** missing option '-layers'\n");
         return 1;
     }
 
@@ -105,10 +103,10 @@ int main(int argc, char * argv[]) {
     log_nifti_descriptives(nim_landmarks_r);
 
     // Get dimensions of input
-    int sizeSlice = nim_layers_r->nz;
-    int sizePhase = nim_layers_r->nx;
-    int sizeRead = nim_layers_r->ny;
-    int nrep = nim_layers_r->nt;
+    int size_z = nim_layers_r->nz;
+    int size_x = nim_layers_r->nx;
+    int size_y = nim_layers_r->ny;
+    int size_t = nim_layers_r->nt;
     int nx = nim_layers_r->nx;
     int nxy = nim_layers_r->nx * nim_layers_r->ny;
     int nxyz = nim_layers_r->nx * nim_layers_r->ny * nim_layers_r->nz;
@@ -131,9 +129,9 @@ int main(int argc, char * argv[]) {
     // Finding number of layers //
     //////////////////////////////
     int nr_layers = 0;
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead; ++ix) {
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_x; ++iy) {
+            for (int ix = 0; ix < size_y; ++ix) {
                 if (*(nim_layers_data + nxy * iz + nx * ix + iy) > nr_layers) {
                     nr_layers = *(nim_layers_data + nxy * iz + nx * ix + iy);
                 }
@@ -172,16 +170,14 @@ int main(int argc, char * argv[]) {
     int grow_vinc = 3;
     int grow_vinc_area = 1;
     // int vinc_max = 40 ;
-    float dist(float x1, float y1, float z1, float x2, float y2, float z2,
-               float dX, float dY, float dZ);
 
     ///////////////////////////////////////
     // Growing from Center cross columns //
     ///////////////////////////////////////
     cout << "  Growing from center " << endl;
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead-0; ++ix) {
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_x; ++iy) {
+            for (int ix = 0; ix < size_y-0; ++ix) {
                 if (*(nim_landmarks_data + nxy * iz + nx * ix + iy) == 1 &&  abs((int) (*(nim_layers_data + nxy * iz + nx * ix + iy) - nr_layers/2)) < 2) {  //defining seed at center landmark
                     *(growfromCenter_data + nxy * iz + nx * ix + iy) = 1.;
                     *(Grow_x_data + nxy * iz + nx * ix + iy) = ix;
@@ -195,9 +191,9 @@ int main(int argc, char * argv[]) {
 
     for (int grow_i = 1; grow_i < vinc_max; grow_i++) {
         cout << "\r  " << grow_i << " " << flush;
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y-0; ++ix) {
                     dist_min2 = 10000.;
                     x1g = 0;
                     y1g = 0;
@@ -206,9 +202,9 @@ int main(int argc, char * argv[]) {
                         // Only grow into areas that are GM and that have not
                         // been grown into, yet... and it should stop as soon
                         // as it hits the border
-                        for (int iy_i = max(0, iy - grow_vinc_area); iy_i <= min(iy + grow_vinc_area, sizePhase - 1); ++iy_i) {
-                            for (int ix_i = max(0, ix - grow_vinc_area); ix_i <= min(ix + grow_vinc_area, sizeRead - 1); ++ix_i) {
-                                for (int iz_i = max(0, iz - grow_vinc_area); iz_i <= min(iz + grow_vinc_area, sizeSlice - 1); ++iz_i) {
+                        for (int iy_i = max(0, iy - grow_vinc_area); iy_i <= min(iy + grow_vinc_area, size_x - 1); ++iy_i) {
+                            for (int ix_i = max(0, ix - grow_vinc_area); ix_i <= min(ix + grow_vinc_area, size_y - 1); ++ix_i) {
+                                for (int iz_i = max(0, iz - grow_vinc_area); iz_i <= min(iz + grow_vinc_area, size_z - 1); ++iz_i) {
                                     dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                     if (*(growfromCenter_data + nxy * iz_i + nx * ix_i + iy_i) == grow_i  && *(nim_landmarks_data + nxy * iz + nx * ix + iy) < 2) {
                                         if (dist_i < dist_min2) {
@@ -250,7 +246,6 @@ int main(int argc, char * argv[]) {
 
     // cout << "  Smooth columns " << endl;  // Ribbons is closer than 5 voxels (vinc_sm)
 
-    float gaus(float distance, float sigma);
     cout << "  Smoothing in middle layer..." << endl;
 
     nifti_image* smooth = copy_nifti_as_float32(nim_layers);
@@ -260,22 +255,22 @@ int main(int argc, char * argv[]) {
 
     // float kernel_size = 10;  // corresponds to one voxel sice.
     int FWHM_val = 1;
-    int vinc_sm = 5;// if voxel is too far away, I ignore it.
+    int vinc_sm = 5;  // if voxel is too far away, I ignore it.
     dist_i = 0.;
     cout << "    vinc_sm " << vinc_sm << endl;
     cout << "    FWHM_val " << FWHM_val << endl;
     // cout << "    DEBUG " << dist(1., 1., 1., 1., 2., 1., dX, dY, dZ) << endl;
     cout << "    Here 2 " << endl;
 
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead-0; ++ix) {
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_x; ++iy) {
+            for (int ix = 0; ix < size_y-0; ++ix) {
                 *(gaussw_data + nxy * iz + nx * ix + iy) = 0;
                 // * (smooth_data + nxy * iz + nx * ix + iy) = 0 ;
                 if (*(growfromCenter_data + nxy * iz + nx * ix + iy)  > 0) {
-                    for (int iz_i = max(0, iz - vinc_sm); iz_i <= min(iz + vinc_sm, sizeSlice - 1); ++iz_i) {
-                        for (int iy_i = max(0, iy - vinc_sm); iy_i <= min(iy + vinc_sm, sizePhase - 1); ++iy_i) {
-                            for (int ix_i = max(0, ix - vinc_sm); ix_i <= min(ix + vinc_sm, sizeRead - 1); ++ix_i) {
+                    for (int iz_i = max(0, iz - vinc_sm); iz_i <= min(iz + vinc_sm, size_z - 1); ++iz_i) {
+                        for (int iy_i = max(0, iy - vinc_sm); iy_i <= min(iy + vinc_sm, size_x - 1); ++iy_i) {
+                            for (int ix_i = max(0, ix - vinc_sm); ix_i <= min(ix + vinc_sm, size_y - 1); ++ix_i) {
                                 if (*(growfromCenter_data + nxy * iz_i + nx * ix_i + iy_i)  > 0) {
                                     dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                     // cout << "    Debug  4 " << gaus(dist_i , FWHM_val) << endl;
@@ -300,9 +295,9 @@ int main(int argc, char * argv[]) {
     }
     cout << "    Here 2." << endl;
 
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead; ++ix) {
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_x; ++iy) {
+            for (int ix = 0; ix < size_y; ++ix) {
                 if (*(growfromCenter_data + nxy * iz + nx * ix + iy) > 0) {
                     *(growfromCenter_data + nxy * iz + nx * ix + iy) = (int) *(smooth_data + nxy * iz + nx * ix + iy);
                 }
@@ -353,17 +348,17 @@ int main(int argc, char * argv[]) {
     // For estimation of time
     int nvoxels_to_go_across = 0;
     int running_index = 0;
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead; ++ix) {
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_x; ++iy) {
+            for (int ix = 0; ix < size_y; ++ix) {
                 if (*(nim_layers_data + nxy * iz + nx * ix + iy) > 1 && *(nim_layers_data + nxy * iz + nx * ix + iy) < nr_layers - 1) nvoxels_to_go_across++;
             }
         }
     }
 
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead; ++ix) {
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_x; ++iy) {
+            for (int ix = 0; ix < size_y; ++ix) {
                 if (*(nim_layers_data + nxy * iz + nx * ix + iy) > 1 && *(nim_layers_data + nxy * iz + nx * ix + iy) < nr_layers - 1) {
                     running_index++;
                     if ((running_index * 100) / nvoxels_to_go_across != pref_ratio) {
@@ -375,9 +370,9 @@ int main(int argc, char * argv[]) {
                     /////////////////////////////////////////////////
 
                     // Preparation of dummy vicinity dile, resting it with zeros
-                    for (int iz_i = max(0, iz - vinc_sm_g - vinc_steps); iz_i <= min(iz + vinc_sm_g + vinc_steps, sizeSlice - 1); ++iz_i) {
-                        for (int iy_i = max(0, iy - vinc_sm_g - vinc_steps); iy_i <= min(iy + vinc_sm_g + vinc_steps, sizePhase - 1); ++iy_i) {
-                            for (int ix_i = max(0, ix - vinc_sm_g - vinc_steps); ix_i <= min(ix + vinc_sm_g + vinc_steps, sizeRead - 1); ++ix_i) {
+                    for (int iz_i = max(0, iz - vinc_sm_g - vinc_steps); iz_i <= min(iz + vinc_sm_g + vinc_steps, size_z - 1); ++iz_i) {
+                        for (int iy_i = max(0, iy - vinc_sm_g - vinc_steps); iy_i <= min(iy + vinc_sm_g + vinc_steps, size_x - 1); ++iy_i) {
+                            for (int ix_i = max(0, ix - vinc_sm_g - vinc_steps); ix_i <= min(ix + vinc_sm_g + vinc_steps, size_y - 1); ++ix_i) {
                                 *(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) = 0;
                             }
                         }
@@ -390,13 +385,13 @@ int main(int argc, char * argv[]) {
                     // TODO(Faruk): I need to have a look at this.
                     *(hairy_brain_data + nxy * iz + nx * ix + iy) = 1;
                     for (int K_ = 0; K_ < vinc_sm_g; K_++) {
-                        for (int iz_ii = max(0, iz - vinc_sm_g); iz_ii <= min(iz + vinc_sm_g, sizeSlice - 1); ++iz_ii) {
-                            for (int iy_ii = max(0, iy - vinc_sm_g); iy_ii <= min(iy + vinc_sm_g, sizePhase - 1); ++iy_ii) {
-                                for (int ix_ii = max(0, ix - vinc_sm_g); ix_ii <= min(ix + vinc_sm_g, sizeRead - 1); ++ix_ii) {
+                        for (int iz_ii = max(0, iz - vinc_sm_g); iz_ii <= min(iz + vinc_sm_g, size_z - 1); ++iz_ii) {
+                            for (int iy_ii = max(0, iy - vinc_sm_g); iy_ii <= min(iy + vinc_sm_g, size_x - 1); ++iy_ii) {
+                                for (int ix_ii = max(0, ix - vinc_sm_g); ix_ii <= min(ix + vinc_sm_g, size_y - 1); ++ix_ii) {
                                     if (*(hairy_brain_data + nxy * iz_ii + nx * ix_ii + iy_ii) == 1) {
-                                        for (int iz_i = max(0, iz_ii - vinc_steps); iz_i <= min(iz_ii + vinc_steps, sizeSlice - 1); ++iz_i) {
-                                            for (int iy_i = max(0, iy_ii - vinc_steps); iy_i <= min(iy_ii + vinc_steps, sizePhase - 1); ++iy_i) {
-                                                for (int ix_i = max(0, ix_ii - vinc_steps); ix_i <= min(ix_ii + vinc_steps, sizeRead - 1); ++ix_i) {
+                                        for (int iz_i = max(0, iz_ii - vinc_steps); iz_i <= min(iz_ii + vinc_steps, size_z - 1); ++iz_i) {
+                                            for (int iy_i = max(0, iy_ii - vinc_steps); iy_i <= min(iy_ii + vinc_steps, size_x - 1); ++iy_i) {
+                                                for (int ix_i = max(0, ix_ii - vinc_steps); ix_i <= min(ix_ii + vinc_steps, size_y - 1); ++ix_i) {
                                                     if (dist((float)ix_ii, (float)iy_ii, (float)iz_ii, (float)ix_i, (float)iy_i, (float)iz_i, 1, 1, 1) <= 1 && *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) > 1 && *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) < nr_layers - 1) {
                                                         *(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) = 1;
                                                     }
@@ -415,9 +410,9 @@ int main(int argc, char * argv[]) {
                     // Only grow into areas that are GM and that have not been
                     // grown into, yet... and it should stop as soon as it hits
                     // the border
-                    for (int iy_i = max(0, iy - vinc_sm_g); iy_i <= min(iy + vinc_sm_g, sizePhase - 1); ++iy_i) {
-                        for (int ix_i = max(0, ix - vinc_sm_g); ix_i <= min(ix + vinc_sm_g, sizeRead - 1); ++ix_i) {
-                            for (int iz_i = max(0, iz - vinc_sm_g); iz_i <= min(iz + vinc_sm_g, sizeSlice - 1); ++iz_i) {
+                    for (int iy_i = max(0, iy - vinc_sm_g); iy_i <= min(iy + vinc_sm_g, size_x - 1); ++iy_i) {
+                        for (int ix_i = max(0, ix - vinc_sm_g); ix_i <= min(ix + vinc_sm_g, size_y - 1); ++ix_i) {
+                            for (int iz_i = max(0, iz - vinc_sm_g); iz_i <= min(iz + vinc_sm_g, size_z - 1); ++iz_i) {
                                 dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                 if (*(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) == 1 && dist_i < dist_min2 && *(growfromCenter_data + nxy * iz_i + nx * ix_i + iy_i) > 0) {
                                     dist_min2 = dist_i;
@@ -449,9 +444,9 @@ int main(int argc, char * argv[]) {
     // (which makes it slow)                                  //
     ////////////////////////////////////////////////////////////
     cout << "  Smoothing the thick cortex now..." << endl;
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead-0; ++ix) {
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_x; ++iy) {
+            for (int ix = 0; ix < size_y-0; ++ix) {
                 *(smooth_data + nxy * iz + nx * ix + iy) = 0;
             }
         }
@@ -466,9 +461,9 @@ int main(int argc, char * argv[]) {
     cout << "    FWHM_val " << FWHM_val << endl;
     cout << "    Starting extended now  " << endl;
 
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead-0; ++ix) {
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_x; ++iy) {
+            for (int ix = 0; ix < size_y-0; ++ix) {
                 *(gaussw_data + nxy * iz + nx * ix + iy) = 0;
                 // * (smooth_data + nxy * iz + nx * ix + iy) = 0 ;
                 if (*(growfromCenter_thick_data + nxy * iz + nx * ix + iy) > 0) {
@@ -478,22 +473,22 @@ int main(int argc, char * argv[]) {
                     /////////////////////////////////////////////////
 
                     // Preparation of dummy vicinity
-                    for (int iz_i = max(0, iz - vinc_sm - vinc_steps); iz_i <= min(iz + vinc_sm + vinc_steps, sizeSlice - 1); ++iz_i) {
-                        for (int iy_i = max(0, iy - vinc_sm - vinc_steps); iy_i <= min(iy + vinc_sm + vinc_steps, sizePhase - 1); ++iy_i) {
-                            for (int ix_i = max(0, ix - vinc_sm - vinc_steps); ix_i <= min(ix + vinc_sm + vinc_steps, sizeRead - 1); ++ix_i) {
+                    for (int iz_i = max(0, iz - vinc_sm - vinc_steps); iz_i <= min(iz + vinc_sm + vinc_steps, size_z - 1); ++iz_i) {
+                        for (int iy_i = max(0, iy - vinc_sm - vinc_steps); iy_i <= min(iy + vinc_sm + vinc_steps, size_x - 1); ++iy_i) {
+                            for (int ix_i = max(0, ix - vinc_sm - vinc_steps); ix_i <= min(ix + vinc_sm + vinc_steps, size_y - 1); ++ix_i) {
                                 *(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) = 0;
                             }
                         }
                     }
                     *(hairy_brain_data + nxy * iz + nx * ix + iy) = 1;
                     for (int K_ = 0; K_ < vinc_sm; K_++) {
-                        for (int iz_ii = max(0, iz - vinc_sm); iz_ii <= min(iz + vinc_sm, sizeSlice - 1); ++iz_ii) {
-                            for (int iy_ii = max(0, iy - vinc_sm); iy_ii <= min(iy + vinc_sm, sizePhase - 1); ++iy_ii) {
-                                for (int ix_ii = max(0, ix - vinc_sm); ix_ii <= min(ix + vinc_sm, sizeRead - 1); ++ix_ii) {
+                        for (int iz_ii = max(0, iz - vinc_sm); iz_ii <= min(iz + vinc_sm, size_z - 1); ++iz_ii) {
+                            for (int iy_ii = max(0, iy - vinc_sm); iy_ii <= min(iy + vinc_sm, size_x - 1); ++iy_ii) {
+                                for (int ix_ii = max(0, ix - vinc_sm); ix_ii <= min(ix + vinc_sm, size_y - 1); ++ix_ii) {
                                     if (*(hairy_brain_data + nxy * iz_ii + nx * ix_ii + iy_ii) == 1) {
-                                        for (int iz_i = max(0, iz_ii - vinc_steps); iz_i <= min(iz_ii + vinc_steps, sizeSlice - 1); ++iz_i) {
-                                            for (int iy_i = max(0, iy_ii - vinc_steps); iy_i <= min(iy_ii + vinc_steps, sizePhase - 1); ++iy_i) {
-                                                for (int ix_i = max(0, ix_ii - vinc_steps); ix_i <= min(ix_ii + vinc_steps, sizeRead - 1); ++ix_i) {
+                                        for (int iz_i = max(0, iz_ii - vinc_steps); iz_i <= min(iz_ii + vinc_steps, size_z - 1); ++iz_i) {
+                                            for (int iy_i = max(0, iy_ii - vinc_steps); iy_i <= min(iy_ii + vinc_steps, size_x - 1); ++iy_i) {
+                                                for (int ix_i = max(0, ix_ii - vinc_steps); ix_i <= min(ix_ii + vinc_steps, size_y - 1); ++ix_i) {
                                                     if (dist((float)ix_ii, (float)iy_ii, (float)iz_ii, (float)ix_i, (float)iy_i, (float)iz_i, 1, 1, 1) <= 1 && *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) > 1 && *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) < nr_layers - 1) {
                                                         *(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) = 1;
                                                     }
@@ -505,13 +500,12 @@ int main(int argc, char * argv[]) {
                             }
                         }
                     }
-
                     // Smoothing within each layer and within the local patch
                     int nr_layers_i = *(nim_layers_data + nxy * iz + nx * ix + iy);
 
-                    for (int iz_i = max(0, iz - vinc_sm); iz_i <= min(iz + vinc_sm, sizeSlice - 1); ++iz_i) {
-                        for (int iy_i = max(0, iy - vinc_sm); iy_i <= min(iy + vinc_sm, sizePhase - 1); ++iy_i) {
-                            for (int ix_i = max(0, ix - vinc_sm); ix_i <= min(ix + vinc_sm, sizeRead - 1); ++ix_i) {
+                    for (int iz_i = max(0, iz - vinc_sm); iz_i <= min(iz + vinc_sm, size_z - 1); ++iz_i) {
+                        for (int iy_i = max(0, iy - vinc_sm); iy_i <= min(iy + vinc_sm, size_x - 1); ++iy_i) {
+                            for (int ix_i = max(0, ix - vinc_sm); ix_i <= min(ix + vinc_sm, size_y - 1); ++ix_i) {
                                 if (*(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) == 1 && abs((int) *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) - nr_layers_i) < 2 && *(growfromCenter_thick_data + nxy * iz_i + nx * ix_i + iy_i) > 0) {
                                     dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                     *(smooth_data + nxy * iz + nx * ix + iy) = *(smooth_data + nxy * iz + nx * ix + iy) + *(growfromCenter_thick_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
@@ -529,9 +523,9 @@ int main(int argc, char * argv[]) {
     }
     cout << "    Extended now." << endl;
 
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead; ++ix) {
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_x; ++iy) {
+            for (int ix = 0; ix < size_y; ++ix) {
                 if (*(growfromCenter_thick_data + nxy * iz + nx * ix + iy) > 0) {
                     *(growfromCenter_thick_data + nxy * iz + nx * ix + iy) = *(smooth_data + nxy * iz + nx * ix + iy);
                 }
@@ -554,16 +548,16 @@ int main(int argc, char * argv[]) {
     // Which is filled in now.
 
     int vinc_rim = 2;
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead; ++ix) {
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_x; ++iy) {
+            for (int ix = 0; ix < size_y; ++ix) {
                 *(hairy_brain_data + nxy * iz + nx * ix + iy) = *(growfromCenter_thick_data + nxy * iz + nx * ix + iy);
             }
         }
     }
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead; ++ix) {
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_x; ++iy) {
+            for (int ix = 0; ix < size_y; ++ix) {
                 if (*(nim_layers_data + nxy * iz + nx * ix + iy) > 0 && *(growfromCenter_thick_data + nxy * iz + nx * ix + iy) == 0) {
                     dist_min2 = 10000.;
                     x1g = 0;
@@ -573,9 +567,9 @@ int main(int argc, char * argv[]) {
                     // Only grow into areas that are GM and that have not been
                     // grown into, yet... And it should stop as soon as it hits
                     // the border.
-                    for (int iy_i = max(0, iy - vinc_rim); iy_i <= min(iy + vinc_rim, sizePhase - 1); ++iy_i) {
-                        for (int ix_i = max(0, ix - vinc_rim); ix_i <= min(ix + vinc_rim, sizeRead - 1); ++ix_i) {
-                            for (int iz_i = max(0, iz - vinc_rim); iz_i <= min(iz + vinc_rim, sizeSlice - 1); ++iz_i) {
+                    for (int iy_i = max(0, iy - vinc_rim); iy_i <= min(iy + vinc_rim, size_x - 1); ++iy_i) {
+                        for (int ix_i = max(0, ix - vinc_rim); ix_i <= min(ix + vinc_rim, size_y - 1); ++ix_i) {
+                            for (int iz_i = max(0, iz - vinc_rim); iz_i <= min(iz + vinc_rim, size_z - 1); ++iz_i) {
                                 dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                 if (dist_i < dist_min2 && *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) > 0 && *(growfromCenter_thick_data + nxy * iz_i + nx * ix_i + iy_i) > 0) {
                                     dist_min2 = dist_i;
@@ -601,13 +595,13 @@ int main(int argc, char * argv[]) {
     ////////////////////////////////////////////////////////////
     // Resample the number of columns to the user given value //
     ////////////////////////////////////////////////////////////
-    if (Ncolumns >0)  {
+    if (Ncolumns > 0)  {
         cout << "   Resampling the number of columns..." << endl;
         int max_columns = 0;
         int min_columns = 100000000;
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y-0; ++ix) {
                     if (*(hairy_brain_data + nxy * iz + nx * ix + iy) >  0) {
                         if ((int) *(hairy_brain_data + nxy * iz + nx * ix + iy) >  max_columns) max_columns = (int) *(hairy_brain_data + nxy * iz + nx * ix + iy);
                         if ((int) *(hairy_brain_data + nxy * iz + nx * ix + iy) < min_columns) min_columns = (int) *(hairy_brain_data + nxy * iz + nx * ix + iy);
@@ -617,9 +611,9 @@ int main(int argc, char * argv[]) {
         }
 
         cout << "   Max = " << max_columns << " | Min = " << min_columns << endl;
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y-0; ++ix) {
                     if (*(hairy_brain_data + nxy * iz + nx * ix + iy) >  0) {
                         *(hairy_brain_data + nxy * iz + nx * ix + iy) = (*(hairy_brain_data + nxy * iz + nx * ix + iy) - (short)min_columns) * (short)(Ncolumns - 1)/(short)(max_columns-min_columns) +1;
                     }
