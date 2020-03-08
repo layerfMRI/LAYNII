@@ -15,7 +15,8 @@ HIGH_PRIORITY	= 	LN_BOCO \
 					LN_MP2RAGE_DNOISE \
 					LN_LAYER_SMOOTH \
 
-LOW_PRIORITY	=	LN_CORREL2FILES \
+LOW_PRIORITY	=	LN_3DCOLUMNS \
+					LN_CORREL2FILES \
 					LN_DIRECT_SMOOTH \
 					LN_GRADSMOOTH \
 					LN_ZOOM \
@@ -30,10 +31,9 @@ LOW_PRIORITY	=	LN_CORREL2FILES \
 					LN_RAGRUG \
 					LN_SKEW \
 					LN_TEMPSMOOTH \
-					# LN_3DCOLUMNS \
+					LN_TRIAL \
+					LN_PHYSIO_PARS \
 					# LN_COLUMNAR_DIST \
-					# LN_TRIAL
-					# LN_PHYSIO_PARS \
 
 LAYNII2	= LN2_LAYERS
 
@@ -90,8 +90,10 @@ LN_FLOAT_ME:
 	$(CC) -c -o obj/LN_FLOAT_ME.o src/LN_FLOAT_ME.cpp
 	$(CC) -o $@ $(CFLAGS) obj/LN_FLOAT_ME.o $(LIBRARIES)
 
-# LN_3DCOLUMNS: obj/LN_3DCOLUMNS.o objs
-# 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
+LN_3DCOLUMNS:
+	$(CC) -c -o obj/LN_3DCOLUMNS.o src/LN_3DCOLUMNS.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_3DCOLUMNS.o $(LIBRARIES)
+
 # LN_COLUMNAR_DIST: obj/LN_COLUMNAR_DIST.o objs
 # 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
 
@@ -135,11 +137,13 @@ LN_TEMPSMOOTH:
 	$(CC) -c -o obj/LN_TEMPSMOOTH.o src/LN_TEMPSMOOTH.cpp
 	$(CC) -o $@ $(CFLAGS) obj/LN_TEMPSMOOTH.o $(LIBRARIES)
 
-# LN_TRIAL: obj/LN_TRIAL.o objs
-# 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
+LN_TRIAL:
+	$(CC) -c -o obj/LN_TRIAL.o src/LN_TRIAL.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_TRIAL.o $(LIBRARIES)
 
-# LN_PHYSIO_PARS: obj/LN_PHYSIO_PARS.o objs
-# 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
+LN_PHYSIO_PARS:
+	$(CC) -c -o obj/LN_PHYSIO_PARS.o src/LN_PHYSIO_PARS.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_PHYSIO_PARS.o $(LIBRARIES)
 
 clean:
 	$(RM) obj/*.o $(LAYNII)
