@@ -99,7 +99,7 @@ int main(int argc, char*  argv[]) {
     for (int iz = 0; iz < size_z; ++iz) {
         for (int iy = 0; iy < size_y; ++iy) {
             for (int ix = 0; ix < size_x; ++ix) {
-                mask_val = *(nii2_data + VOXEL_ID_3D);
+                mask_val = *(nii2_data + nxy * iz + nx * iy + ix);
                 if (mask_val > 0 && ix > max_x) max_x = ix;
                 if (mask_val > 0 && iy > max_y) max_y = iy;
                 if (mask_val > 0 && iz > max_z) max_z = iz;
