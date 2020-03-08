@@ -22,11 +22,11 @@ LOW_PRIORITY	=	LN_CORREL2FILES \
 					LN_FLOAT_ME \
 					LN_EXTREMETR \
 					LN_GFACTOR \
+					LN_GROW_LAYERS \
+					LN_IMAGIRO \
+					LN_INTPRO \
 					# LN_3DCOLUMNS \
 					# LN_COLUMNAR_DIST \
-					# LN_GROW_LAYERS \
-					# LN_IMAGIRO \
-					# LN_INTPRO \
 					# LN_LEAKY_LAYERS \
 					# LN_NOISEME \
 					# LN_PHYSIO_PARS \
@@ -103,12 +103,18 @@ LN_GFACTOR:
 	$(CC) -c -o obj/LN_GFACTOR.o src/LN_GFACTOR.cpp
 	$(CC) -o $@ $(CFLAGS) obj/LN_GFACTOR.o $(LIBRARIES)
 
-# LN_GROW_LAYERS: obj/LN_GROW_LAYERS.o objs
-# 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
-# LN_IMAGIRO: obj/LN_IMAGIRO.o objs
-# 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
-# LN_INTPRO: obj/LN_INTPRO.o objs
-# 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
+LN_GROW_LAYERS:
+	$(CC) -c -o obj/LN_GROW_LAYERS.o src/LN_GROW_LAYERS.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_GROW_LAYERS.o $(LIBRARIES)
+
+LN_IMAGIRO:
+	$(CC) -c -o obj/LN_IMAGIRO.o src/LN_IMAGIRO.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_IMAGIRO.o $(LIBRARIES)
+
+LN_INTPRO:
+	$(CC) -c -o obj/LN_INTPRO.o src/LN_INTPRO.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_INTPRO.o $(LIBRARIES)
+
 # LN_LEAKY_LAYERS: obj/LN_LEAKY_LAYERS.o objs
 # 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
 # LN_NOISEME: obj/LN_NOISEME.o objs
