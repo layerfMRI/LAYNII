@@ -27,11 +27,11 @@ LOW_PRIORITY	=	LN_CORREL2FILES \
 					LN_INTPRO \
 					LN_LEAKY_LAYERS \
 					LN_NOISEME \
+					LN_RAGRUG \
+					LN_SKEW \
+					LN_TEMPSMOOTH \
 					# LN_3DCOLUMNS \
 					# LN_COLUMNAR_DIST \
-					# LN_RAGRUG \
-					# LN_SKEW \
-					# LN_TEMPSMOOTH \
 					# LN_TRIAL
 					# LN_PHYSIO_PARS \
 
@@ -123,12 +123,18 @@ LN_NOISEME:
 	$(CC) -c -o obj/LN_NOISEME.o src/LN_NOISEME.cpp
 	$(CC) -o $@ $(CFLAGS) obj/LN_NOISEME.o $(LIBRARIES)
 
-# LN_RAGRUG: obj/LN_RAGRUG.o objs
-# 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
-# LN_SKEW: obj/LN_SKEW.o objs
-# 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
-# LN_TEMPSMOOTH: obj/LN_TEMPSMOOTH.o objs
-# 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
+LN_RAGRUG:
+	$(CC) -c -o obj/LN_RAGRUG.o src/LN_RAGRUG.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_RAGRUG.o $(LIBRARIES)
+
+LN_SKEW:
+	$(CC) -c -o obj/LN_SKEW.o src/LN_SKEW.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_SKEW.o $(LIBRARIES)
+
+LN_TEMPSMOOTH:
+	$(CC) -c -o obj/LN_TEMPSMOOTH.o src/LN_TEMPSMOOTH.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_TEMPSMOOTH.o $(LIBRARIES)
+
 # LN_TRIAL: obj/LN_TRIAL.o objs
 # 	$(CC) -o $@ $(CFLAGS) $< $(LIBRARIES)
 
