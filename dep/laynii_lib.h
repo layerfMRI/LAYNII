@@ -24,6 +24,7 @@ double ren_autocor(double arr[], int size);
 
 float dist(float x1, float y1, float z1, float x2, float y2, float z2,
            float dX, float dY, float dZ);
+float dist2d(float x1, float y1, float x2, float y2);
 float angle(float a, float b, float c);
 float gaus(float distance, float sigma);
 

@@ -162,8 +162,6 @@ int main(int argc, char * argv[]) {
         float x2g = 0., y2g = 0.;
         float x3g = 0., y3g = 0.;
 
-        float dist2d(float x1, float y1, float x2, float y2);
-
         cout << "  Until here 2 " << endl;
         // Reduce mask to contain only areas close to the surface.
         cout << "  Select GM regions..." << endl;
@@ -487,11 +485,6 @@ int main(int argc, char * argv[]) {
         float x2g = 0., y2g = 0., z2g = 0.;
         float x3g = 0., y3g = 0., z3g = 0.;
 
-        float dist3d(float x1, float y1, float z1, float x2, float y2, float z2,
-                     float dX, float dY, float dZ);
-
-        // cout << "  Until here 2 " << endl;
-
         // Reduce mask to contain only areas close to the surface.
         cout << "  Select GM regions..." << endl;
 
@@ -584,7 +577,7 @@ int main(int argc, char * argv[]) {
                                 for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc + 1, sizeRead); ++ix_i) {
                                     for (int iz_i = max(0, iz - grow_vinc); iz_i < min(iz + grow_vinc + 1, sizeRead); ++iz_i) {
                                         if (*(growfromWM0_data + nxy * iz_i + nx * ix_i + iy_i) == (float)grow_i) {
-                                            dist_i = dist3d((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
+                                            dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                             if (dist_i< dist_min2) {
                                                 dist_min2 = dist_i;
                                                 x1g = ix_i;
@@ -639,7 +632,7 @@ int main(int argc, char * argv[]) {
                                 for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc + 1, sizePhase); ++iy_i) {
                                     for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc + 1, sizeRead); ++ix_i) {
                                         if (*(growfromGM0_data + nxy * iz_i + nx * ix_i + iy_i) == (float)grow_i) {
-                                            dist_i = dist3d((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
+                                            dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                             if (dist_i< dist_min2) {
                                                 dist_min2 = dist_i;
                                                 x1g = ix_i;
@@ -691,7 +684,7 @@ int main(int argc, char * argv[]) {
                                 for (int ix_i = max(0, (*(WMkoordx2_data + nxy * iz + nx * ix + iy)) - grow_vinc); ix_i < min((*(WMkoordx2_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, sizeRead); ++ix_i) {
                                     for (int iz_i = max(0, (*(WMkoordz2_data + nxy * iz + nx * ix + iy)) - grow_vinc); iz_i < min((*(WMkoordz2_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, sizeSlice); ++iz_i) {
                                         if (*(nim_input_data + nxy * iz_i + nx * ix_i + iy_i) == 2) {
-                                            dist_i = dist3d((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
+                                            dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                             if (dist_i< dist_min2) {
                                                 dist_min2 = dist_i;
                                                 x1g = ix_i;
@@ -703,7 +696,7 @@ int main(int argc, char * argv[]) {
                                     }
                                 }
                             }
-                            *(growfromWM1_data + nxy * iz + nx * ix + iy) = dist3d((float)ix, (float)iy, (float)iz, (float)x1g, (float)y1g, (float)z1g, dX, dY, dZ);
+                            *(growfromWM1_data + nxy * iz + nx * ix + iy) = dist((float)ix, (float)iy, (float)iz, (float)x1g, (float)y1g, (float)z1g, dX, dY, dZ);
                             *(WMkoordx2_data + nxy * iz + nx * ix + iy) = *(WMkoordx2_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
                             *(WMkoordy2_data + nxy * iz + nx * ix + iy) = *(WMkoordy2_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
                             *(WMkoordz2_data + nxy * iz + nx * ix + iy) = *(WMkoordz2_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
@@ -743,7 +736,7 @@ int main(int argc, char * argv[]) {
                                 for (int ix_i = max(0, (*(GMkoordx2_data + nxy * iz + nx * ix + iy)) - grow_vinc); ix_i < min((*(GMkoordx2_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, sizeRead); ++ix_i) {
                                     for (int iz_i = max(0, (*(GMkoordz2_data + nxy * iz + nx * ix + iy)) - grow_vinc); iz_i < min((*(GMkoordz2_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, sizeRead); ++iz_i) {
                                         if (*(nim_input_data + nxy * iz_i + nx * ix_i + iy_i) == 1) {
-                                            dist_i = dist3d((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
+                                            dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                             if (dist_i< dist_min2) {
                                                 dist_min2 = dist_i;
                                                 x1g = ix_i;
@@ -755,7 +748,7 @@ int main(int argc, char * argv[]) {
                                     }
                                 }
                             }
-                            *(growfromGM1_data+ nxy * iz + nx * ix + iy) = dist3d((float)ix, (float)iy, (float)iz, (float)x1g, (float)y1g, (float)z1g, dX, dY, dZ);
+                            *(growfromGM1_data+ nxy * iz + nx * ix + iy) = dist((float)ix, (float)iy, (float)iz, (float)x1g, (float)y1g, (float)z1g, dX, dY, dZ);
                             *(GMkoordx2_data + nxy * iz + nx * ix + iy) = *(GMkoordx2_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
                             *(GMkoordy2_data + nxy * iz + nx * ix + iy) = *(GMkoordy2_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
                             *(GMkoordz2_data + nxy * iz + nx * ix + iy) = *(GMkoordz2_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
@@ -796,7 +789,7 @@ int main(int argc, char * argv[]) {
                         iz_f = (float)iz;
 
                         // cout << " rix_f, iy_f, GMK2_f, GMK3_f " << " " << ix_f << " " << iy_f << " " << GMK2_f << " " << * (GMkoordx2_data + nxy * iz + nx * ix + iy) << endl;
-                        *(equi_dist_layers_data + nxy * iz + nx * ix + iy) = (Nlayer-1) * (1- dist3d((float)ix, (float)iy, (float)iz, GMK2_f, GMK3_f, GMKz2_f, dX, dY, dZ)/ (dist3d((float)ix, (float)iy, (float)iz, GMK2_f, GMK3_f, GMKz2_f, dX, dY, dZ) + dist3d((float)ix, (float)iy, (float)iz, WMK2_f, WMK3_f, WMKz2_f, dX, dY, dZ))) + 2;
+                        *(equi_dist_layers_data + nxy * iz + nx * ix + iy) = (Nlayer-1) * (1- dist((float)ix, (float)iy, (float)iz, GMK2_f, GMK3_f, GMKz2_f, dX, dY, dZ)/ (dist((float)ix, (float)iy, (float)iz, GMK2_f, GMK3_f, GMKz2_f, dX, dY, dZ) + dist((float)ix, (float)iy, (float)iz, WMK2_f, WMK3_f, WMKz2_f, dX, dY, dZ))) + 2;
                         // * (equi_dist_layers_data + nxy * iz + nx * ix + iy) = 100 * dist(ix_f, iy_f, GMK2_f, GMK3_f) ;
                     }
                 }
@@ -891,23 +884,4 @@ int main(int argc, char * argv[]) {
 
     cout << "  Finished." << endl;
     return 0;
-}
-
-float dist2d(float x1, float y1, float x2, float y2) {
-    return sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
-}
-
-float dist3d(float x1, float y1, float z1, float x2, float y2, float z2,
-             float dX, float dY, float dZ) {
-    return sqrt((x1 - x2) * (x1 - x2) * dX * dX
-            + (y1 - y2) * (y1 - y2) * dY * dY
-            + (z1 - z2) * (z1 - z2) * dZ * dZ);
-}
-
-float angle(float a, float b, float c) {
-    if (a * a + b * b - c * c<= 0) {
-        return 3.141592;
-    } else {
-        return acos((a * a + b * b - c * c) / (2. * a * b));
-    }
 }
