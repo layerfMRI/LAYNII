@@ -30,7 +30,6 @@ int show_help(void) {
     "Notes:\n"
     "    - The layer nii file and the landmarks nii file should have the \n"
     "      same dimensions.\n"
-    "    - This program now supports INT16, INT32 and FLOAT32. \n"
     "\n");
     return 0;
 }
@@ -49,13 +48,13 @@ int main(int argc, char * argv[]) {
                 fprintf(stderr, "** missing argument for -layer_file\n");
                 return 1;
             }
-            fin_layer = argv[ac];  // Assign pointer, no string copy
+            fin_layer = argv[ac];
         } else if (!strcmp(argv[ac], "-landmarks")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -landmarks\n");
                 return 1;
             }
-            fin_landmark = argv[ac];  // Assign pointer, no string copy
+            fin_landmark = argv[ac];
         } else if (!strcmp(argv[ac], "-twodim")) {
             twodim = 1;
             cout << " I will do smoothing only in 2D" << endl;
@@ -64,13 +63,13 @@ int main(int argc, char * argv[]) {
                 fprintf(stderr, "** missing argument for -vinc\n");
                 return 1;
             }
-            vinc_max = atof(argv[ac]);  // Assign pointer, no string copy
+            vinc_max = atof(argv[ac]);
         } else if (!strcmp(argv[ac], "-Ncolumns")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -Ncolumns\n");
                 return 1;
             }
-            Ncolumns = atof(argv[ac]);  // Assign pointer, no string copy
+            Ncolumns = atof(argv[ac]);
         } else if (!strcmp(argv[ac], "-verbose")) {
             verbose = 1;
             cout << "  Debug mode active. More outputs." << endl;
@@ -116,161 +115,54 @@ int main(int argc, char * argv[]) {
     float dX = nim_layers_r->pixdim[1];
     float dY = nim_layers_r->pixdim[2];
     float dZ = nim_layers_r->pixdim[3];
-
     if  (twodim == 1) {
         dZ = 1000 * dZ;
     }
 
-    // nim_mask->datatype = NIFTI_TYPE_FLOAT32;
-    // nim_mask->nbyper = sizeof(float);
-    // nim_mask->data = calloc(nim_mask->nvox, nim_mask->nbyper);
-
-    nifti_image * nim_layers = nifti_copy_nim_info(nim_layers_r);
-    nim_layers->datatype = NIFTI_TYPE_FLOAT32;
-    nim_layers->nbyper = sizeof(float);
-    nim_layers->data = calloc(nim_layers->nvox, nim_layers->nbyper);
-    float * nim_layers_data = (float *) nim_layers->data;
-
-    nifti_image * nim_landmarks = nifti_copy_nim_info(nim_layers_r);
-    nim_landmarks->datatype = NIFTI_TYPE_INT32;
-    nim_landmarks->nbyper = sizeof(int);
-    nim_landmarks->data = calloc(nim_landmarks->nvox, nim_landmarks->nbyper);
-    int * nim_landmarks_data = (int *) nim_landmarks->data;
-
-    //////////////////////////////////////////////////////////////
+    // ========================================================================
     // Fixing potential problems with different input datatypes //
-    //////////////////////////////////////////////////////////////
-    if (nim_landmarks_r->datatype == NIFTI_TYPE_FLOAT32) {
-        float * nim_landmarks_r_data = (float *) nim_landmarks_r->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_landmarks_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_landmarks_r_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_landmarks_r->datatype == NIFTI_TYPE_INT16) {
-        short * nim_landmarks_r_data = (short *) nim_landmarks_r->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_landmarks_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_landmarks_r_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_landmarks_r->datatype == NIFTI_TYPE_INT32) {
-        int * nim_landmarks_r_data = (int *) nim_landmarks_r->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_landmarks_data + nxyz * it + nxy * islice + nx * ix + iy) = (float) (*(nim_landmarks_r_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_layers_r->datatype == NIFTI_TYPE_FLOAT32) {
-        float * nim_layers_r_data = (float *) nim_layers_r->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_layers_data + nxyz * it + nxy * islice + nx * ix + iy) = (int) (*(nim_layers_r_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_layers_r->datatype == NIFTI_TYPE_INT16) {
-        short * nim_layers_r_data = (short *) nim_layers_r->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_layers_data + nxyz * it + nxy * islice + nx * ix + iy) = (int) (*(nim_layers_r_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
-    if (nim_layers_r->datatype == NIFTI_TYPE_INT32) {
-        int * nim_layers_r_data = (int *) nim_layers_r->data;
-        for (int it = 0; it < nrep; ++it) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead; ++ix) {
-                        *(nim_layers_data + nxyz * it + nxy * islice + nx * ix + iy) = (int) (*(nim_layers_r_data + nxyz * it + nxy * islice + nx * ix + iy));
-                    }
-                }
-            }
-        }
-    }
+    nifti_image* nim_layers = copy_nifti_as_float32(nim_layers_r);
+    float* nim_layers_data = static_cast<float*>(nim_layers->data);
+
+    nifti_image* nim_landmarks = copy_nifti_as_int32(nim_layers_r);
+    int* nim_landmarks_data = static_cast<int*>(nim_landmarks->data);
 
     //////////////////////////////
     // Finding number of layers //
     //////////////////////////////
-    int layernumber = 0;
+    int nr_layers = 0;
     for (int iz = 0; iz < sizeSlice; ++iz) {
         for (int iy = 0; iy < sizePhase; ++iy) {
             for (int ix = 0; ix < sizeRead; ++ix) {
-                if (*(nim_layers_data + nxy * iz + nx * ix + iy) > layernumber) layernumber = *(nim_layers_data + nxy * iz + nx * ix + iy);
-
+                if (*(nim_layers_data + nxy * iz + nx * ix + iy) > nr_layers) {
+                    nr_layers = *(nim_layers_data + nxy * iz + nx * ix + iy);
+                }
             }
         }
     }
-    cout << "  There are  " << layernumber << " layers  " << endl;
+    cout << "  There are " << nr_layers << " layers." << endl;
 
     ////////////////////////////////
     // Allocating necessary files //
     ///////////////////////////////
-    nifti_image * Grow_x = nifti_copy_nim_info(nim_layers);
-    nifti_image * Grow_y = nifti_copy_nim_info(nim_layers);
-    nifti_image * Grow_z = nifti_copy_nim_info(nim_layers);
+    nifti_image* Grow_x = copy_nifti_as_int32(nim_layers);
+    nifti_image* Grow_y = copy_nifti_as_int32(nim_layers);
+    nifti_image* Grow_z = copy_nifti_as_int32(nim_layers);
 
-    Grow_x->datatype = NIFTI_TYPE_INT16;
-    Grow_y->datatype = NIFTI_TYPE_INT16;
-    Grow_x->datatype = NIFTI_TYPE_INT16;
+    int32_t* Grow_x_data = static_cast<int32_t*>(Grow_x->data);
+    int32_t* Grow_y_data = static_cast<int32_t*>(Grow_y->data);
+    int32_t* Grow_z_data = static_cast<int32_t*>(Grow_z->data);
 
-    Grow_x->nbyper = sizeof(short);
-    Grow_y->nbyper = sizeof(short);
-    Grow_z->nbyper = sizeof(short);
+    nifti_image * growfromCenter = copy_nifti_as_int32(nim_layers);
+    nifti_image * growfromCenter_thick = copy_nifti_as_int32(nim_layers);
 
-    Grow_x->data = calloc(Grow_x->nvox, Grow_x->nbyper);
-    Grow_y->data = calloc(Grow_y->nvox, Grow_y->nbyper);
-    Grow_z->data = calloc(Grow_z->nvox, Grow_z->nbyper);
-
-    short * Grow_x_data = (short *) Grow_x->data;
-    short * Grow_y_data = (short *) Grow_y->data;
-    short * Grow_z_data = (short *) Grow_z->data;
-
-    nifti_image * growfromCenter = nifti_copy_nim_info(nim_layers);
-    nifti_image * growfromCenter_thick = nifti_copy_nim_info(nim_layers);
-
-    growfromCenter->datatype = NIFTI_TYPE_INT16;
-    growfromCenter_thick->datatype = NIFTI_TYPE_INT16;
-
-    growfromCenter->nbyper = sizeof(short);
-    growfromCenter_thick->nbyper = sizeof(short);
-
-    growfromCenter->data = calloc(growfromCenter->nvox, growfromCenter->nbyper);
-    growfromCenter_thick->data = calloc(growfromCenter_thick->nvox, growfromCenter_thick->nbyper);
-
-    short * growfromCenter_data = (short *) growfromCenter->data;
-    short * growfromCenter_thick_data = (short *) growfromCenter_thick->data;
+    int32_t* growfromCenter_data = static_cast<int32_t*>(growfromCenter->data);
+    int32_t* growfromCenter_thick_data = static_cast<int32_t*>(growfromCenter_thick->data);
 
     ///////////////////////////////
     // Prepare growing variables //
     ///////////////////////////////
-    float x1g = 0.;
-    float y1g = 0.;
-    float z1g = 0.;
+    float x1g = 0., y1g = 0., z1g = 0.;
 
     float min_val = 0.;
     float dist_min2 = 0.;
@@ -290,7 +182,7 @@ int main(int argc, char * argv[]) {
     for (int iz = 0; iz < sizeSlice; ++iz) {
         for (int iy = 0; iy < sizePhase; ++iy) {
             for (int ix = 0; ix < sizeRead-0; ++ix) {
-                if (*(nim_landmarks_data + nxy * iz + nx * ix + iy) == 1 &&  abs((int) (*(nim_layers_data + nxy * iz + nx * ix + iy) - layernumber/2)) < 2) {  //defining seed at center landmark
+                if (*(nim_landmarks_data + nxy * iz + nx * ix + iy) == 1 &&  abs((int) (*(nim_layers_data + nxy * iz + nx * ix + iy) - nr_layers/2)) < 2) {  //defining seed at center landmark
                     *(growfromCenter_data + nxy * iz + nx * ix + iy) = 1.;
                     *(Grow_x_data + nxy * iz + nx * ix + iy) = ix;
                     *(Grow_y_data + nxy * iz + nx * ix + iy) = iy;
@@ -310,7 +202,7 @@ int main(int argc, char * argv[]) {
                     x1g = 0;
                     y1g = 0;
                     z1g = 0;
-                    if (abs((int) (*(nim_layers_data + nxy * iz + nx * ix + iy) - layernumber/2)) < 2 && *(growfromCenter_data + nxy * iz + nx * ix + iy) == 0 && *(nim_landmarks_data + nxy * iz + nx * ix + iy) < 2) {
+                    if (abs((int) (*(nim_layers_data + nxy * iz + nx * ix + iy) - nr_layers/2)) < 2 && *(growfromCenter_data + nxy * iz + nx * ix + iy) == 0 && *(nim_landmarks_data + nxy * iz + nx * ix + iy) < 2) {
                         // Only grow into areas that are GM and that have not
                         // been grown into, yet... and it should stop as soon
                         // as it hits the border
@@ -361,16 +253,10 @@ int main(int argc, char * argv[]) {
     float gaus(float distance, float sigma);
     cout << "  Smoothing in middle layer..." << endl;
 
-    nifti_image * smoothed = nifti_copy_nim_info(nim_layers);
-    nifti_image * gausweight = nifti_copy_nim_info(nim_layers);
-    smoothed->datatype = NIFTI_TYPE_FLOAT32;
-    gausweight->datatype = NIFTI_TYPE_FLOAT32;
-    smoothed->nbyper = sizeof(float);
-    gausweight->nbyper = sizeof(float);
-    smoothed->data = calloc(smoothed->nvox, smoothed->nbyper);
-    gausweight->data = calloc(gausweight->nvox, gausweight->nbyper);
-    float * smoothed_data = (float *) smoothed->data;
-    float * gausweight_data = (float *) gausweight->data;
+    nifti_image* smooth = copy_nifti_as_float32(nim_layers);
+    nifti_image* gaussw = copy_nifti_as_float32(nim_layers);
+    float* smooth_data = static_cast<float*>(smooth->data);
+    float* gaussw_data = static_cast<float*>(gaussw->data);
 
     // float kernel_size = 10;  // corresponds to one voxel sice.
     int FWHM_val = 1;
@@ -384,8 +270,8 @@ int main(int argc, char * argv[]) {
     for (int iz = 0; iz < sizeSlice; ++iz) {
         for (int iy = 0; iy < sizePhase; ++iy) {
             for (int ix = 0; ix < sizeRead-0; ++ix) {
-                *(gausweight_data + nxy * iz + nx * ix + iy) = 0;
-                // * (smoothed_data + nxy * iz + nx * ix + iy) = 0 ;
+                *(gaussw_data + nxy * iz + nx * ix + iy) = 0;
+                // * (smooth_data + nxy * iz + nx * ix + iy) = 0 ;
                 if (*(growfromCenter_data + nxy * iz + nx * ix + iy)  > 0) {
                     for (int iz_i = max(0, iz - vinc_sm); iz_i <= min(iz + vinc_sm, sizeSlice - 1); ++iz_i) {
                         for (int iy_i = max(0, iy - vinc_sm); iy_i <= min(iy + vinc_sm, sizePhase - 1); ++iy_i) {
@@ -396,18 +282,18 @@ int main(int argc, char * argv[]) {
                                     // cout << "    Debug  5 " << dist_i << endl;
                                     // if (* (nim_input_data + nxy * iz + nx * ix + iy) == 3) cout << "debug  4b " << endl;
                                     // dummy = * (layer_data + nxy * iz_i + nx * ix_i + iy_i);
-                                    *(smoothed_data + nxy * iz + nx * ix + iy) = *(smoothed_data + nxy * iz + nx * ix + iy) + *(growfromCenter_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
-                                    *(gausweight_data + nxy * iz + nx * ix + iy) = *(gausweight_data + nxy * iz + nx * ix + iy) + gaus(dist_i, FWHM_val);
+                                    *(smooth_data + nxy * iz + nx * ix + iy) = *(smooth_data + nxy * iz + nx * ix + iy) + *(growfromCenter_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
+                                    *(gaussw_data + nxy * iz + nx * ix + iy) = *(gaussw_data + nxy * iz + nx * ix + iy) + gaus(dist_i, FWHM_val);
                                 }
                             }
                         }
                     }
-                    if (*(gausweight_data + nxy * iz + nx * ix + iy) > 0) {
-                        *(smoothed_data + nxy * iz + nx * ix + iy) = *(smoothed_data + nxy * iz + nx * ix + iy)/ *(gausweight_data + nxy * iz + nx * ix + iy);
+                    if (*(gaussw_data + nxy * iz + nx * ix + iy) > 0) {
+                        *(smooth_data + nxy * iz + nx * ix + iy) = *(smooth_data + nxy * iz + nx * ix + iy)/ *(gaussw_data + nxy * iz + nx * ix + iy);
                     }
                 }
                 // if (* (nim_layers_r_data + nxy * iz + nx * ix + iy) <= 0) {
-                //     * (smoothed_data + nxy * iz + nx * ix + iy) = * (lateralCoord_data + nxy * iz + nx * ix + iy) ;
+                //     * (smooth_data + nxy * iz + nx * ix + iy) = * (lateralCoord_data + nxy * iz + nx * ix + iy) ;
                 // }
             }
         }
@@ -418,7 +304,7 @@ int main(int argc, char * argv[]) {
         for (int iy = 0; iy < sizePhase; ++iy) {
             for (int ix = 0; ix < sizeRead; ++ix) {
                 if (*(growfromCenter_data + nxy * iz + nx * ix + iy) > 0) {
-                    *(growfromCenter_data + nxy * iz + nx * ix + iy) = (int) *(smoothed_data + nxy * iz + nx * ix + iy);
+                    *(growfromCenter_data + nxy * iz + nx * ix + iy) = (int) *(smooth_data + nxy * iz + nx * ix + iy);
                 }
             }
         }
@@ -434,18 +320,13 @@ int main(int argc, char * argv[]) {
     /////////////////////////////////////
     // NOTE(Renzo): This is not perfect yet, because it has only 4 directions
     // to grow thus ther might be orientation biases.
-    cout << " extending columns across layers  " << endl;
+    cout << "  Extending columns across layers..." << endl;
 
-    nifti_image * hairy_brain = nifti_copy_nim_info(nim_layers);
-    hairy_brain->datatype = NIFTI_TYPE_INT16;
-    hairy_brain->nbyper = sizeof(short);
-    hairy_brain->data = calloc(hairy_brain->nvox, hairy_brain->nbyper);
-    short * hairy_brain_data = (short *) hairy_brain->data;
-    nifti_image * hairy_brain_dist = nifti_copy_nim_info(nim_layers);
-    hairy_brain_dist->datatype = NIFTI_TYPE_FLOAT32;
-    hairy_brain_dist->nbyper = sizeof(float);
-    hairy_brain_dist->data = calloc(hairy_brain_dist->nvox, hairy_brain_dist->nbyper);
-    float * hairy_brain_dist_data = (float *) hairy_brain_dist->data;
+    nifti_image* hairy_brain = copy_nifti_as_int32(nim_layers);
+    int32_t* hairy_brain_data = static_cast<int32_t*>(hairy_brain->data);
+
+    nifti_image* hairy_brain_dist = copy_nifti_as_float32(nim_layers);
+    float* hairy_brain_dist_data = static_cast<float*>(hairy_brain_dist->data);
 
     // This is an upper limit of the cortical thickness
     dist_min2 = 10000.;
@@ -475,7 +356,7 @@ int main(int argc, char * argv[]) {
     for (int iz = 0; iz < sizeSlice; ++iz) {
         for (int iy = 0; iy < sizePhase; ++iy) {
             for (int ix = 0; ix < sizeRead; ++ix) {
-                if (*(nim_layers_data + nxy * iz + nx * ix + iy) > 1 && *(nim_layers_data + nxy * iz + nx * ix + iy) < layernumber - 1) nvoxels_to_go_across++;
+                if (*(nim_layers_data + nxy * iz + nx * ix + iy) > 1 && *(nim_layers_data + nxy * iz + nx * ix + iy) < nr_layers - 1) nvoxels_to_go_across++;
             }
         }
     }
@@ -483,7 +364,7 @@ int main(int argc, char * argv[]) {
     for (int iz = 0; iz < sizeSlice; ++iz) {
         for (int iy = 0; iy < sizePhase; ++iy) {
             for (int ix = 0; ix < sizeRead; ++ix) {
-                if (*(nim_layers_data + nxy * iz + nx * ix + iy) > 1 && *(nim_layers_data + nxy * iz + nx * ix + iy) < layernumber - 1) {
+                if (*(nim_layers_data + nxy * iz + nx * ix + iy) > 1 && *(nim_layers_data + nxy * iz + nx * ix + iy) < nr_layers - 1) {
                     running_index++;
                     if ((running_index * 100) / nvoxels_to_go_across != pref_ratio) {
                         cout << "\r" << (running_index * 100)/nvoxels_to_go_across << "% " << flush;
@@ -516,7 +397,7 @@ int main(int argc, char * argv[]) {
                                         for (int iz_i = max(0, iz_ii - vinc_steps); iz_i <= min(iz_ii + vinc_steps, sizeSlice - 1); ++iz_i) {
                                             for (int iy_i = max(0, iy_ii - vinc_steps); iy_i <= min(iy_ii + vinc_steps, sizePhase - 1); ++iy_i) {
                                                 for (int ix_i = max(0, ix_ii - vinc_steps); ix_i <= min(ix_ii + vinc_steps, sizeRead - 1); ++ix_i) {
-                                                    if (dist((float)ix_ii, (float)iy_ii, (float)iz_ii, (float)ix_i, (float)iy_i, (float)iz_i, 1, 1, 1) <= 1 && *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) > 1 && *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) < layernumber - 1) {
+                                                    if (dist((float)ix_ii, (float)iy_ii, (float)iz_ii, (float)ix_i, (float)iy_i, (float)iz_i, 1, 1, 1) <= 1 && *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) > 1 && *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) < nr_layers - 1) {
                                                         *(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) = 1;
                                                     }
                                                 }
@@ -571,7 +452,7 @@ int main(int argc, char * argv[]) {
     for (int iz = 0; iz < sizeSlice; ++iz) {
         for (int iy = 0; iy < sizePhase; ++iy) {
             for (int ix = 0; ix < sizeRead-0; ++ix) {
-                *(smoothed_data + nxy * iz + nx * ix + iy) = 0;
+                *(smooth_data + nxy * iz + nx * ix + iy) = 0;
             }
         }
     }
@@ -588,8 +469,8 @@ int main(int argc, char * argv[]) {
     for (int iz = 0; iz < sizeSlice; ++iz) {
         for (int iy = 0; iy < sizePhase; ++iy) {
             for (int ix = 0; ix < sizeRead-0; ++ix) {
-                *(gausweight_data + nxy * iz + nx * ix + iy) = 0;
-                // * (smoothed_data + nxy * iz + nx * ix + iy) = 0 ;
+                *(gaussw_data + nxy * iz + nx * ix + iy) = 0;
+                // * (smooth_data + nxy * iz + nx * ix + iy) = 0 ;
                 if (*(growfromCenter_thick_data + nxy * iz + nx * ix + iy) > 0) {
 
                     /////////////////////////////////////////////////
@@ -613,7 +494,7 @@ int main(int argc, char * argv[]) {
                                         for (int iz_i = max(0, iz_ii - vinc_steps); iz_i <= min(iz_ii + vinc_steps, sizeSlice - 1); ++iz_i) {
                                             for (int iy_i = max(0, iy_ii - vinc_steps); iy_i <= min(iy_ii + vinc_steps, sizePhase - 1); ++iy_i) {
                                                 for (int ix_i = max(0, ix_ii - vinc_steps); ix_i <= min(ix_ii + vinc_steps, sizeRead - 1); ++ix_i) {
-                                                    if (dist((float)ix_ii, (float)iy_ii, (float)iz_ii, (float)ix_i, (float)iy_i, (float)iz_i, 1, 1, 1) <= 1 && *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) > 1 && *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) < layernumber - 1) {
+                                                    if (dist((float)ix_ii, (float)iy_ii, (float)iz_ii, (float)ix_i, (float)iy_i, (float)iz_i, 1, 1, 1) <= 1 && *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) > 1 && *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) < nr_layers - 1) {
                                                         *(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) = 1;
                                                     }
                                                 }
@@ -626,21 +507,21 @@ int main(int argc, char * argv[]) {
                     }
 
                     // Smoothing within each layer and within the local patch
-                    int layernumber_i = *(nim_layers_data + nxy * iz + nx * ix + iy);
+                    int nr_layers_i = *(nim_layers_data + nxy * iz + nx * ix + iy);
 
                     for (int iz_i = max(0, iz - vinc_sm); iz_i <= min(iz + vinc_sm, sizeSlice - 1); ++iz_i) {
                         for (int iy_i = max(0, iy - vinc_sm); iy_i <= min(iy + vinc_sm, sizePhase - 1); ++iy_i) {
                             for (int ix_i = max(0, ix - vinc_sm); ix_i <= min(ix + vinc_sm, sizeRead - 1); ++ix_i) {
-                                if (*(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) == 1 && abs((int) *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) - layernumber_i) < 2 && *(growfromCenter_thick_data + nxy * iz_i + nx * ix_i + iy_i) > 0) {
+                                if (*(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) == 1 && abs((int) *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) - nr_layers_i) < 2 && *(growfromCenter_thick_data + nxy * iz_i + nx * ix_i + iy_i) > 0) {
                                     dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                    *(smoothed_data + nxy * iz + nx * ix + iy) = *(smoothed_data + nxy * iz + nx * ix + iy) + *(growfromCenter_thick_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
-                                    *(gausweight_data + nxy * iz + nx * ix + iy) = *(gausweight_data + nxy * iz + nx * ix + iy) + gaus(dist_i, FWHM_val);
+                                    *(smooth_data + nxy * iz + nx * ix + iy) = *(smooth_data + nxy * iz + nx * ix + iy) + *(growfromCenter_thick_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
+                                    *(gaussw_data + nxy * iz + nx * ix + iy) = *(gaussw_data + nxy * iz + nx * ix + iy) + gaus(dist_i, FWHM_val);
                                 }
                             }
                         }
                     }
-                    if (*(gausweight_data + nxy * iz + nx * ix + iy) > 0) {
-                        *(smoothed_data + nxy * iz + nx * ix + iy) = *(smoothed_data + nxy * iz + nx * ix + iy)/ *(gausweight_data + nxy * iz + nx * ix + iy);
+                    if (*(gaussw_data + nxy * iz + nx * ix + iy) > 0) {
+                        *(smooth_data + nxy * iz + nx * ix + iy) = *(smooth_data + nxy * iz + nx * ix + iy)/ *(gaussw_data + nxy * iz + nx * ix + iy);
                     }
                 }
             }
@@ -652,7 +533,7 @@ int main(int argc, char * argv[]) {
         for (int iy = 0; iy < sizePhase; ++iy) {
             for (int ix = 0; ix < sizeRead; ++ix) {
                 if (*(growfromCenter_thick_data + nxy * iz + nx * ix + iy) > 0) {
-                    *(growfromCenter_thick_data + nxy * iz + nx * ix + iy) = *(smoothed_data + nxy * iz + nx * ix + iy);
+                    *(growfromCenter_thick_data + nxy * iz + nx * ix + iy) = *(smooth_data + nxy * iz + nx * ix + iy);
                 }
             }
         }
@@ -660,7 +541,7 @@ int main(int argc, char * argv[]) {
     cout << "    Smoothing done." << endl;
 
     if (verbose == 1) {
-        save_output_nifti(fin_layer, "coordinates_4_thick_smoothed",
+        save_output_nifti(fin_layer, "coordinates_4_thick_smooth",
                           growfromCenter_thick, true);
     }
 
