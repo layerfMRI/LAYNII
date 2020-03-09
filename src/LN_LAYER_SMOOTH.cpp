@@ -16,7 +16,7 @@ int show_help(void) {
     "Options:\n"
     "    -help       : Show this help.\n"
     "    -layer_file : Nifti (.nii) file that contains layer or column masks.\n"
-    "    -input      : Nifti (.nii) file that should be nii_smooth. It \n"
+    "    -input      : Nifti (.nii) file that should be smooth. It \n"
     "                  should have same dimensions as layer file.\n"
     "    -FWHM       : The amount of smoothing in mm.\n"
     "    -twodim     : (Optional) Smooth only in 2D. \n"
@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
                 fprintf(stderr, "** missing argument for -layer_file\n");
                 return 1;
             }
-            f_layer = argv[ac];  // No string copy, just pointer assignment
+            f_layer = argv[ac];
         } else if (!strcmp(argv[ac], "-FWHM")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -FWHM\n");
@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
                 fprintf(stderr, "** missing argument for -input\n");
                 return 1;
             }
-            f_input = argv[ac];  // No string copy, just pointer assignment
+            f_input = argv[ac];
         } else if (!strcmp(argv[ac], "-twodim")) {
             twodim = 1;
             cout << "Smooth only in 2D."  << endl;
@@ -295,9 +295,7 @@ int main(int argc, char* argv[]) {
         //         }
         //     }
         // }
-        const char* fout_3 = "hairy_brain.nii";
-        if (nifti_set_filenames(hairy_brain, fout_3, 1, 1)) return 1;
-        nifti_image_write(hairy_brain);
+        save_output_nifti(f_input, "hairy_brain", hairy_brain, false);
     }
     cout << "  Smoothing is done. " <<  endl;
 
@@ -321,29 +319,7 @@ int main(int argc, char* argv[]) {
         cout << " ########################################## " << endl;
     }
 
-    // Output file name
-    // const char* fout_4 = "leaky_layers.nii" ;
-    // if (nifti_set_filenames(leak_layer, fout_4, 1, 1)) return 1;
-    // nifti_image_write(leak_layer);
-
-    // const char* fout_5 = "input_file.nii" ;
-    // if (nifti_set_filenames(nii_input, fout_5, 1, 1)) return 1;
-    // nifti_image_write(nii_input);
-
-    // const char* fout_2 = "mask.nii" ;
-    // if (nifti_set_filenames(nii_layer, fout_2, 1, 1)) return 1;
-    // nifti_image_write(nii_layer);
-
-    string prefix = "nii_smooth_";
-    string filename = (string) (f_input);
-    string outfilename = prefix + filename;
-    log_output(outfilename.c_str());
-
-    const char* fout_1 = outfilename.c_str();
-    if (nifti_set_filenames(nii_smooth, fout_1, 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(nii_smooth);
+    save_output_nifti(f_input, "smooth", nii_smooth, true);
 
     cout << "  Finished." << endl;
     return 0;
