@@ -19,7 +19,6 @@ int show_help(void) {
     "    -input      : Nifti (.nii) file that should be smooth. It \n"
     "                  should have same dimensions as layer file.\n"
     "    -FWHM       : The amount of smoothing in mm.\n"
-    "    -twodim     : (Optional) Smooth only in 2D. \n"
     "    -mask       : (Optional) Mask activity outside of layers. \n"
     "    -sulctouch  : (Optional) Allows smoothing across sucli. This is \n"
     "                  necessary, when you do heavy smoothing well bevond \n"
@@ -33,7 +32,7 @@ int show_help(void) {
 
 int main(int argc, char* argv[]) {
     char* f_input = NULL, *f_layer = NULL;
-    int ac, twodim = 0, do_masking = 0, sulctouch = 0;
+    int ac, do_masking = 0, sulctouch = 0;
     float FWHM_val = 0;
     if (argc < 3) return show_help();
 
@@ -58,9 +57,6 @@ int main(int argc, char* argv[]) {
                 return 1;
             }
             f_input = argv[ac];
-        } else if (!strcmp(argv[ac], "-twodim")) {
-            twodim = 1;
-            cout << "Smooth only in 2D."  << endl;
         } else if (!strcmp(argv[ac], "-sulctouch")) {
             sulctouch = 1;
             cout << "Smooth across sluci, might take longer."  << endl;
@@ -83,56 +79,57 @@ int main(int argc, char* argv[]) {
     }
 
     // Read inputs including data
-    nifti_image* nii_input = nifti_image_read(f_input, 1);
-    if (!nii_input) {
+    nifti_image* nii1 = nifti_image_read(f_input, 1);
+    if (!nii1) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", f_input);
         return 2;
     }
 
-    nifti_image* nii_layer = nifti_image_read(f_layer, 1);
-    if (!nii_layer) {
+    nifti_image* nii2 = nifti_image_read(f_layer, 1);
+    if (!nii2) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", f_layer);
         return 2;
     }
 
     log_welcome("LN_LAYER_SMOOTH");
-    log_nifti_descriptives(nii_input);
-    log_nifti_descriptives(nii_layer);
+    log_nifti_descriptives(nii1);
+    log_nifti_descriptives(nii2);
 
     // Get dimensions of input
-    const int size_z = nii_layer->nz;
-    const int size_x = nii_layer->nx;
-    const int size_y = nii_layer->ny;
-    const int size_t = nii_layer->nt;
-    const int nx = nii_layer->nx;
-    const int nxy = nii_layer->nx * nii_layer->ny;
-    const int nxyz = nii_layer->nx * nii_layer->ny * nii_layer->nz;
-    const int nr_voxels = size_t * size_z * size_y * size_x;
-    const float dX = nii_layer->pixdim[1];
-    const float dY = nii_layer->pixdim[2];
-    float dZ = nii_layer->pixdim[3];
-    if (twodim == 1) dZ = 1000 * nii_layer->pixdim[3];
-
+    const int size_z = nii2->nz;
+    const int size_x = nii2->nx;
+    const int size_y = nii2->ny;
+    const int nx = nii2->nx;
+    const int nxy = nii2->nx * nii2->ny;
+    const int nr_voxels = size_z * size_y * size_x;
+    const float dX = nii2->pixdim[1];
+    const float dY = nii2->pixdim[2];
+    const float dZ = nii2->pixdim[3];
 
     // ========================================================================
     // Fix datatype issues
-    nii_input = copy_nifti_as_float32(nii_input);
+    nifti_image* nii_input = copy_nifti_as_float32(nii1);
     float *nii_input_data = static_cast<float*>(nii_input->data);
-    nii_input = copy_nifti_as_int32(nii_input);
+    nifti_image* nii_layer = copy_nifti_as_int32(nii2);
     int32_t *nii_layer_data = static_cast<int32_t*>(nii_layer->data);
 
     // Allocate new niftis
-    nifti_image* nii_smooth = copy_nifti_as_float32(nii_input);
-    float* nii_smooth_data = static_cast<float*>(nii_smooth->data);
+    nifti_image *nii_smooth = copy_nifti_as_float32(nii_input);
+    float *nii_smooth_data = static_cast<float*>(nii_smooth->data);
     nifti_image* nii_gaussw = copy_nifti_as_float32(nii_input);
-    float* nii_gaussw_data = static_cast<float*>(nii_gaussw->data);
-    // ========================================================================
+    float *nii_gaussw_data = static_cast<float*>(nii_gaussw->data);
 
-    // float kernel_size = 10;  // Corresponds to one voxel slice
-    int vinc = max(1., 2. * FWHM_val / dX);  // Ignore if voxel is too far
-    float dist_i = 0.;
-    cout << "  Vicinity = " <<  vinc <<  endl;
-    cout << "  FWHM = " <<  FWHM_val <<  endl;
+    // Zero new images
+    for (int i = 0; i < nr_voxels; ++i) {
+        *(nii_smooth_data + i) = 0;
+        *(nii_gaussw_data + i) = 0;
+    }
+
+    // ========================================================================
+    // TODO(Faruk): Why using dX but not others? Need to ask Renzo about this.
+    int vic = max(1., 2. * FWHM_val / dX);  // Ignore if voxel is too far
+    cout << "  Vicinity = " << vic << endl;
+    cout << "  FWHM = " << FWHM_val << endl;
 
     ///////////////////////////
     // Find number of layers //
@@ -148,116 +145,137 @@ int main(int argc, char* argv[]) {
     ////////////////////
     // SMOOTHING LOOP //
     ////////////////////
+    // For time estimation
+    int nr_vox_to_loop = 0, idx = 0, prev_n = 0;
+    for (int i = 0; i < nr_voxels; ++i) {
+        if (*(nii_layer_data + i) > 0) {
+            nr_vox_to_loop++;
+        }
+    }
+
     if (sulctouch == 0) {
         cout << "  Smoothing in layer, not considering sulci." << endl;
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x; ++ix) {
+                    int voxel_i = nxy * iz + nx * iy + ix;
+                    int layer_i = *(nii_layer_data + voxel_i);
 
-        for (int nr_layers_i = 1; nr_layers_i <= nr_layers; ++nr_layers_i) {
-            cout << "\r    " << nr_layers_i << " of " << nr_layers << flush;
+                    if (layer_i > 0) {
+                        idx += 1;
+                        int n = (idx * 100) / nr_vox_to_loop;
+                        if (n != prev_n) {
+                            cout << "\r    " << n <<  "%" << flush;
+                            prev_n = n;
+                        }
 
-            for (int iz = 0; iz < size_z; ++iz) {
-                for (int iy = 0; iy < size_y; ++iy) {
-                    for (int ix = 0; ix < size_x - 0; ++ix) {
-                        *(nii_gaussw_data + nxy * iz + nx * iy + ix) = 0;
+                        int jz_start = max(0, iz - vic);
+                        int jz_stop = min(iz + vic, size_z - 1);
+                        int jy_start = max(0, iy - vic);
+                        int jy_stop = min(iy + vic, size_y - 1);
+                        int jx_start = max(0, ix - vic);
+                        int jx_stop = min(ix + vic, size_x - 1);
 
-                        if (*(nii_layer_data + nxy * iz + nx * iy + ix) == nr_layers_i) {
-
-                            for (int iz_i = max(0, iz-vinc); iz_i < min(iz + vinc + 1, size_z-1); ++iz_i) {
-                                for (int iy_i = max(0, iy-vinc); iy_i < min(iy + vinc + 1, size_y - 1); ++iy_i) {
-                                    for (int ix_i = max(0, ix-vinc); ix_i < min(ix + vinc + 1, size_x - 1); ++ix_i) {
-                                        if (*(nii_layer_data + nxy * iz_i + nx * iy_i + ix_i) == nr_layers_i) {
-                                            dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                            // cout << "  Debug 4 " << gaus(dist_i ,FWHM_val) <<   endl;
-                                            // cout << "  Debug 5 " << dist_i  <<   endl;
-                                            // if (*(nim_input_data + nxy * iz + nx * iy + ix) == 3) cout << "debug  4b " << endl;
-                                            // dummy = *(layer_data + nxy*iz_i + nx*ix_i + iy_i);
-                                            *(nii_smooth_data + nxy * iz + nx * iy + ix) = *(nii_smooth_data + nxy * iz + nx * iy + ix) + *(nii_input_data + nxy * iz_i + nx * iy_i + ix_i) * gaus(dist_i, FWHM_val);
-                                            *(nii_gaussw_data + nxy * iz + nx * iy + ix) = *(nii_gaussw_data + nxy * iz + nx * iy + ix) + gaus(dist_i, FWHM_val);
-                                        }
+                        for (int jz = jz_start; jz <= jz_stop; ++jz) {
+                            for (int jy = jy_start; jy <= jy_stop; ++jy) {
+                                for (int jx = jx_start; jx <= jx_stop; ++jx) {
+                                    int voxel_j = nxy * jz + nx * jy + jx;
+                                    if (*(nii_layer_data + voxel_j) == layer_i) {
+                                        float d = dist((float)ix, (float)iy, (float)iz,
+                                                       (float)jx, (float)jy, (float)jz,
+                                                       dX, dY, dZ);
+                                        float g = gaus(d, FWHM_val);
+                                        *(nii_smooth_data + voxel_i) += *(nii_input_data + voxel_j) * g;
+                                        *(nii_gaussw_data + voxel_i) += g;
                                     }
                                 }
                             }
-                            if (*(nii_gaussw_data + nxy * iz + nx * iy + ix) > 0) {
-                                *(nii_smooth_data + nxy * iz + nx * iy + ix) =
-                                    *(nii_smooth_data + nxy * iz + nx * iy + ix)
-                                    / *(nii_gaussw_data + nxy * iz + nx * iy + ix);
-                            }
                         }
-                        if (*(nii_layer_data + nxy * iz + nx * iy + ix) <= 0) {
-                            *(nii_smooth_data + nxy * iz + nx * iy + ix) =
-                                *(nii_input_data + nxy * iz + nx * iy + ix);
-                        }
+                        // Normalize
+                        *(nii_smooth_data + voxel_i) /= *(nii_gaussw_data + voxel_i);
+                    } else {
+                        *(nii_smooth_data + voxel_i) = *(nii_input_data + voxel_i);
                     }
                 }
             }
         }
         cout << endl;
     }
+
     ///////////////////////////////////////////////////////
     // if requested, smooth only within connected layers //
     ///////////////////////////////////////////////////////
-
     if (sulctouch == 1) {
-        // Allocating local connected vincinity file
+        // Allocating local connected vicinity file
         nifti_image* hairy_brain = copy_nifti_as_int32(nii_layer);
-        int* hairy_brain_data = static_cast<int*>(hairy_brain->data);
+        int32_t* hairy_brain_data = static_cast<int32_t*>(hairy_brain->data);
         hairy_brain->scl_slope = 1.;
-        int vinc_steps = 1;
+        int vic_steps = 1;
 
-        // Making sure voxels are zero
-        for (int i = 0; i < nr_voxels; ++i) {
-            *(nii_smooth_data + i) = 0;
-        }
-
-        vinc = max(1., 2. * FWHM_val / dX);  // Ignore if voxel is too far
-        int nr_layers_i = 0;  // Running index
-        cout << "  vinc " << vinc << endl;
+        vic = max(1., 2. * FWHM_val / dX);  // Ignore if voxel is too far
+        cout << "  vic " << vic << endl;
         cout << "  FWHM_val " << FWHM_val << endl;
-        cout << "  Starting within sulcal smoothing..." <<  endl;
-
-        // For estimation of time
-        int nr_vox_to_go_across = 0, running_index = 0, pref_ratio = 0;
-        for (int i = 0; i < nr_voxels; ++i) {
-            if (*(nii_layer_data + i) > 1) {
-                nr_vox_to_go_across++;
-            }
-        }
+        cout << "  Starting within sulcus smoothing..." <<  endl;
 
         for (int iz = 0; iz < size_z; ++iz) {
             for (int iy = 0; iy < size_y; ++iy) {
-                for (int ix = 0; ix < size_x - 0; ++ix) {
-                    if (*(nii_layer_data + nxy * iz + nx * iy + ix) > 0) {
-                        running_index++;
-                        if ((running_index * 100) / nr_vox_to_go_across != pref_ratio) {
-                            cout << "\r " << (running_index * 100) / nr_vox_to_go_across <<  "% " << flush;
-                            pref_ratio = (running_index * 100) / nr_vox_to_go_across;
+                for (int ix = 0; ix < size_x; ++ix) {
+                    int voxel_i = nxy * iz + nx * iy + ix;
+
+                    if (*(nii_layer_data + voxel_i) > 0) {
+                        idx++;
+                        int n = (idx * 100) / nr_vox_to_loop;
+                        if (n != prev_n) {
+                            cout << "\r " << n <<  "% " << flush;
+                            prev_n = n;
                         }
-                        nr_layers_i = *(nii_layer_data + nxy * iz + nx * iy + ix);
-                        *(nii_gaussw_data + nxy * iz + nx * iy + ix) = 0;
+                        int layer_i = *(nii_layer_data + voxel_i);
 
                         /////////////////////////////////////////////////
                         // Find area that is not from the other sulcus //
                         /////////////////////////////////////////////////
-                        for (int iz_i = max(0, iz - vinc - vinc_steps); iz_i <= min(iz + vinc + vinc_steps, size_z - 1); ++iz_i) {
-                            for (int iy_i = max(0, iy - vinc - vinc_steps); iy_i <= min(iy + vinc + vinc_steps, size_y - 1); ++iy_i) {
-                                for (int ix_i = max(0, ix - vinc - vinc_steps); ix_i <= min(ix + vinc + vinc_steps, size_x - 1); ++ix_i) {
-                                    // cout << iz_i << " " << iy_i << "  " << ix_i << "  " <<  size_z-1 << " " << size_x-1 << "  " << size_x-1 << "  " << endl;
-                                    *(hairy_brain_data + nxy * iz_i + nx * iy_i + ix_i) = 0;
+                        int jz_start = max(0, iz - vic - vic_steps);
+                        int jz_stop = min(iz + vic + vic_steps, size_z - 1);
+                        int jy_start = max(0, iy - vic - vic_steps);
+                        int jy_stop = min(iy + vic + vic_steps, size_y - 1);
+                        int jx_start = max(0, ix - vic - vic_steps);
+                        int jx_stop = min(ix + vic + vic_steps, size_x - 1);
+
+                        for (int jz = jz_start; jz <= jz_stop; ++jz) {
+                            for (int jy = jy_start; jy <= jy_stop; ++jy) {
+                                for (int jx = jx_start; jx <= jx_stop; ++jx) {
+                                    *(hairy_brain_data + nxy * jz + nx * jy + jx) = 0;
                                 }
                             }
                         }
-                        *(hairy_brain_data + nxy*iz + nx*ix + iy) = 1;
+                        *(hairy_brain_data + voxel_i) = 1;
 
-                        // Growing into neigbouring voxels.
-                        for (int K_= 0; K_< vinc; K_++) {
-                            for (int iz_ii = max(0, iz - vinc); iz_ii <= min(iz + vinc, size_z - 1); ++iz_ii) {
-                                for (int iy_ii = max(0,iy - vinc); iy_ii <= min(iy + vinc, size_x - 1); ++iy_ii) {
-                                    for (int ix_ii = max(0, ix-vinc); ix_ii <= min(ix + vinc, size_y - 1); ++ix_ii) {
-                                        if (*(hairy_brain_data + nxy * iz_ii + nx * iy_ii + ix_ii) == 1) {
-                                            for (int iz_i = max(0, iz_ii - vinc_steps); iz_i <= min(iz_ii + vinc_steps, size_z - 1); ++iz_i) {
-                                                for (int iy_i = max(0, iy_ii - vinc_steps); iy_i<= min(iy_ii + vinc_steps, size_y - 1); ++iy_i) {
-                                                    for (int ix_i = max(0, ix_ii - vinc_steps); ix_i <= min(ix_ii + vinc_steps, size_x - 1); ++ix_i) {
-                                                        if (dist((float)ix_ii, (float)iy_ii, (float)iz_ii, (float)ix_i, (float)iy_i, (float)iz_i, 1, 1, 1) <= 1.74 && *(nii_layer_data + nxy * iz_i + nx * iy_i + ix_i) == nr_layers_i) {
-                                                            *(hairy_brain_data + nxy * iz_i + nx * iy_i + ix_i) = 1;
+                        // Grow into neigbouring voxels.
+                        for (int K_= 0; K_< vic; K_++) {
+                            int kz_start = max(0, iz - vic);
+                            int kz_stop = min(iz + vic, size_z - 1);
+                            int ky_start = max(0, iy - vic);
+                            int ky_stop = min(iy + vic, size_x - 1);
+                            int kx_start = max(0, ix - vic);
+                            int kx_stop = min(ix + vic, size_y - 1);
+
+                            for (int kz = kz_start; kz <= kz_stop; ++kz) {
+                                for (int ky = ky_start; ky <= ky_stop; ++ky) {
+                                    for (int kx = kx_start; kx <= kx_stop; ++kx) {
+                                        if (*(hairy_brain_data + nxy * kz + nx * ky + kx) == 1) {
+                                            int mz_start = max(0, kz - vic_steps);
+                                            int mz_stop = min(kz + vic_steps, size_z - 1);
+                                            int my_start = max(0, ky - vic_steps);
+                                            int my_stop = min(ky + vic_steps, size_y - 1);
+                                            int mx_start = max(0, kx - vic_steps);
+                                            int mx_stop = min(kx + vic_steps, size_x - 1);
+
+                                            for (int mz = mz_start; mz <= mz_stop; ++mz) {
+                                                for (int my = my_start; my <= my_stop; ++my) {
+                                                    for (int mx = mx_start; mx <= mx_stop; ++mx) {
+                                                        if (dist((float)kx, (float)ky, (float)kz, (float)mx, (float)my, (float)mz, 1, 1, 1) <= 1.74
+                                                            && *(nii_layer_data + nxy * mz + nx * my + mx) == layer_i) {
+                                                            *(hairy_brain_data + nxy * mz + nx * my + mx) = 1;
                                                         }
                                                     }
                                                 }
@@ -268,33 +286,37 @@ int main(int argc, char* argv[]) {
                             }
                         }
 
-                        // Apply smoothing within each layer and within local patch
-                        for (int iz_i = max(0, iz-vinc); iz_i <= min(iz + vinc, size_z - 1); ++iz_i) {
-                            for (int iy_i = max(0, iy - vinc); iy_i <= min(iy + vinc, size_y - 1); ++iy_i) {
-                                for (int ix_i = max(0, ix-vinc); ix_i <= min(ix + vinc, size_x - 1); ++ix_i) {
-                                    if (*(hairy_brain_data + nxy * iz_i + nx * iy_i + ix_i) == 1) {
-                                        dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                        *(nii_smooth_data + nxy * iz + nx * iy + ix) = *(nii_smooth_data + nxy * iz + nx * iy + ix) + *(nii_input_data + nxy * iz_i + nx * iy_i + ix_i) * gaus(dist_i, FWHM_val);
-                                        *(nii_gaussw_data + nxy * iz + nx * iy + ix) = *(nii_gaussw_data + nxy * iz + nx * iy + ix) + gaus(dist_i, FWHM_val);
+                        // Smooth within each layer and within local patch
+                        jz_start = max(0, iz - vic);
+                        jz_stop = min(iz + vic, size_z - 1);
+                        jy_start = max(0, iy - vic);
+                        jy_stop = min(iy + vic, size_y - 1);
+                        jx_start = max(0, ix - vic);
+                        jx_stop = min(ix + vic, size_x - 1);
+
+                        for (int jz = jz_start; jz <= jz_stop; ++jz) {
+                            for (int jy = jy_start; jy <= jz_stop; ++jy) {
+                                for (int jx = jx_start; jx <= jx_stop; ++jx) {
+                                    if (*(hairy_brain_data + nxy * jz + nx * jy + jx) == 1) {
+                                        float d = dist((float)ix, (float)iy, (float)iz,
+                                                       (float)jx, (float)jy, (float)jz,
+                                                       dX, dY, dZ);
+                                        float g = gaus(d, FWHM_val);
+
+                                        *(nii_smooth_data + voxel_i) += *(nii_input_data + nxy * jz + nx * jy + jx) * g;
+                                        *(nii_gaussw_data + voxel_i) += g;
                                     }
                                 }
                             }
                         }
-                        if (*(nii_gaussw_data + nxy * iz + nx * iy + ix) > 0) *(nii_smooth_data + nxy * iz + nx * iy + ix) = *(nii_smooth_data + nxy * iz + nx * iy + ix) / *(nii_gaussw_data + nxy * iz + nx * iy + ix);
-                    } // if scope  if (*(nii_layer_data + nxy * iz + nx * iy + ix) > 0){ closed
+                        if (*(nii_gaussw_data + voxel_i) > 0) {
+                        *(nii_smooth_data + voxel_i) /= *(nii_gaussw_data + voxel_i);
+                        }
+                    }
 
                 }
             }
         }
-        // for(int iz=0; iz<size_z; ++iz){
-        //     for(int iy=0; iy<size_x; ++iy){
-        //         for(int ix=0; ix<size_y; ++ix){
-        //             if(*(nii_input_data + nxy * iz + nx * iy + ix) > 0) {
-        //                 *(nii_input_data + nxy * iz + nx * iy + ix) = *(nii_smooth_data + nxy * iz + nx * iy + ix);
-        //             }
-        //         }
-        //     }
-        // }
         save_output_nifti(f_input, "hairy_brain", hairy_brain, false);
     }
     cout << "  Smoothing is done. " <<  endl;
@@ -307,16 +329,6 @@ int main(int argc, char* argv[]) {
             if (*(nii_layer_data + i) == 0) {
                 *(nii_smooth_data + i) = 0;
         }
-    }
-
-    nii_smooth->scl_slope = nii_input->scl_slope;
-
-    if (nii_input->scl_inter != 0) {
-        cout << " ########################################## " << endl;
-        cout << " #####   WARNING   WANRING   WANRING  ##### " << endl;
-        cout << " ## the NIFTI scale factor is asymmetric ## " << endl;
-        cout << " #####   WARNING   WANRING   WANRING  ##### " << endl;
-        cout << " ########################################## " << endl;
     }
 
     save_output_nifti(f_input, "smooth", nii_smooth, true);
