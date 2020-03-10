@@ -19,12 +19,10 @@ int show_help(void) {
     return 0;
 }
 
-int main(int argc, char * argv[]) {
-    char *f_in = NULL, *f_out = NULL;
-    int ac, do_outputnaming = 0;
-    if (argc < 3) {  // Typing '-help' is sooo much work
-        return show_help();
-    }
+int main(int argc, char *argv[]) {
+    char *fin = NULL, *fout = NULL;
+    int ac;
+    if (argc < 3) return show_help();
 
     // Process user options
     for (ac = 1; ac < argc; ac++) {
@@ -35,7 +33,8 @@ int main(int argc, char * argv[]) {
                 fprintf(stderr, "** missing argument for -input\n");
                 return 1;
             }
-            f_in = argv[ac];  // Assign pointer, no string copy
+            fin = argv[ac];
+            fout = fin;
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -43,22 +42,22 @@ int main(int argc, char * argv[]) {
             }
             do_outputnaming = 1;
             cout << "  Writing output file with a different name." << endl;
-            f_out = argv[ac];
+            fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
         }
     }
 
-    if (!f_in) {
+    if (!fin) {
         fprintf(stderr, "** missing option '-input'\n");
         return 1;
     }
 
     // Read input dataset
-    nifti_image* nii = nifti_image_read(f_in, 1);
+    nifti_image *nii = nifti_image_read(fin, 1);
     if (!nii) {
-        fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", f_in);
+        fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin);
         return 2;
     }
 
@@ -66,17 +65,9 @@ int main(int argc, char * argv[]) {
     log_nifti_descriptives(nii);
 
     // Cast input data to float
-    nifti_image* nii_new = copy_nifti_as_float32(nii);
+    nifti_image *nii_new = copy_nifti_as_float32(nii);
+    save_output_nifti(fout, "", nii_new, true);
 
-    cout << "  Writing output... " << endl;
-    if (do_outputnaming) {
-        // Assign nifti_image fname/iname pair, based on output filename
-        // (request to 'check' image and 'set_byte_order' here)
-        if (nifti_set_filenames(nii_new, f_out, 1, 1)) {
-            return 1;
-        }
-    }
-    nifti_image_write(nii_new);
     cout << "  Finished." << endl;
     return 0;
 }
