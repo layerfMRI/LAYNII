@@ -331,7 +331,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    save_output_nifti(f_input, "smooth", nii_smooth, true);
+    save_output_nifti(f_input, "layer_smoothed", nii_smooth, true);
 
     cout << "  Finished." << endl;
     return 0;
