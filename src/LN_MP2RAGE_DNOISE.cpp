@@ -31,8 +31,7 @@ int show_help(void) {
 
 int main(int argc, char* argv[]) {
     float SIEMENS_f = 4095.0;  // uint12 range 0-4095
-    char* fout = NULL, *f_in1 = NULL, *f_in2 = NULL;
-    char* f_in3 = NULL;
+    char* fout = NULL, *fin1 = NULL, *fin2 = NULL, *fin3 = NULL;
     int ac, custom_output = 0;
     float beta = 0.2;
     if (argc < 3) return show_help();
@@ -47,25 +46,25 @@ int main(int argc, char* argv[]) {
                 return 1;
             }
             beta = atof(argv[ac]);
-            // cout << " I will do gaussian temporal smoothing " << endl;
         } else if (!strcmp(argv[ac], "-INV1")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -INV1\n");
                 return 1;
             }
-            f_in1 = argv[ac];
+            fin1 = argv[ac];
         } else if (!strcmp(argv[ac], "-INV2")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -INV2\n");
                 return 1;
             }
-            f_in2 = argv[ac];
+            fin2 = argv[ac];
         } else if (!strcmp(argv[ac], "-UNI")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -UNI\n");
                 return 1;
             }
-            f_in3 = argv[ac];
+            fin3 = argv[ac];
+            fout = fin3;
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -79,33 +78,33 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (!f_in1) {
+    if (!fin1) {
         fprintf(stderr, "** missing option '-INV1'\n");
         return 1;
     }
-    if (!f_in2) {
+    if (!fin2) {
         fprintf(stderr, "** missing option '-INV2'\n");
         return 1;
     }
-    if (!f_in3) {
+    if (!fin3) {
         fprintf(stderr, "** missing option '-UNI '\n");
         return 1;
     }
 
     // Read input dataset
-    nifti_image* nii1 = nifti_image_read(f_in1, 1);
+    nifti_image* nii1 = nifti_image_read(fin1, 1);
     if (!nii1) {
-        fprintf(stderr, "** failed to read NIfTI from '%s'\n", f_in1);
+        fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin1);
         return 2;
     }
-    nifti_image* nii2 = nifti_image_read(f_in2, 1);
+    nifti_image* nii2 = nifti_image_read(fin2, 1);
     if (!nii2) {
-        fprintf(stderr, "** failed to read NIfTI from '%s'\n", f_in2);
+        fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin2);
         return 2;
     }
-    nifti_image* nii3 = nifti_image_read(f_in3, 1);
+    nifti_image* nii3 = nifti_image_read(fin3, 1);
     if (!nii3) {
-        fprintf(stderr, "** failed to read NIfTI from '%s'\n", f_in3);
+        fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin3);
         return 2;
     }
 
@@ -190,31 +189,8 @@ int main(int argc, char* argv[]) {
         cout << " ########################################## " << endl;
     }
 
-    if (custom_output == 1) {
-        string outfilename = (string) (fout);
-        log_output(outfilename.c_str());
-        const char* fout_1 = outfilename.c_str();
-        if (nifti_set_filenames(nii_denoised, fout_1, 1, 1)) {
-            return 1;
-        }
-    } else {
-        string prefix = "denoised_";
-        string filename = (string) (f_in3);
-        string outfilename = prefix + filename;
-        log_output(outfilename.c_str());
-        if (nifti_set_filenames(nii_denoised, outfilename.c_str(), 1, 1)) {
-            return 1;
-        }
-    }
-    nifti_image_write(nii_denoised);
-
-    string prefix = "border_enhance_";
-    string filename = (string) (f_in3);
-    string outfilename = prefix + filename;
-    if (nifti_set_filenames(nii_phaseerr, outfilename.c_str(), 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(nii_phaseerr);
+    save_output_nifti(fout, "denoised", nii_denoised, true);
+    save_output_nifti(fout, "border_enhance", nii_phaseerr, true);
 
     cout << "  Finished." << endl;
     return 0;
