@@ -1,4 +1,7 @@
 
+// TODO(Faruk): Seems there might be an issue with the gaussian kernel's
+// symmetry and size corresponding to what is written in CLI
+
 
 #include "../dep/laynii_lib.h"
 
