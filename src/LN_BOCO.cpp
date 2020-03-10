@@ -34,9 +34,7 @@ int main(int argc, char * argv[]) {
     char* fin_1 = NULL, * fin_2 = NULL;
     int ac, shift = 0;
     int trialdur = 0;
-    if (argc < 2) {  // Typing '-help' is sooo much work
-        return show_help();
-    }
+    if (argc < 2) return show_help();
 
     // Process user options: 4 are valid presently
     for (ac = 1; ac < argc; ac++) {
@@ -106,14 +104,14 @@ int main(int argc, char * argv[]) {
 
     // ========================================================================
     // Fix datatype issues
-    nifti_image* nii_nulled = copy_nifti_as_float32(nii1);
-    float* nii_nulled_data = static_cast<float*>(nii_nulled->data);
-    nifti_image* nii_bold = copy_nifti_as_float32(nii2);
-    float* nii_bold_data = static_cast<float*>(nii_bold->data);
+    nifti_image *nii_nulled = copy_nifti_as_float32(nii1);
+    float *nii_nulled_data = static_cast<float*>(nii_nulled->data);
+    nifti_image *nii_bold = copy_nifti_as_float32(nii2);
+    float *nii_bold_data = static_cast<float*>(nii_bold->data);
 
     // Allocate new nifti
-    nifti_image* nii_boco_vaso = copy_nifti_as_float32(nii1);
-    float  *nii_boco_vaso_data = static_cast<float*>(nii_boco_vaso->data);
+    nifti_image *nii_boco_vaso = copy_nifti_as_float32(nii1);
+    float *nii_boco_vaso_data = static_cast<float*>(nii_boco_vaso->data);
 
     // ========================================================================
     // AVERAGE across Trials
@@ -178,18 +176,7 @@ int main(int argc, char * argv[]) {
                 *(nii_boco_vaso_data + i) = 2;
             }
         }
-
-        string prefix = "correlated_";
-        string filename_1 = (string) (fin_1);
-        string outfilename = prefix+filename_1;
-        log_output(outfilename.c_str());
-        // cout << "  Writing as = " << outfilename.c_str() << endl;
-
-        const char* fout_1 = outfilename.c_str();
-        if (nifti_set_filenames(correl_file, fout_1, 1, 1)) {
-            return 1;
-        }
-        nifti_image_write(correl_file);
+        save_output_nifti(fin_1, "correlated", correl_file, false);
     }
 
     // ========================================================================
@@ -218,22 +205,22 @@ int main(int argc, char * argv[]) {
         triav_B_file->data = calloc(triav_B_file->nvox, triav_B_file->nbyper);
         float* triav_B_file_data = static_cast<float*>(triav_B_file->data);
 
-        float AV_Nulled[trialdur];
-        float AV_BOLD[trialdur];
+        float AV_nulled[trialdur];
+        float AV_bold[trialdur];
 
         for (int j = 0; j != size_z * size_y * size_x; ++j) {
             for (int t = 0; t < trialdur; ++t) {
-                AV_Nulled[t] = 0;
-                AV_BOLD[t] = 0;
+                AV_nulled[t] = 0;
+                AV_bold[t] = 0;
             }
             for (int t = 0; t < trialdur * nr_trials; ++t) {
                 int m = t % trialdur;
-                AV_Nulled[m] += (*(nii_nulled_data + nxyz * t + j)) / nr_trials;
-                AV_BOLD[m] += (*(nii_bold_data + nxyz * t + j)) / nr_trials;
+                AV_nulled[m] += (*(nii_nulled_data + nxyz * t + j)) / nr_trials;
+                AV_bold[m] += (*(nii_bold_data + nxyz * t + j)) / nr_trials;
             }
             for (int t = 0; t < trialdur; ++t) {
-                *(triav_file_data + nxyz * t + j) = AV_Nulled[t] / AV_BOLD[t];
-                *(triav_B_file_data + nxyz * t + j) = AV_BOLD[t];
+                *(triav_file_data + nxyz * t + j) = AV_nulled[t] / AV_bold[t];
+                *(triav_B_file_data + nxyz * t + j) = AV_bold[t];
             }
         }
 
@@ -247,25 +234,10 @@ int main(int argc, char * argv[]) {
             }
         }
 
-        const char* fout_trial = "VASO_trialAV_LN.nii";
-        if (nifti_set_filenames(triav_file, fout_trial, 1, 1)) {
-            return 1;
-        }
-        nifti_image_write(triav_file);
-
-        const char* fout_trial_BOLD = "BOLD_trialAV_LN.nii";
-        if (nifti_set_filenames(triav_B_file, fout_trial_BOLD, 1, 1)) {
-            return 1;
-        }
-        nifti_image_write(triav_B_file);
+        save_output_nifti(fin_2, "trialAV_VASO", triav_file, false);
+        save_output_nifti(fin_2, "trialAV", triav_B_file, false);
     }
-
-    const char* fout_5 = "VASO_LN.nii";
-    log_output(fout_5);
-    if (nifti_set_filenames(nii_boco_vaso, fout_5, 1, 1)) {
-        return 1;
-    }
-    nifti_image_write(nii_boco_vaso);
+    save_output_nifti(fin_2, "VASO", nii_boco_vaso, true);
 
     cout << "  Finished." << endl;
     return 0;
