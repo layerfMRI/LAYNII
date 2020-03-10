@@ -140,8 +140,8 @@ int main(int argc, char*  argv[]) {
 
     nifti_image* hotspots = copy_nifti_as_int32(nii_rim);
     int32_t* hotspots_data = static_cast<int32_t*>(hotspots->data);
-    nifti_image* curvature = copy_nifti_as_int32(nii_rim);
-    int32_t* curvature_data = static_cast<int32_t*>(curvature->data);
+    nifti_image* curvature = copy_nifti_as_float32(nii_rim);
+    float* curvature_data = static_cast<float*>(curvature->data);
 
     // Setting zero
     for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -1040,10 +1040,13 @@ int main(int argc, char*  argv[]) {
     cout << "  Start doing columns..." << endl;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
-            // Approximate curvature measurement
+            // Approximate curvature measurement per column/streamline
             j = *(innerGM_id_data + i);
-            k = *(outerGM_id_data + i);
+            k = *(outerGM_id_data + i);  // These values are negative
             *(curvature_data + i) = *(hotspots_data + j) + *(hotspots_data + k);
+            *(curvature_data + i) /=
+                *(hotspots_data + j) - *(hotspots_data + k);  // normalize
+
             // Re-assign mid-GM id based on curvature
             if (*(curvature_data + i) >= 0) {  // Gyrus
                 *(nii_columns_data + i) = j;
