@@ -1054,18 +1054,83 @@ int main(int argc, char*  argv[]) {
                 *(nii_columns_data + i) = k;
             }
 
-            // TODO(Faruk): Think about re-id midGM as average of id-d voxels.
-            // This would be useful for later column downsampling
-            // TODO(Faruk): Mean coordinate of columns might be used in
-            // equivolume layering
+            // MiddleGM ids are used to find centroids in the next step
             if (*(middleGM_data + i) == 1) {
                 *(middleGM_id_data + i) = *(nii_columns_data + i);
             }
         }
     }
 
+    // ========================================================================
+    // Fid MidGM centroids
+    // ========================================================================
+    nifti_image* coords_x = copy_nifti_as_float32(nii_rim);
+    float* coords_x_data = static_cast<float*>(coords_x->data);
+    nifti_image* coords_y = copy_nifti_as_float32(nii_rim);
+    float* coords_y_data = static_cast<float*>(coords_y->data);
+    nifti_image* coords_z = copy_nifti_as_float32(nii_rim);
+    float* coords_z_data = static_cast<float*>(coords_z->data);
+    nifti_image* coords_count = copy_nifti_as_int32(nii_rim);
+    int32_t* coords_count_data = static_cast<int32_t*>(coords_count->data);
+    nifti_image* centroid = copy_nifti_as_int32(nii_rim);
+    int32_t* centroid_data = static_cast<int32_t*>(centroid->data);
+
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        *(coords_x_data + i) = 0;
+        *(coords_y_data + i) = 0;
+        *(coords_z_data + i) = 0;
+        *(coords_count_data + i) = 0;
+        *(centroid_data + i) = 0;
+    }
+
+    // Sum x, y, z coordinates of same-column middle GM voxels
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(middleGM_data + i) == 1) {
+            tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
+            j = *(middleGM_id_data + i);
+            *(coords_x_data + j) += x;
+            *(coords_y_data + j) += y;
+            *(coords_z_data + j) += z;
+            *(coords_count_data + j) += 1;
+        }
+    }
+    // Divide summed coordinates to find centroid
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(coords_count_data + i) != 0) {
+            // Assign centroid id in place of inner/outer border voxel id
+            x = round(*(coords_x_data + i) / *(coords_count_data + i));
+            y = round(*(coords_y_data + i) / *(coords_count_data + i));
+            z = round(*(coords_z_data + i) / *(coords_count_data + i));
+
+            // ----------------------------------------------------------------
+            // Downsample midGM coordinate if wanted (makes columns larger)
+            if (column_size > 1) {
+                x = floor(x / column_size) * column_size;
+                y = floor(y / column_size) * column_size;
+                z = floor(z / column_size) * column_size;
+            }
+            // ----------------------------------------------------------------
+
+            j = sub2ind_3D(x, y, z, size_x, size_y);
+            *(centroid_data + i) = j;
+        }
+    }
+    // Map new centroid ids to midGM voxels
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) == 3) {
+            j = *(nii_columns_data + i);
+            *(nii_columns_data + i) = *(centroid_data + j);
+            if (*(middleGM_data + i) == 1) {  // Update middle GM ids
+                *(middleGM_data + i) = *(centroid_data + j);
+            }
+        }
+    }
+
+    // ========================================================================
+    // TODO(Faruk): Mean coordinate of columns might be used in
+    // equivolume layering
     save_output_nifti(fin, "curvature", curvature, false);
-    save_output_nifti(fin, "middleGM_id", middleGM_id, false);
+    save_output_nifti(fin, "middleGM_id", middleGM, false);
     save_output_nifti(fin, "columns", nii_columns, false);
 
     cout << "  Finished." << endl;
