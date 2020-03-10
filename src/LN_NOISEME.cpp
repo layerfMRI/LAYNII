@@ -1,4 +1,6 @@
 
+// TODO(Faruk): Seems that variance flag in CLI is actually used as stdev.
+// Need to ask Renzo about this.
 
 #include "../dep/laynii_lib.h"
 
@@ -22,10 +24,9 @@ int show_help(void) {
     "    LN_NOISEME -input input_example.nii -variance 0.4445 \n"
     "\n"
     "Options:\n"
-    "    -help               : Show this help.\n"
-    "    -disp_float_example : Show some voxel's data.\n"
-    "    -input              : Specify input dataset.\n"
-    "    -variance value     : Set a cutof value.\n"
+    "    -help       : Show this help.\n"
+    "    -input      : Specify input dataset.\n"
+    "    -variance   : Noise variance.\n"
     "\n");
     return 0;
 }
@@ -34,11 +35,10 @@ int main(int argc, char * argv[]) {
     char *fin = NULL;
     int ac;
     float variance_val;
-    if (argc < 2) {  // Typing '-help' is sooo much work
-        return show_help();
-    }
 
     // Process user options
+    if (argc < 2) return show_help();
+
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
@@ -54,7 +54,6 @@ int main(int argc, char * argv[]) {
                 return 1;
             }
             variance_val = atof(argv[ac]);
-            cout << "  Varience chosen to " << variance_val << endl;
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -73,6 +72,7 @@ int main(int argc, char * argv[]) {
 
     log_welcome("LN_NOISEME");
     log_nifti_descriptives(nii_input);
+    cout << "  Varience chosen to " << variance_val << endl;
 
     // ========================================================================
     // Allocating new nifti
@@ -86,6 +86,7 @@ int main(int argc, char * argv[]) {
             adjusted_rand_numbers(0, variance_val,
                                   arb_pdf_num(N_rand, pFunc, lower, upper));
     }
+
     save_output_nifti(fin, "noised", nii_new, true);
 
     cout << "  Finished." << endl;
@@ -107,15 +108,15 @@ double_t arb_pdf_num(int N_rand, double (*pFunc)(double), double_t lower,
     int i;
 
     for (i = 0; integral < rand_num; i++) {
-        integral += pFunc(lower + (double_t) i *binwidth)*binwidth;
+        integral += pFunc(lower + (double_t)i * binwidth) * binwidth;
 
-        if ((lower + (double_t) i*binwidth) > upper) {
+        if ((lower + (double_t)i * binwidth) > upper) {
             cout << "  Upper limit, maybe there should be adjusted limit "
                  << i << endl;
             return lower + (double_t) i *binwidth;
         }
     }
-    return lower + (double_t) i *binwidth;
+    return lower + (double_t)i * binwidth;
 }
 
 double adjusted_rand_numbers(double mean, double stdev, double value) {
