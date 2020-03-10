@@ -1064,6 +1064,8 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Fid MidGM centroids
     // ========================================================================
+    // NOTE(Faruk): I am a bit sluggish with memory usage here. Might optimize
+    // later by switching nifti images to vectors.
     nifti_image* coords_x = copy_nifti_as_float32(nii_rim);
     float* coords_x_data = static_cast<float*>(coords_x->data);
     nifti_image* coords_y = copy_nifti_as_float32(nii_rim);
@@ -1115,7 +1117,7 @@ int main(int argc, char*  argv[]) {
             *(centroid_data + i) = j;
         }
     }
-    // Map new centroid ids to midGM voxels
+    // Map new centroid IDs to columns/streamlines
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
             j = *(nii_columns_data + i);
@@ -1123,6 +1125,15 @@ int main(int argc, char*  argv[]) {
             if (*(middleGM_data + i) == 1) {  // Update middle GM ids
                 *(middleGM_data + i) = *(centroid_data + j);
             }
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    // Update curvature along column/streamline based on midGM curvature
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) == 3) {
+            j = *(nii_columns_data + i);
+            *(curvature_data + i) = *(curvature_data + j);
         }
     }
 
