@@ -40,8 +40,6 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "** missing argument for -output\n");
                 return 2;
             }
-            do_outputnaming = 1;
-            cout << "  Writing output file with a different name." << endl;
             fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
