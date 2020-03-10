@@ -189,21 +189,21 @@ int main(int argc, char * argv[]) {
 
         int nr_trials = size_t/trialdur;
         // Trial average file
-        nifti_image* triav_file = nifti_copy_nim_info(nii_nulled);
-        triav_file->nt = trialdur;
-        triav_file->nvox = nii_nulled->nvox / size_t * trialdur;
-        triav_file->datatype = NIFTI_TYPE_FLOAT32;
-        triav_file->nbyper = sizeof(float);
-        triav_file->data = calloc(triav_file->nvox, triav_file->nbyper);
-        float* triav_file_data = static_cast<float*>(triav_file->data);
+        nifti_image *nii_triavg = nifti_copy_nim_info(nii_nulled);
+        nii_triavg->nt = trialdur;
+        nii_triavg->nvox = nii_nulled->nvox / size_t * trialdur;
+        nii_triavg->datatype = NIFTI_TYPE_FLOAT32;
+        nii_triavg->nbyper = sizeof(float);
+        nii_triavg->data = calloc(nii_triavg->nvox, nii_triavg->nbyper);
+        float *nii_triavg_data = static_cast<float*>(nii_triavg->data);
 
-        nifti_image* triav_B_file = nifti_copy_nim_info(nii_nulled);
-        triav_B_file->nt = trialdur;
-        triav_B_file->nvox = nii_nulled->nvox / size_t * trialdur;
-        triav_B_file->datatype = NIFTI_TYPE_FLOAT32;
-        triav_B_file->nbyper = sizeof(float);
-        triav_B_file->data = calloc(triav_B_file->nvox, triav_B_file->nbyper);
-        float* triav_B_file_data = static_cast<float*>(triav_B_file->data);
+        nifti_image *nii_triavg_B = nifti_copy_nim_info(nii_nulled);
+        nii_triavg_B->nt = trialdur;
+        nii_triavg_B->nvox = nii_nulled->nvox / size_t * trialdur;
+        nii_triavg_B->datatype = NIFTI_TYPE_FLOAT32;
+        nii_triavg_B->nbyper = sizeof(float);
+        nii_triavg_B->data = calloc(nii_triavg_B->nvox, nii_triavg_B->nbyper);
+        float *nii_triavg_B_data = static_cast<float*>(nii_triavg_B->data);
 
         float AV_nulled[trialdur];
         float AV_bold[trialdur];
@@ -219,23 +219,23 @@ int main(int argc, char * argv[]) {
                 AV_bold[m] += (*(nii_bold_data + nxyz * t + j)) / nr_trials;
             }
             for (int t = 0; t < trialdur; ++t) {
-                *(triav_file_data + nxyz * t + j) = AV_nulled[t] / AV_bold[t];
-                *(triav_B_file_data + nxyz * t + j) = AV_bold[t];
+                *(nii_triavg_data + nxyz * t + j) = AV_nulled[t] / AV_bold[t];
+                *(nii_triavg_B_data + nxyz * t + j) = AV_bold[t];
             }
         }
 
         // Clean VASO values that are unrealistic
         for (int i = 0; i != nr_voxels; ++i) {
-            if (*(triav_file_data + i) <= 0) {
-                *(triav_file_data + i) = 0;
+            if (*(nii_triavg_data + i) <= 0) {
+                *(nii_triavg_data + i) = 0;
             }
-            if (*(triav_file_data + i) >= 2) {
-                *(triav_file_data + i) = 2;
+            if (*(nii_triavg_data + i) >= 2) {
+                *(nii_triavg_data + i) = 2;
             }
         }
 
-        save_output_nifti(fin_2, "trialAV_VASO", triav_file, false);
-        save_output_nifti(fin_2, "trialAV", triav_B_file, false);
+        save_output_nifti(fin_2, "trialAV_VASO", nii_triavg, false);
+        save_output_nifti(fin_2, "trialAV", nii_triavg_B, false);
     }
     save_output_nifti(fin_2, "VASO", nii_boco_vaso, true);
 
