@@ -1080,7 +1080,7 @@ int main(int argc, char*  argv[]) {
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(midGM_data + i) == 1) {
             tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
-            j = *(midGM_id_data + i);
+            j = *(midGM_id_data + i);  // used to determine storage voxel
             *(coords_x_data + j) += x;
             *(coords_y_data + j) += y;
             *(coords_z_data + j) += z;
@@ -1094,28 +1094,23 @@ int main(int argc, char*  argv[]) {
             x = round(*(coords_x_data + i) / *(coords_count_data + i));
             y = round(*(coords_y_data + i) / *(coords_count_data + i));
             z = round(*(coords_z_data + i) / *(coords_count_data + i));
-
-            // ----------------------------------------------------------------
-            // Downsample midGM coordinate if wanted (makes columns larger)
-            if (column_size > 1) {
-                x = floor(x / column_size) * column_size;
-                y = floor(y / column_size) * column_size;
-                z = floor(z / column_size) * column_size;
-            }
-            // ----------------------------------------------------------------
-
             j = sub2ind_3D(x, y, z, size_x, size_y);
             *(centroid_data + i) = j;
         }
     }
-    // Map new centroid IDs to MidGM ids
+    // Map new centroid IDs to columns/streamlines
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(midGM_data + i) == 1) {
+        if (*(nii_rim_data + i) == 3) {
             j = *(nii_columns_data + i);
-            *(midGM_id_data + i) = *(centroid_data + j);
+            *(nii_columns_data + i) = *(centroid_data + j);
+
+            if (*(midGM_data + i) == 1) {  // Update Mid GM id
+                *(midGM_id_data + i) = *(centroid_data + j);
+            }
         }
     }
     save_output_nifti(fin, "midGM_id", midGM_id, false);
+    save_output_nifti(fin, "columns", nii_columns, false);
 
     // ========================================================================
     // Find column centroids
@@ -1130,9 +1125,9 @@ int main(int argc, char*  argv[]) {
 
     // Sum x, y, z coordinates of same-column voxels
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_columns_data + i) == 1) {
+        if (*(nii_rim_data + i) == 3) {
             tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
-            j = *(midGM_id_data + i);
+            j = *(nii_columns_data + i);  // used to determine storage voxel
             *(coords_x_data + j) += x;
             *(coords_y_data + j) += y;
             *(coords_z_data + j) += z;
@@ -1146,16 +1141,6 @@ int main(int argc, char*  argv[]) {
             x = round(*(coords_x_data + i) / *(coords_count_data + i));
             y = round(*(coords_y_data + i) / *(coords_count_data + i));
             z = round(*(coords_z_data + i) / *(coords_count_data + i));
-
-            // ----------------------------------------------------------------
-            // Downsample midGM coordinate if wanted (makes columns larger)
-            if (column_size > 1) {
-                x = floor(x / column_size) * column_size;
-                y = floor(y / column_size) * column_size;
-                z = floor(z / column_size) * column_size;
-            }
-            // ----------------------------------------------------------------
-
             j = sub2ind_3D(x, y, z, size_x, size_y);
             *(centroid_data + i) = j;
         }
@@ -1167,8 +1152,7 @@ int main(int argc, char*  argv[]) {
             *(nii_columns_data + i) = *(centroid_data + j);
         }
     }
-    save_output_nifti(fin, "columns", nii_columns, false);
-
+    save_output_nifti(fin, "columns2", nii_columns, false);
 
     // ========================================================================
     // Update curvature along column/streamline based on midGM curvature
