@@ -1093,9 +1093,9 @@ int main(int argc, char*  argv[]) {
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(coords_count_data + i) != 0) {
             // Assign centroid id in place of inner/outer border voxel id
-            x = round(*(coords_x_data + i) / *(coords_count_data + i));
-            y = round(*(coords_y_data + i) / *(coords_count_data + i));
-            z = round(*(coords_z_data + i) / *(coords_count_data + i));
+            x = floor(*(coords_x_data + i) / *(coords_count_data + i));
+            y = floor(*(coords_y_data + i) / *(coords_count_data + i));
+            z = floor(*(coords_z_data + i) / *(coords_count_data + i));
             j = sub2ind_3D(x, y, z, size_x, size_y);
             *(centroid_data + i) = j;
         }
@@ -1143,9 +1143,9 @@ int main(int argc, char*  argv[]) {
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(coords_count_data + i) != 0) {
             // Assign centroid id in place of inner/outer border voxel id
-            x = round(*(coords_x_data + i) / *(coords_count_data + i));
-            y = round(*(coords_y_data + i) / *(coords_count_data + i));
-            z = round(*(coords_z_data + i) / *(coords_count_data + i));
+            x = floor(*(coords_x_data + i) / *(coords_count_data + i));
+            y = floor(*(coords_y_data + i) / *(coords_count_data + i));
+            z = floor(*(coords_z_data + i) / *(coords_count_data + i));
             j = sub2ind_3D(x, y, z, size_x, size_y);
             *(centroid_data + i) = j;
         }
