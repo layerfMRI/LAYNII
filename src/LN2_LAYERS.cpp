@@ -1067,6 +1067,8 @@ int main(int argc, char*  argv[]) {
     int32_t* coords_count_data = static_cast<int32_t*>(coords_count->data);
     nifti_image* centroid = copy_nifti_as_int32(nii_rim);
     int32_t* centroid_data = static_cast<int32_t*>(centroid->data);
+    nifti_image* midGM_centroid_id = copy_nifti_as_int32(nii_columns);
+    int32_t* midGM_centroid_id_data = static_cast<int32_t*>(midGM_centroid_id->data);
 
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         *(coords_x_data + i) = 0;
@@ -1102,7 +1104,7 @@ int main(int argc, char*  argv[]) {
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
             j = *(nii_columns_data + i);
-            *(nii_columns_data + i) = *(centroid_data + j);
+            *(midGM_centroid_id_data + i) = *(centroid_data + j);
 
             if (*(midGM_data + i) == 1) {  // Update Mid GM id
                 *(midGM_id_data + i) = *(centroid_data + j);
@@ -1110,11 +1112,14 @@ int main(int argc, char*  argv[]) {
         }
     }
     save_output_nifti(fin, "midGM_id", midGM_id, false);
-    save_output_nifti(fin, "columns", nii_columns, false);
+    save_output_nifti(fin, "columns", midGM_centroid_id, false);
 
     // ========================================================================
     // Find column centroids
     // ========================================================================
+    nifti_image* column_centroid_id = copy_nifti_as_int32(nii_columns);
+    int32_t* column_centroid_id_data = static_cast<int32_t*>(column_centroid_id->data);
+
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         *(coords_x_data + i) = 0;
         *(coords_y_data + i) = 0;
@@ -1149,10 +1154,27 @@ int main(int argc, char*  argv[]) {
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
             j = *(nii_columns_data + i);
-            *(nii_columns_data + i) = *(centroid_data + j);
+            *(column_centroid_id_data + i) = *(centroid_data + j);
         }
     }
-    save_output_nifti(fin, "columns2", nii_columns, false);
+    save_output_nifti(fin, "columns2", column_centroid_id, false);
+
+    // ------------------------------------------------------------------------
+    // Debug centroids
+    nifti_image *debug = copy_nifti_as_int32(nii_rim);
+    int32_t *debug_data = static_cast<int32_t*>(debug->data);
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) == 3) {
+            j = *(midGM_centroid_id_data + i);
+            *(debug_data + j) = 1;
+            j = *(column_centroid_id_data + i);
+            *(debug_data + j) = 2;
+        } else {
+            *(debug_data + i) = 0;
+        }
+    }
+    save_output_nifti(fin, "centroid_debug", debug, false);
+    // ------------------------------------------------------------------------
 
     // ========================================================================
     // Update curvature along column/streamline based on midGM curvature
