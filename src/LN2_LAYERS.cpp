@@ -25,10 +25,11 @@ int show_help(void) {
 }
 
 int main(int argc, char*  argv[]) {
-    nifti_image*nii1 = NULL;
+    nifti_image *nii1 = NULL;
     char* fin = NULL;
     uint16_t ac, nr_layers = 3;
     float column_size = 1;
+    bool debug_mode = false;
     if (argc < 2) {
         return show_help();   // typing '-help' is sooo much work
     }
@@ -55,6 +56,8 @@ int main(int argc, char*  argv[]) {
             } else {
                 column_size = atof(argv[ac]);
             }
+        } else if (!strcmp(argv[ac], "-debug")) {
+            debug_mode = true;
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -531,9 +534,11 @@ int main(int argc, char*  argv[]) {
         }
         grow_step += 1;
     }
-    save_output_nifti(fin, "innerGM_step", innerGM_step, false);
-    save_output_nifti(fin, "innerGM_dist", innerGM_dist, false);
-    save_output_nifti(fin, "innerGM_id", innerGM_id, false);
+    if (debug_mode) {
+        save_output_nifti(fin, "innerGM_step", innerGM_step, false);
+        save_output_nifti(fin, "innerGM_dist", innerGM_dist, false);
+        save_output_nifti(fin, "innerGM_id", innerGM_id, false);
+    }
 
     // ========================================================================
     // Grow from CSF
@@ -912,9 +917,11 @@ int main(int argc, char*  argv[]) {
         }
         grow_step += 1;
     }
-    save_output_nifti(fin, "outerGM_step", outerGM_step, false);
-    save_output_nifti(fin, "outerGM_dist", outerGM_dist, false);
-    save_output_nifti(fin, "outerGM_id", outerGM_id, false);
+    if (debug_mode) {
+        save_output_nifti(fin, "outerGM_step", outerGM_step, false);
+        save_output_nifti(fin, "outerGM_dist", outerGM_dist, false);
+        save_output_nifti(fin, "outerGM_id", outerGM_id, false);
+    }
 
     // ========================================================================
     // Layers
@@ -965,9 +972,11 @@ int main(int argc, char*  argv[]) {
     }
     save_output_nifti(fin, "layers_equidist", nii_layers);
     save_output_nifti(fin, "thickness", thickness, false);
-    save_output_nifti(fin, "hotspots", hotspots, false);
-    save_output_nifti(fin, "disterror", err_dist, false);
-    save_output_nifti(fin, "normdistdiff_equidist", normdistdiff, false);
+    if (debug_mode) {
+        save_output_nifti(fin, "hotspots", hotspots, false);
+        save_output_nifti(fin, "disterror", err_dist, false);
+        save_output_nifti(fin, "normdistdiff_equidist", normdistdiff, false);
+    }
 
     // ========================================================================
     // Middle gray matter
@@ -1026,7 +1035,7 @@ int main(int argc, char*  argv[]) {
             }
         }
     }
-    save_output_nifti(fin, "midGM", midGM, false);
+    save_output_nifti(fin, "midGM_equidist", midGM, false);
 
     // ========================================================================
     // Columns
@@ -1114,8 +1123,10 @@ int main(int argc, char*  argv[]) {
             }
         }
     }
-    save_output_nifti(fin, "midGM_id", midGM_id, false);
-    save_output_nifti(fin, "columns", midGM_centroid_id, false);
+    if (debug_mode) {
+        save_output_nifti(fin, "midGM_equidist_id", midGM_id, false);
+        save_output_nifti(fin, "columns", midGM_centroid_id, false);
+    }
 
     // ========================================================================
     // Update curvature along column/streamline based on midGM curvature
@@ -1175,19 +1186,21 @@ int main(int argc, char*  argv[]) {
 
     // ------------------------------------------------------------------------
     // Debug centroids
-    nifti_image *debug = copy_nifti_as_int32(nii_rim);
-    int32_t *debug_data = static_cast<int32_t*>(debug->data);
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_rim_data + i) == 3) {
-            j = *(midGM_centroid_id_data + i);
-            *(debug_data + j) = 1;
-            j = *(column_centroid_id_data + i);
-            *(debug_data + j) = 2;
-        } else {
-            *(debug_data + i) = 0;
+    if (debug_mode) {
+        nifti_image *debug = copy_nifti_as_int32(nii_rim);
+        int32_t *debug_data = static_cast<int32_t*>(debug->data);
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(nii_rim_data + i) == 3) {
+                j = *(midGM_centroid_id_data + i);
+                *(debug_data + j) = 1;
+                j = *(column_centroid_id_data + i);
+                *(debug_data + j) = 2;
+            } else {
+                *(debug_data + i) = 0;
+            }
         }
+        save_output_nifti(fin, "centroid_debug", debug, false);
     }
-    save_output_nifti(fin, "centroid_debug", debug, false);
     // ------------------------------------------------------------------------
 
     // ========================================================================
