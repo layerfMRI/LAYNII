@@ -1190,52 +1190,120 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Equi-volume
     // ========================================================================
-    // for (uint32_t i = 0; i != nr_voxels; ++i) {
-    //     if (*(nii_rim_data + i) == 3) {
-    //         // Normalize distance
-    //         float dist1 = *(innerGM_dist_data + i);
-    //         float dist2 = *(outerGM_dist_data + i);
-    //         float total_dist = (dist1 + dist2);
-    //         *(thickness_data + i) = total_dist;
-    //         *(innerGM_dist_data + i) /= total_dist;
-    //         *(outerGM_dist_data + i) /= total_dist;
-    //     }
-    // }
-    //
-    // for (uint32_t i = 0; i != nr_voxels; ++i) {
-    //     if (*(nii_rim_data + i) == 3) {
-    //         j = *(nii_columns_data + i);
-    //         k = *(innerGM_id_data + j);  // Inner GM anchor
-    //         float m = *(hotspots_data + k);
-    //         k = *(outerGM_id_data + j);  // Outer GM anchor
-    //         float n = abs(*(hotspots_data + k));
-    //
-    //         // Weights
-    //         float a = m / (m + n);
-    //         float b = n / (m + n);
-    //
-    //         a /= 0.25;
-    //         b /= 0.25;
-    //
-    //         // Normalize distance (completely discrete)
-    //         float dist1 = pow(*(innerGM_dist_data + i), a);
-    //         float dist2 = pow(*(outerGM_dist_data + i), b);
-    //         float norm_dist = dist1 / (dist1 + dist2);
-    //
-    //         // Difference of normalized distances
-    //         *(normdistdiff_data + i) = (dist1 - dist2) / (dist1 + dist2);
-    //
-    //         // Cast distances to integers as number of desired layers
-    //         if (norm_dist != 0) {
-    //             *(nii_layers_data + i) = ceil(nr_layers * norm_dist);
-    //         } else {
-    //             *(nii_layers_data + i) = 1;
-    //         }
-    //     }
-    // }
-    // save_output_nifti(fin, "thickness", thickness, false);
-    // save_output_nifti(fin, "layers_equivol", nii_layers);
-    // save_output_nifti(fin, "normdistdiff_equivol", normdistdiff, false);
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) == 3) {
+            // Normalize distance
+            float dist1 = *(innerGM_dist_data + i);
+            float dist2 = *(outerGM_dist_data + i);
+            float total_dist = (dist1 + dist2);
+            *(thickness_data + i) = total_dist;
+            *(innerGM_dist_data + i) /= total_dist;
+            *(outerGM_dist_data + i) /= total_dist;
+        }
+    }
+
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) == 3) {
+            j = *(midGM_centroid_id_data + i);
+            k = *(column_centroid_id_data + j);
+
+            float j1 = *(innerGM_dist_data + j);
+            float j2 = *(outerGM_dist_data + j);
+
+            float k1 = *(innerGM_dist_data + k);
+            float k2 = *(outerGM_dist_data + k);
+
+            float a = j1 / k1;
+            float b = j2 / k2;
+
+            // float x1, y1, z1, x2, y2, z2;
+            // tie(x1, y1, z1) = ind2sub_3D(j, size_x, size_y);
+            // tie(x2, y2, z2) = ind2sub_3D(k, size_x, size_y);
+            // float d = dist(x1, y1, z1, x2, y2, z2, dX, dY, dZ);
+
+            // Normalize distance (completely discrete)
+            float dist1 = *(innerGM_dist_data + i) * exp(a);
+            float dist2 = *(outerGM_dist_data + i) * exp(b);
+            float norm_dist = dist1 / (dist1 + dist2);
+
+            // Difference of normalized distances
+            *(normdistdiff_data + i) = (dist1 - dist2) / (dist1 + dist2);
+
+            // Cast distances to integers as number of desired layers
+            if (norm_dist != 0) {
+                *(nii_layers_data + i) = ceil(nr_layers * norm_dist);
+            } else {
+                *(nii_layers_data + i) = 1;
+            }
+        }
+    }
+    save_output_nifti(fin, "thickness", thickness, false);
+    save_output_nifti(fin, "layers_equivol", nii_layers);
+    save_output_nifti(fin, "normdistdiff_equivol", normdistdiff, false);
+
+    // ========================================================================
+    // Middle gray matter for equi-volume
+    // ========================================================================
+    cout << "  Start finding middle gray matter..." << endl;
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        *(midGM_data + i) = 0;
+        *(midGM_id_data + i) = 0;
+    }
+
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) == 3) {
+            // Check sign changes in normalized distance differences between
+            // neighbouring voxels on a column path (a.k.a. streamline)
+            if (*(normdistdiff_data + i) == 0) {
+                *(midGM_data + i) = 1;
+                *(midGM_id_data + i) = i;
+            } else {
+                float m = *(normdistdiff_data + i);
+                float n;
+
+                // Inner neighbour
+                j = *(innerGM_prevstep_id_data + i);
+                if (*(nii_rim_data + j) == 3) {
+                    n = *(normdistdiff_data + j);
+                    if (signbit(m) - signbit(n) != 0) {
+                        if (abs(m) < abs(n)) {
+                            *(midGM_data + i) = 1;
+                            *(midGM_id_data + i) = i;
+                        } else if (abs(m) > abs(n)) {  // Closer to prev. step
+                            *(midGM_data + j) = 1;
+                            *(midGM_id_data + j) = j;
+                        } else {  // Equal +/- normalized distance
+                            *(midGM_data + i) = 1;
+                            *(midGM_id_data + i) = i;
+                            *(midGM_data + j) = 1;
+                            *(midGM_id_data + j) = i;  // On purpose
+                        }
+                    }
+                }
+
+                // Outer neighbour
+                j = *(outerGM_prevstep_id_data + i);
+                if (*(nii_rim_data + j) == 3) {
+                    n = *(normdistdiff_data + j);
+                    if (signbit(m) - signbit(n) != 0) {
+                        if (abs(m) < abs(n)) {
+                            *(midGM_data + i) = 1;
+                            *(midGM_id_data + i) = i;
+                        } else if (abs(m) > abs(n)) {  // Closer to prev. step
+                            *(midGM_data + j) = 1;
+                            *(midGM_id_data + j) = j;
+                        } else {  // Equal +/- normalized distance
+                            *(midGM_data + i) = 1;
+                            *(midGM_id_data + i) = i;
+                            *(midGM_data + j) = 1;
+                            *(midGM_id_data + j) = i;  // On purpose
+                        }
+                    }
+                }
+            }
+        }
+    }
+    save_output_nifti(fin, "midGM_equivol", midGM, false);
 
     // ========================================================================
     // TODO(Faruk): Might use bspline weights to smooth curvature maps a bit.
