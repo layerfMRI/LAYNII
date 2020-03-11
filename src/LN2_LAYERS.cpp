@@ -102,63 +102,54 @@ int main(int argc, char*  argv[]) {
     int32_t* nii_rim_data = static_cast<int32_t*>(nii_rim->data);
 
     // Prepare required nifti images
-    nifti_image* innerGM_step = copy_nifti_as_float32(nii_rim);
-    float* innerGM_step_data = static_cast<float*>(innerGM_step->data);
-    nifti_image* innerGM_dist = copy_nifti_as_float32(nii_rim);
-    float* innerGM_dist_data = static_cast<float*>(innerGM_dist->data);
-
-    nifti_image* outerGM_step = copy_nifti_as_float32(nii_rim);
-    float* outerGM_step_data = static_cast<float*>(outerGM_step->data);
-    nifti_image* outerGM_dist = copy_nifti_as_float32(nii_rim);
-    float* outerGM_dist_data = static_cast<float*>(outerGM_dist->data);
-
-    nifti_image* err_dist = copy_nifti_as_float32(nii_rim);
-    float* err_dist_data = static_cast<float*>(err_dist->data);
-
-    nifti_image* innerGM_id = copy_nifti_as_int32(nii_rim);
-    int32_t* innerGM_id_data = static_cast<int32_t*>(innerGM_id->data);
-    nifti_image* outerGM_id = copy_nifti_as_int32(nii_rim);
-    int32_t* outerGM_id_data = static_cast<int32_t*>(outerGM_id->data);
-
-    nifti_image* innerGM_prevstep_id = copy_nifti_as_int32(nii_rim);
-    int32_t* innerGM_prevstep_id_data = static_cast<int32_t*>(innerGM_prevstep_id->data);
-    nifti_image* outerGM_prevstep_id = copy_nifti_as_int32(nii_rim);
-    int32_t* outerGM_prevstep_id_data = static_cast<int32_t*>(outerGM_prevstep_id->data);
-    nifti_image* normdistdiff = copy_nifti_as_float32(nii_rim);
-    float* normdistdiff_data = static_cast<float*>(normdistdiff->data);
-
     nifti_image* nii_layers  = copy_nifti_as_int32(nii_rim);
     int32_t* nii_layers_data = static_cast<int32_t*>(nii_layers->data);
-
-    nifti_image* nii_columns = copy_nifti_as_int32(nii_rim);
-    int32_t* nii_columns_data = static_cast<int32_t*>(nii_columns->data);
-
-    nifti_image* middleGM = copy_nifti_as_int32(nii_rim);
-    int32_t* middleGM_data = static_cast<int32_t*>(middleGM->data);
-    nifti_image* middleGM_id = copy_nifti_as_int32(nii_rim);
-    int32_t* middleGM_id_data = static_cast<int32_t*>(middleGM_id->data);
-
-    nifti_image* hotspots = copy_nifti_as_int32(nii_rim);
-    int32_t* hotspots_data = static_cast<int32_t*>(hotspots->data);
-    nifti_image* curvature = copy_nifti_as_float32(nii_rim);
-    float* curvature_data = static_cast<float*>(curvature->data);
-
     // Setting zero
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        *(innerGM_step_data + i) = 0;
-        *(outerGM_step_data + i) = 0;
-        *(err_dist_data + i) = 0;
-        *(innerGM_id_data + i) = 0;
-        *(outerGM_id_data + i) = 0;
-        *(innerGM_prevstep_id_data + i) = 0;
-        *(outerGM_prevstep_id_data + i) = 0;
-        *(middleGM_data + i) = 0;
-        *(normdistdiff_data + i) = 0;
         *(nii_layers_data + i) = 0;
-        *(nii_columns_data + i) = 0;
-        *(hotspots_data + i) = 0;
-        *(curvature_data + i) = 0;
     }
+
+    nifti_image* innerGM_step = copy_nifti_as_float32(nii_layers);
+    float* innerGM_step_data = static_cast<float*>(innerGM_step->data);
+    nifti_image* innerGM_dist = copy_nifti_as_float32(nii_layers);
+    float* innerGM_dist_data = static_cast<float*>(innerGM_dist->data);
+
+    nifti_image* outerGM_step = copy_nifti_as_float32(nii_layers);
+    float* outerGM_step_data = static_cast<float*>(outerGM_step->data);
+    nifti_image* outerGM_dist = copy_nifti_as_float32(nii_layers);
+    float* outerGM_dist_data = static_cast<float*>(outerGM_dist->data);
+
+    nifti_image* err_dist = copy_nifti_as_float32(nii_layers);
+    float* err_dist_data = static_cast<float*>(err_dist->data);
+
+    nifti_image* innerGM_id = copy_nifti_as_int32(nii_layers);
+    int32_t* innerGM_id_data = static_cast<int32_t*>(innerGM_id->data);
+    nifti_image* outerGM_id = copy_nifti_as_int32(nii_layers);
+    int32_t* outerGM_id_data = static_cast<int32_t*>(outerGM_id->data);
+
+    nifti_image* innerGM_prevstep_id = copy_nifti_as_int32(nii_layers);
+    int32_t* innerGM_prevstep_id_data =
+        static_cast<int32_t*>(innerGM_prevstep_id->data);
+    nifti_image* outerGM_prevstep_id = copy_nifti_as_int32(nii_layers);
+    int32_t* outerGM_prevstep_id_data =
+        static_cast<int32_t*>(outerGM_prevstep_id->data);
+    nifti_image* normdistdiff = copy_nifti_as_float32(nii_layers);
+    float* normdistdiff_data = static_cast<float*>(normdistdiff->data);
+
+    nifti_image* nii_columns = copy_nifti_as_int32(nii_layers);
+    int32_t* nii_columns_data = static_cast<int32_t*>(nii_columns->data);
+
+    nifti_image* middleGM = copy_nifti_as_int32(nii_layers);
+    int32_t* middleGM_data = static_cast<int32_t*>(middleGM->data);
+    nifti_image* middleGM_id = copy_nifti_as_int32(nii_layers);
+    int32_t* middleGM_id_data = static_cast<int32_t*>(middleGM_id->data);
+
+    nifti_image* hotspots = copy_nifti_as_int32(nii_layers);
+    int32_t* hotspots_data = static_cast<int32_t*>(hotspots->data);
+    nifti_image* curvature = copy_nifti_as_float32(nii_layers);
+    float* curvature_data = static_cast<float*>(curvature->data);
+    nifti_image* thickness = copy_nifti_as_float32(nii_layers);
+    float* thickness_data = static_cast<float*>(thickness->data);
 
     // ========================================================================
     // Grow from WM
@@ -970,10 +961,10 @@ int main(int argc, char*  argv[]) {
             *(hotspots_data + j) -= 1;
         }
     }
-    save_output_nifti(fin, "layers", nii_layers);
+    save_output_nifti(fin, "layers_equidist", nii_layers);
     save_output_nifti(fin, "hotspots", hotspots, false);
     save_output_nifti(fin, "disterror", err_dist, false);
-    save_output_nifti(fin, "normdistdiff_diff", normdistdiff, false);
+    save_output_nifti(fin, "normdistdiff_equidist", normdistdiff, false);
 
     // ========================================================================
     // Middle gray matter
@@ -1138,6 +1129,450 @@ int main(int argc, char*  argv[]) {
     }
 
     // ========================================================================
+    // Grow from Middle Gray Matter
+    // ========================================================================
+    cout << "  Start growing from middle GM..." << endl;
+
+    nifti_image* midGM_step = copy_nifti_as_float32(nii_layers);
+    float* midGM_step_data = static_cast<float*>(midGM_step->data);
+    nifti_image* midGM_dist = copy_nifti_as_float32(nii_layers);
+    float* midGM_dist_data = static_cast<float*>(midGM_dist->data);
+    nifti_image* midGM_id = copy_nifti_as_int32(nii_layers);
+    int32_t* midGM_id_data = static_cast<int32_t*>(midGM_id->data);
+    nifti_image* midGM_prevstep_id = copy_nifti_as_int32(nii_layers);
+    int32_t* midGM_prevstep_id_data = static_cast<int32_t*>(midGM_prevstep_id->data);
+
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(middleGM_data + i) == 1) {
+            *(midGM_step_data + i) = 1.;
+            *(midGM_dist_data + i) = 0.;
+            *(midGM_id_data + i) = i;
+        } else {
+            *(midGM_step_data + i) = 0.;
+            *(midGM_dist_data + i) = 0.;
+            *(midGM_id_data + i) = 0;
+        }
+    }
+
+    grow_step = 1, voxel_counter = nr_voxels;
+    while (voxel_counter != 0) {
+        voxel_counter = 0;
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(midGM_step_data + i) == grow_step) {
+                tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+                voxel_counter += 1;
+
+                // ------------------------------------------------------------
+                // 1-jump neighbours
+                // ------------------------------------------------------------
+                if (ix != 0) {
+                    j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dX;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (ix != size_x) {
+                    j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dX;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (iy != 0) {
+                    j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dY;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (iy != size_y) {
+                    j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dY;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (iz != 0) {
+                    j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dZ;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (iz != size_z) {
+                    j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dZ;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+
+                // ------------------------------------------------------------
+                // 2-jump neighbours
+                // ------------------------------------------------------------
+                if (ix != 0 && iy != 0) {
+                    j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_xy;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (ix != 0 && iy != size_y) {
+                    j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_xy;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (ix != size_x && iy != 0) {
+                    j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_xy;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (ix != size_x && iy != size_y) {
+                    j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_xy;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (iy != 0 && iz != 0) {
+                    j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_yz;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (iy != 0 && iz != size_z) {
+                    j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_yz;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (iy != size_z && iz != 0) {
+                    j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_yz;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (iy != size_z && iz != size_z) {
+                    j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_yz;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (ix != 0 && iz != 0) {
+                    j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_xz;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (ix != size_x && iz != 0) {
+                    j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_xz;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (ix != 0 && iz != size_z) {
+                    j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_xz;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (ix != size_x && iz != size_z) {
+                    j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_xz;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+
+                // ------------------------------------------------------------
+                // 3-jump neighbours
+                // ------------------------------------------------------------
+                if (ix != 0 && iy != 0 && iz != 0) {
+                    j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_xyz;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (ix != 0 && iy != 0 && iz != size_z) {
+                    j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_xyz;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (ix != 0 && iy != size_y && iz != 0) {
+                    j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_xyz;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (ix != size_x && iy != 0 && iz != 0) {
+                    j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_xyz;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (ix != 0 && iy != size_y && iz != size_z) {
+                    j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_xyz;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (ix != size_x && iy != size_y && iz != size_z) {
+                    j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_xyz;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (ix != size_x && iy != size_y && iz != 0) {
+                    j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_xyz;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+                if (ix != size_x && iy != size_y && iz != size_z) {
+                    j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(midGM_dist_data + i) + dia_xyz;
+                        if (d < *(midGM_dist_data + j)
+                            || *(midGM_dist_data + j) == 0) {
+                            *(midGM_dist_data + j) = d;
+                            *(midGM_step_data + j) = grow_step + 1;
+                            *(midGM_id_data + j) = *(midGM_id_data + i);
+                            *(midGM_prevstep_id_data + j) = i;
+                        }
+                    }
+                }
+            }
+        }
+        grow_step += 1;
+    }
+    // save_output_nifti(fin, "outerGM_step", midGM_step, false);
+    save_output_nifti(fin, "outerGM_dist", midGM_dist, false);
+    // save_output_nifti(fin, "outerGM_id", midGM_id, false);
+
+
+    // ========================================================================
+    // Equi-volume
+    // ========================================================================
+    // for (uint32_t i = 0; i != nr_voxels; ++i) {
+    //     if (*(nii_rim_data + i) == 3) {
+    //         // Normalize distance
+    //         float dist1 = *(innerGM_dist_data + i);
+    //         float dist2 = *(outerGM_dist_data + i);
+    //         float total_dist = (dist1 + dist2);
+    //         *(thickness_data + i) = total_dist;
+    //         *(innerGM_dist_data + i) /= total_dist;
+    //         *(outerGM_dist_data + i) /= total_dist;
+    //     }
+    // }
+    //
+    // for (uint32_t i = 0; i != nr_voxels; ++i) {
+    //     if (*(nii_rim_data + i) == 3) {
+    //         j = *(nii_columns_data + i);
+    //         k = *(innerGM_id_data + j);  // Inner GM anchor
+    //         float m = *(hotspots_data + k);
+    //         k = *(outerGM_id_data + j);  // Outer GM anchor
+    //         float n = abs(*(hotspots_data + k));
+    //
+    //         // Weights
+    //         float a = m / (m + n);
+    //         float b = n / (m + n);
+    //
+    //         a /= 0.25;
+    //         b /= 0.25;
+    //
+    //         // Normalize distance (completely discrete)
+    //         float dist1 = pow(*(innerGM_dist_data + i), a);
+    //         float dist2 = pow(*(outerGM_dist_data + i), b);
+    //         float norm_dist = dist1 / (dist1 + dist2);
+    //
+    //         // Difference of normalized distances
+    //         *(normdistdiff_data + i) = (dist1 - dist2) / (dist1 + dist2);
+    //
+    //         // Cast distances to integers as number of desired layers
+    //         if (norm_dist != 0) {
+    //             *(nii_layers_data + i) = ceil(nr_layers * norm_dist);
+    //         } else {
+    //             *(nii_layers_data + i) = 1;
+    //         }
+    //     }
+    // }
+    // save_output_nifti(fin, "thickness", thickness, false);
+    // save_output_nifti(fin, "layers_equivol", nii_layers);
+    // save_output_nifti(fin, "normdistdiff_equivol", normdistdiff, false);
+
+    // ========================================================================
+    // TODO(Faruk): Might use bspline weights to smooth curvature maps a bit.
+    // TODO(Faruk): Might be better to use step 1 id's to define columns.
     // TODO(Faruk): Mean coordinate of columns might be used in
     // equivolume layering
     save_output_nifti(fin, "curvature", curvature, false);
