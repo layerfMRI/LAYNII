@@ -1,7 +1,5 @@
 
-// TODO(Faruk): Make columns optional output.
 // TODO(Faruk): Put neighbour visits into a function.
-// TODO(Faruk): Add debug flag to reduce number of outputs.
 
 #include "../dep/laynii_lib.h"
 
