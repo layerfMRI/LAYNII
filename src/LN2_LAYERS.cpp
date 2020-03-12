@@ -971,7 +971,7 @@ int main(int argc, char*  argv[]) {
         }
     }
     save_output_nifti(fin, "layers_equidist", nii_layers);
-    save_output_nifti(fin, "thickness", thickness, false);
+    save_output_nifti(fin, "thickness", thickness);
     if (debug_mode) {
         save_output_nifti(fin, "hotspots", hotspots, false);
         save_output_nifti(fin, "disterror", err_dist, false);
@@ -981,7 +981,6 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Middle gray matter
     // ========================================================================
-    cout << "  Start finding middle gray matter..." << endl;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
             // Check sign changes in normalized distance differences between
@@ -1035,12 +1034,11 @@ int main(int argc, char*  argv[]) {
             }
         }
     }
-    save_output_nifti(fin, "midGM_equidist", midGM, false);
+    save_output_nifti(fin, "midGM_equidist", midGM, true);
 
     // ========================================================================
     // Columns
     // ========================================================================
-    cout << "  Start doing columns..." << endl;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
             // Approximate curvature measurement per column/streamline
@@ -1137,7 +1135,7 @@ int main(int argc, char*  argv[]) {
             *(curvature_data + i) = *(curvature_data + j);
         }
     }
-    save_output_nifti(fin, "curvature", curvature, false);
+    save_output_nifti(fin, "curvature", curvature, true);
 
     // ========================================================================
     // Find column centroids
