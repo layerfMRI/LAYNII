@@ -156,28 +156,29 @@ int main(int argc, char * argv[]) {
     float x1g = 0., y1g = 0., z1g = 0.;
 
     float dist_min2 = 0.;
-    float dist_i = 0.;
-    float dist_p1 = 0.;
+    float d = 0.;
+    float d_p1 = 0.;
 
     int grow_vinc = 3;
     int grow_vinc_area = 1;
     int vinc_max = 250;
-    float dist(float x1, float y1, float z1, float x2, float y2, float z2,
-               float dX, float dY, float dZ);
 
-    /////////////////////////
-    // Growing from Center //
-    /////////////////////////
+    // ========================================================================
+    // Growing from Center
+    // ========================================================================
     cout << "  Growing from center " << endl;
+
+    // Defining seed at center landmark
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                // Defining seed at center landmark
-                if (*(nii_landmark_data + nxy * iz + nx * ix + iy) == 1 && abs((int) (*(nii_layer_data + nxy * iz + nx * ix + iy) - nr_layers / 2)) < 2) {
-                    *(growfromCenter_data + nxy * iz + nx * ix + iy) = 1.;
-                    *(Grow_x_data + nxy * iz + nx * ix + iy) = ix;
-                    *(Grow_y_data + nxy * iz + nx * ix + iy) = iy;
-                    *(Grow_z_data + nxy * iz + nx * ix + iy) = iz;
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                if (*(nii_landmark_data + voxel_i) == 1
+                    && abs((int) (*(nii_layer_data + voxel_i) - nr_layers / 2)) < 2) {
+                    *(growfromCenter_data + voxel_i) = 1.;
+                    *(Grow_x_data + voxel_i) = ix;
+                    *(Grow_y_data + voxel_i) = iy;
+                    *(Grow_z_data + voxel_i) = iz;
                 }
             }
         }
@@ -190,34 +191,48 @@ int main(int argc, char * argv[]) {
                     x1g = 0;
                     y1g = 0;
                     z1g = 0;
-                    if (abs((int) (*(nii_layer_data + nxy * iz + nx * ix + iy) - nr_layers/2)) < 2 && *(growfromCenter_data + nxy * iz + nx * ix + iy) == 0 && *(nii_landmark_data + nxy * iz + nx * ix + iy) < 2) {
+                    int voxel_i = nxy * iz + nx * ix + iy;
+
+                    if (abs((int) (*(nii_layer_data + voxel_i) - nr_layers/2)) < 2
+                        && *(growfromCenter_data + voxel_i) == 0
+                        && *(nii_landmark_data + voxel_i) < 2) {
                         // NOTE: Only grow into areas that are GM and that have not been grown into, yet.
                         // And it should stop as soon as it hits tie border.
-                        for (int iy_i = max(0, iy - grow_vinc_area); iy_i<min(iy + grow_vinc_area + 1, size_x); ++iy_i) {
-                            for (int ix_i = max(0, ix - grow_vinc_area); ix_i < min(ix + grow_vinc_area + 1, size_y); ++ix_i) {
-                                for (int iz_i = max(0, iz - grow_vinc_area); iz_i < min(iz + grow_vinc_area + 1, size_z); ++iz_i) {
-                                    dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
 
-                                    if (*(growfromCenter_data + nxy * iz_i + nx * ix_i + iy_i) == grow_i && *(nii_landmark_data + nxy * iz + nx * ix + iy) < 2) {
-                                        if (dist_i < dist_min2) {
-                                            dist_min2 = dist_i;
-                                            x1g = ix_i;
-                                            y1g = iy_i;
-                                            z1g = iz_i;
-                                            dist_p1 = dist_min2;
+                        int jz_start = max(0, iy - grow_vinc_area);
+                        int jz_stop = min(iy + grow_vinc_area + 1, size_x);
+                        int jy_start = max(0, ix - grow_vinc_area);
+                        int jy_stop = min(ix + grow_vinc_area + 1, size_y);
+                        int jx_start = max(0, iz - grow_vinc_area);
+                        int jx_stop = min(iz + grow_vinc_area + 1, size_z);
+
+                        for (int jz = jz_start; jz < jz_stop; ++jz) {
+                            for (int jy = jy_start; jy < jz_stop; ++jy) {
+                                for (int jx = jx_start; jx < jx_stop; ++jx) {
+                                    d = dist((float)ix, (float)iy, (float)iz,
+                                             (float)jx, (float)jy, (float)jz,
+                                             dX, dY, dZ);
+
+                                    int voxel_j = nxy * jz + nx * jy + jx;
+                                    if (*(growfromCenter_data + voxel_j) == grow_i
+                                        && *(nii_landmark_data + voxel_i) < 2) {
+                                        if (d < dist_min2) {
+                                            dist_min2 = d;
+                                            x1g = jx;
+                                            y1g = jy;
+                                            z1g = jz;
+                                            d_p1 = dist_min2;
                                         }
                                     }
                                 }
                             }
                         }
-                        if (dist_min2 < 1.7) {  // TODO(@Renzo): ???? I DONT REMEMBER WHY I NEED THIS ????
-                            // distDebug(0, islice, iy, ix) = dist_min2;
-                            *(growfromCenter_data + nxy * iz + nx * ix + iy) = grow_i+1;
-                            *(Grow_x_data + nxy * iz + nx * ix + iy) = *(Grow_x_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
-                            *(Grow_y_data + nxy * iz + nx * ix + iy) = *(Grow_y_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
-                            *(Grow_z_data + nxy * iz + nx * ix + iy) = *(Grow_z_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
+                        if (dist_min2 < 1.7) {  // TODO(Renzo): I DONT REMEMBER WHY I NEED THIS ????
+                            *(growfromCenter_data + voxel_i) = grow_i+1;
+                            *(Grow_x_data + voxel_i) = *(Grow_x_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
+                            *(Grow_y_data + voxel_i) = *(Grow_y_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
+                            *(Grow_z_data + voxel_i) = *(Grow_z_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
                         }
-                        //cout << " ix   " << ix << " iy   " << iy << "    " << *(WMkoord0_data + nxy*islice + nx*(int)x1g + (int)y1g)<< endl;
                     }
                 }
             }
@@ -225,29 +240,33 @@ int main(int argc, char * argv[]) {
     }
     save_output_nifti(fin_layer, "finding_leaks", growfromCenter, true);
 
-    ///////////////////////
-    // Growing from left //
-    ///////////////////////
+    // ========================================================================
+    // Growing from left
+    // ========================================================================
     cout << "  Growing from left..." << endl;
 
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y - 0; ++ix) {
-                *(Grow_x_data + nxy * iz + nx * ix + iy) = 0;
-                *(Grow_y_data + nxy * iz + nx * ix + iy) = 0;
-                *(Grow_z_data + nxy * iz + nx * ix + iy) = 0;
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                *(Grow_x_data + voxel_i) = 0;
+                *(Grow_y_data + voxel_i) = 0;
+                *(Grow_z_data + voxel_i) = 0;
             }
         }
     }
+    // Defining seed at center landmark
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y - 0; ++ix) {
-                // Defining seed at center landmark
-                if (*(nii_landmark_data + nxy * iz + nx * ix + iy) == 2 && abs((int) (*(nii_layer_data + nxy * iz + nx * ix + iy) - nr_layers / 2)) < 2) {
-                    *(growfromLeft_data + nxy * iz + nx * ix + iy) = 1.;
-                    *(Grow_x_data + nxy * iz + nx * ix + iy) = ix;
-                    *(Grow_y_data + nxy * iz + nx * ix + iy) = iy;
-                    *(Grow_z_data + nxy * iz + nx * ix + iy) = iz;
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+
+                if (*(nii_landmark_data + voxel_i) == 2
+                    && abs((int) (*(nii_layer_data + voxel_i) - nr_layers / 2)) < 2) {
+                    *(growfromLeft_data + voxel_i) = 1.;
+                    *(Grow_x_data + voxel_i) = ix;
+                    *(Grow_y_data + voxel_i) = iy;
+                    *(Grow_z_data + voxel_i) = iz;
                 }
             }
         }
@@ -260,64 +279,78 @@ int main(int argc, char * argv[]) {
                     x1g = 0;
                     y1g = 0;
                     z1g = 0;
-                    if (abs((int) (*(nii_layer_data + nxy * iz + nx * ix + iy) - nr_layers / 2)) < 2 && *(growfromLeft_data + nxy * iz + nx * ix + iy) == 0  && *(growfromCenter_data + nxy * iz + nx * ix + iy) != 0) {
+                    int voxel_i = nxy * iz + nx * ix + iy;
+                    if (abs((int) (*(nii_layer_data + voxel_i) - nr_layers / 2)) < 2
+                        && *(growfromLeft_data + voxel_i) == 0
+                        && *(growfromCenter_data + voxel_i) != 0) {
                         // NOTE: Only grow into areas that are GM and that have not been grown into, yet ...
                         // And it should stop as soon as it hits the border.
-                        for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc + 1, size_x); ++iy_i) {
-                            for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc + 1, size_y); ++ix_i) {
-                                for (int iz_i = max(0, iz - grow_vinc); iz_i < min(iz + grow_vinc + 1, size_z); ++iz_i) {
-                                    dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
 
-                                    if (*(growfromLeft_data + nxy * iz_i + nx * ix_i + iy_i) == grow_i) {
-                                        if (dist_i < dist_min2) {
-                                            dist_min2 = dist_i;
-                                            x1g = ix_i;
-                                            y1g = iy_i;
-                                            z1g = iz_i;
-                                            dist_p1 = dist_min2;
+                        jz_start = max(0, iz - grow_vinc);
+                        jz_stop = min(iz + grow_vinc + 1, size_z);
+                        jy_start = max(0, iy - grow_vinc);
+                        jy_stop = min(iy + grow_vinc + 1, size_x);
+                        jx_start = max(0, ix - grow_vinc);
+                        jx_stop = min(ix + grow_vinc + 1, size_y);
+
+                        for (int jy = jy_start; jy < jy_stop; ++jy) {
+                            for (int jx = jx_start; jx < jx_stop; ++jx) {
+                                for (int jz = jz_start; jz < jz_stop; ++jz) {
+                                    d = dist((float)ix, (float)iy, (float)iz,
+                                             (float)jx, (float)jy, (float)jz,
+                                             dX, dY, dZ);
+
+                                    int voxel_j = nxy * jz + nx * jy + jx;
+                                    if (*(growfromLeft_data + voxel_j) == grow_i) {
+                                        if (d < dist_min2) {
+                                            dist_min2 = d;
+                                            x1g = jx;
+                                            y1g = jy;
+                                            z1g = jz;
+                                            d_p1 = dist_min2;
                                         }
                                     }
                                 }
                             }
                         }
                         if (dist_min2 < 1.7) {  // TODO(@Renzo): ???? I DONT REMEMBER WHY I NEED THIS ????
-                            // distDebug(0, islice, iy, ix) = dist_min2;
-                            *(growfromLeft_data + nxy * iz + nx * ix + iy) = grow_i + 1;
-                            *(Grow_x_data + nxy * iz + nx * ix + iy) = *(Grow_x_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
-                            *(Grow_y_data + nxy * iz + nx * ix + iy) = *(Grow_y_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
-                            *(Grow_z_data + nxy * iz + nx * ix + iy) = *(Grow_z_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
+                            *(growfromLeft_data + voxel_i) = grow_i + 1;
+                            *(Grow_x_data + voxel_i) = *(Grow_x_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
+                            *(Grow_y_data + voxel_i) = *(Grow_y_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
+                            *(Grow_z_data + voxel_i) = *(Grow_z_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
                         }
-                        //cout << " ix   " << ix << " iy   " << iy << "    " << *(WMkoord0_data + nxy*islice + nx*(int)x1g + (int)y1g)<< endl;
                     }
                 }
             }
         }
     }
 
-    ////////////////////////
-    // Growing from Right //
-    ////////////////////////
+    // ========================================================================
+    // Growing from Right
+    // ========================================================================
     cout << "  Growing from right..." << endl;
 
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                *(Grow_x_data + nxy * iz + nx * ix + iy) = 0;
-                *(Grow_y_data + nxy * iz + nx * ix + iy) = 0;
-                *(Grow_z_data + nxy * iz + nx * ix + iy) = 0;
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                *(Grow_x_data + voxel_i) = 0;
+                *(Grow_y_data + voxel_i) = 0;
+                *(Grow_z_data + voxel_i) = 0;
             }
         }
     }
+    // Defining seed at center landmark
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                // Defining seed at center landmark
-                if (*(nii_landmark_data + nxy * iz + nx * ix + iy) == 3
-                    && abs((int) (*(nii_layer_data + nxy * iz + nx * ix + iy) - nr_layers / 2)) < 2) {
-                    *(growfromRight_data + nxy * iz + nx * ix + iy) = 1.;
-                    *(Grow_x_data + nxy * iz + nx * ix + iy) = ix;
-                    *(Grow_y_data + nxy * iz + nx * ix + iy) = iy;
-                    *(Grow_z_data + nxy * iz + nx * ix + iy) = iz;
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                if (*(nii_landmark_data + voxel_i) == 3
+                    && abs((int) (*(nii_layer_data + voxel_i) - nr_layers / 2)) < 2) {
+                    *(growfromRight_data + voxel_i) = 1.;
+                    *(Grow_x_data + voxel_i) = ix;
+                    *(Grow_y_data + voxel_i) = iy;
+                    *(Grow_z_data + voxel_i) = iz;
                 }
             }
         }
@@ -325,39 +358,51 @@ int main(int argc, char * argv[]) {
     for (int grow_i = 1; grow_i < vinc_max; grow_i++) {
         for (int iz = 0; iz < size_z; ++iz) {
             for (int iy = 0; iy < size_x; ++iy) {
-                for (int ix = 0; ix < size_y - 0; ++ix) {
+                for (int ix = 0; ix < size_y; ++ix) {
                     dist_min2 = 10000.;
                     x1g = 0;
                     y1g = 0;
                     z1g = 0;
-                    if (abs((int) (*(nii_layer_data + nxy * iz + nx * ix + iy) - nr_layers/2)) < 2 && *(growfromRight_data + nxy * iz + nx * ix + iy) == 0  && *(growfromCenter_data + nxy * iz + nx * ix + iy) != 0) {
+                    int voxel_i = nxy * iz + nx * ix + iy;
+                    if (abs((int) (*(nii_layer_data + voxel_i) - nr_layers / 2)) < 2
+                        && *(growfromRight_data + voxel_i) == 0
+                        && *(growfromCenter_data + voxel_i) != 0) {
                         // NOTE: Only grow into areas that are GM and that have not been gown into, yet...
                         // And it should stop as soon as it hits tie border
-                        for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc + 1, size_x); ++iy_i) {
-                            for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc + 1, size_y); ++ix_i) {
-                                for (int iz_i = max(0, iz - grow_vinc); iz_i < min(iz + grow_vinc + 1, size_z); ++iz_i) {
-                                    dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
 
-                                    if (*(growfromRight_data + nxy * iz_i + nx * ix_i + iy_i) == grow_i) {
-                                        if (dist_i < dist_min2) {
-                                            dist_min2 = dist_i;
-                                            x1g = ix_i;
-                                            y1g = iy_i;
-                                            z1g = iz_i;
-                                            dist_p1 = dist_min2;
+                        int jy_start = max(0, iy - grow_vinc);
+                        int jy_stop = min(iy + grow_vinc + 1, size_x);
+                        int jx_start = max(0, ix - grow_vinc);
+                        int jx_stop = min(ix + grow_vinc + 1, size_y);
+                        int jz_start = max(0, iz - grow_vinc);
+                        int jz_stop = min(iz + grow_vinc + 1, size_z);
+
+                        for (int jz = jz_start; jz < jz_stop; ++jz) {
+                            for (int jy = jy_start; jy < jy_stop; ++jy) {
+                                for (int jx = jx_start; jx < jx_stop; ++jx) {
+                                    d = dist((float)ix, (float)iy, (float)iz,
+                                             (float)jx, (float)jy, (float)jz,
+                                             dX, dY, dZ);
+
+                                    int voxel_j = nxy * jz + nx * jy + jx;
+                                    if (*(growfromRight_data + voxel_j) == grow_i) {
+                                        if (d < dist_min2) {
+                                            dist_min2 = d;
+                                            x1g = jx;
+                                            y1g = jy;
+                                            z1g = jz;
+                                            d_p1 = dist_min2;
                                         }
                                     }
                                 }
                             }
                         }
-                        if (dist_min2 < 1.7) {  // TODO(@Renzo): ???? I DONT REMEMBER WHY I NEED THIS ????
-                            // distDebug(0, islice, iy, ix) = dist_min2;
-                            *(growfromRight_data + nxy * iz + nx * ix + iy) = grow_i+1;
-                            *(Grow_x_data + nxy * iz + nx * ix + iy) = *(Grow_x_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
-                            *(Grow_y_data + nxy * iz + nx * ix + iy) = *(Grow_y_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
-                            *(Grow_z_data + nxy * iz + nx * ix + iy) = *(Grow_z_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
+                        if (dist_min2 < 1.7) {  // TODO(@Renzo): I DONT REMEMBER WHY I NEED THIS ????
+                            *(growfromRight_data + voxel_i) = grow_i + 1;
+                            *(Grow_x_data + voxel_i) = *(Grow_x_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
+                            *(Grow_y_data + voxel_i) = *(Grow_y_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
+                            *(Grow_z_data + voxel_i) = *(Grow_z_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
                         }
-                        // cout << " ix   " << ix << " iy   " << iy << "    " << *(WMkoord0_data + nxy*islice + nx*(int)x1g + (int)y1g)<< endl;
                     }
                 }
             }
@@ -365,17 +410,23 @@ int main(int argc, char * argv[]) {
     }
     save_output_nifti(fin_layer, "grow_from_right", growfromRight, true);
 
-    //////////////////////////////////////
-    // Get normalized coordinate system //
-    //////////////////////////////////////
+    // ========================================================================
+    // Get normalized coordinate system
+    // ========================================================================
     cout << "  Getting normalized coordinate system..." << endl;
 
     for (int iz = 0; iz < size_z; ++iz) {
         for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y - 0; ++ix) {
-                if (*(growfromCenter_data + nxy * iz + nx * ix + iy) > 0) {
-                    *(lateralCoord_data + nxy * iz + nx * ix + iy) = (int) (200 *(float) *(growfromRight_data + nxy * iz + nx * ix + iy) / ((float) *(growfromRight_data + nxy * iz + nx * ix + iy) + (float) *(growfromLeft_data + nxy * iz + nx * ix + iy)));
-                    // *(growfromCenter_thick_data + nxy * iz + nx * ix + iy) = 1;
+            for (int ix = 0; ix < size_y; ++ix) {
+                int voxel_i = nxy * iz + nx * ix + iy;
+                if (*(growfromCenter_data + voxel_i) > 0) {
+
+                    float grow_r = static_cast<float>(*(growfromRight_data + voxel_i));
+                    float grow_l = static_cast<float>(*(growfromLeft_data + voxel_i));
+
+                    *(lateralCoord_data + voxel_i) =
+                        static_cast<int>(200 * grow_r / (grow_r + grow_l));
+                    // *(growfromCenter_thick_data + voxel_i) = 1;
                 }
             }
         }
@@ -389,9 +440,10 @@ int main(int argc, char * argv[]) {
     // cout << " visualisation " << endl;
     // for (int iz = 0; iz < size_z; ++iz) {
     //     for (int iy = 0; iy < size_x; ++iy) {
-    //         for (int ix = 0; ix < size_y - 0; ++ix) {
+    //         for (int ix = 0; ix < size_y; ++ix) {
     //             if (iy % 4 == 0 || iz % 4 == 0) {
-    //                 *(lateralCoord_data + nxy * iz + nx * ix + iy) = *(lateralCoord_data + nxy * iz + nx * ix + iy);
+    //                 *(lateralCoord_data + nxy * iz + nx * ix + iy) =
+    //                     *(lateralCoord_data + nxy * iz + nx * ix + iy);
     //             } else {
     //                 *(lateralCoord_data + nxy * iz + nx * ix + iy) = 0;
     //             }
@@ -410,10 +462,9 @@ int main(int argc, char * argv[]) {
     float* nii_smooth_data = static_cast<float*>(nii_smooth->data);
     float* nii_gaussw_data = static_cast<float*>(nii_gaussw->data);
 
-    // float kernel_size = 10; // Corresponds to one voxel size.
     int FWHM_val = 1;
     int vinc_sm = max(1., 2. * FWHM_val / dX);  // Ignore if voxel is too far
-    dist_i = 0.;
+    d = 0.;
     cout << "  vinc_sm " << vinc_sm<< endl;
     cout << "  FWHM_val " << FWHM_val<< endl;
 
@@ -523,7 +574,7 @@ int main(int argc, char * argv[]) {
 
     for (int iz = 0; iz < size_z; ++iz) {
         for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y - 0; ++ix) {
+            for (int ix = 0; ix < size_y; ++ix) {
                 *(nii_smooth_data + nxy * iz + nx *ix + iy) = 0;
             }
         }
@@ -691,7 +742,7 @@ int main(int argc, char * argv[]) {
     cout << "  Cleaning up hairy brain..." << endl;
     for (int iz = 0; iz < size_z; ++iz) {
         for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y - 0; ++ix) {
+            for (int ix = 0; ix < size_y; ++ix) {
                 if (*(growfromCenter_thick_data + nxy * iz + nx * ix + iy) == 0 || *(hairy_brain_data + nxy * iz + nx * ix + iy) == 0) {
                     *(growfromRight_data + nxy*iz + nx*ix + iy) = 0;
                     *(hairy_brain_data + nxy*iz + nx*ix + iy) = 0;
@@ -719,7 +770,7 @@ int main(int argc, char * argv[]) {
     cout << "  Max = " << max_columns << " | Min = " << min_columns << endl;
     for (int iz = 0; iz < size_z; ++iz) {
         for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y - 0; ++ix) {
+            for (int ix = 0; ix < size_y; ++ix) {
                 if (*(hairy_brain_data + nxy * iz + nx * ix + iy) >  0) {
                     *(hairy_brain_data + nxy * iz + nx * ix + iy) = (*(hairy_brain_data + nxy * iz + nx * ix + iy) - (short)min_columns) * (short)jiajiavinc_max / (short)(max_columns - min_columns);
                 }
