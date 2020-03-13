@@ -170,17 +170,23 @@ int main(int argc, char* argv[]) {
                                      (float)x, (float)y, (float)j,
                                      dX, dY, dZ);
                         }
-                        if (option == 0) {
-                            w = gaus(d, FWHM_val);
-                        } else if (option == 1) {
-                            w = laur(d, FWHM_val);
-                        } else if (option == 2) {
-                            w = ASLFt(d, strength);
+                        // TODO(Faruk): Need to ask to Renzo about j masking
+                        // Potentially problematic with sulci + big FWHM
+                        if (*(nii_input_data + voxel_j) != 0) {
+                            if (option == 0) {
+                                w = gaus(d, FWHM_val);
+                            } else if (option == 1) {
+                                w = laur(d, FWHM_val);
+                            } else if (option == 2) {
+                                w = ASLFt(d, strength);
+                            }
+                            *(smooth_data + voxel_i) += *(nii_input_data + voxel_j) * w;
+                            total_weight += w;
                         }
-                        *(smooth_data + voxel_i) += *(nii_input_data + voxel_j) * w;
-                        total_weight += w;
                     }
-                    *(smooth_data + voxel_i) /= total_weight;
+                    if (total_weight != 0) {
+                        *(smooth_data + voxel_i) /= total_weight;
+                    }
                 }
             }
         }
