@@ -2,9 +2,34 @@
 #include "./laynii_lib.h"
 
 // ============================================================================
+// Command-line log messages
 // ============================================================================
+
+void log_welcome(const char* programname) {
+    cout << "============="<< endl;
+    cout << "LAYNII v1.5.0"<< endl;
+    cout << "============="<< endl;
+    cout << programname << "\n" << endl;
+}
+
+void log_output(const char* filename) {
+    cout << "  Writing output as:" << endl;
+    cout << "    " << filename << endl;
+}
+
+void log_nifti_descriptives(nifti_image* nii) {
+    // Print nifti descriptives to command line for debugging
+    cout << "  File name: " << nii->fname << endl;
+    cout << "    Image details: " << nii->nz << " X | " << nii->nx
+         << " Y | " << nii->ny << " Z | " << nii->nt << " T " << endl;
+    cout << "    Voxel size = " << nii->pixdim[1] << " x " << nii->pixdim[2]
+         << " x " << nii->pixdim[3] << endl;
+    cout << "    Datatype = " << nii->datatype << "\n" << endl;
+}
+
 // ============================================================================
 // Statistics functions
+// ============================================================================
 
 double ren_average(double arr[], int size) {
     int i;
@@ -111,38 +136,9 @@ float gaus(float distance, float sigma) {
            * exp(-0.5 * distance * distance / (sigma * sigma));
 }
 
-
-// ============================================================================
-// ============================================================================
-// ============================================================================
-// Command-line log messages
-
-void log_welcome(const char* programname) {
-    cout << "============="<< endl;
-    cout << "LAYNII v1.1.0"<< endl;
-    cout << "============="<< endl;
-    cout << programname << "\n" << endl;
-}
-
-void log_output(const char* filename) {
-    cout << "  Writing output as:" << endl;
-    cout << "    " << filename << endl;
-}
-
-void log_nifti_descriptives(nifti_image* nii) {
-    // Print nifti descriptives to command line for debugging
-    cout << "  File name: " << nii->fname << endl;
-    cout << "    Image details: " << nii->nz << " X | " << nii->nx
-         << " Y | " << nii->ny << " Z | " << nii->nt << " T " << endl;
-    cout << "    Voxel size = " << nii->pixdim[1] << " x " << nii->pixdim[2]
-         << " x " << nii->pixdim[3] << endl;
-    cout << "    Datatype = " << nii->datatype << "\n" << endl;
-}
-
-// ============================================================================
-// ============================================================================
 // ============================================================================
 // Utility functions
+// ============================================================================
 
 void save_output_nifti(string filename, string prefix, nifti_image* nii,
                        bool log) {
@@ -301,6 +297,7 @@ nifti_image* copy_nifti_as_int32(nifti_image* nii) {
 
 // ============================================================================
 // Faruk's favorite functions
+// ============================================================================
 std::tuple<uint32_t, uint32_t, uint32_t> ind2sub_3D(
     const uint32_t linear_index, const uint32_t size_x, const uint32_t size_y) {
     uint32_t z = linear_index / (size_x * size_y);
