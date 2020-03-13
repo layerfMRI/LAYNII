@@ -4,11 +4,7 @@
 
 int show_help(void) {
     printf(
-    "LN_GRADSMOOTH : Layering algorithm based on iterative smoothing.\n"
-    "\n"
-    "    This program smooths data within layer or columns. In order to \n"
-    "    avoid smoothing across masks, a crawler smooths only across \n"
-    "    connected voxels.\n"
+    "LN_GRADSMOOTH : Local gradient based smoothing.\n"
     "\n"
     "Usage:\n"
     "    LN_GRADSMOOTH -input activity_map.nii -gradfile gradfile.nii -FWHM 1 -within -selectivity 0.1 \n"
@@ -203,9 +199,7 @@ int main(int argc, char * argv[]) {
 
     // Estimate and output of program process and how much longer it will take.
     int nr_voxels = size_z * size_x * size_y;
-    int running_index = 0;
-    int pref_ratio = 0;
-
+    int running_index = 0, pref_ratio = 0;
     if (do_masking == 1) {
         nr_voxels = 0;
         for (int i = 0; i < nii2->nvox; ++i) {
@@ -237,7 +231,7 @@ int main(int argc, char * argv[]) {
                     float w = 0;
                     *(smooth_data + voxel_i) = 0;
                     nr_vox_in_vic = 0;
-                    float v = *(nii_grad_data + voxel_i);
+                    float val_i = *(nii_grad_data + voxel_i);
 
                     // Examining the environment and determining what the
                     // signal intensities are and what its distribution are
@@ -251,8 +245,8 @@ int main(int argc, char * argv[]) {
                         for (int jy = jy_start; jy <= jy_stop; ++jy) {
                             for (int jx = jx_start; jx <= jx_stop; ++jx) {
                                 int voxel_j = nxy * jz + nx * jy + jx;
-                                vec1[nr_vox_in_vic] =
-                                    static_cast<double>(*(nii_grad_data + voxel_j));
+                                float val_j = *(nii_grad_data + voxel_j);
+                                vec1[nr_vox_in_vic] = static_cast<double>(val_j);
                                 nr_vox_in_vic++;
                             }
                         }
@@ -267,22 +261,23 @@ int main(int argc, char * argv[]) {
                         for (int jy = jy_start; jy <= jy_stop; ++jy) {
                             for (int jx = jx_start; jx <= jx_stop; ++jx) {
                                 int voxel_j = nxy * jz + nx * jy + jx;
+                                float val_j = *(nii_grad_data + voxel_j);
 
                                 float d1 = dist((float)ix, (float)iy, (float)iz,
                                                 (float)jx, (float)jy, (float)jz,
                                                 dX, dY, dZ);
                                 float g1 = gaus(d1, FWHM_val);
 
-                                float d2 = fabs(v - *(nii_grad_data + voxel_j));
+                                float d2 = abs(val_i - val_j);
                                 float g2 = gaus(d2, grad_stdev * selectivity);
 
                                 float g3 = gaus(0, grad_stdev * selectivity);
 
                                 float temp_w =  g1 * g2 / g3;
 
-                                // Gauss data are important to avoid local
-                                // scaling differences. When the kernel size
-                                // changes (e.g. at edge of images).
+                                // NOTE(Renzo): Gauss data are important to
+                                // kernel size changes (e.g. at edge of images).
+                                // avoid local scaling differences. When the
                                 // This is a geometric parameter and only need
                                 // to be calculated for one time point. This
                                 // might be avoidable, if the Gauss fucnction
