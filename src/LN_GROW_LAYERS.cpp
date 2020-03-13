@@ -91,10 +91,10 @@ int main(int argc, char * argv[]) {
     log_nifti_descriptives(nim_input_i);
 
     // Get dimensions of input
-    int sizeSlice = nim_input_i->nz;
-    int sizePhase = nim_input_i->nx;
-    int sizeRead = nim_input_i->ny;
-    int nrep = nim_input_i->nt;
+    int size_z = nim_input_i->nz;
+    int size_x = nim_input_i->nx;
+    int size_y = nim_input_i->ny;
+    int size_t = nim_input_i->nt;
     int nx = nim_input_i->nx;
     int nxy = nim_input_i->nx * nim_input_i->ny;
     int nxyz = nim_input_i->nx * nim_input_i->ny * nim_input_i->nz;
@@ -118,8 +118,8 @@ int main(int argc, char * argv[]) {
     int32_t* nim_input_data = static_cast<int32_t*>(nim_input->data);
 
     // Allocate new nifti images
-    nifti_image * equi_dist_layers = copy_nifti_as_int32(nim_input);
-    int32_t* equi_dist_layers_data = static_cast<int32_t*>(equi_dist_layers->data);
+    nifti_image * nii_layers = copy_nifti_as_int32(nim_input);
+    int32_t* nii_layers_data = static_cast<int32_t*>(nii_layers->data);
 
     // ========================================================================
     ///////////////////////////////////////////////////
@@ -181,13 +181,13 @@ int main(int argc, char * argv[]) {
         cout << "  Start growing from WM..." << endl;
 
         // Setting zero
-        for (int islice = 0; islice < sizeSlice; ++islice) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
-                    *(growfromWM0_data + nxy * islice + nx * ix + iy) = 0;
-                    *(growfromWM1_data + nxy * islice + nx * ix + iy) = 0;
-                    *(growfromGM0_data + nxy * islice + nx * ix + iy) = 0;
-                    *(growfromGM1_data + nxy * islice + nx * ix + iy) = 0;
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
+                    *(growfromWM0_data + nxy * iz + nx * ix + iy) = 0;
+                    *(growfromWM1_data + nxy * iz + nx * ix + iy) = 0;
+                    *(growfromGM0_data + nxy * iz + nx * ix + iy) = 0;
+                    *(growfromGM1_data + nxy * iz + nx * ix + iy) = 0;
                 }
             }
         }
@@ -196,29 +196,29 @@ int main(int argc, char * argv[]) {
         // Grow from WM //
         //////////////////
         int grow_vinc = 2;
-        for (int islice = 0; islice < sizeSlice; ++islice) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
-                    if (*(nim_input_data + nxy * islice + nx * ix + iy) == 2) {
-                        *(growfromWM0_data + nxy * islice + nx * ix + iy) = 1.;
-                        *(WMkoord0_data + nxy * islice + nx * ix + iy) = ix;
-                        *(WMkoord1_data + nxy * islice + nx * ix + iy) = iy;
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
+                    if (*(nim_input_data + nxy * iz + nx * ix + iy) == 2) {
+                        *(growfromWM0_data + nxy * iz + nx * ix + iy) = 1.;
+                        *(WMkoord0_data + nxy * iz + nx * ix + iy) = ix;
+                        *(WMkoord1_data + nxy * iz + nx * ix + iy) = iy;
                     }
                 }
             }
         }
         for (int grow_i = 1; grow_i< vinc; grow_i++) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead-0; ++ix) {
+            for (int iz = 0; iz < size_z; ++iz) {
+                for (int iy = 0; iy < size_x; ++iy) {
+                    for (int ix = 0; ix < size_y; ++ix) {
                         dist_min2 = 10000.;
                         x1g = 0;
                         y1g = 0;
-                        if (*(nim_input_data + nxy * islice + nx * ix + iy) == 3  && *(growfromWM0_data + nxy * islice + nx * ix + iy) == 0) {
-                            // cout << " true " << * (growfromWM0_data + nxy * islice + nx * ix + iy) << endl;
-                            for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc + 1, sizePhase); ++iy_i) {
-                                for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc + 1, sizeRead); ++ix_i) {
-                                    if (*(growfromWM0_data + nxy * islice + nx * ix_i + iy_i) == (float)grow_i) {
+                        if (*(nim_input_data + nxy * iz + nx * ix + iy) == 3  && *(growfromWM0_data + nxy * iz + nx * ix + iy) == 0) {
+                            // cout << " true " << * (growfromWM0_data + nxy * iz + nx * ix + iy) << endl;
+                            for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc + 1, size_x); ++iy_i) {
+                                for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc + 1, size_y); ++ix_i) {
+                                    if (*(growfromWM0_data + nxy * iz + nx * ix_i + iy_i) == (float)grow_i) {
                                         dist_i = dist2d((float)ix, (float)iy, (float)ix_i, (float)iy_i);
                                         if (dist_i< dist_min2) {
                                             dist_min2 = dist_i;
@@ -230,12 +230,12 @@ int main(int argc, char * argv[]) {
                                 }
                             }
                             if (dist_min2< 1.4) {
-                                // distDebug(0, islice, iy, ix) = dist_min2 ;
-                                *(growfromWM0_data + nxy * islice + nx * ix + iy) = (float)grow_i+1;
-                                *(WMkoord0_data + nxy * islice + nx * ix + iy) = *(WMkoord0_data + nxy * islice + nx * (int)x1g + (int)y1g);
-                                *(WMkoord1_data + nxy * islice + nx * ix + iy) = *(WMkoord1_data + nxy * islice + nx * (int)x1g + (int)y1g);
+                                // distDebug(0, iz, iy, ix) = dist_min2 ;
+                                *(growfromWM0_data + nxy * iz + nx * ix + iy) = (float)grow_i+1;
+                                *(WMkoord0_data + nxy * iz + nx * ix + iy) = *(WMkoord0_data + nxy * iz + nx * (int)x1g + (int)y1g);
+                                *(WMkoord1_data + nxy * iz + nx * ix + iy) = *(WMkoord1_data + nxy * iz + nx * (int)x1g + (int)y1g);
                             }
-                            // cout << " ix " << ix << " iy " << iy << " " << * (WMkoord0_data + nxy * islice + nx * (int)x1g + (int)y1g) << endl;
+                            // cout << " ix " << ix << " iy " << iy << " " << * (WMkoord0_data + nxy * iz + nx * (int)x1g + (int)y1g) << endl;
                         }
                     }
                 }
@@ -246,28 +246,28 @@ int main(int argc, char * argv[]) {
         // grow from CSF //
         ///////////////////
         cout << "  Start growing from CSF..." << endl;
-        for (int islice = 0; islice < sizeSlice; ++islice) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
-                    if (*(nim_input_data + nxy * islice + nx * ix + iy) == 1) {
-                        *(growfromGM0_data + nxy * islice + nx * ix + iy) = 1.;
-                        *(GMkoord0_data + nxy * islice + nx * ix + iy) = ix;
-                        *(GMkoord1_data + nxy * islice + nx * ix + iy) = iy;
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
+                    if (*(nim_input_data + nxy * iz + nx * ix + iy) == 1) {
+                        *(growfromGM0_data + nxy * iz + nx * ix + iy) = 1.;
+                        *(GMkoord0_data + nxy * iz + nx * ix + iy) = ix;
+                        *(GMkoord1_data + nxy * iz + nx * ix + iy) = iy;
                     }
                 }
             }
         }
         for (int grow_i = 1; grow_i< vinc; grow_i++) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead-0; ++ix) {
+            for (int iz = 0; iz < size_z; ++iz) {
+                for (int iy = 0; iy < size_x; ++iy) {
+                    for (int ix = 0; ix < size_y; ++ix) {
                         dist_min2 = 10000.;
                         x1g = 0.;
                         y1g = 0;
-                        if (*(nim_input_data + nxy * islice + nx * ix + iy) == 3  && *(growfromGM0_data + nxy * islice + nx * ix + iy) == 0) {
-                            for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc + 1, sizePhase); ++iy_i) {
-                                for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc + 1, sizeRead); ++ix_i) {
-                                    if (*(growfromGM0_data + nxy * islice + nx * ix_i + iy_i) == (float)grow_i) {
+                        if (*(nim_input_data + nxy * iz + nx * ix + iy) == 3  && *(growfromGM0_data + nxy * iz + nx * ix + iy) == 0) {
+                            for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc + 1, size_x); ++iy_i) {
+                                for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc + 1, size_y); ++ix_i) {
+                                    if (*(growfromGM0_data + nxy * iz + nx * ix_i + iy_i) == (float)grow_i) {
                                         dist_i = dist2d((float)ix, (float)iy, (float)ix_i, (float)iy_i);
                                         if (dist_i< dist_min2) {
                                             dist_min2 = dist_i;
@@ -279,10 +279,10 @@ int main(int argc, char * argv[]) {
                                 }
                             }
                             if (dist_min2< 1.4) {
-                                *(growfromGM0_data + nxy * islice + nx * ix + iy) = (float)grow_i+1;
+                                *(growfromGM0_data + nxy * iz + nx * ix + iy) = (float)grow_i+1;
 
-                                *(GMkoord0_data + nxy * islice + nx * ix + iy) = *(GMkoord0_data + nxy * islice + nx * (int)x1g + (int)y1g);
-                                *(GMkoord1_data + nxy * islice + nx * ix + iy) = *(GMkoord1_data + nxy * islice + nx * (int)x1g + (int)y1g);
+                                *(GMkoord0_data + nxy * iz + nx * ix + iy) = *(GMkoord0_data + nxy * iz + nx * (int)x1g + (int)y1g);
+                                *(GMkoord1_data + nxy * iz + nx * ix + iy) = *(GMkoord1_data + nxy * iz + nx * (int)x1g + (int)y1g);
                             }
                         }
                     }
@@ -306,28 +306,28 @@ int main(int argc, char * argv[]) {
         // to account for Pytagoras errors /////////////////
         ////////////////////////////////////////////////////
         cout << "  Correcting for Pytagoras error..." << endl;
-        for (int islice = 0; islice < sizeSlice; ++islice) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
-                    *(growfromWM1_data + nxy * islice + nx * ix + iy) = *(growfromWM0_data + nxy * islice + nx * ix + iy);
-                    *(WMkoord2_data + nxy * islice + nx * ix + iy) = *(WMkoord0_data + nxy * islice + nx * ix + iy);
-                    *(WMkoord3_data + nxy * islice + nx * ix + iy) = *(WMkoord1_data + nxy * islice + nx * ix + iy);
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
+                    *(growfromWM1_data + nxy * iz + nx * ix + iy) = *(growfromWM0_data + nxy * iz + nx * ix + iy);
+                    *(WMkoord2_data + nxy * iz + nx * ix + iy) = *(WMkoord0_data + nxy * iz + nx * ix + iy);
+                    *(WMkoord3_data + nxy * iz + nx * ix + iy) = *(WMkoord1_data + nxy * iz + nx * ix + iy);
 
                 }
             }
         }
         for (int grow_i = 1; grow_i< vinc; grow_i++) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead-0; ++ix) {
-                        if (*(WMkoord1_data + nxy * islice + nx * ix + iy) != 0) {
+            for (int iz = 0; iz < size_z; ++iz) {
+                for (int iy = 0; iy < size_x; ++iy) {
+                    for (int ix = 0; ix < size_y; ++ix) {
+                        if (*(WMkoord1_data + nxy * iz + nx * ix + iy) != 0) {
                             dist_min2 = 10000.;
                             x1g = 0;
                             y1g = 0;
 
-                            for (int iy_i = max(0, (*(WMkoord3_data + nxy * islice + nx * ix + iy)) - grow_vinc); iy_i < min((*(WMkoord3_data + nxy * islice + nx * ix + iy)) + grow_vinc + 1, sizePhase); ++iy_i) {
-                                for (int ix_i = max(0, (*(WMkoord2_data + nxy * islice + nx * ix + iy)) - grow_vinc); ix_i < min((*(WMkoord2_data + nxy * islice + nx * ix + iy)) + grow_vinc + 1, sizeRead); ++ix_i) {
-                                    if (*(nim_input_data + nxy * islice + nx * ix_i + iy_i) == 2) {
+                            for (int iy_i = max(0, (*(WMkoord3_data + nxy * iz + nx * ix + iy)) - grow_vinc); iy_i < min((*(WMkoord3_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, size_x); ++iy_i) {
+                                for (int ix_i = max(0, (*(WMkoord2_data + nxy * iz + nx * ix + iy)) - grow_vinc); ix_i < min((*(WMkoord2_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, size_y); ++ix_i) {
+                                    if (*(nim_input_data + nxy * iz + nx * ix_i + iy_i) == 2) {
 
                                         dist_i = dist2d((float)ix, (float)iy, (float)ix_i, (float)iy_i);
                                         if (dist_i< dist_min2) {
@@ -339,9 +339,9 @@ int main(int argc, char * argv[]) {
                                     }
                                 }
                             }
-                            *(growfromWM1_data + nxy * islice + nx * ix + iy) = dist2d((float)ix, (float)iy, (float)x1g, (float)y1g);
-                            *(WMkoord2_data + nxy * islice + nx * ix + iy) = *(WMkoord2_data + nxy * islice + nx * (int)x1g + (int)y1g);
-                            *(WMkoord3_data + nxy * islice + nx * ix + iy) = *(WMkoord3_data + nxy * islice + nx * (int)x1g + (int)y1g);
+                            *(growfromWM1_data + nxy * iz + nx * ix + iy) = dist2d((float)ix, (float)iy, (float)x1g, (float)y1g);
+                            *(WMkoord2_data + nxy * iz + nx * ix + iy) = *(WMkoord2_data + nxy * iz + nx * (int)x1g + (int)y1g);
+                            *(WMkoord3_data + nxy * iz + nx * ix + iy) = *(WMkoord3_data + nxy * iz + nx * (int)x1g + (int)y1g);
                         }
                     }
                 }
@@ -353,27 +353,27 @@ int main(int argc, char * argv[]) {
         // Wabble across neighbouring voxels of closest GM //
         // to account for Pytagoras errors /////////////////
         ////////////////////////////////////////////////////
-        for (int islice = 0; islice < sizeSlice; ++islice) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
-                    *(growfromGM1_data + nxy * islice + nx * ix + iy) = *(growfromGM0_data + nxy * islice + nx * ix + iy);
-                    *(GMkoord2_data + nxy * islice + nx * ix + iy) = *(GMkoord0_data + nxy * islice + nx * ix + iy);
-                    *(GMkoord3_data + nxy * islice + nx * ix + iy) = *(GMkoord1_data + nxy * islice + nx * ix + iy);
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
+                    *(growfromGM1_data + nxy * iz + nx * ix + iy) = *(growfromGM0_data + nxy * iz + nx * ix + iy);
+                    *(GMkoord2_data + nxy * iz + nx * ix + iy) = *(GMkoord0_data + nxy * iz + nx * ix + iy);
+                    *(GMkoord3_data + nxy * iz + nx * ix + iy) = *(GMkoord1_data + nxy * iz + nx * ix + iy);
                 }
             }
         }
         // cout << "  Running also until here..." << endl;
         for (int grow_i = 1; grow_i< vinc; grow_i++) {
-            for (int islice = 0; islice < sizeSlice; ++islice) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead-0; ++ix) {
-                        if (*(GMkoord1_data + nxy * islice + nx * ix + iy) != 0) {
+            for (int iz = 0; iz < size_z; ++iz) {
+                for (int iy = 0; iy < size_x; ++iy) {
+                    for (int ix = 0; ix < size_y; ++ix) {
+                        if (*(GMkoord1_data + nxy * iz + nx * ix + iy) != 0) {
                             dist_min2 = 10000.;
                             x1g = 0;
                             y1g = 0;
-                            for (int iy_i = max(0, (*(GMkoord3_data + nxy * islice + nx * ix + iy)) - grow_vinc); iy_i < min((*(GMkoord3_data + nxy * islice + nx * ix + iy)) + grow_vinc + 1, sizePhase); ++iy_i) {
-                                for (int ix_i = max(0, (*(GMkoord2_data + nxy * islice + nx * ix + iy)) - grow_vinc); ix_i < min((*(GMkoord2_data + nxy * islice + nx * ix + iy)) + grow_vinc + 1, sizeRead); ++ix_i) {
-                                    if (*(nim_input_data + nxy * islice + nx * ix_i + iy_i) == 1) {
+                            for (int iy_i = max(0, (*(GMkoord3_data + nxy * iz + nx * ix + iy)) - grow_vinc); iy_i < min((*(GMkoord3_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, size_x); ++iy_i) {
+                                for (int ix_i = max(0, (*(GMkoord2_data + nxy * iz + nx * ix + iy)) - grow_vinc); ix_i < min((*(GMkoord2_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, size_y); ++ix_i) {
+                                    if (*(nim_input_data + nxy * iz + nx * ix_i + iy_i) == 1) {
                                         dist_i = dist2d((float)ix, (float)iy, (float)ix_i, (float)iy_i);
                                         if (dist_i< dist_min2) {
                                             dist_min2 = dist_i;
@@ -384,9 +384,9 @@ int main(int argc, char * argv[]) {
                                     }
                                 }
                             }
-                            *(growfromGM1_data + nxy * islice + nx * ix + iy) = dist2d((float)ix, (float)iy, (float)x1g, (float)y1g);
-                            *(GMkoord2_data + nxy * islice + nx * ix + iy) = *(GMkoord2_data + nxy * islice + nx * (int)x1g + (int)y1g);
-                            *(GMkoord3_data + nxy * islice + nx * ix + iy) = *(GMkoord3_data + nxy * islice + nx * (int)x1g + (int)y1g);
+                            *(growfromGM1_data + nxy * iz + nx * ix + iy) = dist2d((float)ix, (float)iy, (float)x1g, (float)y1g);
+                            *(GMkoord2_data + nxy * iz + nx * ix + iy) = *(GMkoord2_data + nxy * iz + nx * (int)x1g + (int)y1g);
+                            *(GMkoord3_data + nxy * iz + nx * ix + iy) = *(GMkoord3_data + nxy * iz + nx * (int)x1g + (int)y1g);
                         }
                     }
                 }
@@ -397,16 +397,16 @@ int main(int argc, char * argv[]) {
         int GMK2_i, GMK3_i, WMK2_i, WMK3_i;
         float GMK2_f, GMK3_f, WMK2_f, WMK3_f, ix_f, iy_f;
 
-        for (int islice = 0; islice < sizeSlice; ++islice) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
-                    if (*(nim_input_data + nxy * islice + nx * ix + iy) == 3) {
-                        // Equi_dist_layers(0, islice, iy, ix) = 19 * (1- dist((float)ix, (float)iy, (float)GMkoord(2, islice, iy, ix) , (float)GMkoord(3, islice, iy, ix) )/ (dist((float)ix, (float)iy, (float)GMkoord(2, islice, iy, ix)    , (float)GMkoord(3, islice, iy, ix) ) + dist((float)ix, (float)iy, (float)WMkoord(2, islice, iy, ix)        , (float)WMkoord(3, islice, iy, ix)))) + 2  ;
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
+                    if (*(nim_input_data + nxy * iz + nx * ix + iy) == 3) {
+                        // Equi_dist_layers(0, iz, iy, ix) = 19 * (1- dist((float)ix, (float)iy, (float)GMkoord(2, iz, iy, ix) , (float)GMkoord(3, iz, iy, ix) )/ (dist((float)ix, (float)iy, (float)GMkoord(2, iz, iy, ix)    , (float)GMkoord(3, iz, iy, ix) ) + dist((float)ix, (float)iy, (float)WMkoord(2, iz, iy, ix)        , (float)WMkoord(3, iz, iy, ix)))) + 2  ;
 
-                        GMK2_i = *(GMkoord2_data + nxy * islice + nx * ix + iy);
-                        GMK3_i = *(GMkoord3_data + nxy * islice + nx * ix + iy);
-                        WMK2_i = *(WMkoord2_data + nxy * islice + nx * ix + iy);
-                        WMK3_i = *(WMkoord3_data + nxy * islice + nx * ix + iy);
+                        GMK2_i = *(GMkoord2_data + nxy * iz + nx * ix + iy);
+                        GMK3_i = *(GMkoord3_data + nxy * iz + nx * ix + iy);
+                        WMK2_i = *(WMkoord2_data + nxy * iz + nx * ix + iy);
+                        WMK3_i = *(WMkoord3_data + nxy * iz + nx * ix + iy);
                         GMK2_f = (float)GMK2_i;
                         GMK3_f = (float)GMK3_i;
                         WMK2_f = (float)WMK2_i;
@@ -414,9 +414,9 @@ int main(int argc, char * argv[]) {
                         ix_f = (float)ix;
                         iy_f = (float)iy;
 
-                        // cout << " rix_f, iy_f, GMK2_f, GMK3_f " << " " << ix_f << " " << iy_f << " " << GMK2_f << " " << * (GMkoord2_data + nxy * islice + nx * ix + iy) << endl;
-                        *(equi_dist_layers_data + nxy * islice + nx * ix + iy) = (Nlayer-1) * (1- dist2d((float)ix, (float)iy, GMK2_f, GMK3_f)/ (dist2d((float)ix, (float)iy, GMK2_f, GMK3_f) + dist2d((float)ix, (float)iy, WMK2_f, WMK3_f))) + 2;
-                        // * (equi_dist_layers_data + nxy * islice + nx * ix + iy) = 100 * dist(ix_f, iy_f, GMK2_f, GMK3_f) ;
+                        // cout << " rix_f, iy_f, GMK2_f, GMK3_f " << " " << ix_f << " " << iy_f << " " << GMK2_f << " " << * (GMkoord2_data + nxy * iz + nx * ix + iy) << endl;
+                        *(nii_layers_data + nxy * iz + nx * ix + iy) = (Nlayer-1) * (1- dist2d((float)ix, (float)iy, GMK2_f, GMK3_f)/ (dist2d((float)ix, (float)iy, GMK2_f, GMK3_f) + dist2d((float)ix, (float)iy, WMK2_f, WMK3_f))) + 2;
+                        // * (nii_layers_data + nxy * iz + nx * ix + iy) = 100 * dist(ix_f, iy_f, GMK2_f, GMK3_f) ;
                     }
                 }
             }
@@ -503,9 +503,9 @@ int main(int argc, char * argv[]) {
         cout << "  Start growing from WM..." << endl;
 
         // Setting zero
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
                     *(growfromWM0_data + nxy * iz + nx * ix + iy) = 0;
                     *(growfromWM1_data + nxy * iz + nx * ix + iy) = 0;
                     *(growfromGM0_data + nxy * iz + nx * ix + iy) = 0;
@@ -520,16 +520,16 @@ int main(int argc, char * argv[]) {
         // cout << "  Closing surfaces..." << endl;
         // int isWMb, isCSFb, isb;
         // for (int iterations = 0; iterations < 100; ++iterations) {
-        //     for (int iz = 0; iz < sizeSlice; ++iz) {
-        //         for (int iy = 0; iy < sizePhase; ++iy) {
-        //             for (int ix = 0; ix < sizeRead-0; ++ix) {
+        //     for (int iz = 0; iz < size_z; ++iz) {
+        //         for (int iy = 0; iy < size_x; ++iy) {
+        //             for (int ix = 0; ix < size_y; ++ix) {
         //                 if (*(nim_input_data + nxy * iz + nx * ix + iy) == 0) {
         //                     isWMb = 0;
         //                     isCSFb = 0;
         //                     isb = 0;
-        //                     for (int iz_i = max(0, iz-2); iz_i < min(sizeSlice, iz+2); ++iz_i) {
-        //                         for (int iy_i = max(0, iy-2); iy_i < min(sizePhase, iy+2); ++iy_i) {
-        //                             for (int ix_i = max(0, ix-2); ix_i < min(sizeRead, ix+2); ++ix_i) {
+        //                     for (int iz_i = max(0, iz-2); iz_i < min(size_z, iz+2); ++iz_i) {
+        //                         for (int iy_i = max(0, iy-2); iy_i < min(size_x, iy+2); ++iy_i) {
+        //                             for (int ix_i = max(0, ix-2); ix_i < min(size_y, ix+2); ++ix_i) {
         //                                 if (*(nim_input_data + nxy * iz_i + nx * ix_i + iy_i) == 3) isb = 1;
         //                                 if (*(nim_input_data + nxy * iz_i + nx * ix_i + iy_i) == 1) isCSFb = 1;
         //                                 if (*(nim_input_data + nxy * iz_i + nx * ix_i + iy_i) == 2) isWMb = 1;
@@ -551,9 +551,9 @@ int main(int argc, char * argv[]) {
         // Grow from WM //
         //////////////////
         int grow_vinc = 2;
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
                     if (*(nim_input_data + nxy * iz + nx * ix + iy) == 2) {
                         *(growfromWM0_data + nxy * iz + nx * ix + iy) = 1.;
                         *(WMkoordx1_data + nxy * iz + nx * ix + iy) = ix;
@@ -564,18 +564,18 @@ int main(int argc, char * argv[]) {
             }
         }
         for (int grow_i = 1; grow_i< vinc; grow_i++) {
-            for (int iz = 0; iz < sizeSlice; ++iz) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead-0; ++ix) {
+            for (int iz = 0; iz < size_z; ++iz) {
+                for (int iy = 0; iy < size_x; ++iy) {
+                    for (int ix = 0; ix < size_y; ++ix) {
                         dist_min2 = 10000.;
                         x1g = 0;
                         y1g = 0;
                         z1g = 0;
                         if (*(nim_input_data + nxy * iz + nx * ix + iy) == 3  && *(growfromWM0_data + nxy * iz + nx * ix + iy) == 0) {
-                            // cout << " true " << * (growfromWM0_data + nxy * islice + nx * ix + iy) << endl;
-                            for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc + 1, sizePhase); ++iy_i) {
-                                for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc + 1, sizeRead); ++ix_i) {
-                                    for (int iz_i = max(0, iz - grow_vinc); iz_i < min(iz + grow_vinc + 1, sizeRead); ++iz_i) {
+                            // cout << " true " << * (growfromWM0_data + nxy * iz + nx * ix + iy) << endl;
+                            for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc + 1, size_x); ++iy_i) {
+                                for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc + 1, size_y); ++ix_i) {
+                                    for (int iz_i = max(0, iz - grow_vinc); iz_i < min(iz + grow_vinc + 1, size_y); ++iz_i) {
                                         if (*(growfromWM0_data + nxy * iz_i + nx * ix_i + iy_i) == (float)grow_i) {
                                             dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                             if (dist_i< dist_min2) {
@@ -590,13 +590,13 @@ int main(int argc, char * argv[]) {
                                 }
                             }
                             if (dist_min2< 1.4) {
-                                // distDebug(0, islice, iy, ix) = dist_min2 ;
+                                // distDebug(0, iz, iy, ix) = dist_min2 ;
                                 *(growfromWM0_data + nxy * iz + nx * ix + iy) = (float)grow_i+1;
                                 *(WMkoordx1_data + nxy * iz + nx * ix + iy) = *(WMkoordx1_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
                                 *(WMkoordy1_data + nxy * iz + nx * ix + iy) = *(WMkoordy1_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
                                 *(WMkoordz1_data + nxy * iz + nx * ix + iy) = *(WMkoordz1_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
                             }
-                            // cout << " ix " << ix << " iy " << iy << " " << * (WMkoordx1_data + nxy * islice + nx * (int)x1g + (int)y1g) << endl;
+                            // cout << " ix " << ix << " iy " << iy << " " << * (WMkoordx1_data + nxy * iz + nx * (int)x1g + (int)y1g) << endl;
                         }
                     }
                 }
@@ -607,9 +607,9 @@ int main(int argc, char * argv[]) {
         // Grow from CSF //
         ///////////////////
         cout << "  Start growing from CSF..." << endl;
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
                     if (*(nim_input_data + nxy * iz + nx * ix + iy) == 1) {
                         *(growfromGM0_data + nxy * iz + nx * ix + iy) = 1.;
                         *(GMkoordx1_data + nxy * iz + nx * ix + iy) = ix;
@@ -620,17 +620,17 @@ int main(int argc, char * argv[]) {
             }
         }
         for (int grow_i = 1; grow_i< vinc; grow_i++) {
-            for (int iz = 0; iz < sizeSlice; ++iz) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead-0; ++ix) {
+            for (int iz = 0; iz < size_z; ++iz) {
+                for (int iy = 0; iy < size_x; ++iy) {
+                    for (int ix = 0; ix < size_y; ++ix) {
                         dist_min2 = 10000.;
                         x1g = 0.;
                         y1g = 0;
                         z1g = 0;
                         if (*(nim_input_data + nxy * iz + nx * ix + iy) == 3  && *(growfromGM0_data + nxy * iz + nx * ix + iy) == 0) {
-                            for (int iz_i = max(0, iz - grow_vinc); iz_i < min(iz + grow_vinc + 1, sizeRead); ++iz_i) {
-                                for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc + 1, sizePhase); ++iy_i) {
-                                    for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc + 1, sizeRead); ++ix_i) {
+                            for (int iz_i = max(0, iz - grow_vinc); iz_i < min(iz + grow_vinc + 1, size_y); ++iz_i) {
+                                for (int iy_i = max(0, iy - grow_vinc); iy_i < min(iy + grow_vinc + 1, size_x); ++iy_i) {
+                                    for (int ix_i = max(0, ix - grow_vinc); ix_i < min(ix + grow_vinc + 1, size_y); ++ix_i) {
                                         if (*(growfromGM0_data + nxy * iz_i + nx * ix_i + iy_i) == (float)grow_i) {
                                             dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                             if (dist_i< dist_min2) {
@@ -661,9 +661,9 @@ int main(int argc, char * argv[]) {
         // to account for Pytagoras errors //////////////////
         /////////////////////////////////////////////////////
         cout << "  Correcting for Pytagoras error..." << endl;
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
                     *(growfromWM1_data + nxy * iz + nx * ix + iy) = *(growfromWM0_data + nxy * iz + nx * ix + iy);
                     *(WMkoordx2_data + nxy * iz + nx * ix + iy) = *(WMkoordx1_data + nxy * iz + nx * ix + iy);
                     *(WMkoordy2_data + nxy * iz + nx * ix + iy) = *(WMkoordy1_data + nxy * iz + nx * ix + iy);
@@ -672,17 +672,17 @@ int main(int argc, char * argv[]) {
             }
         }
         for (int grow_i = 1; grow_i< vinc; grow_i++) {
-            for (int iz = 0; iz < sizeSlice; ++iz) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead-0; ++ix) {
+            for (int iz = 0; iz < size_z; ++iz) {
+                for (int iy = 0; iy < size_x; ++iy) {
+                    for (int ix = 0; ix < size_y; ++ix) {
                         if (*(WMkoordy1_data + nxy * iz + nx * ix + iy) != 0) {
                             dist_min2 = 10000.;
                             x1g = 0;
                             y1g = 0;
                             z1g = 0;
-                            for (int iy_i = max(0, (*(WMkoordy2_data + nxy * iz + nx * ix + iy)) - grow_vinc); iy_i < min((*(WMkoordy2_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, sizePhase); ++iy_i) {
-                                for (int ix_i = max(0, (*(WMkoordx2_data + nxy * iz + nx * ix + iy)) - grow_vinc); ix_i < min((*(WMkoordx2_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, sizeRead); ++ix_i) {
-                                    for (int iz_i = max(0, (*(WMkoordz2_data + nxy * iz + nx * ix + iy)) - grow_vinc); iz_i < min((*(WMkoordz2_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, sizeSlice); ++iz_i) {
+                            for (int iy_i = max(0, (*(WMkoordy2_data + nxy * iz + nx * ix + iy)) - grow_vinc); iy_i < min((*(WMkoordy2_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, size_x); ++iy_i) {
+                                for (int ix_i = max(0, (*(WMkoordx2_data + nxy * iz + nx * ix + iy)) - grow_vinc); ix_i < min((*(WMkoordx2_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, size_y); ++ix_i) {
+                                    for (int iz_i = max(0, (*(WMkoordz2_data + nxy * iz + nx * ix + iy)) - grow_vinc); iz_i < min((*(WMkoordz2_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, size_z); ++iz_i) {
                                         if (*(nim_input_data + nxy * iz_i + nx * ix_i + iy_i) == 2) {
                                             dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                             if (dist_i< dist_min2) {
@@ -711,9 +711,9 @@ int main(int argc, char * argv[]) {
         // Wabble accross neighbouring voxeles of closest GM //
         // To account for Pytagoras errors ////////////////////
         ///////////////////////////////////////////////////////
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
                     *(growfromGM1_data + nxy * iz + nx * ix + iy) = *(growfromGM0_data + nxy * iz + nx * ix + iy);
                     *(GMkoordx2_data + nxy * iz + nx * ix + iy) = *(GMkoordx1_data + nxy * iz + nx * ix + iy);
                     *(GMkoordy2_data + nxy * iz + nx * ix + iy) = *(GMkoordy1_data + nxy * iz + nx * ix + iy);
@@ -724,17 +724,17 @@ int main(int argc, char * argv[]) {
         cout << "  Running also until here..." << endl;
 
         for (int grow_i = 1; grow_i< vinc; grow_i++) {
-            for (int iz = 0; iz < sizeSlice; ++iz) {
-                for (int iy = 0; iy < sizePhase; ++iy) {
-                    for (int ix = 0; ix < sizeRead-0; ++ix) {
+            for (int iz = 0; iz < size_z; ++iz) {
+                for (int iy = 0; iy < size_x; ++iy) {
+                    for (int ix = 0; ix < size_y; ++ix) {
                         if (*(GMkoordy1_data + nxy * iz + nx * ix + iy) != 0) {
                             dist_min2 = 10000.;
                             x1g = 0;
                             y1g = 0;
                             z1g = 0;
-                            for (int iy_i = max(0, (*(GMkoordy2_data + nxy * iz + nx * ix + iy)) - grow_vinc); iy_i < min((*(GMkoordy2_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, sizePhase); ++iy_i) {
-                                for (int ix_i = max(0, (*(GMkoordx2_data + nxy * iz + nx * ix + iy)) - grow_vinc); ix_i < min((*(GMkoordx2_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, sizeRead); ++ix_i) {
-                                    for (int iz_i = max(0, (*(GMkoordz2_data + nxy * iz + nx * ix + iy)) - grow_vinc); iz_i < min((*(GMkoordz2_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, sizeRead); ++iz_i) {
+                            for (int iy_i = max(0, (*(GMkoordy2_data + nxy * iz + nx * ix + iy)) - grow_vinc); iy_i < min((*(GMkoordy2_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, size_x); ++iy_i) {
+                                for (int ix_i = max(0, (*(GMkoordx2_data + nxy * iz + nx * ix + iy)) - grow_vinc); ix_i < min((*(GMkoordx2_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, size_y); ++ix_i) {
+                                    for (int iz_i = max(0, (*(GMkoordz2_data + nxy * iz + nx * ix + iy)) - grow_vinc); iz_i < min((*(GMkoordz2_data + nxy * iz + nx * ix + iy)) + grow_vinc + 1, size_y); ++iz_i) {
                                         if (*(nim_input_data + nxy * iz_i + nx * ix_i + iy_i) == 1) {
                                             dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
                                             if (dist_i< dist_min2) {
@@ -762,9 +762,9 @@ int main(int argc, char * argv[]) {
         int GMK2_i, GMKz2_i, GMK3_i, WMK2_i, WMKz2_i, WMK3_i;
         float GMK2_f, GMKz2_f, GMK3_f, WMK2_f, WMKz2_f, WMK3_f, ix_f, iy_f, iz_f;
 
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
                     if (*(nim_input_data + nxy * iz + nx * ix + iy) == 3) {
                         // Equi_dist_layers(0, iz, iy, ix) = 19 * (1- dist((float)ix, (float)iy, (float)GMkoord(2, iz, iy, ix) , (float)GMkoord(3, iz, iy, ix) )/ (dist((float)ix, (float)iy, (float)GMkoord(2, iz, iy, ix)    , (float)GMkoord(3, iz, iy, ix) ) + dist((float)ix, (float)iy, (float)WMkoord(2, iz, iy, ix)        , (float)WMkoord(3, iz, iy, ix)))) + 2  ;
 
@@ -789,8 +789,8 @@ int main(int argc, char * argv[]) {
                         iz_f = (float)iz;
 
                         // cout << " rix_f, iy_f, GMK2_f, GMK3_f " << " " << ix_f << " " << iy_f << " " << GMK2_f << " " << * (GMkoordx2_data + nxy * iz + nx * ix + iy) << endl;
-                        *(equi_dist_layers_data + nxy * iz + nx * ix + iy) = (Nlayer-1) * (1- dist((float)ix, (float)iy, (float)iz, GMK2_f, GMK3_f, GMKz2_f, dX, dY, dZ)/ (dist((float)ix, (float)iy, (float)iz, GMK2_f, GMK3_f, GMKz2_f, dX, dY, dZ) + dist((float)ix, (float)iy, (float)iz, WMK2_f, WMK3_f, WMKz2_f, dX, dY, dZ))) + 2;
-                        // * (equi_dist_layers_data + nxy * iz + nx * ix + iy) = 100 * dist(ix_f, iy_f, GMK2_f, GMK3_f) ;
+                        *(nii_layers_data + nxy * iz + nx * ix + iy) = (Nlayer-1) * (1- dist((float)ix, (float)iy, (float)iz, GMK2_f, GMK3_f, GMKz2_f, dX, dY, dZ)/ (dist((float)ix, (float)iy, (float)iz, GMK2_f, GMK3_f, GMKz2_f, dX, dY, dZ) + dist((float)ix, (float)iy, (float)iz, WMK2_f, WMK3_f, WMKz2_f, dX, dY, dZ))) + 2;
+                        // * (nii_layers_data + nxy * iz + nx * ix + iy) = 100 * dist(ix_f, iy_f, GMK2_f, GMK3_f) ;
                     }
                 }
             }
@@ -804,14 +804,14 @@ int main(int argc, char * argv[]) {
     ///////////////////////////////////////////////////////////////
     //// Cleaning negative layers and layers of more than cutoff //
     ///////////////////////////////////////////////////////////////
-    for (int islice = 0; islice < sizeSlice; ++islice) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead-0; ++ix) {
-                if (*(nim_input_data + nxy * islice + nx * ix + iy) == 1 && *(equi_dist_layers_data + nxy * islice + nx * ix + iy) == 0) {
-                    *(equi_dist_layers_data + nxy * islice + nx * ix + iy) = Nlayer+1;
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_x; ++iy) {
+            for (int ix = 0; ix < size_y; ++ix) {
+                if (*(nim_input_data + nxy * iz + nx * ix + iy) == 1 && *(nii_layers_data + nxy * iz + nx * ix + iy) == 0) {
+                    *(nii_layers_data + nxy * iz + nx * ix + iy) = Nlayer+1;
                 }
-                if (*(nim_input_data + nxy * islice + nx * ix + iy) == 2 && *(equi_dist_layers_data + nxy * islice + nx * ix + iy) == 0) {
-                    *(equi_dist_layers_data + nxy * islice + nx * ix + iy) = 1;
+                if (*(nim_input_data + nxy * iz + nx * ix + iy) == 2 && *(nii_layers_data + nxy * iz + nx * ix + iy) == 0) {
+                    *(nii_layers_data + nxy * iz + nx * ix + iy) = 1;
                 }
             }
         }
@@ -824,11 +824,11 @@ int main(int argc, char * argv[]) {
         nifti_image* centroid = copy_nifti_as_float32(nim_input);
         float* centroid_data = static_cast<float*>(centroid->data);
         float coord = 0.0;
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
                     if (*(nim_input_data + nxy * iz + nx * ix + iy) != 0) {
-                        coord = (float)((double) *(equi_dist_layers_data + nxy * iz + nx * ix + iy) /((double)(Nlayer)));
+                        coord = (float)((double) *(nii_layers_data + nxy * iz + nx * ix + iy) /((double)(Nlayer)));
                         if (coord >= 0 && coord<= 1) {  // Taking care of lfoar rounding errors
                             *(centroid_data + nxy * iz + nx * ix + iy) = coord;
                         }
@@ -846,11 +846,11 @@ int main(int argc, char * argv[]) {
     }  // Centroid option is closed
 
     if (thinn_option == 0) {
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
                     if (*(nim_input_data + nxy * iz + nx * ix + iy) != 0) {
-                        *(equi_dist_layers_data + nxy * iz + nx * ix + iy) = (int)((double) *(equi_dist_layers_data + nxy * iz + nx * ix + iy) * (double) (Nlayer_real - 1) / ((double)(Nlayer)) + 1.5);
+                        *(nii_layers_data + nxy * iz + nx * ix + iy) = (int)((double) *(nii_layers_data + nxy * iz + nx * ix + iy) * (double) (Nlayer_real - 1) / ((double)(Nlayer)) + 1.5);
                     }
                 }
             }
@@ -858,29 +858,29 @@ int main(int argc, char * argv[]) {
     }
     if (thinn_option == 1) {
         Nlayer_real = Nlayer_real + 2;
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
                     if (*(nim_input_data + nxy * iz + nx * ix + iy) != 0) {
-                        *(equi_dist_layers_data + nxy * iz + nx * ix + iy) = (int)((double) *(equi_dist_layers_data + nxy * iz + nx * ix + iy) * (double) (Nlayer_real-1) / ((double) (Nlayer)) + 1.5);
+                        *(nii_layers_data + nxy * iz + nx * ix + iy) = (int)((double) *(nii_layers_data + nxy * iz + nx * ix + iy) * (double) (Nlayer_real-1) / ((double) (Nlayer)) + 1.5);
                     }
                 }
             }
         }
-        for (int iz = 0; iz < sizeSlice; ++iz) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead-0; ++ix) {
-                    if (*(equi_dist_layers_data + nxy * iz + nx * ix + iy) >= 2 && *(equi_dist_layers_data + nxy * iz + nx * ix + iy)< Nlayer_real) {
-                        *(equi_dist_layers_data + nxy * iz + nx * ix + iy) = *(equi_dist_layers_data + nxy * iz + nx * ix + iy) - 1;
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_x; ++iy) {
+                for (int ix = 0; ix < size_y; ++ix) {
+                    if (*(nii_layers_data + nxy * iz + nx * ix + iy) >= 2 && *(nii_layers_data + nxy * iz + nx * ix + iy)< Nlayer_real) {
+                        *(nii_layers_data + nxy * iz + nx * ix + iy) = *(nii_layers_data + nxy * iz + nx * ix + iy) - 1;
                     }
-                    if (*(equi_dist_layers_data + nxy * iz + nx * ix + iy) == Nlayer_real) {
-                        *(equi_dist_layers_data + nxy * iz + nx * ix + iy) = *(equi_dist_layers_data + nxy * iz + nx * ix + iy) - 2;
+                    if (*(nii_layers_data + nxy * iz + nx * ix + iy) == Nlayer_real) {
+                        *(nii_layers_data + nxy * iz + nx * ix + iy) = *(nii_layers_data + nxy * iz + nx * ix + iy) - 2;
                     }
                 }
             }
         }
     }
-    save_output_nifti(fin, "layers", equi_dist_layers, true);
+    save_output_nifti(fin, "layers", nii_layers, true);
 
     cout << "  Finished." << endl;
     return 0;
