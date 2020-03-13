@@ -452,14 +452,16 @@ int main(int argc, char * argv[]) {
     // }
     // cout << "  Not Segmentation fault until here 381" << endl;
 
-    ////////////////////
-    // Smooth columns //
-    ////////////////////
+    // ========================================================================
+    // ========================================================================
+    // Smooth columns
+    // ========================================================================
+    // ========================================================================
     cout << "  Smoothing in middle layer..." << endl;
 
     nifti_image* nii_smooth = copy_nifti_as_float32(nii_layer);
-    nifti_image* nii_gaussw = copy_nifti_as_float32(nii_layer);
     float* nii_smooth_data = static_cast<float*>(nii_smooth->data);
+    nifti_image* nii_gaussw = copy_nifti_as_float32(nii_layer);
     float* nii_gaussw_data = static_cast<float*>(nii_gaussw->data);
 
     int FWHM_val = 1;
@@ -469,113 +471,134 @@ int main(int argc, char * argv[]) {
     cout << "  FWHM_val " << FWHM_val<< endl;
 
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                *(nii_gaussw_data + nxy * iz + nx * ix + iy) = 0;
-                // *(nii_smooth_data + nxy * iz + nx * ix + iy) = 0;
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                *(nii_gaussw_data + voxel_i) = 0;
+                // *(nii_smooth_data + voxel_i) = 0;
 
-                if (*(lateralCoord_data + nxy * iz + nx * ix + iy)  > 0) {
-                    for (int iz_i = max(0, iz - vinc_sm); iz_i < min(iz + vinc_sm + 1, size_z); ++iz_i) {
-                        for (int iy_i = max(0, iy - vinc_sm); iy_i < min(iy + vinc_sm + 1, size_x); ++iy_i) {
-                            for (int ix_i = max(0, ix - vinc_sm); ix_i<min(ix + vinc_sm + 1, size_y); ++ix_i) {
-                                if (*(lateralCoord_data + nxy * iz_i + nx * ix_i + iy_i)  > 0) {
-                                    dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                    // cout << "debug 4 " << gaus(dist_i, FWHM_val) << endl;
-                                    // cout << "debug 5 " << dist_i << endl;
-                                    // if (*(nim_input_data + nxy * iz + nx * ix + iy) == 3) cout << "debug  4b " << endl;
-                                    // dummy = *(layer_data + nxy * iz_i + nx * ix_i + iy_i);
-                                    *(nii_smooth_data + nxy * iz + nx * ix + iy) = *(nii_smooth_data + nxy * iz + nx * ix + iy) + *(lateralCoord_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
-                                    *(nii_gaussw_data + nxy * iz + nx * ix + iy) = *(nii_gaussw_data + nxy * iz + nx * ix + iy) + gaus(dist_i, FWHM_val);
+                if (*(lateralCoord_data + voxel_i)  > 0) {
+
+                    int jz_start = max(0, iz - vinc_sm);
+                    int jz_stop = min(iz + vinc_sm + 1, size_z);
+                    int jy_start = max(0, iy - vinc_sm);
+                    int jy_stop = min(iy + vinc_sm + 1, size_y);
+                    int jx_start = max(0, ix - vinc_sm);
+                    int jx_stop = min(ix + vinc_sm + 1, size_x);
+
+                    for (int jz = jz_start; jz < jz_stop; ++jz) {
+                        for (int jy = jy_start; jy < jy_stop; ++jy) {
+                            for (int jx = jx_start; jx < jx_stop; ++jx) {
+                                int voxel_j = nxy * jz + nx * jx + jy;
+
+                                if (*(lateralCoord_data + voxel_j) > 0) {
+                                    d = dist((float)ix, (float)iy, (float)iz,
+                                             (float)jx, (float)jy, (float)jz,
+                                             dX, dY, dZ);
+                                    float w = gaus(d, FWHM_val);
+                                    *(nii_smooth_data + voxel_i) += *(lateralCoord_data + voxel_j) * w;
+                                    *(nii_gaussw_data + voxel_i) += w;
                                 }
                             }
                         }
                     }
-                    if (*(nii_gaussw_data + nxy * iz + nx * ix + iy) > 0) {
-                        *(nii_smooth_data + nxy * iz + nx * ix + iy) = *(nii_smooth_data + nxy * iz + nx * ix + iy) / *(nii_gaussw_data + nxy * iz + nx * ix + iy);
+                    if (*(nii_gaussw_data + voxel_i) > 0) {
+                        *(nii_smooth_data + voxel_i) /= *(nii_gaussw_data + voxel_i);
                     }
                 }
-                //if (*(nii_layer_r_data + nxy * iz + nx * ix + iy) <= 0) *(nii_smooth_data + nxy*iz + nx * ix + iy) = *(lateralCoord_data + nxy*iz + nx*ix + iy);
             }
         }
     }
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                if (*(growfromCenter_data + nxy * iz + nx * ix + iy) > 0) {
-                    *(lateralCoord_data + nxy * iz + nx * ix + iy) = (int) *(nii_smooth_data + nxy * iz + nx * ix + iy);
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_z; ++ix) {
+                int voxel_i = nxy * iz + nx * ix + iy;
+
+                if (*(growfromCenter_data + voxel_i) > 0) {
+                    *(lateralCoord_data + voxel_i) =
+                        static_cast<int>(*(nii_smooth_data + voxel_i));
                 }
             }
         }
     }
-    // const char *fout_10 = "lateral_cord_nii_smooth.nii";
-    // if (nifti_set_filenames(lateralCoord, fout_10, 1, 1)){
-    //     return 1;
-    // }
-    // nifti_image_write(lateralCoord);
 
-    /////////////////////////////////////
-    // Extending columns across layers //
-    /////////////////////////////////////
+    // ========================================================================
+    // Extending columns across layers
+    // ========================================================================
     cout << "  Extending columns across layers..." << endl;
 
-    nifti_image* hairy_brain = copy_nifti_as_int32(nii_layer);
-    int32_t* hairy_brain_data = static_cast<int32_t*>(hairy_brain->data);
+    nifti_image* hairy = copy_nifti_as_int32(nii_layer);
+    int32_t* hairy_data = static_cast<int32_t*>(hairy->data);
 
-    nifti_image* hairy_brain_dist = copy_nifti_as_float32(nii_layer);
-    float* hairy_brain_dist_data = static_cast<float*>(hairy_brain_dist->data);
+    nifti_image* hairy_dist = copy_nifti_as_float32(nii_layer);
+    float* hairy_dist_data = static_cast<float*>(hairy_dist->data);
 
     dist_min2 = 10000.;  // This is an upper limit of the cortical thickness
     int vinc_thickness = 13;  // Closest middle layer area algorithm looks for
     int cloasest_coord = 0.;
 
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                *(hairy_brain_dist_data + nxy * iz + nx * ix + iy) = dist_min2;
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                *(hairy_dist_data + voxel_i) = dist_min2;
             }
         }
     }
 
-    // *(nii_layer_data + nxy * iz + nx * ix + iy) > 0
-
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
                 dist_min2 = 10000.;
-                if (*(lateralCoord_data + nxy*iz + nx*ix + iy) > 0) {
-                    // for (int iz_i = max(0, iz-vinc_thickness + 1); iz_i < min(iz + vinc_thickness + 1, size_z); ++iz_i) {
-                    int iz_i = iz;
-                    for (int iy_i = max(0, iy-vinc_thickness+1); iy_i<min(iy+vinc_thickness+1, size_x); ++iy_i) {
-                        for (int ix_i = max(0, ix-vinc_thickness+1); ix_i<min(ix+vinc_thickness+1, size_y); ++ix_i) {
-                            if (*(lateralCoord_data + nxy*iz_i + nx*ix_i + iy_i) == 0  && *(nii_layer_data + nxy*iz + nx*ix + iy) > 0 && dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ) < vinc_thickness) {
-                                dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
+                int voxel_i = nxy * iz + nx * iy + ix;
 
-                                if (dist_i < *(hairy_brain_dist_data + nxy * iz_i + nx * ix_i + iy_i) && *(nii_layer_data + nxy * iz + nx * ix + iy) > 0) {
-                                    *(hairy_brain_dist_data + nxy * iz_i + nx * ix_i + iy_i) = dist_i;
-                                    *(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) = *(lateralCoord_data + nxy * iz + nx * ix + iy);
+                if (*(lateralCoord_data + voxel_i) > 0) {
+                    int jz = iz;
+
+                    int jy_start = max(0, iy - vinc_thickness + 1);
+                    int jy_stop = min(iy + vinc_thickness + 1, size_x);
+                    int jx_start = max(0, ix - vinc_thickness + 1);
+                    int jx_stop = min(ix+vinc_thickness + 1, size_y);
+
+                    for (int jy = jy_start; jy < jy_stop; ++jy) {
+                        for (int jx = jx_start; jx < jx_stop; ++jx) {
+                            int voxel_j = nxy * jz + nx * jy + jx;
+
+                            if (*(lateralCoord_data + voxel_j) == 0
+                                && *(nii_layer_data + voxel_i) > 0
+                                && dist((float)ix, (float)iy, (float)iz,
+                                        (float)jx, (float)jy, (float)jz,
+                                        dX, dY, dZ) < vinc_thickness) {
+                                d = dist((float)ix, (float)iy, (float)iz,
+                                              (float)jx, (float)jy, (float)jz,
+                                              dX, dY, dZ);
+
+                                if (d < *(hairy_dist_data + voxel_j)
+                                    && *(nii_layer_data + voxel_i) > 0) {
+                                    *(hairy_dist_data + voxel_j) = d;
+                                    *(hairy_data + voxel_j) = *(lateralCoord_data + voxel_i);
                                 }
                             }
-                            if (*(lateralCoord_data + nxy * iz_i + nx * ix_i + iy_i) != 0) {
-                                *(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) = *(lateralCoord_data + nxy * iz_i + nx * ix_i + iy_i);
+                            if (*(lateralCoord_data + voxel_j) != 0) {
+                                *(hairy_data + voxel_j) = *(lateralCoord_data + voxel_j);
                             }
                         }
                     }
-                    // }
-                    // *(hairy_brain_data + nxy * iz + nx * ix + iy) = cloasest_coord;
                 }
             }
         }
     }
 
-    ////////////////////
-    // Smooth columns //
-    ////////////////////
+    // ========================================================================
+    // Smooth columns
+    // ========================================================================
     cout << "  Smoothing hairy brain again... " << endl;
 
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                *(nii_smooth_data + nxy * iz + nx *ix + iy) = 0;
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                *(nii_smooth_data + voxel_i) = 0;
             }
         }
     }
@@ -586,66 +609,76 @@ int main(int argc, char * argv[]) {
     cout << "  FWHM_val " << FWHM_val << endl;
 
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y -0; ++ix) {
-                *(nii_gaussw_data + nxy * iz + nx * ix + iy) = 0;
-                // *(nii_smooth_data + nxy * iz + nx * ix + iy) = 0;
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                *(nii_gaussw_data + voxel_i) = 0;
+                // *(nii_smooth_data + voxel_i) = 0;
 
-                if (*(hairy_brain_data + nxy * iz + nx * ix + iy) > 0) {
-                    int nr_layers_i = *(nii_layer_data + nxy * iz + nx * ix + iy);
+                if (*(hairy_data + voxel_i) > 0) {
+                    int nr_layers_i = *(nii_layer_data + voxel_i);
+                    int jz = iz;
+                    int jy_start = max(0, iy - vinc_sm);
+                    int jy_stop = min(iy + vinc_sm + 1, size_x);
+                    int jx_start = max(0, ix - vinc_sm);
+                    int jx_stop = min(ix + vinc_sm + 1, size_y);
 
-                    //for (int iz_i = max(0, iz - vinc_sm); iz_i < min(iz + vinc_sm + 1, size_y); ++iz_i) {
-                    int iz_i = iz;
-                    for (int iy_i = max(0, iy - vinc_sm); iy_i < min(iy + vinc_sm + 1, size_x); ++iy_i) {
-                        for (int ix_i = max(0, ix - vinc_sm); ix_i < min(ix + vinc_sm + 1, size_y); ++ix_i) {
-                            if (abs((int) *(nii_layer_data + nxy * iz_i + nx * ix_i + iy_i) - nr_layers_i) < 2 && *(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) > 0) {
-                                dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                // cout << "debug  4 " << gaus(dist_i, FWHM_val) << endl;
-                                // cout << "debug  5 " << dist_i << endl;
-                                // if (*(nim_input_data + nxy*iz + nx*ix + iy) == 3) cout << "debug  4b " << endl;
-                                // dummy = *(layer_data + nxy*iz_i + nx*ix_i + iy_i);
-                                *(nii_smooth_data + nxy * iz + nx * ix + iy) = *(nii_smooth_data + nxy * iz + nx * ix + iy) + *(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
-                                *(nii_gaussw_data + nxy * iz + nx * ix + iy) = *(nii_gaussw_data + nxy * iz + nx * ix + iy) + gaus(dist_i, FWHM_val);
+                    for (int jy = jy_start; jz < jy_stop; ++jz) {
+                        for (int jx = jx_start; jx < jx_stop; ++jx) {
+                            int voxel_j = voxel_j;
+
+                            if (abs((int) *(nii_layer_data + voxel_j) - nr_layers_i) < 2
+                                && *(hairy_data + voxel_j) > 0) {
+                                d = dist((float)ix, (float)iy, (float)iz,
+                                         (float)jx, (float)jy, (float)jz,
+                                         dX, dY, dZ);
+                                float w = gaus(d, FWHM_val);
+                                *(nii_smooth_data + voxel_i) += *(hairy_data + voxel_j) * w;
+                                *(nii_gaussw_data + voxel_i) += w;
                             }
                         }
-                        // }
                     }
-                    if (*(nii_gaussw_data + nxy * iz + nx * ix + iy) > 0) {
-                        *(nii_smooth_data + nxy * iz + nx * ix + iy) = *(nii_smooth_data + nxy * iz + nx * ix + iy) / *(nii_gaussw_data + nxy * iz + nx * ix + iy);
+                    if (*(nii_gaussw_data + voxel_i) > 0) {
+                        *(nii_smooth_data + voxel_i) /= *(nii_gaussw_data + voxel_i);
                     }
                 }
             }
         }
     }
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                if (*(hairy_brain_data + nxy * iz + nx * ix + iy) > 0) {
-                    *(hairy_brain_data + nxy * iz + nx * ix + iy) = (int) *(nii_smooth_data + nxy * iz + nx * ix + iy);
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                if (*(hairy_data + voxel_i) > 0) {
+                    *(hairy_data + voxel_i) =
+                        static_cast<int>(*(nii_smooth_data + voxel_i));
                 }
             }
         }
     }
 
-    //////////////////////////
-    // Sparse visualisation //
-    //////////////////////////
+    // ========================================================================
+    // Sparse visualisation
+    // ========================================================================
     cout << "  Visualisation..." << endl;
 
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                if ((int) *(nii_smooth_data + nxy * iz + nx * ix + iy) % 10 == 0 && iz % 10 == 0) {
-                    *(growfromRight_data + nxy * iz + nx * ix + iy) = *(nii_smooth_data + nxy * iz + nx *ix + iy);
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                if ((int) *(nii_smooth_data + voxel_i) % 10 == 0
+                    && iz % 10 == 0) {
+                    *(growfromRight_data + voxel_i) = *(nii_smooth_data + voxel_i);
+                } else {
+                    *(growfromRight_data + voxel_i) = 0;
                 }
-                else *(growfromRight_data + nxy * iz + nx * ix + iy) = 0;
             }
         }
     }
 
-    //////////////////////////////////
-    // Growing from as thick cortex //
-    //////////////////////////////////
+    // ========================================================================
+    // Growing from as thick cortex
+    // ========================================================================
     cout << "  Growing from center with thick cortex..." << endl;
     cout << "  Jiajia Option is on." << endl;
 
@@ -654,12 +687,13 @@ int main(int argc, char * argv[]) {
     int vinc_max_thick = 17;
     int grow_vinc_area_thick = 1;
 
+    // Defining seed at center landmark
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                // Defining seed at center landmark
-                if (*(growfromCenter_data + nxy * iz + nx * ix + iy) > 0) {
-                    *(growfromCenter_thick_data + nxy * iz + nx * ix + iy) = 1;
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                if (*(growfromCenter_data + voxel_i) > 0) {
+                    *(growfromCenter_thick_data + voxel_i) = 1;
                 }
             }
         }
@@ -667,23 +701,38 @@ int main(int argc, char * argv[]) {
     if (jiajiaoption == 1)  {
         for (int grow_i = 1; grow_i < vinc_max_thick; grow_i++) {
             for (int iz = 0; iz < size_z; ++iz) {
-                for (int iy = 0; iy < size_x; ++iy) {
-                    for (int ix = 0; ix < size_y; ++ix) {
-                        if ( *(nii_layer_data + nxy * iz + nx * ix + iy) > 0 && *(nii_layer_data + nxy * iz + nx * ix + iy) <= nr_layers && *(growfromCenter_thick_data + nxy * iz + nx * ix + iy) == grow_i && *(hairy_brain_data + nxy * iz + nx *ix + iy) > 0) {
+                for (int iy = 0; iy < size_y; ++iy) {
+                    for (int ix = 0; ix < size_x; ++ix) {
+                        int voxel_i = nxy * iz + nx * iy + ix;
+
+                        if (*(nii_layer_data + voxel_i) > 0
+                            && *(nii_layer_data + voxel_i) <= nr_layers
+                            && *(growfromCenter_thick_data + voxel_i) == grow_i
+                            && *(hairy_data + voxel_i) > 0) {
                             // Note: Only grow into areas that are GM and that have not been grown into, yet...
                             // And it should stop as soon as it hits the border
-                            int iz_i = iz;
-                            // int stopme = 0;
-                            for (int ix_i = max(0, ix - grow_vinc_area_thick); ix_i < min(ix + grow_vinc_area_thick + 1, size_y); ++ix_i) {
-                                for (int iy_i = max(0, iy - grow_vinc_area_thick); iy_i < min(iy + grow_vinc_area_thick + 1, size_x); ++iy_i) {
-                                    dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                    // if (*(nii_layer_data + nxy * iz_i + nx * ix_i + iy_i) == nr_layers) stopme = 1;
-                                    if (dist_i <= (dY + dX) / 2. && *(growfromCenter_thick_data + nxy * iz_i + nx * ix_i + iy_i) == 0 && *(nii_layer_data + nxy * iz_i + nx * ix_i + iy_i) <= nr_layers && *(nii_layer_data + nxy * iz_i + nx * ix_i + iy_i) > 0 && *(hairy_brain_data + nxy * iz + nx * ix + iy) > 0) {
-                                        *(growfromCenter_thick_data + nxy * iz_i + nx * ix_i + iy_i) = grow_i+1;
+                            int jz = iz;
+                            int jy_start = max(0, ix - grow_vinc_area_thick);
+                            int jy_stop = min(ix + grow_vinc_area_thick + 1, size_y);
+                            int jx_start = max(0, iy - grow_vinc_area_thick);
+                            int jx_stop = min(iy + grow_vinc_area_thick + 1, size_x);
+
+                            for (int jy = jy_start; jy < jy_stop; ++jy) {
+                                for (int jx = jx_start; jx < jx_stop; ++jx) {
+                                    int voxel_j = nxy * jz + nx * jx + jy;
+
+                                    d = dist((float)ix, (float)iy, (float)iz,
+                                             (float)jx, (float)jy, (float)jz,
+                                             dX, dY, dZ);
+                                    if (d <= (dY + dX) / 2.
+                                        && *(growfromCenter_thick_data + voxel_j) == 0
+                                        && *(nii_layer_data + voxel_j) <= nr_layers
+                                        && *(nii_layer_data + voxel_j) > 0
+                                        && *(hairy_data + voxel_i) > 0) {
+                                        *(growfromCenter_thick_data + voxel_j) = grow_i + 1;
                                     }
                                 }
                             }
-                            // cout << " ix   " << ix << " iy   " << iy << "    " << *(WMkoord0_data + nxy*islice + nx*(int)x1g + (int)y1g)<< endl;
                         }
                     }
                 }
@@ -693,23 +742,37 @@ int main(int argc, char * argv[]) {
     if (jiajiaoption != 1) {
         for (int grow_i = 1; grow_i < vinc_max_thick; grow_i++) {
             for (int iz = 0; iz < size_z; ++iz) {
-                for (int iy = 0; iy <size_x; ++iy) {
-                    for (int ix = 0; ix < size_y; ++ix) {
-                        if ( *(nii_layer_data + nxy*iz + nx*ix + iy) > 0 && *(nii_layer_data + nxy*iz + nx*ix + iy) < nr_layers && *(growfromCenter_thick_data + nxy*iz + nx*ix + iy) == grow_i && *(hairy_brain_data + nxy*iz + nx*ix + iy) > 0) {
-                            // Note: Only grow into areas that are GM and that have not been gown into, yet...
-                            // And it should stop as soon as it hits the border.
-                            int iz_i = iz;
-                            // int stopme = 0;
-                            for (int ix_i = max(0, ix - grow_vinc_area_thick); ix_i < min(ix + grow_vinc_area_thick + 1, size_y); ++ix_i) {
-                                for (int iy_i = max(0, iy - grow_vinc_area_thick); iy_i<min(iy + grow_vinc_area_thick + 1, size_x); ++iy_i) {
-                                    dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                    // if (*(nii_layer_data + nxy * iz_i + nx * ix_i + iy_i) == nr_layers) stopme = 1;
-                                    if (dist_i <= (dY + dX) / 2. && *(growfromCenter_thick_data + nxy * iz_i + nx * ix_i + iy_i) == 0 && *(nii_layer_data + nxy * iz_i + nx * ix_i + iy_i) < nr_layers && *(nii_layer_data + nxy * iz_i + nx * ix_i + iy_i) > 0 && *(hairy_brain_data + nxy * iz + nx * ix + iy) > 0) {
-                                        *(growfromCenter_thick_data + nxy * iz_i + nx * ix_i + iy_i) = grow_i + 1;
+                for (int iy = 0; iy < size_y; ++iy) {
+                    for (int ix = 0; ix < size_x; ++ix) {
+                        int voxel_i = nxy * iz + nx * iy + ix;
+
+                        if (*(nii_layer_data + voxel_i) > 0
+                            && *(nii_layer_data + voxel_i) < nr_layers
+                            && *(growfromCenter_thick_data + voxel_i) == grow_i
+                            && *(hairy_data + voxel_i) > 0) {
+
+                            int jz = iz;
+                            int jy_start = max(0, ix - grow_vinc_area_thick);
+                            int jy_stop = min(ix + grow_vinc_area_thick + 1, size_y);
+                            int jx_start = max(0, iy - grow_vinc_area_thick);
+                            int jx_stop = min(iy + grow_vinc_area_thick + 1, size_x);
+
+                            for (int jy = jy_start; jy < jy_stop; ++jy) {
+                                for (int jx = jx_start; jx < jx_stop; ++jx) {
+                                    int voxel_j = nxy * jz + nx * jy + jx;
+
+                                    d = dist((float)ix, (float)iy, (float)iz,
+                                             (float)jx, (float)jy, (float)jz,
+                                             dX, dY, dZ);
+                                    if (d <= (dY + dX) / 2.
+                                        && *(growfromCenter_thick_data + voxel_j) == 0
+                                        && *(nii_layer_data + voxel_j) < nr_layers
+                                        && *(nii_layer_data + voxel_j) > 0
+                                        && *(hairy_data + nxy * iz + nx * ix + iy) > 0) {
+                                        *(growfromCenter_thick_data + voxel_j) = grow_i + 1;
                                     }
                                 }
                             }
-                            // cout << " ix   " << ix << " iy   " << iy << "    " << *(WMkoord0_data + nxy*islice + nx*(int)x1g + (int)y1g)<< endl;
                         }
                     }
                 }
@@ -717,17 +780,29 @@ int main(int argc, char * argv[]) {
         }
     }
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                if ((*(nii_layer_data + nxy * iz + nx * ix + iy) == nr_layers - 1 || *(nii_layer_data + nxy * iz + nx * ix + iy) == nr_layers - 2) && *(growfromCenter_thick_data + nxy * iz + nx * ix + iy) > 0) {
-                    // only grow into areas that are GM and that have not been gown into, yet .... and it should stop as soon as it hits tie border
-                    for (int iy_i = max(0, iy - grow_vinc_area_thick); iy_i < min(iy + grow_vinc_area_thick + 1, size_x); ++iy_i) {
-                        for (int ix_i = max(0, ix - grow_vinc_area_thick); ix_i < min(ix + grow_vinc_area_thick + 1, size_y); ++ix_i) {
-                            int iz_i = iz;
-                            dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                if ((*(nii_layer_data + voxel_i) == nr_layers - 1
+                    || *(nii_layer_data + voxel_i) == nr_layers - 2)
+                    && *(growfromCenter_thick_data + voxel_i) > 0) {
 
-                            if (dist_i <= (dY + dX) / 2. && *(nii_landmark_data + nxy * iz_i + nx * ix_i + iy_i) > 0) {
-                                *(growfromCenter_thick_data + nxy * iz_i + nx * ix_i + iy_i) = *(growfromCenter_thick_data + nxy * iz + nx * ix + iy);
+                    int jz = iz;
+                    int jy_start = max(0, iy - grow_vinc_area_thick);
+                    int jy_stop = min(iy + grow_vinc_area_thick + 1, size_x);
+                    int jx_start = max(0, ix - grow_vinc_area_thick);
+                    int jx_stop = min(ix + grow_vinc_area_thick + 1, size_y);
+
+                    for (int jy = jy_start; jy < jy_stop; ++jy) {
+                        for (int jx = jx_start; jx < jx_stop; ++jx) {
+                            int voxel_j = nxy * jz + nx * jy + jx;
+                            d = dist((float)ix, (float)iy, (float)iz,
+                                     (float)jx, (float)jy, (float)jz,
+                                     dX, dY, dZ);
+
+                            if (d <= (dY + dX) / 2.
+                                && *(nii_landmark_data + voxel_j) > 0) {
+                                *(growfromCenter_thick_data + voxel_j) = *(growfromCenter_thick_data + voxel_i);
                             }
                         }
                     }
@@ -736,49 +811,64 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    /////////////////////////////
-    // Clean up hairy brain /////
-    /////////////////////////////
+    // ========================================================================
+    // Clean up hairy brain
+    // ========================================================================
     cout << "  Cleaning up hairy brain..." << endl;
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                if (*(growfromCenter_thick_data + nxy * iz + nx * ix + iy) == 0 || *(hairy_brain_data + nxy * iz + nx * ix + iy) == 0) {
-                    *(growfromRight_data + nxy*iz + nx*ix + iy) = 0;
-                    *(hairy_brain_data + nxy*iz + nx*ix + iy) = 0;
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                if (*(growfromCenter_thick_data + voxel_i) == 0
+                    || *(hairy_data + voxel_i) == 0) {
+                    *(growfromRight_data + voxel_i) = 0;
+                    *(hairy_data + voxel_i) = 0;
                 }
             }
         }
     }
 
-    //////////////////////////////
-    // Change number of columns //
-    //////////////////////////////
+    // ========================================================================
+    // Change number of columns
+    // ========================================================================
     cout << "  Number of columns." << endl;
     int max_columns = 0;
     int min_columns = 100000000;
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                if (*(hairy_brain_data + nxy * iz + nx * ix + iy) >  0) {
-                    if ((int) *(hairy_brain_data + nxy * iz + nx *ix + iy) > max_columns) max_columns = (int) *(hairy_brain_data + nxy * iz + nx * ix + iy);
-                    if ((int) *(hairy_brain_data + nxy * iz + nx *ix + iy) < min_columns) min_columns = (int) *(hairy_brain_data + nxy * iz + nx * ix + iy);
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+
+                if (*(hairy_data + voxel_i) >  0) {
+                    int val = static_cast<int>(*(hairy_data + voxel_i));
+
+                    if (val > max_columns) {
+                        max_columns = val;
+                    }
+                    if (val < min_columns) {
+                        min_columns = val;
+                    }
                 }
             }
         }
     }
     cout << "  Max = " << max_columns << " | Min = " << min_columns << endl;
+
     for (int iz = 0; iz < size_z; ++iz) {
         for (int iy = 0; iy < size_x; ++iy) {
             for (int ix = 0; ix < size_y; ++ix) {
-                if (*(hairy_brain_data + nxy * iz + nx * ix + iy) >  0) {
-                    *(hairy_brain_data + nxy * iz + nx * ix + iy) = (*(hairy_brain_data + nxy * iz + nx * ix + iy) - (short)min_columns) * (short)jiajiavinc_max / (short)(max_columns - min_columns);
+                int voxel_i = nxy * iz + nx * iy + ix;
+
+                if (*(hairy_data + voxel_i) >  0) {
+                    int a = static_cast<int>(min_columns);
+                    int b = static_cast<int>(jiajiavinc_max);
+                    int c = static_cast<int>(max_columns - min_columns);
+                    *(hairy_data + voxel_i) -= a * b / c;
                 }
             }
         }
     }
-
-    save_output_nifti(fin_layer, "column_coordinates", hairy_brain, true);
+    save_output_nifti(fin_layer, "column_coordinates", hairy, true);
 
     cout << "  Finished." << endl;
     return 0;
