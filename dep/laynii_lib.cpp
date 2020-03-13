@@ -223,8 +223,16 @@ nifti_image* copy_nifti_as_float32(nifti_image* nii) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else {
-        cout << "Unrecognized nifti data type!" << endl;
+        cout << "Warning! Unrecognized nifti data type!" << endl;
     }
+
+    // Replace nans with zeros
+    for (int i = 0; i < nii->nvox; ++i) {
+        if (isnan(*(nii_new_data + i))) {
+            *(nii_new_data + i) = 0;
+        }
+    }
+
     return nii_new;
 }
 
@@ -289,9 +297,16 @@ nifti_image* copy_nifti_as_int32(nifti_image* nii) {
             *(nii_new_data + i) = static_cast<int32_t>(*(nii_data + i));
         }
     } else {
-        cout << "Unrecognized nifti data type!" << endl;
+        cout << "Warning! Unrecognized nifti data type!" << endl;
     }
-    // ------------------------------------------------------------------------
+
+    // Replace nans with zeros
+    for (int i = 0; i < nii->nvox; ++i) {
+        if (isnan(*(nii_new_data + i))) {
+            *(nii_new_data + i) = 0;
+        }
+    }
+
     return nii_new;
 }
 
