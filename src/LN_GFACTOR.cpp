@@ -55,28 +55,24 @@ int main(int argc, char * argv[]) {
                 return 1;
             }
             variance_val = atof(argv[ac]);
-            cout << "Variance  = " << variance_val << endl;
         } else if (!strcmp(argv[ac], "-direction")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -direction\n");
                 return 1;
             }
             direction_int = atof(argv[ac]);
-            cout << "Direction = " << direction_int << endl;
         } else if (!strcmp(argv[ac], "-grappa")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -grappa\n");
                 return 1;
             }
             grappa_int = atof(argv[ac]);
-            cout << "GRAPPA    = " << grappa_int << endl;
         } else if (!strcmp(argv[ac], "-cutoff")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -cutoff\n");
                 return 1;
             }
             cutoff = atof(argv[ac]);
-            cout << "Cut-off   = " << cutoff << endl;
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -97,6 +93,11 @@ int main(int argc, char * argv[]) {
 
     log_welcome("LN_GFACTOR");
     log_nifti_descriptives(nii);
+
+    cout << "  Variance  = " << variance_val << endl;
+    cout << "  Direction = " << direction_int << endl;
+    cout << "  GRAPPA    = " << grappa_int << endl;
+    cout << "  Cut-off   = " << cutoff << endl;
 
     // Get dimensions of input
     int size_x = nii->nx;
@@ -156,7 +157,7 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    save_output_nifti(fin, "binary", nii_binary, false);
+    save_output_nifti(fin, "Gfactormap_binary", nii_binary, false);
 
     // Setting initial condition
     for (int it = 0; it < size_t; ++it) {
