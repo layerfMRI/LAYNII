@@ -96,9 +96,9 @@ int main(int argc, char * argv[]) {
     cout << "  Filling nii with spatial values..." << endl;
 
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                int voxel_i = nxy * iz + nx * ix + iy;
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
                 *(ragrug_data + voxel_i) = 0;
 
                 *(coord_data + nxyz * 0 + voxel_i) = ix;
