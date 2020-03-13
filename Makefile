@@ -41,10 +41,10 @@ LAYNII 	= $(HIGH_PRIORITY) $(LOW_PRIORITY) $(LAYNII2)
 
 # =============================================================================
 dependencies :
-	$(CC) -c -o obj/nifti2_io.o dep/nifti2_io.cpp
-	$(CC) -c -o obj/nifticdf.o dep/nifticdf.cpp
-	$(CC) -c -o obj/znzlib.o dep/znzlib.cpp
-	$(CC) -c -o obj/laynii_lib.o dep/laynii_lib.cpp
+	$(CC) -c -std=c++11 -o obj/nifti2_io.o dep/nifti2_io.cpp 
+	$(CC) -c -std=c++11 -o obj/nifticdf.o dep/nifticdf.cpp
+	$(CC) -c -std=c++11 -o obj/znzlib.o dep/znzlib.cpp
+	$(CC) -c -std=c++11 -o obj/laynii_lib.o dep/laynii_lib.cpp
 
 all : dependencies $(LAYNII)
 
