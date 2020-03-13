@@ -11,15 +11,14 @@ int show_help(void) {
     "    connected voxels.\n"
     "\n"
     "Usage:\n"
-    "    LN_GRADSMOOTH -gradfile gradfile.nii -input activity_map.nii -FWHM 1 -within -selectivity 0.1 \n"
+    "    LN_GRADSMOOTH -input activity_map.nii -gradfile gradfile.nii -FWHM 1 -within -selectivity 0.1 \n"
     "\n"
     "Options:\n"
     "    -help        : Show this help.\n"
-    "    -gradfile    : Nifti (.nii) that is used to estimate local gradients\n"
-    "                   only the first time point of this file is used. It \n"
+    "    -input       : Nifti (.nii) that will be smoothed.\n"
+    "    -gradfile    : Nifti (.nii) used to estimate local gradients.\n"
+    "                   Only the first time point of this file is used. It \n"
     "                   should have the same spatial dimensions as the input.\n"
-    "    -input       : Nifti (.nii) that should be smooth. It should have\n"
-    "                   same dimensions as layer file.\n"
     "    -FWHM        : Amount of smoothing in mm.\n"
     "    -twodim      : (Optional) Smooth in 2 dimensions only. \n"
     "    -mask        : (Optional) Nifti (.nii) that is used mask activity \n"
@@ -136,10 +135,10 @@ int main(int argc, char * argv[]) {
     log_nifti_descriptives(nii2);
 
     // Get dimensions of input
-    int sizeSlice = nii2->nz;
-    int sizePhase = nii2->nx;
-    int sizeRead = nii2->ny;
-    int nrep = nii1->nt;
+    int size_x = nii2->nx;
+    int size_y = nii2->ny;
+    int size_z = nii2->nz;
+    int size_t = nii1->nt;
     int nx = nii2->nx;
     int nxy = nii2->nx * nii2->ny;
     int nxyz = nii2->nx * nii2->ny * nii2->nz;
@@ -157,113 +156,104 @@ int main(int argc, char * argv[]) {
     // Fix datatype issues
     nifti_image* nii_input = copy_nifti_as_float32(nii1);
     float* nii_input_data = static_cast<float*>(nii_input->data);
-    nifti_image* nii_mask = copy_nifti_as_float32(nii2);
-    float* nii_mask_data = static_cast<float*>(nii_mask->data);
+    nifti_image* nii_grad = copy_nifti_as_float32(nii2);
+    float* nii_grad_data = static_cast<float*>(nii_grad->data);
 
     // Allocate new nifti images
     nifti_image* smooth = copy_nifti_as_float32(nii_input);
     float* smooth_data = static_cast<float*>(smooth->data);
-    nifti_image* gaussw = copy_nifti_as_float32(nii_input);
-    // NOTE(Renzo): Gauss weight is a gemoetry factor and only needs to be
-    // estimated once. So with the next lines I am saving RAM.
-    gaussw->nt = 1;
-    gaussw->nvox = gaussw->nvox / nrep;
-    float* gaussw_data = static_cast<float*>(gaussw->data);
 
-    // ------------------------------------------------------------------------
     // Mask nifti related part
-    nifti_image* nii_roi;
-    float* nii_roi_data;
+    nifti_image* nii_mask;
+    float* nii_mask_data;
     if (do_masking == 1) {
         nifti_image* nii3 = nifti_image_read(fin_3, 1);
         if (!nii3) {
-            fprintf(stderr, "** failed to read layer NIfTI from '%s'\n", fin_3);
+            fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin_3);
             return 2;
         }
         log_nifti_descriptives(nii3);
-        nii_roi = copy_nifti_as_float32(nii3);
-        nii_roi_data = static_cast<float*>(nii_roi->data);
+        nii_mask = copy_nifti_as_int32(nii3);
+        nii_mask_data = static_cast<float*>(nii_mask->data);
+    } else {  // When no mask, make all voxels 1
+        nii_mask = copy_nifti_as_int32(nii1);
+        nii_mask_data = static_cast<float*>(nii_mask->data);
+        for (int i = 0; i < nii2->nvox; ++i) {
+            *(nii_mask_data + i) = 1;
+        }
     }
     // ========================================================================
 
     cout << "  Time dimension of smooth. Output file: " << smooth->nt << endl;
 
-    //  float kernel_size = 10;  // corresponds to one voxel sice.
-    int vinc = max(1., 2. * FWHM_val/dX);  // Ignore if voxel is too far
-    float dist_i = 0.;
-    cout << "  vinc " << vinc << endl;
+    int vic = max(1., 2. * FWHM_val / dX);  // Ignore if voxel is too far
+    cout << "  vic " << vic << endl;
     cout << "  FWHM_val " << FWHM_val << endl;
 
-    // To store temp values, so I don't make the same computations repeatedly.
-    float temp_wight_factor = 0;
+    // ========================================================================
+    // Finding the range of gradient values
+    // ========================================================================
 
-    //////////////////////////////////////////
-    // Finding the range of gradient values //
-    //////////////////////////////////////////
-
-    // valued that I need to characterize the local signals in the vicinity.
-    float local_val = 0;
-    int NvoxInVinc = (2 * vinc+1) * (2 * vinc+1) * (2 * vinc+1);
-    double vec1[NvoxInVinc];
-    for (int it = 0; it < NvoxInVinc; it++) vec1[it] = 0;
-    float grad_stdev = 0;
-    float value_dist = 0;
-
+    // Values that I need to characterize the local signals in the vicinity.
+    int nr_vox_in_vic = (2 * vic + 1) * (2 * vic + 1) * (2 * vic + 1);
+    double vec1[nr_vox_in_vic];
+    for (int it = 0; it < nr_vox_in_vic; it++) {
+        vec1[it] = 0;
+    }
 
     // Estimate and output of program process and how much longer it will take.
-    int nvoxels_to_go_across = sizeSlice * sizePhase * sizeRead;
+    int nr_voxels = size_z * size_x * size_y;
     int running_index = 0;
     int pref_ratio = 0;
 
-    if (sizeSlice * sizePhase * sizeRead > 32767) {
-        cout << "  The number of voxels is bigger than the range of int the time estimation will be wrong." << endl;
-    }
-
     if (do_masking == 1) {
-        nvoxels_to_go_across = 0;
-        for (int islice = 0; islice < sizeSlice; ++islice) {
-            for (int iy = 0; iy < sizePhase; ++iy) {
-                for (int ix = 0; ix < sizeRead; ++ix) {
-                    if (*(nii_roi_data + nxy * islice + nx * ix + iy) > 0) {
-                        nvoxels_to_go_across = nvoxels_to_go_across +1;
-                    }
-                }
+        nr_voxels = 0;
+        for (int i = 0; i < nii2->nvox; ++i) {
+            if (*(nii_mask_data + i) > 0) {
+                nr_voxels = nr_voxels + 1;
             }
         }
     }
-    cout << "  The number of voxels to go across = " << nvoxels_to_go_across << endl;
+    cout << "  The number of voxels to go across = " << nr_voxels << endl;
 
-    ////////////////////
-    // Smoothing loop //
-    ////////////////////
-
+    // ========================================================================
+    // Smoothing loop
+    // ========================================================================
     cout << "  Big smoothing loop is being done..." << endl;
-    for (int iz = 0; iz < sizeSlice; ++iz) {
-        for (int iy = 0; iy < sizePhase; ++iy) {
-            for (int ix = 0; ix < sizeRead; ++ix) {
-                if (!(!(*(nii_roi_data + nxy * iz + nx * ix + iy) > 0) && (do_masking == 1))) {
-                    // if (iz==sizeSlice/2 && iy == sizePhase/2-4 && ix == sizeRead/2-4) { // debug loop open
-
-                    // This is to write out how many more voxels I have to go through.
+    for (int iz = 0; iz < size_z; ++iz) {
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                if (*(nii_mask_data + voxel_i) != 0) {
+                    // Write out how many more voxels I have to go through.
                     running_index++;
-                    if ((running_index * 100)/nvoxels_to_go_across != pref_ratio) {
-                        cout << "\r  Progress: " << (running_index * 100)/nvoxels_to_go_across << "%" << flush;
-                        pref_ratio = (running_index * 100)/nvoxels_to_go_across;
+                    if ((running_index * 100) / nr_voxels != pref_ratio) {
+                        cout << "\r  Progress: "
+                             << (running_index * 100) / nr_voxels
+                             << "%" << flush;
+                        pref_ratio = (running_index * 100)/nr_voxels;
                     }
-                    // I am cooking in a clean kitchen.
-                    // This might not be neccessary, just to be on the safe side
-                    *(gaussw_data + nxy * iz + nx * ix + iy) = 0;
-                    *(smooth_data + nxy * iz + nx * ix + iy) = 0;
-                    NvoxInVinc = 0;
-                    local_val = *(nii_mask_data + nxy * iz + nx * ix + iy);
+                    // Clean kitchen
+                    float w = 0;
+                    *(smooth_data + voxel_i) = 0;
+                    nr_vox_in_vic = 0;
+                    float v = *(nii_grad_data + voxel_i);
 
                     // Examining the environment and determining what the
                     // signal intensities are and what its distribution are
-                    for (int iz_i = max(0, iz - vinc); iz_i <= min(iz + vinc, sizeSlice - 1); ++iz_i) {
-                        for (int iy_i = max(0, iy - vinc); iy_i <= min(iy + vinc, sizePhase - 1); ++iy_i) {
-                            for (int ix_i = max(0, ix - vinc); ix_i <= min(ix + vinc, sizeRead - 1); ++ix_i) {
-                                vec1[NvoxInVinc] = (double) *(nii_mask_data + nxy * iz_i + nx * ix_i + iy_i);
-                                NvoxInVinc++;
+                    int jz_start = max(0, iz - vic);
+                    int jz_stop = min(iz + vic, size_z - 1);
+                    int jy_start = max(0, iy - vic);
+                    int jy_stop = min(iy + vic, size_y - 1);
+                    int jx_start = max(0, ix - vic);
+                    int jx_stop = min(ix + vic, size_x - 1);
+                    for (int jz = jz_start; jz <= jz_stop; ++jz) {
+                        for (int jy = jy_start; jy <= jy_stop; ++jy) {
+                            for (int jx = jx_start; jx <= jx_stop; ++jx) {
+                                int voxel_j = nxy * jz + nx * jy + jx;
+                                vec1[nr_vox_in_vic] =
+                                    static_cast<double>(*(nii_grad_data + voxel_j));
+                                nr_vox_in_vic++;
                             }
                         }
                     }
@@ -271,18 +261,24 @@ int main(int argc, char * argv[]) {
                     // Standard deviation of the signal valued in the vicinity.
                     // This is necessary to normalize how many voxels are
                     // contributing to the local smoothing.
-                    // grad_stdev = (float)  gsl_stats_sd (vec1, 1, NvoxInVinc);
-                    grad_stdev = (float) ren_stdev (vec1, NvoxInVinc);
-                    for (int iz_i = max(0, iz-vinc); iz_i <= min(iz+vinc, sizeSlice-1); ++iz_i) {
-                        for (int iy_i = max(0, iy-vinc); iy_i <= min(iy+vinc, sizePhase-1); ++iy_i) {
-                            for (int ix_i = max(0, ix-vinc); ix_i <= min(ix+vinc, sizeRead-1); ++ix_i) {
-                                dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                value_dist = fabs(local_val - *(nii_mask_data + nxy * iz_i + nx * ix_i + iy_i));
+                    float grad_stdev = static_cast<float>(ren_stdev(vec1, nr_vox_in_vic));
 
-                                // * (debug_data + nxy * iz_i + nx * ix_i + iy_i) = gaus(dist_i , FWHM_val)/gaus(0, FWHM_val)
-                                //                                               * gaus(value_dist, grad_stdev * 0.1) /gaus(0, grad_stdev * 0.1) ;
+                    for (int jz = jz_start; jz <= jz_stop; ++jz) {
+                        for (int jy = jy_start; jy <= jy_stop; ++jy) {
+                            for (int jx = jx_start; jx <= jx_stop; ++jx) {
+                                int voxel_j = nxy * jz + nx * jy + jx;
 
-                                temp_wight_factor = gaus(dist_i, FWHM_val) * gaus(value_dist, grad_stdev * selectivity)/gaus(0, grad_stdev * selectivity);
+                                float d1 = dist((float)ix, (float)iy, (float)iz,
+                                                (float)jx, (float)jy, (float)jz,
+                                                dX, dY, dZ);
+                                float g1 = gaus(d1, FWHM_val);
+
+                                float d2 = fabs(v - *(nii_grad_data + voxel_j));
+                                float g2 = gaus(d2, grad_stdev * selectivity);
+
+                                float g3 = gaus(0, grad_stdev * selectivity);
+
+                                float temp_w =  g1 * g2 / g3;
 
                                 // Gauss data are important to avoid local
                                 // scaling differences. When the kernel size
@@ -291,61 +287,25 @@ int main(int argc, char * argv[]) {
                                 // to be calculated for one time point. This
                                 // might be avoidable, if the Gauss fucnction
                                 // is better normalized.
-                                *(gaussw_data + nxy * iz + nx * ix + iy) = *(gaussw_data + nxy * iz + nx * ix + iy)
-                                                                               + temp_wight_factor;
-
-                                for (int it = 0; it < nrep; ++it) {  // loop across all time steps
-                                    *(smooth_data + nxyz * it + nxy * iz + nx * ix + iy) = *(smooth_data + nxyz * it + nxy * iz + nx * ix + iy )
-                                                                                             + *(nii_input_data + nxyz * it + nxy * iz_i + nx * ix_i + iy_i) * temp_wight_factor;
+                                w += temp_w;
+                                for (int it = 0; it < size_t; ++it) {
+                                    *(smooth_data + nxyz * it + voxel_i) +=
+                                        *(nii_input_data + nxyz * it + voxel_j) * temp_w;
                                 }
                             }
                         }
                     }
                     // Scaling signal intensity with the overall Gauss leakage
-                    if (*(gaussw_data + nxy * iz + nx * ix + iy) > 0) {
-                        for (int it = 0; it < nrep; ++it) {
-                            *(smooth_data + nxyz * it + nxy * iz + nx * ix + iy) = *(smooth_data + nxyz * it + nxy * iz + nx * ix + iy) / *(gaussw_data + nxy * iz + nx * ix + iy);
+                    if (w > 0) {
+                        for (int it = 0; it < size_t; ++it) {
+                            *(smooth_data + nxyz * it + voxel_i) /= w;
                         }
                     }
-                    // if (* (nii_mask_data + nxy * iz + nx * ix + iy) < = 0) {
-                    // * (smooth_data + nxy * iz + nx * ix + iy) = *(nii_input_data + nxy * iz + nx * ix + iy) ;
-                    // }
-                    // }  //debug loop closed
                 }
             }
         }
     }
     cout << endl;
-    // Note(Renzo): I am not sure if there is a case there masking makes sense?
-    // I just leave it in.
-    // if (do_masking == 1) {
-    //     for (int it = 0; it < nrep; ++it) {
-    //         for (int islice = 0; islice < sizeSlice; ++islice) {
-    //             for (int iy = 0; iy < sizePhase; ++iy) {
-    //                 for (int ix = 0; ix < sizeRead; ++ix) {
-    //                     if (*(nii_mask_data + nxy * islice + nx * ix + iy) == 0) {
-    //                     *(smooth_data + nxyz * it + nxy * islice + nx * ix + iy) = 0;
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
-    // cout << "  Runing also until here 5... " << endl;
-    // cout << "  Slope " << smooth->scl_slope << " " << nii1->scl_slope << endl;
-
-    smooth->scl_slope = nii1->scl_slope;
-
-    if (nii1->scl_inter != 0) {
-        cout << " ########################################## " << endl;
-        cout << " #####   WARNING   WANRING   WANRING  ##### " << endl;
-        cout << " ## the NIFTI scale factor is asymmetric ## " << endl;
-        cout << " ## Why would you do such a thing????    ## " << endl;
-        cout << " #####   WARNING   WANRING   WANRING  ##### " << endl;
-        cout << " ########################################## " << endl;
-    }
-
     save_output_nifti(fin_1, "smooth", smooth, true);
 
     cout << "  Finished." << endl;
