@@ -4,28 +4,28 @@
 ./LN_BOCO -Nulled Nulled_intemp.nii -BOLD BOLD_intemp.nii -trialBOCO 40 -shift
 ./LN_MP2RAGE_DNOISE -INV1 INV1.nii -INV2 INV2.nii -UNI UNI.nii
 
-./LN_3DCOLUMNS -layer_file layers_large.nii -landmarks landmarks.nii
-./LN_CORREL2FILES -file1 VASO_LN.nii -file2 BOLD_intemp.nii
-./LN_DEBUGGING -rim rim_example.nii
-./LN_DIRECT_SMOOTH -input activity_map_example.nii -FWHM 2 -direction 1
-./LN_EXTREMETR -file VASO_LN.nii
-./LN_FAsim -input input_example_float32.nii -output test -cutoff 3
-./LN_FIX_RIM -rim rim.nii
-./LN_FLOAT_ME -input rim_example.nii
-./LN_GFACTOR -input activity_map_example.nii -output gfactor -variance 1 -direction 1 -grappa 2 -cutoff 5
-./LN_GRADSMOOTH -gradfile VASO_LN_Tmin.nii -input VASO_LN_Tmean.nii -FWHM 2 -within -selectivity 0.1
-./LN_GROW_LAYERS -rim rim_example.nii
-./LN_INTPRO -image activity_map_example.nii -min -direction 2
-./LN_LEAKY_LAYERS -rim rim_test.nii
-./LN_NOISEME -input activity_map_example.nii -output noiseme_custom_output
-./LN_RAGRUG -input activity_map_example.nii
-./LN_SHORT_ME -input sub-001_uni_defaced_float.nii -output sub-001_uni_defaced_int16.nii
-./LN_SKEW -timeseries VASO_LN.nii
-./LN_SMOOTH_RIM -rim rim_test.nii
+# ./LN_3DCOLUMNS -layer_file layers_large.nii -landmarks landmarks.nii
+# ./LN_CORREL2FILES -file1 VASO_LN.nii -file2 BOLD_intemp.nii
+# ./LN_DEBUGGING -rim rim_example.nii
+# ./LN_DIRECT_SMOOTH -input activity_map_example.nii -FWHM 2 -direction 1
+# ./LN_EXTREMETR -file VASO_LN.nii
+# ./LN_FAsim -input input_example_float32.nii -output test -cutoff 3
+# ./LN_FIX_RIM -rim rim.nii
+# ./LN_FLOAT_ME -input rim_example.nii
+# ./LN_GFACTOR -input activity_map_example.nii -output gfactor -variance 1 -direction 1 -grappa 2 -cutoff 5
+# ./LN_GRADSMOOTH -gradfile VASO_LN_Tmin.nii -input VASO_LN_Tmean.nii -FWHM 2 -within -selectivity 0.1
+# ./LN_GROW_LAYERS -rim rim_example.nii
+# ./LN_INTPRO -image activity_map_example.nii -min -direction 2
+# ./LN_LEAKY_LAYERS -rim rim_test.nii
+# ./LN_NOISEME -input activity_map_example.nii -output noiseme_custom_output
+# ./LN_RAGRUG -input activity_map_example.nii
+# ./LN_SHORT_ME -input sub-001_uni_defaced_float.nii -output sub-001_uni_defaced_int16.nii
+# ./LN_SKEW -timeseries VASO_LN.nii
+# ./LN_SMOOTH_RIM -rim rim_test.nii
 
 ./LN_TEMPSMOOTH -timeseries VASO_LN.nii -box 1
 ./LN_TEMPSMOOTH -timeseries VASO_LN.nii -gaus 1
 
-./LN_TRIAL -file VASO_LN.nii -trialdur 12
+# ./LN_TRIAL -file VASO_LN.nii -trialdur 12
 
-./LN_ZOOM -mask test_mask.nii -input activity_map_example.nii
+# ./LN_ZOOM -mask test_mask.nii -input activity_map_example.nii
