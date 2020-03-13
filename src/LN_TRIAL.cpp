@@ -11,8 +11,8 @@ int show_help(void) {
     "    LN_TRIAL -input timeseries.nii -trial_dur 12 \n"
     "\n"
     "Options:\n"
-    "    -help     : Show this help.\n"
-    "    -input    : Input time series.\n"
+    "    -help      : Show this help.\n"
+    "    -input     : Input time series.\n"
     "    -trial_dur : Duration of activity-rest trial in TRs.\n"
     "\n");
     return 0;
@@ -20,25 +20,26 @@ int show_help(void) {
 
 int main(int argc, char * argv[]) {
     char *fin = NULL;
-    int ac, trial_dur;
+    int ac;
+    int trial_dur;
     if (argc < 2) return show_help();
 
     // Process user options
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
-        } else if (!strcmp(argv[ac], "-trial_dur")) {
-            if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -trial_dur\n");
-                return 1;
-            }
-            trial_dur = atof(argv[ac]);
         } else if (!strcmp(argv[ac], "-input")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -input\n");
                 return 1;
             }
             fin = argv[ac];
+        } else if (!strcmp(argv[ac], "-trial_dur")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -trial_dur\n");
+                return 1;
+            }
+            trial_dur = atof(argv[ac]);
         }
     }
 
@@ -48,7 +49,7 @@ int main(int argc, char * argv[]) {
     }
 
     // Read input dataset
-    nifti_image * nii_input = nifti_image_read(fin, 1);
+    nifti_image *nii_input = nifti_image_read(fin, 1);
     if (!nii_input) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin);
         return 2;
@@ -58,19 +59,18 @@ int main(int argc, char * argv[]) {
     log_nifti_descriptives(nii_input);
 
     // Get dimensions of input
-    int size_x = nii_input->nx;
-    int size_y = nii_input->ny;
-    int size_z = nii_input->nz;
-    int size_t = nii_input->nt;
-    int nx = nii_input->nx;
-    int nxy = nii_input->nx * nii_input->ny;
-    int nxyz = nii_input->nx * nii_input->ny * nii_input->nz;
+    const int size_x = nii_input->nx;
+    const int size_y = nii_input->ny;
+    const int size_z = nii_input->nz;
+    const int size_t = nii_input->nt;
+    const int nx = nii_input->nx;
+    const int nxy = nii_input->nx * nii_input->ny;
+    const int nxyz = nii_input->nx * nii_input->ny * nii_input->nz;
 
-    int nr_trials = size_t / trial_dur;
+    const int nr_trials = size_t / trial_dur;
 
     cout << "  Trial duration is " << trial_dur << ". This means there are "
-         << static_cast<float>(size_t) / static_cast<float>(trial_dur)
-         << " trials recorded here." << endl;
+         << nr_trials << " trials recorded here." << endl;
 
     // ========================================================================
     // Fix data type issues
@@ -80,19 +80,17 @@ int main(int argc, char * argv[]) {
     // Allocate trial average file
     nifti_image* nii_trials = nifti_copy_nim_info(nii);
     nii_trials->nt = trial_dur;
-    nii_trials->nvox = nii->nvox / size_t * trial_dur;
-    nii_trials->datatype = NIFTI_TYPE_FLOAT32;
-    nii_trials->nbyper = sizeof(float);
+    nii_trials->nvox = nii->nvox / nr_trials;
     nii_trials->data = calloc(nii_trials->nvox, nii_trials->nbyper);
     float* nii_trials_data = static_cast<float*>(nii_trials->data);
 
     // ========================================================================
 
-    for (int it = 0; it < trial_dur * nr_trials; ++it) {
+    for (int it = 0; it < (trial_dur * nr_trials); ++it) {
         for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_x; ++iy) {
-                for (int ix = 0; ix < size_y; ++ix) {
-                    int voxel_i = nxy * iz + nx * ix + iy;
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x; ++ix) {
+                    int voxel_i = nxy * iz + nx * iy + ix;
                     *(nii_trials_data + nxyz * (it % trial_dur) + voxel_i) +=
                         (*(nii_data + nxyz * it + voxel_i)) / nr_trials;
                 }
