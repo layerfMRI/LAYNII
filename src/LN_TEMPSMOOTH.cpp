@@ -42,7 +42,6 @@ int main(int argc, char * argv[]) {
             }
             gFWHM_val = atof(argv[ac]);
             do_gaus = 1;
-            cout << "Selected temporal smoothing: Gaussian" << endl;
         } else if (!strcmp(argv[ac], "-box")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -box\n");
@@ -50,7 +49,6 @@ int main(int argc, char * argv[]) {
             }
             bFWHM_val = atoi(argv[ac]);
             do_box = 1;
-            cout << "Selected temporal smoothing: Box-car" << endl;
         } else if (!strcmp(argv[ac], "-input")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -input\n");
@@ -81,23 +79,24 @@ int main(int argc, char * argv[]) {
 
     log_welcome("LN_TEMPSMOOTH");
     log_nifti_descriptives(nii_input);
+    if (do_gaus) {
+        cout << "Selected temporal smoothing: Gaussian" << endl;
+    } else if (do_box) {
+        cout << "Selected temporal smoothing: Box-car" << endl;
+    }
 
     // Get dimensions of input
     int size_x = nii_input->nx;
     int size_y = nii_input->ny;
     int size_z = nii_input->nz;
     int size_t = nii_input->nt;
-    int nr_voxels = size_t * size_z * size_y * size_x;
-    int nx = nii_input->nx;
-    int nxy = nii_input->nx * nii_input->ny;
+    int nr_voxels = size_x * size_y * size_z;
+    // int nx = nii_input->nx;
+    // int nxy = nii_input->nx * nii_input->ny;
     int nxyz = nii_input->nx * nii_input->ny * nii_input->nz;
     float dX = nii_input->pixdim[1];
     // float dY = nii_input->pixdim[2];
     // float dZ = nii_input->pixdim[3];
-
-    // Note: If you are running the smoothing in 2D, it will still go through
-    // the entire pipeline. The only difference is that the weights in a
-    // certain direction are suppressed. Doing it in 2D, will be faster.
 
     // ========================================================================
     // Fixing potential problems with different input datatypes
@@ -108,128 +107,62 @@ int main(int argc, char * argv[]) {
     nifti_image* nii_smooth = copy_nifti_as_float32(nii);
     float* nii_smooth_data = static_cast<float*>(nii_smooth->data);
 
-    nifti_image* nii_gaussw = nifti_copy_nim_info(nii);
-    nii_gaussw->nt = 1;
-    nii_gaussw->datatype = NIFTI_TYPE_FLOAT32;
-    nii_gaussw->nbyper = sizeof(float);
-    nii_gaussw->nvox = nii_gaussw->nvox / size_t;
-    nii_gaussw->data = calloc(nii_gaussw->nvox, nii_gaussw->nbyper);
-    float* nii_gaussw_data = static_cast<float*>(nii_gaussw->data);
+    nifti_image* nii_weight = nifti_copy_nim_info(nii);
+    nii_weight->nt = 1;
+    nii_weight->datatype = NIFTI_TYPE_FLOAT32;
+    nii_weight->nbyper = sizeof(float);
+    nii_weight->nvox = size_x * size_y * size_z;
+    nii_weight->data = calloc(nii_weight->nvox, nii_weight->nbyper);
+    float* nii_weight_data = static_cast<float*>(nii_weight->data);
 
     // ========================================================================
-    // Smoothing loop (for Gaussian smoothing
+    // Smoothing loop
     // ========================================================================
+    // TODO(Faruk): Might be better to use dT to give a meaning to Gaussian.
+    // I should ask to renzo about this.
+    int vic;
     if (do_gaus) {
-        // float_kernel_size = 10;  // Corresponds to one voxel size.
-        int vinc = max(1., 2. * gFWHM_val / dX);  // Ignore if voxel is too far
-        cout << "  vinc " << vinc << endl;
-        cout << "  FWHM_val " << gFWHM_val << endl;
-
-        // To estimate how much longer the program will take.
-        int nvox_remain = size_z * size_x * size_y;
-        int counter = 0;
-        int pref_ratio = 0;
-
-        // --------------------------------------------------------------------
-        // Smoothing loop
-        cout << "  Smoothing with Gaussian..." << endl;
-        for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_y; ++iy) {
-                for (int ix = 0; ix < size_x; ++ix) {
-                    counter++;
-                    if ((counter * 100) / nvox_remain != pref_ratio) {
-                        float c = (counter * 100) / nvox_remain;
-                        cout << "\r  Progress: %" << c << flush;
-                        pref_ratio = c;
-                    }
-                    for (int it = 0; it < size_t; ++it) {
-                        int voxel_i = nxyz * it + nxy * iz + nx * iy + ix;
-                        *(nii_gaussw_data + voxel_i) = 0;
-
-                        for (int it_i = max(0, it - vinc);
-                             it_i < min(it + vinc + 1, size_t); ++it_i) {
-                            int voxel_j = nxyz * it_i + nxy * iz + nx * iy + ix;
-
-                            if (*(nii_data + voxel_j) != 0) {
-                                float g = gaus(abs(it - it_i), gFWHM_val);
-                                *(nii_smooth_data + voxel_i) +=
-                                    *(nii_data + voxel_j) * g;
-                                *(nii_gaussw_data + voxel_i) += g;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        cout << endl;
+        vic = max(1., 2. * gFWHM_val / dX);  // Ignore if voxel is too far
+    } else if (do_box) {
+        vic = bFWHM_val;
     }
+    cout << "    vic " << vic << endl;
+    cout << "    FWHM_val " << gFWHM_val << endl;
 
-    // ========================================================================
-    // Smoothing loop (for box-car smoothing)
-    // ========================================================================
-    if (do_box) {
-        // float_kernel_size = 10;  // Corresponds to one voxel size.
-        int vinc = bFWHM_val;  // Ignore if voxel is too far.
-        cout << "  vinc " << vinc << endl;
-
-        // Estimate how long this program will take.
-        int nvox_remain = size_z * size_x * size_y;
-        int counter = 0;
-        int pref_ratio = 0;
-
-        // --------------------------------------------------------------------
-        // Smoothing loop //
-        cout << "  Smoothing with box-car function." << endl;
-        for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_y; ++iy) {
-                for (int ix = 0; ix < size_x; ++ix) {
-                    counter++;
-                    if ((counter * 100) / nvox_remain != pref_ratio) {
-                        float c = (counter * 100) / nvox_remain;
-                        cout << "\r  Progress: %" << c << flush;
-                        pref_ratio = c;
-                    }
-                    for (int it = 0; it < size_t; ++it) {
-                        int voxel_i = nxyz * it + nxy * iz + nx * iy + ix;
-                        *(nii_gaussw_data + voxel_i) = 0;
-
-                        for (int it_i = max(0, it - vinc);
-                             it_i < min(it + vinc + 1, size_t); ++it_i) {
-                            int voxel_j = nxyz * it_i + nxy * iz + nx * iy + ix;
-
-                            if (*(nii_data + voxel_j) != 0) {
-                                *(nii_smooth_data + voxel_i) +=
-                                    *(nii_data + voxel_j);
-                                *(nii_gaussw_data + voxel_i) += 1;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        cout << endl;
-    }
-
-    // ========================================================================
-    // Correcting for edge error
-    // ========================================================================
     for (int i = 0; i < nr_voxels; ++i) {
-        if (*(nii_gaussw_data + i) != 0) {
-            *(nii_smooth_data + i) /= *(nii_gaussw_data + i);
+        *(nii_weight_data + i) = 0;
+        if (*(nii_data + i) != 0) {
+            for (int it = 0; it < size_t; ++it) {
+                int j = nxyz * it + i;
+                *(nii_smooth_data + j) = 0;
+
+                if (do_gaus) {
+                    float weight = 0;
+                    int jt_start = max(0, it - vic);
+                    int jt_stop = min(it + vic + 1, size_t);
+                    for (int jt = jt_start; jt < jt_stop; ++jt) {
+                        int k = nxyz * jt + i;
+                        float dist = abs(it - jt);
+                        float g = gaus(dist, gFWHM_val);
+                        *(nii_smooth_data + j) += (*(nii_data + k) * g);
+                        weight += g;
+                    }
+                    *(nii_smooth_data + j) /= weight;
+                } else if (do_box) {
+                    float weight = 0;
+                    int jt_start = max(0, it - vic);
+                    int jt_stop = min(it + vic + 1, size_t);
+                    for (int jt = jt_start; jt < jt_stop; ++jt) {
+                        int k = nxyz * jt + i;
+                        *(nii_smooth_data + j) += *(nii_data + k);
+                        weight += 1;
+                    }
+                    *(nii_smooth_data + j) /= weight;
+                }
+            }
         }
     }
-
-    nii_smooth->scl_slope = nii_input->scl_slope;
-    if (nii_input->scl_inter != 0) {
-        cout << "  ########################################## " << endl;
-        cout << "  #####   WARNING   WANRING   WANRING  ##### " << endl;
-        cout << "  ## The NIFTI scale factor is asymmetric ## " << endl;
-        cout << "  ## Why would you do such a thing????    ## " << endl;
-        cout << "  #####   WARNING   WANRING   WANRING  ##### " << endl;
-        cout << "  ########################################## " << endl;
-    }
-
-    save_output_nifti(fin, "nii_smooth", nii_smooth, true);
+    save_output_nifti(fin, "tempsmooth", nii_smooth, true);
 
     cout << "  Finished." << endl;
     return 0;
