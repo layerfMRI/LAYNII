@@ -71,8 +71,8 @@ LN_LAYER_SMOOTH:
 # -----------------------------------------------------------------------------
 # Low priority programs
 LN_CORREL2FILES:
-	$(CC) -c -std=c++11 -o  obj/LN_BOCO.o src/LN_BOCO.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_BOCO.o $(LIBRARIES)
+	$(CC) -c -std=c++11 -o  obj/LN_CORREL2FILES.o src/LN_CORREL2FILES.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_CORREL2FILES.o $(LIBRARIES)
 
 LN_DIRECT_SMOOTH:
 	$(CC) -c -std=c++11 -o  obj/LN_DIRECT_SMOOTH.o src/LN_DIRECT_SMOOTH.cpp

@@ -22,30 +22,28 @@ int show_help(void) {
     return 0;
 }
 
-int main(int argc, char* argv[]) {
-    // nifti_image* nim_input=NULL;
-    char* fin_1 = NULL, *fin_2 = NULL;
+int main(int argc, char *argv[]) {
+    char *fin_1 = NULL, *fin_2 = NULL;
     int ac;
-    if (argc < 2) {  // Typing '-help' is sooo much work
-       return show_help();
-    }
+    if (argc < 2) return show_help();
 
     // Process user options
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
         } else if (!strcmp(argv[ac], "-file1")) {
+            cout << "Hello " << endl;
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -file1\n");
                 return 1;
             }
-            fin_1 = argv[ac];  // Assign pointer, no string copy
+            fin_1 = argv[ac];
         } else if (!strcmp(argv[ac], "-file2")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -file2\n");
                 return 1;
             }
-            fin_2 = argv[ac];  // Assign pointer, no string copy
+            fin_2 = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -94,29 +92,28 @@ int main(int argc, char* argv[]) {
     float* nii2_temp_data = static_cast<float*>(nii2_temp->data);
 
     // Allocate new nifti
-    nifti_image* correl_file = copy_nifti_as_float32(nii1_temp);
-    float* correl_file_data = static_cast<float*>(correl_file->data);
-
+    nifti_image *correl_file = nifti_copy_nim_info(nii1_temp);
+    correl_file->nt = 1;
+    correl_file->nvox = size_x * size_y * size_z;
+    correl_file->data = calloc(correl_file->nvox, correl_file->nbyper);
+    float *correl_file_data = static_cast<float*>(correl_file->data);
     // ========================================================================
 
-    double vec_file1[size_t];
-    double vec_file2[size_t];
-
-    // Loop across voxels
+    double vec1[size_t], vec2[size_t];
     for (int iz = 0; iz < size_z; ++iz) {
         for (int iy = 0; iy < size_y; ++iy) {
             for (int ix = 0; ix < size_x; ++ix) {
                 int voxel_i = nxy * iz + nx * iy + ix;
-                for (int it = 0;  it < size_t; ++it) {
-                    vec_file1[it] = *(nii1_temp_data + voxel_i);
-                    vec_file2[it] = *(nii2_temp_data + voxel_i);
+                for (int it = 0; it < size_t; ++it) {
+                    int voxel_j = nxyz * it + nxy * iz + nx * iy + ix;
+                    vec1[it] = *(nii1_temp_data + voxel_j);
+                    vec2[it] = *(nii2_temp_data + voxel_j);
                 }
                 *(correl_file_data + voxel_i) =
-                    ren_correl(vec_file1, vec_file2, size_t);
+                    static_cast<float>(ren_correl(vec1, vec2, size_t));
             }
         }
     }
-
     save_output_nifti(fin_1, "correlated", correl_file, true);
 
     cout << "  Finished." << endl;
