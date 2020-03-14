@@ -286,12 +286,12 @@ int main(int argc, char * argv[]) {
                         // NOTE: Only grow into areas that are GM and that have not been grown into, yet ...
                         // And it should stop as soon as it hits the border.
 
-                        jz_start = max(0, iz - grow_vinc);
-                        jz_stop = min(iz + grow_vinc + 1, size_z);
-                        jy_start = max(0, iy - grow_vinc);
-                        jy_stop = min(iy + grow_vinc + 1, size_x);
-                        jx_start = max(0, ix - grow_vinc);
-                        jx_stop = min(ix + grow_vinc + 1, size_y);
+                        int jz_start = max(0, iz - grow_vinc);
+                        int jz_stop = min(iz + grow_vinc + 1, size_z);
+                        int jy_start = max(0, iy - grow_vinc);
+                        int jy_stop = min(iy + grow_vinc + 1, size_x);
+                        int jx_start = max(0, ix - grow_vinc);
+                        int jx_stop = min(ix + grow_vinc + 1, size_y);
 
                         for (int jy = jy_start; jy < jy_stop; ++jy) {
                             for (int jx = jx_start; jx < jx_stop; ++jx) {
@@ -709,8 +709,7 @@ int main(int argc, char * argv[]) {
                             && *(nii_layer_data + voxel_i) <= nr_layers
                             && *(growfromCenter_thick_data + voxel_i) == grow_i
                             && *(hairy_data + voxel_i) > 0) {
-                            // Note: Only grow into areas that are GM and that have not been grown into, yet...
-                            // And it should stop as soon as it hits the border
+
                             int jz = iz;
                             int jy_start = max(0, ix - grow_vinc_area_thick);
                             int jy_stop = min(ix + grow_vinc_area_thick + 1, size_y);
