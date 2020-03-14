@@ -2,12 +2,12 @@
 // TODO(Faruk): Requires columnar_coordinated.nii and data2unfold.nii from Renzo for tests.
 
 
-#include "../dep/laynii_lib.h"
+#include "../dep/laynii_lib.h" 
 
 int show_help(void) {
     printf(
     "LN_IMAGIRO : Generates a 3D matrix of columns and layers.\n"
-    "             Does the opposite of ORIGAMI. It unfolds stuff.\n"
+    "             It Does the ORIGAMI backwards; It unfolds stuff.\n"
     "\n"
     "Usage:\n"
     "    LN_IMAGIRO -layers equi_dist_layers.nii -column_file columnar_coordinated.nii -data data2unfold.nii\n"
