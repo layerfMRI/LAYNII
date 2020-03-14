@@ -5,6 +5,7 @@ IFLAGS	= -I.
 USEZLIB	= -DHAVE_ZLIB
 CFLAGS	= -std=c++11 -Wall -pedantic $(USEZLIB) $(IFLAGS)
 
+
 # =============================================================================
 LIBRARIES		=	obj/nifti2_io.o \
  					obj/nifticdf.o \
@@ -47,6 +48,8 @@ dependencies :
 	$(CC) -c -std=c++11 -o obj/laynii_lib.o dep/laynii_lib.cpp
 
 all : dependencies $(LAYNII)
+
+.PHONY: all $(HIGH_PRIORITY) $(LOW_PRIORITY) $(LAYNII2)
 
 # =============================================================================
 # LAYNII v2.0.0 programs
