@@ -15,9 +15,9 @@
 ./LN_GROW_LAYERS -rim rim.nii
 ./LN_INTPRO -image UNI.nii -min -direction 2
 
-# ./LN_LEAKY_LAYERS -rim rim_test.nii
+./LN_LEAKY_LAYERS -rim rim_test.nii
 ./LN_NOISEME -input activity_map_example.nii -output noiseme_custom_output
-# ./LN_RAGRUG -input activity_map_example.nii
+./LN_RAGRUG -input rim_M.nii
 ./LN_SKEW -timeseries lo_BOLD_intemp.nii
 ./LN_TEMPSMOOTH -input VASO_LN.nii -box 1
 ./LN_TEMPSMOOTH -input VASO_LN.nii -gaus 1
