@@ -122,7 +122,7 @@ int main(int argc, char * argv[]) {
     // int *nim_input_data = (int *) nim_input->data;
     // short *nim_input_data = (short *) nim_input->data;
     // int16_t *nim_input_data = (__int16_t *) nim_input->data;
-    int16_t *nim_input_data = (__int16_t *) nim_input->data;
+    int *nim_input_data = (int *) nim_input->data;
 
     cout << "  Datatype 2 " << nim_input->datatype << endl;
 
