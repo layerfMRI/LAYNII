@@ -95,7 +95,7 @@ int main(int argc, char * argv[]) {
 
 // Gauss lower = -5 , upper = 5
 double verteilung(double z) {
-    return exp(-z * z / (2.)) * 1. / sqrt(2. * 3.141592653);
+    return exp(-z * z / (2.)) * 1. / sqrt(2. * 3.141592653); 
 }
 
 double_t arb_pdf_num(int N_rand, double (*pFunc)(double), double_t lower,
