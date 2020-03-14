@@ -131,15 +131,15 @@ int main(int argc, char * argv[]) {
         nifti_image * growfromWM1 = copy_nifti_as_float32(nim_input);
         float* growfromWM1_data = static_cast<float*>(growfromWM1->data);
 
-        nifti_image* WMkoord0 = copy_nifti_as_int32(nim_input);
-        nifti_image* WMkoord1 = copy_nifti_as_int32(nim_input);
-        nifti_image* WMkoord2 = copy_nifti_as_int32(nim_input);
-        nifti_image* WMkoord3 = copy_nifti_as_int32(nim_input);
+        nifti_image* WMkoord0 = copy_nifti_as_int16(nim_input);
+        nifti_image* WMkoord1 = copy_nifti_as_int16(nim_input);
+        nifti_image* WMkoord2 = copy_nifti_as_int16(nim_input);
+        nifti_image* WMkoord3 = copy_nifti_as_int16(nim_input);
 
-        int32_t* WMkoord0_data = static_cast<int32_t*>(WMkoord0->data);
-        int32_t* WMkoord1_data = static_cast<int32_t*>(WMkoord1->data);
-        int32_t* WMkoord2_data = static_cast<int32_t*>(WMkoord2->data);
-        int32_t* WMkoord3_data = static_cast<int32_t*>(WMkoord3->data);
+        int16_t* WMkoord0_data = static_cast<int16_t*>(WMkoord0->data);
+        int16_t* WMkoord1_data = static_cast<int16_t*>(WMkoord1->data);
+        int16_t* WMkoord2_data = static_cast<int16_t*>(WMkoord2->data);
+        int16_t* WMkoord3_data = static_cast<int16_t*>(WMkoord3->data);
 
 
         nifti_image* growfromGM0 = copy_nifti_as_float32(nim_input);
@@ -147,15 +147,15 @@ int main(int argc, char * argv[]) {
         float* growfromGM0_data = static_cast<float*>(growfromGM0->data);
         float* growfromGM1_data = static_cast<float*>(growfromGM1->data);
 
-        nifti_image* GMkoord0 = copy_nifti_as_int32(nim_input);
-        nifti_image* GMkoord1 = copy_nifti_as_int32(nim_input);
-        nifti_image* GMkoord2 = copy_nifti_as_int32(nim_input);
-        nifti_image* GMkoord3 = copy_nifti_as_int32(nim_input);
+        nifti_image* GMkoord0 = copy_nifti_as_int16(nim_input);
+        nifti_image* GMkoord1 = copy_nifti_as_int16(nim_input);
+        nifti_image* GMkoord2 = copy_nifti_as_int16(nim_input);
+        nifti_image* GMkoord3 = copy_nifti_as_int16(nim_input);
 
-        int* GMkoord0_data = static_cast<int*>(GMkoord0->data);
-        int* GMkoord1_data = static_cast<int*>(GMkoord1->data);
-        int* GMkoord2_data = static_cast<int*>(GMkoord2->data);
-        int* GMkoord3_data = static_cast<int*>(GMkoord3->data);
+        int16_t* GMkoord0_data = static_cast<int16_t*>(GMkoord0->data);
+        int16_t* GMkoord1_data = static_cast<int16_t*>(GMkoord1->data);
+        int16_t* GMkoord2_data = static_cast<int16_t*>(GMkoord2->data);
+        int16_t* GMkoord3_data = static_cast<int16_t*>(GMkoord3->data);
         // --------------------------------------------------------------------
         // Coordinates
         float x1g = 0., y1g = 0.;
@@ -291,14 +291,8 @@ int main(int argc, char * argv[]) {
         }
 
         if (debug > 0) {
-            const char* fout_5 = "debug_WM_pre_pytagoras.nii";
-            if (nifti_set_filenames(growfromWM1, fout_5, 1, 1)) return 1;
-            nifti_image_write(growfromWM1);
-
-            const char* fout_6 = "debug_GM_pre_pytagoras.nii";
-            if (nifti_set_filenames(growfromGM1, fout_6, 1, 1)) return 1;
-            nifti_image_write(growfromGM1);
-
+            save_output_nifti(fin, "debug_WM_pre_pythagoras", growfromWM1, false);
+            save_output_nifti(fin, "debug_GM_pre_pythagoras", growfromGM1, false);
         }
 
         ////////////////////////////////////////////////////
@@ -423,17 +417,8 @@ int main(int argc, char * argv[]) {
         }
 
         if (debug > 0) {
-            const char * fout_5 = "debug_WM.nii";
-            if (nifti_set_filenames(growfromWM1, fout_5, 1, 1)) {
-                return 1;
-            }
-            nifti_image_write(growfromWM1);
-
-            const char * fout_6 = "debug_GM.nii";
-            if (nifti_set_filenames(growfromGM1, fout_6, 1, 1)) {
-                return 1;
-            }
-            nifti_image_write(growfromGM1);
+            save_output_nifti(fin, "debug_WM", growfromWM1, false);
+            save_output_nifti(fin, "debug_GM", growfromGM1, false);
         }
     }  // 2D layer calculation is closed.
 
@@ -447,38 +432,38 @@ int main(int argc, char * argv[]) {
         float* growfromWM0_data = static_cast<float*>(growfromWM0->data);
         float* growfromWM1_data = static_cast<float*>(growfromWM1->data);
 
-        nifti_image * WMkoordx1 = copy_nifti_as_int32(nim_input);
-        nifti_image * WMkoordy1 = copy_nifti_as_int32(nim_input);
-        nifti_image * WMkoordz1 = copy_nifti_as_int32(nim_input);
-        nifti_image * WMkoordx2 = copy_nifti_as_int32(nim_input);
-        nifti_image * WMkoordy2 = copy_nifti_as_int32(nim_input);
-        nifti_image * WMkoordz2 = copy_nifti_as_int32(nim_input);
+        nifti_image * WMkoordx1 = copy_nifti_as_int16(nim_input);
+        nifti_image * WMkoordy1 = copy_nifti_as_int16(nim_input);
+        nifti_image * WMkoordz1 = copy_nifti_as_int16(nim_input);
+        nifti_image * WMkoordx2 = copy_nifti_as_int16(nim_input);
+        nifti_image * WMkoordy2 = copy_nifti_as_int16(nim_input);
+        nifti_image * WMkoordz2 = copy_nifti_as_int16(nim_input);
 
-        int32_t* WMkoordx1_data = static_cast<int32_t*>(WMkoordx1->data);
-        int32_t* WMkoordy1_data = static_cast<int32_t*>(WMkoordy1->data);
-        int32_t* WMkoordz1_data = static_cast<int32_t*>(WMkoordz1->data);
-        int32_t* WMkoordx2_data = static_cast<int32_t*>(WMkoordx2->data);
-        int32_t* WMkoordy2_data = static_cast<int32_t*>(WMkoordy2->data);
-        int32_t* WMkoordz2_data = static_cast<int32_t*>(WMkoordz2->data);
+        int16_t* WMkoordx1_data = static_cast<int16_t*>(WMkoordx1->data);
+        int16_t* WMkoordy1_data = static_cast<int16_t*>(WMkoordy1->data);
+        int16_t* WMkoordz1_data = static_cast<int16_t*>(WMkoordz1->data);
+        int16_t* WMkoordx2_data = static_cast<int16_t*>(WMkoordx2->data);
+        int16_t* WMkoordy2_data = static_cast<int16_t*>(WMkoordy2->data);
+        int16_t* WMkoordz2_data = static_cast<int16_t*>(WMkoordz2->data);
 
         nifti_image* growfromGM0 = copy_nifti_as_float32(nim_input);
         nifti_image* growfromGM1 = copy_nifti_as_float32(nim_input);
         float* growfromGM0_data = static_cast<float*>(growfromGM0->data);
         float* growfromGM1_data = static_cast<float*>(growfromGM1->data);
 
-        nifti_image* GMkoordx1 = copy_nifti_as_int32(nim_input);
-        nifti_image* GMkoordy1 = copy_nifti_as_int32(nim_input);
-        nifti_image* GMkoordz1 = copy_nifti_as_int32(nim_input);
-        nifti_image* GMkoordx2 = copy_nifti_as_int32(nim_input);
-        nifti_image* GMkoordy2 = copy_nifti_as_int32(nim_input);
-        nifti_image* GMkoordz2 = copy_nifti_as_int32(nim_input);
+        nifti_image* GMkoordx1 = copy_nifti_as_int16(nim_input);
+        nifti_image* GMkoordy1 = copy_nifti_as_int16(nim_input);
+        nifti_image* GMkoordz1 = copy_nifti_as_int16(nim_input);
+        nifti_image* GMkoordx2 = copy_nifti_as_int16(nim_input);
+        nifti_image* GMkoordy2 = copy_nifti_as_int16(nim_input);
+        nifti_image* GMkoordz2 = copy_nifti_as_int16(nim_input);
 
-        int32_t* GMkoordx1_data = static_cast<int32_t*>(GMkoordx1->data);
-        int32_t* GMkoordy1_data = static_cast<int32_t*>(GMkoordy1->data);
-        int32_t* GMkoordz1_data = static_cast<int32_t*>(GMkoordz1->data);
-        int32_t* GMkoordx2_data = static_cast<int32_t*>(GMkoordx2->data);
-        int32_t* GMkoordy2_data = static_cast<int32_t*>(GMkoordy2->data);
-        int32_t* GMkoordz2_data = static_cast<int32_t*>(GMkoordz2->data);
+        int16_t* GMkoordx1_data = static_cast<int16_t*>(GMkoordx1->data);
+        int16_t* GMkoordy1_data = static_cast<int16_t*>(GMkoordy1->data);
+        int16_t* GMkoordz1_data = static_cast<int16_t*>(GMkoordz1->data);
+        int16_t* GMkoordx2_data = static_cast<int16_t*>(GMkoordx2->data);
+        int16_t* GMkoordy2_data = static_cast<int16_t*>(GMkoordy2->data);
+        int16_t* GMkoordz2_data = static_cast<int16_t*>(GMkoordz2->data);
 
         // Coordinates
         float x1g = 0., y1g = 0., z1g = 0.;
