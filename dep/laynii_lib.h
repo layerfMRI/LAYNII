@@ -36,6 +36,7 @@ void save_output_nifti(string filename, string prefix, nifti_image* nii,
 
 nifti_image* copy_nifti_as_float32(nifti_image* nii);
 nifti_image* copy_nifti_as_int32(nifti_image* nii);
+nifti_image* copy_nifti_as_int16(nifti_image* nii);
 
 std::tuple<uint32_t, uint32_t, uint32_t> ind2sub_3D(
     const uint32_t linear_index, const uint32_t size_x, const uint32_t size_y);
