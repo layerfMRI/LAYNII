@@ -34,7 +34,8 @@ int show_help(void) {
 
 int main(int argc, char * argv[]) {
     char* fin_layer = NULL, * fin_landmark = NULL;
-    int ac, twodim = 0, do_masking = 0, vinc_max = 40, Ncolumns = 0, verbose = 0;
+    int ac, twodim = 0, do_masking = 0, vinc_max = 40, Ncolumns = 0;
+    int verbose = 0;
     if (argc < 3) return show_help();
 
     // process user options: 4 are valid presently
@@ -171,18 +172,22 @@ int main(int argc, char * argv[]) {
     int grow_vinc_area = 1;
     // int vinc_max = 40 ;
 
-    ///////////////////////////////////////
-    // Growing from Center cross columns //
-    ///////////////////////////////////////
+    // ========================================================================
+    // Growing from Center cross columns
+    // ========================================================================
     cout << "  Growing from center " << endl;
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y-0; ++ix) {
-                if (*(nim_landmarks_data + nxy * iz + nx * ix + iy) == 1 &&  abs((int) (*(nim_layers_data + nxy * iz + nx * ix + iy) - nr_layers/2)) < 2) {  //defining seed at center landmark
-                    *(growfromCenter_data + nxy * iz + nx * ix + iy) = 1.;
-                    *(Grow_x_data + nxy * iz + nx * ix + iy) = ix;
-                    *(Grow_y_data + nxy * iz + nx * ix + iy) = iy;
-                    *(Grow_z_data + nxy * iz + nx * ix + iy) = iz;
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_y; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+
+                // Defining seed at center landmark
+                if (*(nim_landmarks_data + voxel_i) == 1
+                    && abs((int) (*(nim_layers_data + voxel_i) - nr_layers / 2)) < 2) {
+                    *(growfromCenter_data + voxel_i) = 1.;
+                    *(Grow_x_data + voxel_i) = ix;
+                    *(Grow_y_data + voxel_i) = iy;
+                    *(Grow_z_data + voxel_i) = iz;
                 }
             }
         }
@@ -192,26 +197,43 @@ int main(int argc, char * argv[]) {
     for (int grow_i = 1; grow_i < vinc_max; grow_i++) {
         cout << "\r  " << grow_i << " " << flush;
         for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_x; ++iy) {
-                for (int ix = 0; ix < size_y-0; ++ix) {
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x; ++ix) {
+                    int voxel_i = nxy * iz + nx * iy + ix;
                     dist_min2 = 10000.;
                     x1g = 0;
                     y1g = 0;
                     z1g = 0;
-                    if (abs((int) (*(nim_layers_data + nxy * iz + nx * ix + iy) - nr_layers/2)) < 2 && *(growfromCenter_data + nxy * iz + nx * ix + iy) == 0 && *(nim_landmarks_data + nxy * iz + nx * ix + iy) < 2) {
+                    if (abs((int) (*(nim_layers_data + voxel_i) - nr_layers / 2)) < 2
+                        && *(growfromCenter_data + voxel_i) == 0
+                        && *(nim_landmarks_data + voxel_i) < 2) {
                         // Only grow into areas that are GM and that have not
                         // been grown into, yet... and it should stop as soon
                         // as it hits the border
-                        for (int iy_i = max(0, iy - grow_vinc_area); iy_i <= min(iy + grow_vinc_area, size_x - 1); ++iy_i) {
-                            for (int ix_i = max(0, ix - grow_vinc_area); ix_i <= min(ix + grow_vinc_area, size_y - 1); ++ix_i) {
-                                for (int iz_i = max(0, iz - grow_vinc_area); iz_i <= min(iz + grow_vinc_area, size_z - 1); ++iz_i) {
-                                    dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                    if (*(growfromCenter_data + nxy * iz_i + nx * ix_i + iy_i) == grow_i  && *(nim_landmarks_data + nxy * iz + nx * ix + iy) < 2) {
+
+                        int jz_start = max(0, iz - grow_vinc_area);
+                        int jz_stop = min(iz + grow_vinc_area, size_z - 1);
+                        int jy_start = max(0, iy - grow_vinc_area);
+                        int jy_stop = min(iy + grow_vinc_area, size_y - 1);
+                        int jx_start = max(0, ix - grow_vinc_area);
+                        int jx_stop = min(ix + grow_vinc_area, size_x - 1);
+
+                        for (int jz = jz_start; jz <= jz_stop; ++jz) {
+                            for (int jy = jy_start; jy <= jy_stop; ++jy) {
+                                for (int jx = jx_start; jx <= jx_stop; ++jx) {
+                                    int voxel_j = nxy * jz + nx * jy + jx;
+
+                                    dist_i = dist((float)ix, (float)iy, (float)iz,
+                                                  (float)jx, (float)jy, (float)jz,
+                                                  dX, dY, dZ);
+
+                                    if (*(growfromCenter_data + voxel_j) == grow_i
+                                        && *(nim_landmarks_data + voxel_i) < 2) {
                                         if (dist_i < dist_min2) {
                                             dist_min2 = dist_i;
-                                            x1g = ix_i;
-                                            y1g = iy_i;
-                                            z1g = iz_i;
+                                            x1g = jx;
+                                            y1g = jy;
+                                            z1g = jz;
                                             dist_p1 = dist_min2;
                                         }
                                     }
@@ -219,13 +241,11 @@ int main(int argc, char * argv[]) {
                             }
                         }
                         if (dist_min2 < 1.7) { // ???? I DONT REMEMBER WHY I NEED THIS ????
-                            // distDebug(0, islice, iy, ix) = dist_min2 ;
-                            *(growfromCenter_data + nxy * iz + nx * ix + iy) = grow_i+1;
-                            *(Grow_x_data + nxy * iz + nx * ix + iy) = *(Grow_x_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
-                            *(Grow_y_data + nxy * iz + nx * ix + iy) = *(Grow_y_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
-                            *(Grow_z_data + nxy * iz + nx * ix + iy) = *(Grow_z_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
+                            *(growfromCenter_data + voxel_i) = grow_i+1;
+                            *(Grow_x_data + voxel_i) = *(Grow_x_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
+                            *(Grow_y_data + voxel_i) = *(Grow_y_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
+                            *(Grow_z_data + voxel_i) = *(Grow_z_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
                         }
-                        // cout << " ix   " << ix << " iy   " << iy << "    " << * (WMkoord0_data + nxy * islice + nx * (int)x1g + (int)y1g) << endl;
                     }
                 }
             }
@@ -238,14 +258,11 @@ int main(int argc, char * argv[]) {
                           growfromCenter, true);
     }
 
-    /////////////////////
-    // Smooth columns  //
-    /////////////////////
+    // ========================================================================
+    // Smooth columns
+    // ========================================================================
     // NOTE(Renzo): In the future this should be done only within connected
     // areas. Right now there might be a problem, when the center of two GM.
-
-    // cout << "  Smooth columns " << endl;  // Ribbons is closer than 5 voxels (vinc_sm)
-
     cout << "  Smoothing in middle layer..." << endl;
 
     nifti_image* smooth = copy_nifti_as_float32(nim_layers);
@@ -253,53 +270,62 @@ int main(int argc, char * argv[]) {
     float* smooth_data = static_cast<float*>(smooth->data);
     float* gaussw_data = static_cast<float*>(gaussw->data);
 
-    // float kernel_size = 10;  // corresponds to one voxel sice.
     int FWHM_val = 1;
     int vinc_sm = 5;  // if voxel is too far away, I ignore it.
     dist_i = 0.;
     cout << "    vinc_sm " << vinc_sm << endl;
     cout << "    FWHM_val " << FWHM_val << endl;
-    // cout << "    DEBUG " << dist(1., 1., 1., 1., 2., 1., dX, dY, dZ) << endl;
     cout << "    Here 2 " << endl;
 
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y-0; ++ix) {
-                *(gaussw_data + nxy * iz + nx * ix + iy) = 0;
-                // * (smooth_data + nxy * iz + nx * ix + iy) = 0 ;
-                if (*(growfromCenter_data + nxy * iz + nx * ix + iy)  > 0) {
-                    for (int iz_i = max(0, iz - vinc_sm); iz_i <= min(iz + vinc_sm, size_z - 1); ++iz_i) {
-                        for (int iy_i = max(0, iy - vinc_sm); iy_i <= min(iy + vinc_sm, size_x - 1); ++iy_i) {
-                            for (int ix_i = max(0, ix - vinc_sm); ix_i <= min(ix + vinc_sm, size_y - 1); ++ix_i) {
-                                if (*(growfromCenter_data + nxy * iz_i + nx * ix_i + iy_i)  > 0) {
-                                    dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                    // cout << "    Debug  4 " << gaus(dist_i , FWHM_val) << endl;
-                                    // cout << "    Debug  5 " << dist_i << endl;
-                                    // if (* (nim_input_data + nxy * iz + nx * ix + iy) == 3) cout << "debug  4b " << endl;
-                                    // dummy = * (layer_data + nxy * iz_i + nx * ix_i + iy_i);
-                                    *(smooth_data + nxy * iz + nx * ix + iy) = *(smooth_data + nxy * iz + nx * ix + iy) + *(growfromCenter_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
-                                    *(gaussw_data + nxy * iz + nx * ix + iy) = *(gaussw_data + nxy * iz + nx * ix + iy) + gaus(dist_i, FWHM_val);
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+
+                *(gaussw_data + voxel_i) = 0;
+                // * (smooth_data + voxel_i) = 0 ;
+                if (*(growfromCenter_data + voxel_i)  > 0) {
+
+                    int jz_start = max(0, iz - vinc_sm);
+                    int jy_start = max(0, iy - vinc_sm);
+                    int jx_start = max(0, ix - vinc_sm);
+                    int jz_stop = min(iz + vinc_sm, size_z - 1);
+                    int jy_stop = min(iy + vinc_sm, size_y - 1);
+                    int jx_stop = min(ix + vinc_sm, size_x - 1);
+
+                    for (int jz = jz_start; jz <= jz_stop; ++jz) {
+                        for (int jy = jy_start; jy <= jy_stop; ++jy) {
+                            for (int jx = jx_start; jx <= jx_stop; ++jx) {
+                                int voxel_j = nxy * jz + nx * jy + jx;
+
+                                if (*(growfromCenter_data + voxel_j)  > 0) {
+                                    dist_i = dist((float)ix, (float)iy, (float)iz,
+                                                  (float)jx, (float)jy, (float)jz,
+                                                  dX, dY, dZ);
+
+                                    float w = gaus(dist_i, FWHM_val);
+                                    *(smooth_data + voxel_i) += *(growfromCenter_data + voxel_j) * w;
+                                    *(gaussw_data + voxel_i) += w;
                                 }
                             }
                         }
                     }
-                    if (*(gaussw_data + nxy * iz + nx * ix + iy) > 0) {
-                        *(smooth_data + nxy * iz + nx * ix + iy) = *(smooth_data + nxy * iz + nx * ix + iy)/ *(gaussw_data + nxy * iz + nx * ix + iy);
+                    if (*(gaussw_data + voxel_i) > 0) {
+                        *(smooth_data + voxel_i) /= *(gaussw_data + voxel_i);
                     }
                 }
-                // if (* (nim_layers_r_data + nxy * iz + nx * ix + iy) <= 0) {
-                //     * (smooth_data + nxy * iz + nx * ix + iy) = * (lateralCoord_data + nxy * iz + nx * ix + iy) ;
-                // }
             }
         }
     }
     cout << "    Here 2." << endl;
 
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                if (*(growfromCenter_data + nxy * iz + nx * ix + iy) > 0) {
-                    *(growfromCenter_data + nxy * iz + nx * ix + iy) = (int) *(smooth_data + nxy * iz + nx * ix + iy);
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                if (*(growfromCenter_data + voxel_i) > 0) {
+                    *(growfromCenter_data + voxel_i) =
+                        static_cast<int>(*(smooth_data + voxel_i));
                 }
             }
         }
@@ -310,18 +336,18 @@ int main(int argc, char * argv[]) {
                           growfromCenter, true);
     }
 
-    /////////////////////////////////////
-    // Extending columns across layers //
-    /////////////////////////////////////
+    // ========================================================================
+    // Extending columns across layers
+    // ========================================================================
     // NOTE(Renzo): This is not perfect yet, because it has only 4 directions
     // to grow thus ther might be orientation biases.
     cout << "  Extending columns across layers..." << endl;
 
-    nifti_image* hairy_brain = copy_nifti_as_int32(nim_layers);
-    int32_t* hairy_brain_data = static_cast<int32_t*>(hairy_brain->data);
+    nifti_image* hairy = copy_nifti_as_int32(nim_layers);
+    int32_t* hairy_data = static_cast<int32_t*>(hairy->data);
 
-    nifti_image* hairy_brain_dist = copy_nifti_as_float32(nim_layers);
-    float* hairy_brain_dist_data = static_cast<float*>(hairy_brain_dist->data);
+    nifti_image* hairy_dist = copy_nifti_as_float32(nim_layers);
+    float* hairy_dist_data = static_cast<float*>(hairy_dist->data);
 
     // This is an upper limit of the cortical thickness
     dist_min2 = 10000.;
@@ -349,31 +375,48 @@ int main(int argc, char * argv[]) {
     int nvoxels_to_go_across = 0;
     int running_index = 0;
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                if (*(nim_layers_data + nxy * iz + nx * ix + iy) > 1 && *(nim_layers_data + nxy * iz + nx * ix + iy) < nr_layers - 1) nvoxels_to_go_across++;
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                if (*(nim_layers_data + voxel_i) > 1
+                    && *(nim_layers_data + voxel_i) < nr_layers - 1) {
+                        nvoxels_to_go_across++;
+                    }
             }
         }
     }
 
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                if (*(nim_layers_data + nxy * iz + nx * ix + iy) > 1 && *(nim_layers_data + nxy * iz + nx * ix + iy) < nr_layers - 1) {
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+
+                if (*(nim_layers_data + voxel_i) > 1
+                    && *(nim_layers_data + voxel_i) < nr_layers - 1) {
                     running_index++;
                     if ((running_index * 100) / nvoxels_to_go_across != pref_ratio) {
-                        cout << "\r" << (running_index * 100)/nvoxels_to_go_across << "% " << flush;
-                        pref_ratio = (running_index * 100)/nvoxels_to_go_across;
+                        int temp = (running_index * 100) / nvoxels_to_go_across;
+
+                        cout << "\r" << temp << "% " << flush;
+                        pref_ratio = temp;
                     }
-                    /////////////////////////////////////////////////
-                    // Find area that is not from the other sulcus //
-                    /////////////////////////////////////////////////
+                    // --------------------------------------------------------
+                    // Find area that is not from the other sulcus
+                    // --------------------------------------------------------
 
                     // Preparation of dummy vicinity dile, resting it with zeros
-                    for (int iz_i = max(0, iz - vinc_sm_g - vinc_steps); iz_i <= min(iz + vinc_sm_g + vinc_steps, size_z - 1); ++iz_i) {
-                        for (int iy_i = max(0, iy - vinc_sm_g - vinc_steps); iy_i <= min(iy + vinc_sm_g + vinc_steps, size_x - 1); ++iy_i) {
-                            for (int ix_i = max(0, ix - vinc_sm_g - vinc_steps); ix_i <= min(ix + vinc_sm_g + vinc_steps, size_y - 1); ++ix_i) {
-                                *(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) = 0;
+                    int jz_start = max(0, iz - vinc_sm_g - vinc_steps);
+                    int jy_start = max(0, iy - vinc_sm_g - vinc_steps);
+                    int jx_start = max(0, ix - vinc_sm_g - vinc_steps);
+                    int jz_stop = min(iz + vinc_sm_g + vinc_steps, size_z - 1);
+                    int jy_stop = min(iy + vinc_sm_g + vinc_steps, size_y - 1);
+                    int jx_stop = min(ix + vinc_sm_g + vinc_steps, size_x - 1);
+
+                    for (int jz = jz_start; jz <= jz_stop; ++jz) {
+                        for (int jy = jy_start; jy <= jy_stop; ++jy) {
+                            for (int jx = jx_start; jx <= jx_stop; ++jx) {
+                                int voxel_j = nxy * jz + nx * jy + jx;
+                                *(hairy_data + voxel_j) = 0;
                             }
                         }
                     }
@@ -383,17 +426,43 @@ int main(int argc, char * argv[]) {
                     // voxels, exlcudid covels from opposite GM bank.
                     // NOTE(Renzo): This loop takes forever
                     // TODO(Faruk): I need to have a look at this.
-                    *(hairy_brain_data + nxy * iz + nx * ix + iy) = 1;
+                    *(hairy_data + voxel_i) = 1;
                     for (int K_ = 0; K_ < vinc_sm_g; K_++) {
-                        for (int iz_ii = max(0, iz - vinc_sm_g); iz_ii <= min(iz + vinc_sm_g, size_z - 1); ++iz_ii) {
-                            for (int iy_ii = max(0, iy - vinc_sm_g); iy_ii <= min(iy + vinc_sm_g, size_x - 1); ++iy_ii) {
-                                for (int ix_ii = max(0, ix - vinc_sm_g); ix_ii <= min(ix + vinc_sm_g, size_y - 1); ++ix_ii) {
-                                    if (*(hairy_brain_data + nxy * iz_ii + nx * ix_ii + iy_ii) == 1) {
-                                        for (int iz_i = max(0, iz_ii - vinc_steps); iz_i <= min(iz_ii + vinc_steps, size_z - 1); ++iz_i) {
-                                            for (int iy_i = max(0, iy_ii - vinc_steps); iy_i <= min(iy_ii + vinc_steps, size_x - 1); ++iy_i) {
-                                                for (int ix_i = max(0, ix_ii - vinc_steps); ix_i <= min(ix_ii + vinc_steps, size_y - 1); ++ix_i) {
-                                                    if (dist((float)ix_ii, (float)iy_ii, (float)iz_ii, (float)ix_i, (float)iy_i, (float)iz_i, 1, 1, 1) <= 1 && *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) > 1 && *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) < nr_layers - 1) {
-                                                        *(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) = 1;
+
+                        jz_start = max(0, iz - vinc_sm_g);
+                        jy_start = max(0, iy - vinc_sm_g);
+                        jx_start = max(0, ix - vinc_sm_g);
+                        jz_stop = min(iz + vinc_sm_g, size_z - 1);
+                        jy_stop = min(iy + vinc_sm_g, size_x - 1);
+                        jx_stop = min(ix + vinc_sm_g, size_y - 1);
+
+                        for (int jz = jz_start; jz <= jz_stop; ++jz) {
+                            for (int jy = jy_start; jy <= jy_stop; ++jy) {
+                                for (int jx = jx_start; jx <= jx_stop; ++jx) {
+                                    int voxel_j = nxy * jz + nx * jy + jx;
+
+                                    if (*(hairy_data + voxel_j) == 1) {
+
+                                        int kz_start = max(0, jz - vinc_steps);
+                                        int ky_start = max(0, jy - vinc_steps);
+                                        int kx_start = max(0, jx - vinc_steps);
+                                        int kz_stop = min(jz + vinc_steps, size_z - 1);
+                                        int ky_stop = min(jy + vinc_steps, size_y - 1);
+                                        int kx_stop = min(jx + vinc_steps, size_x - 1);
+
+                                        for (int kz = kz_start; kz <= kz_stop; ++kz) {
+                                            for (int ky = ky_start; ky <= ky_stop; ++ky) {
+                                                for (int kx = kx_start; kx <= kx_stop; ++kx) {
+                                                    int voxel_k = nxy * kz + nx * ky + kx;
+
+                                                    float d = dist((float)jx, (float)jy, (float)jz,
+                                                                   (float)kx, (float)ky, (float)kz,
+                                                                   1, 1, 1);
+
+                                                    if (d <= 1
+                                                        && *(nim_layers_data + voxel_k) > 1
+                                                        && *(nim_layers_data + voxel_k) < nr_layers - 1) {
+                                                        *(hairy_data + voxel_k) = 1;
                                                     }
                                                 }
                                             }
@@ -410,22 +479,37 @@ int main(int argc, char * argv[]) {
                     // Only grow into areas that are GM and that have not been
                     // grown into, yet... and it should stop as soon as it hits
                     // the border
-                    for (int iy_i = max(0, iy - vinc_sm_g); iy_i <= min(iy + vinc_sm_g, size_x - 1); ++iy_i) {
-                        for (int ix_i = max(0, ix - vinc_sm_g); ix_i <= min(ix + vinc_sm_g, size_y - 1); ++ix_i) {
-                            for (int iz_i = max(0, iz - vinc_sm_g); iz_i <= min(iz + vinc_sm_g, size_z - 1); ++iz_i) {
-                                dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                if (*(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) == 1 && dist_i < dist_min2 && *(growfromCenter_data + nxy * iz_i + nx * ix_i + iy_i) > 0) {
+
+                    jz_start = max(0, iz - vinc_sm_g);
+                    jy_start = max(0, iy - vinc_sm_g);
+                    jx_start = max(0, ix - vinc_sm_g);
+                    jz_stop = min(iz + vinc_sm_g, size_z - 1);
+                    jy_stop = min(iy + vinc_sm_g, size_x - 1);
+                    jx_stop = min(ix + vinc_sm_g, size_y - 1);
+
+                    for (int jz = jz_start; jz <= jz_stop; ++jz) {
+                        for (int jy = jy_start; jy <= jy_stop; ++jy) {
+                            for (int jx = jx_start; jx <= jx_stop; ++jx) {
+                                int voxel_j = nxy * jz + nx * jy + jx;
+
+                                dist_i = dist((float)ix, (float)iy, (float)iz,
+                                              (float)jx, (float)jy, (float)jz,
+                                              dX, dY, dZ);
+
+                                if (*(hairy_data + voxel_j) == 1
+                                    && dist_i < dist_min2
+                                    && *(growfromCenter_data + voxel_j) > 0) {
                                     dist_min2 = dist_i;
-                                    x1g = ix_i;
-                                    y1g = iy_i;
-                                    z1g = iz_i;
+                                    x1g = jx;
+                                    y1g = jy;
+                                    z1g = jz;
                                     dist_p1 = dist_min2;
-                                    min_val = *(growfromCenter_data + nxy * iz_i + nx * ix_i + iy_i);
+                                    min_val = *(growfromCenter_data + voxel_j);
                                 }
                             }
                         }
                     }
-                    *(growfromCenter_thick_data + nxy * iz + nx * ix + iy) = min_val;
+                    *(growfromCenter_thick_data + voxel_i) = min_val;
                 }
             }
         }
@@ -445,9 +529,10 @@ int main(int argc, char * argv[]) {
     ////////////////////////////////////////////////////////////
     cout << "  Smoothing the thick cortex now..." << endl;
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y-0; ++ix) {
-                *(smooth_data + nxy * iz + nx * ix + iy) = 0;
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                *(smooth_data + voxel_i) = 0;
             }
         }
     }
@@ -462,35 +547,70 @@ int main(int argc, char * argv[]) {
     cout << "    Starting extended now  " << endl;
 
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y-0; ++ix) {
-                *(gaussw_data + nxy * iz + nx * ix + iy) = 0;
-                // * (smooth_data + nxy * iz + nx * ix + iy) = 0 ;
-                if (*(growfromCenter_thick_data + nxy * iz + nx * ix + iy) > 0) {
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
 
-                    /////////////////////////////////////////////////
-                    // Find area that is not from the other sulcus //
-                    /////////////////////////////////////////////////
+                *(gaussw_data + voxel_i) = 0;
+                // * (smooth_data + voxel_i) = 0 ;
 
+                if (*(growfromCenter_thick_data + voxel_i) > 0) {
+                    // --------------------------------------------------------
+                    // Find area that is not from the other sulcus
+                    // --------------------------------------------------------
                     // Preparation of dummy vicinity
-                    for (int iz_i = max(0, iz - vinc_sm - vinc_steps); iz_i <= min(iz + vinc_sm + vinc_steps, size_z - 1); ++iz_i) {
-                        for (int iy_i = max(0, iy - vinc_sm - vinc_steps); iy_i <= min(iy + vinc_sm + vinc_steps, size_x - 1); ++iy_i) {
-                            for (int ix_i = max(0, ix - vinc_sm - vinc_steps); ix_i <= min(ix + vinc_sm + vinc_steps, size_y - 1); ++ix_i) {
-                                *(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) = 0;
+
+                    int jz_start = max(0, iz - vinc_sm - vinc_steps);
+                    int jy_start = max(0, iy - vinc_sm - vinc_steps);
+                    int jx_start = max(0, ix - vinc_sm - vinc_steps);
+                    int jz_stop = min(iz + vinc_sm + vinc_steps, size_z - 1);
+                    int jy_stop = min(iy + vinc_sm + vinc_steps, size_x - 1);
+                    int jx_stop = min(ix + vinc_sm + vinc_steps, size_y - 1);
+
+                    for (int jz = jz_start; jz <= jz_stop; ++jz) {
+                        for (int jy = jy_start; jy <= jy_stop; ++jy) {
+                            for (int jx = jx_start; jx <= jx_stop; ++jx) {
+                                int voxel_j = nxy * jz + nx * jy + jx;
+                                *(hairy_data + voxel_j) = 0;
                             }
                         }
                     }
-                    *(hairy_brain_data + nxy * iz + nx * ix + iy) = 1;
+                    *(hairy_data + voxel_i) = 1;
                     for (int K_ = 0; K_ < vinc_sm; K_++) {
-                        for (int iz_ii = max(0, iz - vinc_sm); iz_ii <= min(iz + vinc_sm, size_z - 1); ++iz_ii) {
-                            for (int iy_ii = max(0, iy - vinc_sm); iy_ii <= min(iy + vinc_sm, size_x - 1); ++iy_ii) {
-                                for (int ix_ii = max(0, ix - vinc_sm); ix_ii <= min(ix + vinc_sm, size_y - 1); ++ix_ii) {
-                                    if (*(hairy_brain_data + nxy * iz_ii + nx * ix_ii + iy_ii) == 1) {
-                                        for (int iz_i = max(0, iz_ii - vinc_steps); iz_i <= min(iz_ii + vinc_steps, size_z - 1); ++iz_i) {
-                                            for (int iy_i = max(0, iy_ii - vinc_steps); iy_i <= min(iy_ii + vinc_steps, size_x - 1); ++iy_i) {
-                                                for (int ix_i = max(0, ix_ii - vinc_steps); ix_i <= min(ix_ii + vinc_steps, size_y - 1); ++ix_i) {
-                                                    if (dist((float)ix_ii, (float)iy_ii, (float)iz_ii, (float)ix_i, (float)iy_i, (float)iz_i, 1, 1, 1) <= 1 && *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) > 1 && *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) < nr_layers - 1) {
-                                                        *(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) = 1;
+
+                        jz_start = max(0, iz - vinc_sm);
+                        jy_start = max(0, iy - vinc_sm);
+                        jx_start = max(0, ix - vinc_sm);
+                        jz_stop = min(iz + vinc_sm, size_z - 1);
+                        jy_stop = min(iy + vinc_sm, size_y - 1);
+                        jx_stop = min(ix + vinc_sm, size_x - 1);
+
+                        for (int jz = jz_start; jz <= jz_stop; ++jz) {
+                            for (int jy = jy_start; jy <= jy_stop; ++jy) {
+                                for (int jx = jx_start; jx <= jx_stop; ++jx) {
+                                    int voxel_j = nxy * jz + nx * jy + jx;
+
+                                    if (*(hairy_data + voxel_j) == 1) {
+
+                                        int kz_start = max(0, jz - vinc_steps);
+                                        int ky_start = max(0, jy - vinc_steps);
+                                        int kx_start = max(0, jx - vinc_steps);
+                                        int kz_stop = min(jz + vinc_steps, size_z - 1);
+                                        int ky_stop = min(jy + vinc_steps, size_y - 1);
+                                        int kx_stop = min(jx + vinc_steps, size_x - 1);
+
+                                        for (int kz = kz_start; kz <= kz_stop; ++kz) {
+                                            for (int ky = ky_start; ky <= ky_stop; ++ky) {
+                                                for (int kx = kx_start; kx <= kx_stop; ++kx) {
+                                                    int voxel_k = nxy * kz + nx * ky + kx;
+
+                                                    float d = dist((float)jx, (float)jy, (float)jz,
+                                                                   (float)kx, (float)ky, (float)kz,
+                                                                   1, 1, 1);
+                                                    if (d <= 1
+                                                        && *(nim_layers_data + voxel_k) > 1
+                                                        && *(nim_layers_data + voxel_k) < nr_layers - 1) {
+                                                        *(hairy_data + voxel_k) = 1;
                                                     }
                                                 }
                                             }
@@ -501,21 +621,35 @@ int main(int argc, char * argv[]) {
                         }
                     }
                     // Smoothing within each layer and within the local patch
-                    int nr_layers_i = *(nim_layers_data + nxy * iz + nx * ix + iy);
+                    int nr_layers_i = *(nim_layers_data + voxel_i);
 
-                    for (int iz_i = max(0, iz - vinc_sm); iz_i <= min(iz + vinc_sm, size_z - 1); ++iz_i) {
-                        for (int iy_i = max(0, iy - vinc_sm); iy_i <= min(iy + vinc_sm, size_x - 1); ++iy_i) {
-                            for (int ix_i = max(0, ix - vinc_sm); ix_i <= min(ix + vinc_sm, size_y - 1); ++ix_i) {
-                                if (*(hairy_brain_data + nxy * iz_i + nx * ix_i + iy_i) == 1 && abs((int) *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) - nr_layers_i) < 2 && *(growfromCenter_thick_data + nxy * iz_i + nx * ix_i + iy_i) > 0) {
-                                    dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                    *(smooth_data + nxy * iz + nx * ix + iy) = *(smooth_data + nxy * iz + nx * ix + iy) + *(growfromCenter_thick_data + nxy * iz_i + nx * ix_i + iy_i) * gaus(dist_i, FWHM_val);
-                                    *(gaussw_data + nxy * iz + nx * ix + iy) = *(gaussw_data + nxy * iz + nx * ix + iy) + gaus(dist_i, FWHM_val);
+                    jz_start = max(0, iz - vinc_sm);
+                    jy_start = max(0, iy - vinc_sm);
+                    jx_start = max(0, ix - vinc_sm);
+                    jz_stop = min(iz + vinc_sm, size_z - 1);
+                    jy_stop = min(iy + vinc_sm, size_y - 1);
+                    jx_stop = min(ix + vinc_sm, size_x - 1);
+
+                    for (int jz = jz_start; jz <= jz_stop; ++jz) {
+                        for (int jy = jy_start; jy <= jy_stop; ++jy) {
+                            for (int jx = jx_start; jx <= jx_stop; ++jx) {
+                                int voxel_j = nxy * jz + nx * jy + jx;
+
+                                if (*(hairy_data + voxel_j) == 1
+                                    && abs((int) *(nim_layers_data + voxel_j) - nr_layers_i) < 2
+                                    && *(growfromCenter_thick_data + voxel_j) > 0) {
+                                    dist_i = dist((float)ix, (float)iy, (float)iz,
+                                                  (float)jx, (float)jy, (float)jz,
+                                                  dX, dY, dZ);
+                                    float w = gaus(dist_i, FWHM_val);
+                                    *(smooth_data + voxel_i) += *(growfromCenter_thick_data + voxel_j) * w;
+                                    *(gaussw_data + voxel_i) += w;
                                 }
                             }
                         }
                     }
-                    if (*(gaussw_data + nxy * iz + nx * ix + iy) > 0) {
-                        *(smooth_data + nxy * iz + nx * ix + iy) = *(smooth_data + nxy * iz + nx * ix + iy)/ *(gaussw_data + nxy * iz + nx * ix + iy);
+                    if (*(gaussw_data + voxel_i) > 0) {
+                        *(smooth_data + voxel_i) /= *(gaussw_data + voxel_i);
                     }
                 }
             }
@@ -524,10 +658,12 @@ int main(int argc, char * argv[]) {
     cout << "    Extended now." << endl;
 
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                if (*(growfromCenter_thick_data + nxy * iz + nx * ix + iy) > 0) {
-                    *(growfromCenter_thick_data + nxy * iz + nx * ix + iy) = *(smooth_data + nxy * iz + nx * ix + iy);
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                if (*(growfromCenter_thick_data + voxel_i) > 0) {
+                    *(growfromCenter_thick_data + voxel_i) =
+                        *(smooth_data + voxel_i);
                 }
             }
         }
@@ -539,26 +675,29 @@ int main(int argc, char * argv[]) {
                           growfromCenter_thick, true);
     }
 
-    //////////////////////////
-    // Grow final outer rim //
-    //////////////////////////
-
+    // ========================================================================
+    // Grow final outer rim
+    // ========================================================================
     // Note(Renzo): I could not fill this earlier because it would have resulted
     // in leakage from the opposite back. Thus I always left a safety corridor.
     // Which is filled in now.
 
     int vinc_rim = 2;
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                *(hairy_brain_data + nxy * iz + nx * ix + iy) = *(growfromCenter_thick_data + nxy * iz + nx * ix + iy);
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+                *(hairy_data + voxel_i) = *(growfromCenter_thick_data + voxel_i);
             }
         }
     }
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                if (*(nim_layers_data + nxy * iz + nx * ix + iy) > 0 && *(growfromCenter_thick_data + nxy * iz + nx * ix + iy) == 0) {
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+
+                if (*(nim_layers_data + voxel_i) > 0
+                    && *(growfromCenter_thick_data + voxel_i) == 0) {
                     dist_min2 = 10000.;
                     x1g = 0;
                     y1g = 0;
@@ -567,44 +706,65 @@ int main(int argc, char * argv[]) {
                     // Only grow into areas that are GM and that have not been
                     // grown into, yet... And it should stop as soon as it hits
                     // the border.
-                    for (int iy_i = max(0, iy - vinc_rim); iy_i <= min(iy + vinc_rim, size_x - 1); ++iy_i) {
-                        for (int ix_i = max(0, ix - vinc_rim); ix_i <= min(ix + vinc_rim, size_y - 1); ++ix_i) {
-                            for (int iz_i = max(0, iz - vinc_rim); iz_i <= min(iz + vinc_rim, size_z - 1); ++iz_i) {
-                                dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i, dX, dY, dZ);
-                                if (dist_i < dist_min2 && *(nim_layers_data + nxy * iz_i + nx * ix_i + iy_i) > 0 && *(growfromCenter_thick_data + nxy * iz_i + nx * ix_i + iy_i) > 0) {
+
+                    int jz_start = max(0, iy - vinc_rim);
+                    int jy_start = max(0, ix - vinc_rim);
+                    int jx_start = max(0, iz - vinc_rim);
+                    int jz_stop = min(iy + vinc_rim, size_x - 1);
+                    int jy_stop = min(ix + vinc_rim, size_y - 1);
+                    int jx_stop = min(iz + vinc_rim, size_z - 1);
+
+                    for (int jz = jz_start; jz <= jz_stop; ++jz) {
+                        for (int jy = jy_start; jy <= jy_stop; ++jy) {
+                            for (int jx = jx_start; jx <= jx_stop; ++jx) {
+                                int voxel_j = nxy * jz + nx * jy + jx;
+
+                                dist_i = dist((float)ix, (float)iy, (float)iz,
+                                              (float)jx, (float)jy, (float)jz,
+                                              dX, dY, dZ);
+
+                                if (dist_i < dist_min2
+                                    && *(nim_layers_data + voxel_j) > 0
+                                    && *(growfromCenter_thick_data + voxel_j) > 0) {
                                     dist_min2 = dist_i;
-                                    x1g = ix_i;
-                                    y1g = iy_i;
-                                    z1g = iz_i;
+                                    x1g = jx;
+                                    y1g = jy;
+                                    z1g = jz;
                                     dist_p1 = dist_min2;
-                                    min_val = *(growfromCenter_thick_data + nxy * iz_i + nx * ix_i + iy_i);
+                                    min_val = *(growfromCenter_thick_data + voxel_j);
                                 }
                             }
                         }
                     }
-                    *(hairy_brain_data + nxy * iz + nx * ix + iy) = min_val;
+                    *(hairy_data + voxel_i) = min_val;
                 }
             }
         }
     }
 
     if (verbose == 1) {
-        save_output_nifti(fin_layer, "coordinates_5_extended", hairy_brain, true);
+        save_output_nifti(fin_layer, "coordinates_5_extended", hairy, true);
     }
 
-    ////////////////////////////////////////////////////////////
-    // Resample the number of columns to the user given value //
-    ////////////////////////////////////////////////////////////
+    // ========================================================================
+    // Resample the number of columns to the user given value
+    // ========================================================================
     if (Ncolumns > 0)  {
         cout << "   Resampling the number of columns..." << endl;
         int max_columns = 0;
         int min_columns = 100000000;
         for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_x; ++iy) {
-                for (int ix = 0; ix < size_y-0; ++ix) {
-                    if (*(hairy_brain_data + nxy * iz + nx * ix + iy) >  0) {
-                        if ((int) *(hairy_brain_data + nxy * iz + nx * ix + iy) >  max_columns) max_columns = (int) *(hairy_brain_data + nxy * iz + nx * ix + iy);
-                        if ((int) *(hairy_brain_data + nxy * iz + nx * ix + iy) < min_columns) min_columns = (int) *(hairy_brain_data + nxy * iz + nx * ix + iy);
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x; ++ix) {
+                    int voxel_i = nxy * iz + nx * iy + ix;
+                    int val = static_cast<int>(*(hairy_data + voxel_i));
+                    if (val >  0) {
+                        if (val >  max_columns) {
+                            max_columns = val;
+                        }
+                        if (val < min_columns) {
+                            min_columns = val;
+                        }
                     }
                 }
             }
@@ -612,16 +772,22 @@ int main(int argc, char * argv[]) {
 
         cout << "   Max = " << max_columns << " | Min = " << min_columns << endl;
         for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_x; ++iy) {
-                for (int ix = 0; ix < size_y-0; ++ix) {
-                    if (*(hairy_brain_data + nxy * iz + nx * ix + iy) >  0) {
-                        *(hairy_brain_data + nxy * iz + nx * ix + iy) = (*(hairy_brain_data + nxy * iz + nx * ix + iy) - (short)min_columns) * (short)(Ncolumns - 1)/(short)(max_columns-min_columns) +1;
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x; ++ix) {
+                    int voxel_i = nxy * iz + nx * iy + ix;
+
+                    if (*(hairy_data + voxel_i) >  0) {
+                        int a = static_cast<int>(min_columns);
+                        int b = static_cast<int>(Ncolumns - 1);
+                        int c = static_cast<int>(max_columns - min_columns);
+                        *(hairy_data + voxel_i) =
+                            (*(hairy_data + voxel_i) - a) * b / c + 1;
                     }
                 }
             }
         }
     }
-    save_output_nifti(fin_layer, "coordinates_final", hairy_brain, true);
+    save_output_nifti(fin_layer, "coordinates_final", hairy, true);
 
     cout << "  Finished." << endl;
     return 0;
