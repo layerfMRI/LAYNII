@@ -273,16 +273,16 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    save_output_nifti(fin, "Gfactormap", nii_gfactormap, true);
+    save_output_nifti(fin, "Gfactormap", nii_gfactormap, true); 
     save_output_nifti(fin, "Amplified_GRAPPA", nii_noise, true);
 
     cout << "  Finished." << endl;
-    return 0;
+    return 0; 
 }
 
 // Gauss lower = -5, upper = 5
 double verteilung(double z) {
-    return exp(-z * z / (2.)) * 1. / sqrt(2. * M_PI);
+    return exp(-z * z / (2.)) * 1. / sqrt(2. * 3.141592653);
 }
 
 double_t arb_pdf_num(int N_rand, double ( * pFunc)(double), double_t lower,
