@@ -140,13 +140,41 @@ float gaus(float distance, float sigma) {
 // Utility functions
 // ============================================================================
 
-void save_output_nifti(string filename, string prefix, nifti_image* nii,
-                       bool log) {
-    string outfilename = prefix + "_" + filename;
-    nifti_set_filenames(nii, outfilename.c_str(), 1, 1);
+void save_output_nifti(const string path, const string tag,
+                       nifti_image* nii, const bool log) {
+    // Parse path
+    string dir, file, basename, ext, sep;
+    auto pos1 = path.find_last_of('/');
+    if (pos1 != string::npos) {  // For Unix
+        sep = "/";
+        dir = path.substr(0, pos1);
+        file = path.substr(pos1 + 1);
+    } else {  // For Windows
+        pos1 = path.find_last_of('\\');
+        if (pos1 != string::npos) {
+            sep = "\\";
+            dir = path.substr(0, pos1);
+            file = path.substr(pos1 + 1);
+        } else {  // Only the filename
+            sep = "";
+            dir = "";
+            file = path;
+        }
+    }
+
+    // Parse extension
+    auto const pos2 = file.find_first_of('.');
+    basename = file.substr(0, pos2);
+    ext = file.substr(pos2);
+
+    // Prepare output path
+    string out_path = dir + sep + basename + "_" + tag + ext;
+
+    // Save nifti
+    nifti_set_filenames(nii, out_path.c_str(), 1, 1);
     nifti_image_write(nii);
     if (log) {
-        log_output(outfilename.c_str());
+        log_output(out_path.c_str());
     }
 }
 
