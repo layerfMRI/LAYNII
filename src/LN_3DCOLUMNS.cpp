@@ -8,11 +8,11 @@ int show_help(void) {
     "               based on the gray matter (GM) geometry.\n"
     "\n"
     "Usage:\n"
-    "    LN_3DCOLUMNS -layer_file layers.nii -landmarks landmarks.nii \n"
+    "    LN_3DCOLUMNS -layers layers.nii -landmarks landmarks.nii \n"
     "\n"
     "Options:\n"
     "    -help         : Show this help.\n"
-    "    -layer_file   : Nifti (.nii) file containing layer or column masks \n"
+    "    -layers       : Nifti (.nii) file containing layer or column masks \n"
     "    -landmarks    : Nifti (.nii) file with landmarks 1, 2, 3 (1 is in \n"
     "                    the center 2 and 3 are the borders. Landmarks \n"
     "                    should be at least 4 voxels thick.\n"
@@ -36,9 +36,10 @@ int main(int argc, char *argv[]) {
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
-        } else if (!strcmp(argv[ac], "-layer_file")) {
+        } else if (!strcmp(argv[ac], "-layers")
+                   || !strcmp(argv[ac], "-layer_file")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -layer_file\n");
+                fprintf(stderr, "** missing argument for -layers\n");
                 return 1;
             }
             fin_layer = argv[ac];
@@ -64,7 +65,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (!fin_layer) {
-        fprintf(stderr, "** missing option '-layer_file'\n");
+        fprintf(stderr, "** missing option '-layers'\n");
         return 1;
     }
     if (!fin_landmark) {
