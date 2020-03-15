@@ -546,7 +546,7 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-    save_output_nifti(fin_layer, "step_6", hairy, false);
+    // save_output_nifti(fin_layer, "step_6", hairy, false);
 
     // ========================================================================
     // Smooth columns
@@ -563,6 +563,7 @@ int main(int argc, char *argv[]) {
             for (int ix = 0; ix < size_x; ++ix) {
                 int voxel_i = nxy * iz + nx * iy + ix;
                 float total_weight = 0;
+                *(nii_smooth_data + voxel_i) = 0;
 
                 if (*(hairy_data + voxel_i) > 0) {
                     int l = *(nii_layer_data + voxel_i);
@@ -599,7 +600,7 @@ int main(int argc, char *argv[]) {
             *(hairy_data + i) = static_cast<int>(*(nii_smooth_data + i));
         }
     }
-    save_output_nifti(fin_layer, "step_7", hairy, false);
+    // save_output_nifti(fin_layer, "step_7", hairy, false);
 
     // ========================================================================
     // Growing from as thick cortex
@@ -729,7 +730,7 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-    save_output_nifti(fin_layer, "step_8", hairy, false);
+    // save_output_nifti(fin_layer, "step_8", hairy, false);
 
     // ========================================================================
     // Change number of columns
