@@ -23,6 +23,7 @@ LOW_PRIORITY	=	LN_3DCOLUMNS \
 					LN_GRADSMOOTH \
 					LN_ZOOM \
 					LN_FLOAT_ME \
+					LN_SHORT_ME \
 					LN_EXTREMETR \
 					LN_GFACTOR \
 					LN_GROW_LAYERS \
@@ -92,6 +93,11 @@ LN_ZOOM:
 LN_FLOAT_ME:
 	$(CC) -c -std=c++11 -o  obj/LN_FLOAT_ME.o src/LN_FLOAT_ME.cpp
 	$(CC) -o $@ $(CFLAGS) obj/LN_FLOAT_ME.o $(LIBRARIES)
+
+LN_SHORT_ME:
+	$(CC) -c -std=c++11 -o  obj/LN_SHORT_ME.o src/LN_SHORT_ME.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_SHORT_ME.o $(LIBRARIES)
+
 
 LN_3DCOLUMNS:
 	$(CC) -c -std=c++11 -o  obj/LN_3DCOLUMNS.o src/LN_3DCOLUMNS.cpp
