@@ -30,13 +30,13 @@ int show_help(void) {
     return 0;
 }
 
-int main(int argc, char * argv[]) {
-    char* fin_layer = NULL, * fin_landmark = NULL;
-    int ac, do_masking = 0, vinc_max = 40, Ncolumns = 0;
+int main(int argc, char *argv[]) {
+    char *fin_layer = NULL, *fin_landmark = NULL;
+    int ac, vinc_max = 40, Ncolumns = 0;
     int verbose = 0;
     if (argc < 3) return show_help();
 
-    // process user options: 4 are valid presently
+    // process user options
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
@@ -73,24 +73,24 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    if (!fin_landmark) {
-        fprintf(stderr, "** missing option '-landmarks'\n");
-        return 1;
-    }
     if (!fin_layer) {
         fprintf(stderr, "** missing option '-layers'\n");
         return 1;
     }
+    if (!fin_landmark) {
+        fprintf(stderr, "** missing option '-landmarks'\n");
+        return 1;
+    }
 
     // Read input dataset
-    nifti_image * nii_input2 = nifti_image_read(fin_landmark, 1);
-    if (!nii_input2) {
-        fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin_landmark);
-        return 2;
-    }
     nifti_image * nii_input1 = nifti_image_read(fin_layer, 1);
     if (!nii_input1) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin_layer);
+        return 2;
+    }
+    nifti_image * nii_input2 = nifti_image_read(fin_landmark, 1);
+    if (!nii_input2) {
+        fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin_landmark);
         return 2;
     }
 
@@ -157,15 +157,16 @@ int main(int argc, char * argv[]) {
     float min_val = 0.;
     float dist_min2 = 0.;
     float dist_i = 0.;
-    float dist_p1 = 0.;
+    float dist_p1;
 
-    int grow_vinc = 3;
     int grow_vinc_area = 1;
-    // int vinc_max = 40 ;
 
     // ========================================================================
     // Growing from Center cross columns
     // ========================================================================
+    int jz_start, jy_start, jx_start, jz_stop, jy_stop, jx_stop;
+    int kz_start, ky_start, kx_start, kz_stop, ky_stop, kx_stop;
+
     cout << "  Growing from center..." << endl;
     for (int iz = 0; iz < size_z; ++iz) {
         for (int iy = 0; iy < size_y; ++iy) {
@@ -185,7 +186,6 @@ int main(int argc, char * argv[]) {
     }
 
     for (int grow_i = 1; grow_i < vinc_max; grow_i++) {
-        cout << "\r  " << grow_i << " " << flush;
         for (int iz = 0; iz < size_z; ++iz) {
             for (int iy = 0; iy < size_y; ++iy) {
                 for (int ix = 0; ix < size_x; ++ix) {
@@ -203,12 +203,12 @@ int main(int argc, char * argv[]) {
                         // been grown into, yet... and it should stop as soon
                         // as it hits the border
 
-                        int jz_start = max(0, iz - grow_vinc_area);
-                        int jz_stop = min(iz + grow_vinc_area, size_z - 1);
-                        int jy_start = max(0, iy - grow_vinc_area);
-                        int jy_stop = min(iy + grow_vinc_area, size_y - 1);
-                        int jx_start = max(0, ix - grow_vinc_area);
-                        int jx_stop = min(ix + grow_vinc_area, size_x - 1);
+                        jz_start = max(0, iz - grow_vinc_area);
+                        jz_stop = min(iz + grow_vinc_area, size_z - 1);
+                        jy_start = max(0, iy - grow_vinc_area);
+                        jy_stop = min(iy + grow_vinc_area, size_y - 1);
+                        jx_start = max(0, ix - grow_vinc_area);
+                        jx_stop = min(ix + grow_vinc_area, size_x - 1);
 
                         for (int jz = jz_start; jz <= jz_stop; ++jz) {
                             for (int jy = jy_start; jy <= jy_stop; ++jy) {
@@ -232,7 +232,7 @@ int main(int argc, char * argv[]) {
                                 }
                             }
                         }
-                        if (dist_min2 < 1.7) { // ???? I DONT REMEMBER WHY I NEED THIS ????
+                        if (dist_min2 < 1.7) {  // ???? I DONT REMEMBER WHY I NEED THIS ????
                             *(growfromCenter_data + voxel_i) = grow_i+1;
                             *(Grow_x_data + voxel_i) = *(Grow_x_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
                             *(Grow_y_data + voxel_i) = *(Grow_y_data + nxy * (int)z1g + nx * (int)x1g + (int)y1g);
@@ -274,12 +274,12 @@ int main(int argc, char * argv[]) {
 
                 if (*(growfromCenter_data + voxel_i)  > 0) {
 
-                    int jz_start = max(0, iz - vinc_sm);
-                    int jy_start = max(0, iy - vinc_sm);
-                    int jx_start = max(0, ix - vinc_sm);
-                    int jz_stop = min(iz + vinc_sm, size_z - 1);
-                    int jy_stop = min(iy + vinc_sm, size_y - 1);
-                    int jx_stop = min(ix + vinc_sm, size_x - 1);
+                    jz_start = max(0, iz - vinc_sm);
+                    jy_start = max(0, iy - vinc_sm);
+                    jx_start = max(0, ix - vinc_sm);
+                    jz_stop = min(iz + vinc_sm, size_z - 1);
+                    jy_stop = min(iy + vinc_sm, size_y - 1);
+                    jx_stop = min(ix + vinc_sm, size_x - 1);
 
                     for (int jz = jz_start; jz <= jz_stop; ++jz) {
                         for (int jy = jy_start; jy <= jy_stop; ++jy) {
@@ -305,7 +305,6 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    cout << "    Here 2." << endl;
 
     for (int i = 0; i < nr_voxels; ++i) {
         if (*(growfromCenter_data + i) > 0) {
@@ -314,7 +313,8 @@ int main(int argc, char * argv[]) {
     }
 
     if (verbose == 1) {
-        save_output_nifti(fin_layer, "coordinates_2_path_smooth", growfromCenter, false);
+        save_output_nifti(fin_layer, "coordinates_2_path_smooth",
+                          growfromCenter, false);
     }
 
     // ========================================================================
@@ -326,28 +326,22 @@ int main(int argc, char * argv[]) {
 
     nifti_image* hairy = copy_nifti_as_int32(nii_layers);
     int32_t* hairy_data = static_cast<int32_t*>(hairy->data);
-    nifti_image* hairy_dist = copy_nifti_as_float32(nii_layers);
-    float* hairy_dist_data = static_cast<float*>(hairy_dist->data);
+
+    for (int i = 0; i < nr_voxels; ++i) {
+        if (*(nim_layers_data + i) > 1) {
+            *(hairy_data + i) = 1;
+        } else {
+            *(hairy_data + i) = 0;
+        }
+    }
 
     // This is an upper limit of the cortical thickness
     dist_min2 = 10000.;
-
-    // This is the area the algorithm looks for the closest middele layer.
-    // The only problem, when this is too big is the longer calculation time.
-    int vinc_thickness = 30;
 
     // This is step size that neigbouring GM voxels need to be to be classified
     // as one side of the GM bank.
     int vinc_steps = 1;
 
-    int cloasest_coord = 0.;
-    int there_is_close_noigbour = 0;
-    float average_neigbours = 0;
-    float average_val = 0;
-
-    cout << "  Growing " << vinc_thickness << " iteration aross layers " << flush;
-
-    int vinc_steps_g = 1;
     int vinc_sm_g = 25;
     int pref_ratio = 0;
 
@@ -369,23 +363,20 @@ int main(int argc, char * argv[]) {
                 if (*(nim_layers_data + voxel_i) > 1
                     && *(nim_layers_data + voxel_i) < nr_layers - 1) {
                     running_index++;
-                    if ((running_index * 100) / nvoxels_to_go_across != pref_ratio) {
-                        int temp = (running_index * 100) / nvoxels_to_go_across;
-
-                        cout << "\r" << temp << "% " << flush;
+                    int temp = (running_index * 100) / nvoxels_to_go_across;
+                    if (temp != pref_ratio) {
+                        cout << "\r    " << temp << "% " << flush;
                         pref_ratio = temp;
                     }
                     // --------------------------------------------------------
                     // Find area that is not from the other sulcus
                     // --------------------------------------------------------
-
-                    // Preparation of dummy vicinity dile, resting it with zeros
-                    int jz_start = max(0, iz - vinc_sm_g - vinc_steps);
-                    int jy_start = max(0, iy - vinc_sm_g - vinc_steps);
-                    int jx_start = max(0, ix - vinc_sm_g - vinc_steps);
-                    int jz_stop = min(iz + vinc_sm_g + vinc_steps, size_z - 1);
-                    int jy_stop = min(iy + vinc_sm_g + vinc_steps, size_y - 1);
-                    int jx_stop = min(ix + vinc_sm_g + vinc_steps, size_x - 1);
+                    jz_start = max(0, iz - vinc_sm_g - vinc_steps);
+                    jy_start = max(0, iy - vinc_sm_g - vinc_steps);
+                    jx_start = max(0, ix - vinc_sm_g - vinc_steps);
+                    jz_stop = min(iz + vinc_sm_g + vinc_steps, size_z - 1);
+                    jy_stop = min(iy + vinc_sm_g + vinc_steps, size_y - 1);
+                    jx_stop = min(ix + vinc_sm_g + vinc_steps, size_x - 1);
 
                     for (int jz = jz_start; jz <= jz_stop; ++jz) {
                         for (int jy = jy_start; jy <= jy_stop; ++jy) {
@@ -417,12 +408,12 @@ int main(int argc, char * argv[]) {
 
                                     if (*(hairy_data + voxel_j) == 1) {
 
-                                        int kz_start = max(0, jz - vinc_steps);
-                                        int ky_start = max(0, jy - vinc_steps);
-                                        int kx_start = max(0, jx - vinc_steps);
-                                        int kz_stop = min(jz + vinc_steps, size_z - 1);
-                                        int ky_stop = min(jy + vinc_steps, size_y - 1);
-                                        int kx_stop = min(jx + vinc_steps, size_x - 1);
+                                        kz_start = max(0, jz - vinc_steps);
+                                        ky_start = max(0, jy - vinc_steps);
+                                        kx_start = max(0, jx - vinc_steps);
+                                        kz_stop = min(jz + vinc_steps, size_z - 1);
+                                        ky_stop = min(jy + vinc_steps, size_y - 1);
+                                        kx_stop = min(jx + vinc_steps, size_x - 1);
 
                                         for (int kz = kz_start; kz <= kz_stop; ++kz) {
                                             for (int ky = ky_start; ky <= ky_stop; ++ky) {
@@ -528,13 +519,12 @@ int main(int argc, char * argv[]) {
                     // Find area that is not from the other sulcus
                     // --------------------------------------------------------
                     // Preparation of dummy vicinity
-
-                    int jz_start = max(0, iz - vinc_sm - vinc_steps);
-                    int jy_start = max(0, iy - vinc_sm - vinc_steps);
-                    int jx_start = max(0, ix - vinc_sm - vinc_steps);
-                    int jz_stop = min(iz + vinc_sm + vinc_steps, size_z - 1);
-                    int jy_stop = min(iy + vinc_sm + vinc_steps, size_x - 1);
-                    int jx_stop = min(ix + vinc_sm + vinc_steps, size_y - 1);
+                    jz_start = max(0, iz - vinc_sm - vinc_steps);
+                    jy_start = max(0, iy - vinc_sm - vinc_steps);
+                    jx_start = max(0, ix - vinc_sm - vinc_steps);
+                    jz_stop = min(iz + vinc_sm + vinc_steps, size_z - 1);
+                    jy_stop = min(iy + vinc_sm + vinc_steps, size_y - 1);
+                    jx_stop = min(ix + vinc_sm + vinc_steps, size_x - 1);
 
                     for (int jz = jz_start; jz <= jz_stop; ++jz) {
                         for (int jy = jy_start; jy <= jy_stop; ++jy) {
@@ -665,12 +655,12 @@ int main(int argc, char * argv[]) {
                     // grown into, yet... And it should stop as soon as it hits
                     // the border.
 
-                    int jz_start = max(0, iy - vinc_rim);
-                    int jy_start = max(0, ix - vinc_rim);
-                    int jx_start = max(0, iz - vinc_rim);
-                    int jz_stop = min(iy + vinc_rim, size_x - 1);
-                    int jy_stop = min(ix + vinc_rim, size_y - 1);
-                    int jx_stop = min(iz + vinc_rim, size_z - 1);
+                    jz_start = max(0, iz - vinc_rim);
+                    jy_start = max(0, iy - vinc_rim);
+                    jx_start = max(0, ix - vinc_rim);
+                    jz_stop = min(iz + vinc_rim, size_z - 1);
+                    jy_stop = min(iy + vinc_rim, size_y - 1);
+                    jx_stop = min(ix + vinc_rim, size_x - 1);
 
                     for (int jz = jz_start; jz <= jz_stop; ++jz) {
                         for (int jy = jy_start; jy <= jy_stop; ++jy) {
@@ -711,19 +701,14 @@ int main(int argc, char * argv[]) {
         cout << "   Resampling the number of columns..." << endl;
         int max_columns = 0;
         int min_columns = 100000000;
-        for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_y; ++iy) {
-                for (int ix = 0; ix < size_x; ++ix) {
-                    int voxel_i = nxy * iz + nx * iy + ix;
-                    int val = static_cast<int>(*(hairy_data + voxel_i));
-                    if (val >  0) {
-                        if (val >  max_columns) {
-                            max_columns = val;
-                        }
-                        if (val < min_columns) {
-                            min_columns = val;
-                        }
-                    }
+        for (int i = 0; i < nr_voxels; ++i) {
+            int val = static_cast<int>(*(hairy_data + i));
+            if (val >  0) {
+                if (val >  max_columns) {
+                    max_columns = val;
+                }
+                if (val < min_columns) {
+                    min_columns = val;
                 }
             }
         }
