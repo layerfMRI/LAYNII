@@ -4,9 +4,9 @@
 ./LN_BOCO -Nulled Nulled_intemp.nii -BOLD BOLD_intemp.nii -trialBOCO 40 -shift
 ./LN_MP2RAGE_DNOISE -INV1 INV1.nii -INV2 INV2.nii -UNI UNI.nii
 
-# ./LN_3DCOLUMNS -layer_file layers_large.nii -landmarks landmarks.nii
+./LN_3DCOLUMNS -layers sc_layers_3dcolumns.nii -landmarks sc_landmarks_3dcolumns.nii
 ./LN_CORREL2FILES -file1 lo_Nulled_intemp.nii -file2 lo_BOLD_intemp.nii
-# ./LN_COLUMNAR_DIST
+./LN_COLUMNAR_DIST -layers sc_layers_3dcolumns.nii -landmarks sc_landmarks_3dcolumns.nii
 ./LN_DIRECT_SMOOTH -input UNI.nii -FWHM 2 -direction 1
 ./LN_EXTREMETR -input lo_BOLD_intemp.nii
 ./LN_FLOAT_ME -input rim.nii
