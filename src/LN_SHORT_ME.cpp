@@ -4,7 +4,7 @@
 
 int show_help(void) {
     printf(
-    "LN_SHORT_ME: Convert nifti datatype to SHORT16. \n"
+    "LN_SHORT_ME: Convert nifti datatype to SHORT (INT16). \n"
     "\n"
     "Usage:\n"
     "    LN_SHORT_ME -input data_file.nii \n"
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
     log_welcome("LN_SHORT_ME");
     log_nifti_descriptives(nii);
 
-    // Cast input data to float
+    // Cast input data to short (int16)
     nifti_image *nii_new = copy_nifti_as_int16(nii);
     save_output_nifti(fout, "", nii_new, true);
 
