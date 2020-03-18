@@ -154,7 +154,7 @@ int main(int argc, char* argv[]) {
                         stop_j = min(z + vic, size_z);
                     }
 
-                    for (int j = start_j; j <= stop_j; ++j) {
+                    for (int j = start_j; j < stop_j; ++j) {
                         int voxel_j;
                         float d, w;
                         if (direction == 1) {
