@@ -9,7 +9,7 @@
 
 int show_help(void) {
     printf(
-    "LN_LAYER_SMOOTH : Layering algorithm based on iterative smothing.\n"
+    "LN_LAYER_SMOOTH : Layering algorithm based on iterative smoothing.\n"
     "\n"
     "    This program smooths data within layer or columns. In order to \n"
     "    avoid smoothing across masks, a crawler smooths only across \n"

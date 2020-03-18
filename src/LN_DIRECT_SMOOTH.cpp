@@ -22,8 +22,10 @@ int show_help(void) {
     "                   : only for division images.\n"
     "    -Anonymous_sri : You know what you did (no FWHM).\n"
     "    \n"
-    "    Note, this program ignores zerroes. Thus, sharp borders (e.g. after MOCO) will stay the same. \n"
-    "    Note, this program works in voxel space not it mm space. \n"
+    "Notes:\n"
+    "    - This program ignores zeroes. Thus, sharp borders (e.g. after MOCO)\n"
+    "    will stay the same.\n"
+    "    - This program works in voxel space not it mm space. \n"
     "\n");
     return 0;
 }
