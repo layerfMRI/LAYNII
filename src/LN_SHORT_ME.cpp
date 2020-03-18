@@ -14,7 +14,7 @@ int show_help(void) {
     "    -help   : Show this help.\n"
     "    -input  : Dataset that should be shorted data.\n"
     "    -output : (Optional) Output filename. If this parameter is not set \n"
-    "              the original file will be overwritten.\n"
+    "              the output will be given in intager values.\n"
     "\n");
     return 0;
 }
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 
     // Cast input data to short (int16)
     nifti_image *nii_new = copy_nifti_as_int16(nii);
-    save_output_nifti(fout, "", nii_new, true);
+    save_output_nifti(fout, "short", nii_new, true);
 
     cout << "  Finished." << endl;
     return 0;
