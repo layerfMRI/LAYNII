@@ -116,7 +116,7 @@ int main(int argc, char * argv[]) {
     // ========================================================================
     // Start iterative loop here
     // ========================================================================
-    int iter_max = 400;
+    int iter_max = 500;
 
     for (int iter = 0; iter < iter_max; ++iter) {
         cout << "\r  Iteration: " << iter << " of " << iter_max << flush;
