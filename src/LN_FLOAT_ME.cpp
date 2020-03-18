@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 
     // Cast input data to float
     nifti_image *nii_new = copy_nifti_as_float32(nii);
-    save_output_nifti(fout, "", nii_new, true);
+    save_output_nifti(fout, "float", nii_new, true);
 
     cout << "  Finished." << endl;
     return 0;
