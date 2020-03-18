@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
                 return 1;
             }
             fin_landmark = argv[ac];
-        } else if (!strcmp(argv[ac], " -vinc")) {
+        } else if (!strcmp(argv[ac], "-vinc")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -vinc\n");
                 return 1;
