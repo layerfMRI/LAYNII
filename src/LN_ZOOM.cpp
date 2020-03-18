@@ -8,7 +8,7 @@ int show_help(void) {
     "         that is different from zero.\n"
     "\n"
     "Usage: \n"
-    "    LN_ZOOM -mask mask.nii -input file_to_be_zoomed.nii \n"
+    "    LN_ZOOM -input image.nii -mask image_mask.nii\n"
     "\n"
     "Options:\n"
     "\n"
@@ -17,8 +17,6 @@ int show_help(void) {
     "             multiple time points).\n"
     "    -mask  : Nifti (.nii) file that determines the region of interest\n"
     "             (e.g. the layer mask with one time point).\n"
-    "\n"
-    "Note: Written for Insub. \n"
     "\n");
     return 0;
 }

@@ -18,7 +18,7 @@ int show_help(void) {
     "LN_NOISEME: Adds noise to image.\n"
     "\n"
     "Usage:\n"
-    "    LN_NOISEME -input input_example.nii -variance 0.4445 \n"
+    "    LN_NOISEME -input input_example.nii -std 0.5 \n"
     "\n"
     "Options:\n"
     "    -help   : Show this help.\n"

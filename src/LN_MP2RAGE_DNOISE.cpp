@@ -23,16 +23,14 @@ int show_help(void) {
     "                  unsigned integer 12 values between 0-4095. \n"
     "    -beta value : Regularization term. Default is 0.2.\n"
     "    -output     : (Optional) Custom output name. \n"
-    "\n"
-    "Note: This program supports INT16, INT32 and FLOAT32. \n"
     "\n");
     return 0;
 }
 
 int main(int argc, char* argv[]) {
     float SIEMENS_f = 4095.0;  // uint12 range 0-4095
-    char* fout = NULL, *fin1 = NULL, *fin2 = NULL, *fin3 = NULL;
-    int ac, custom_output = 0;
+    char *fout = NULL, *fin1 = NULL, *fin2 = NULL, *fin3 = NULL;
+    int ac;
     float beta = 0.2;
     if (argc < 3) return show_help();
 
@@ -70,7 +68,6 @@ int main(int argc, char* argv[]) {
                 fprintf(stderr, "** missing argument for -output\n");
                 return 1;
             }
-            custom_output = 1;
             fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
