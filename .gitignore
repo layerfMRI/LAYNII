@@ -35,7 +35,7 @@
 *.DS_Store
 
 # Ignore nii at top level
-/*.nii
+*.nii
 /*.nii.gz
 
 # Test data (uncomment when pushing new nii to repo)
