@@ -10,10 +10,12 @@
 ../LN_DIRECT_SMOOTH -input sc_UNI.nii -FWHM 2 -direction 3
 ../LN_EXTREMETR -input lo_BOLD_intemp.nii
 ../LN_FLOAT_ME -input lo_BOLD_intemp.nii
+../LN_SHORT_ME -input sc_rim.nii
 ../LN_GFACTOR -input sc_INV2.nii  -variance 1 -direction 1 -grappa 2 -cutoff 200
 ../LN_GRADSMOOTH -gradfile lo_gradT1.nii -input lo_VASO_stat.nii -FWHM 1 -within -selectivity 0.1
 ../LN_GROW_LAYERS -rim sc_rim.nii
 ../LN_INTPRO -image sc_UNI.nii -min -direction 2 -range 3
+../LN_IMAGIRO -layers sc_layers_3dcolumns.nii -column_file sc_columns_3dcolumns.nii -data sc_BOLD_stat.nii
 
 ../LN_LEAKY_LAYERS -rim lo_rim_LL.nii
 ../LN_NOISEME -input lo_VASO_stat.nii -std 1
