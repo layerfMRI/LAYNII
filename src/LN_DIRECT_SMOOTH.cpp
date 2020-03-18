@@ -21,6 +21,9 @@ int show_help(void) {
     "    -laurenzian    : Use Laurenzian smoothing. Default is Gaussian \n"
     "                   : only for division images.\n"
     "    -Anonymous_sri : You know what you did (no FWHM).\n"
+    "    \n"
+    "    Note, this program ignores zerroes. Thus, sharp borders (e.g. after MOCO) will stay the same. \n"
+    "    Note, this program works in voxel space not it mm space. \n"
     "\n");
     return 0;
 }

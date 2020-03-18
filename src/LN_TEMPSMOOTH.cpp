@@ -120,9 +120,10 @@ int main(int argc, char * argv[]) {
     // ========================================================================
     // TODO(Faruk): Might be better to use dT to give a meaning to Gaussian.
     // I should ask to renzo about this.
+    float dT = 1; 
     int vic;
     if (do_gaus) {
-        vic = max(1., 2. * gFWHM_val / dX);  // Ignore if voxel is too far
+        vic = max(1., 2. * gFWHM_val / dT);  // Ignore if voxel is too far
     } else if (do_box) {
         vic = bFWHM_val;
     }
