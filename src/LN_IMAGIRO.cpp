@@ -1,6 +1,4 @@
 
-// TODO(Faruk): Requires columnar_coordinated.nii and data2unfold.nii from Renzo for tests.
-
 
 #include "../dep/laynii_lib.h"
 
@@ -10,7 +8,7 @@ int show_help(void) {
     "             It Does the ORIGAMI backwards; It unfolds stuff.\n"
     "\n"
     "Usage:\n"
-    "    LN_IMAGIRO -layers equi_dist_layers.nii -column_file columnar_coordinated.nii -data data2unfold.nii\n"
+    "    LN_IMAGIRO -layers equi_dist_layers.nii -columns columnar_coordinated.nii -data data2unfold.nii\n"
     "\n"
     "Options:\n"
     "    -help       : Show this help.\n"
@@ -20,30 +18,28 @@ int show_help(void) {
     "\n"
     "Notes:\n"
     "    - All inputs should have the same dimensions.\n"
-    "    - This program now supports INT16, INT32 and FLOAT32.\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
     char* fin_layers = NULL, * fin_columns = NULL, * fin_data = NULL;
-    int ac, twodim = 0;
+    int ac;
     if (argc < 3) return show_help();
 
     // Process user options
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
-        }
-        else if (!strcmp(argv[ac], "-layers")) {
+        } else if (!strcmp(argv[ac], "-layers")) {
             if (++ac >= argc) {
                 fprintf(stderr, " ** missing argument for -layers\n");
                 return 1;
             }
             fin_layers = argv[ac];
-        } else if (!strcmp(argv[ac], "-column_file")) {
+        } else if (!strcmp(argv[ac], "-columns")) {
             if (++ac >= argc) {
-                fprintf(stderr, " ** missing argument for -column_file\n");
+                fprintf(stderr, " ** missing argument for -columns\n");
                 return 1;
             }
             fin_columns = argv[ac];
@@ -60,7 +56,7 @@ int main(int argc, char * argv[]) {
     }
 
     if (!fin_columns) {
-        fprintf(stderr, " ** missing option '-column_file'\n");
+        fprintf(stderr, " ** missing option '-columns'\n");
         return 1;
     }
     if (!fin_layers) {
@@ -106,9 +102,6 @@ int main(int argc, char * argv[]) {
     float dX = nim_layers_r->pixdim[1];
     float dY = nim_layers_r->pixdim[2];
     float dZ = nim_layers_r->pixdim[3];
-    if (twodim == 1) {
-        dZ = 1000 * dZ;
-    }
 
     // ========================================================================
     // Fixing potential problems with different input datatypes
@@ -122,7 +115,7 @@ int main(int argc, char * argv[]) {
     float* nim_data_data = static_cast<float*>(nim_data->data);
 
     // ========================================================================
-    // Finding number of layers //
+    // Finding number of layers/columns
     int nr_layers = 0, nr_columns = 0;
     for (int i = 0; i < nr_voxels; ++i) {
         if (*(nim_layers_data + i) > nr_layers) {
@@ -158,9 +151,9 @@ int main(int argc, char * argv[]) {
     imagiro->nvox = imagiro->nx * imagiro->ny * imagiro->nz * imagiro->nt
                     * imagiro->nu * imagiro->nv * imagiro->nw;
 
-    int sizeColumn_imagiro = imagiro->nx;
-    int sizeDepth_imagiro = imagiro->ny;
-    int sizeLayer_imagiro = imagiro->nz;
+    int size_x_imagiro = imagiro->nx;
+    int size_y_imagiro = imagiro->ny;
+    int size_z_imagiro = imagiro->nz;
     int size_t_imagiro = imagiro->nt;
     int nx_imagiro = imagiro->nx;
     int nxy_imagiro = imagiro->nx * imagiro->ny;
@@ -198,19 +191,16 @@ int main(int argc, char * argv[]) {
     // Resample across Layers and columns //
     ////////////////////////////////////////
     cout << "  Resampling..." << endl;
-    short layer_zi = 0, column_yi = 0, depth_xi = 0;
     float value_ofinput_data = 0;
     imagiro->nz = nr_layers;
     imagiro->nx = nr_columns;
     imagiro->ny = size_z;
 
-    for (int iz = 0; iz < sizeLayer_imagiro; ++iz) {
-        for (int iy = 0; iy < sizeColumn_imagiro; ++iy) {
-            for (int ix = 0; ix < sizeDepth_imagiro; ++ix) {
-                // cout << iz << " " << ix << " " << iy << endl;
-                *(imagiro_data + nxy_imagiro * iz + nx_imagiro * ix + iy) = 0;
-                *(imagiro_vnr_data + nxy_imagiro * iz + nx_imagiro * ix + iy) = 0;
-                // *(nim_columns_data + nxy * iz + nx * ix + iy) = 1 ;
+    for (int iz = 0; iz < size_z_imagiro; ++iz) {
+        for (int iy = 0; iy < size_y_imagiro; ++iy) {
+            for (int ix = 0; ix < size_x_imagiro; ++ix) {
+                *(imagiro_data + nxy_imagiro * iz + nx_imagiro * iy + ix) = 0;
+                *(imagiro_vnr_data + nxy_imagiro * iz + nx_imagiro * iy + ix) = 0;
             }
         }
     }
@@ -219,17 +209,19 @@ int main(int argc, char * argv[]) {
     // Calculating the number of voxels per layer/column //
     ///////////////////////////////////////////////////////
     cout << "  Calculating the number of voxels per layer column..." << endl;
+    int lay = 0, col = 0, dep = 0;
 
     for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_x; ++iy) {
-            for (int ix = 0; ix < size_y; ++ix) {
-                if (*(nim_layers_data + nxy * iz + nx * ix + iy) > 0
-                    && *(nim_columns_data + nxy * iz + nx * ix + iy) > 0) {
-                    layer_zi = *(nim_layers_data + nxy * iz + nx * ix + iy)-1;
-                    column_yi = *(nim_columns_data + nxy * iz + nx * ix + iy)-1;
-                    depth_xi = iz;
-                    *(imagiro_vnr_data + nxy_imagiro * layer_zi + nx_imagiro * depth_xi + column_yi) =
-                        *(imagiro_vnr_data + nxy_imagiro * layer_zi + nx_imagiro * depth_xi + column_yi)+ 1;
+        for (int iy = 0; iy < size_y; ++iy) {
+            for (int ix = 0; ix < size_x; ++ix) {
+                int voxel_i = nxy * iz + nx * iy + ix;
+
+                if (*(nim_layers_data + voxel_i) > 0
+                    && *(nim_columns_data + voxel_i) > 0) {
+                    lay = *(nim_layers_data + voxel_i) - 1;
+                    col = *(nim_columns_data + voxel_i) - 1;
+                    dep = iz;
+                    *(imagiro_vnr_data + nxy_imagiro * lay + nx_imagiro * dep + col) += 1;
                 }
             }
         }
@@ -241,15 +233,21 @@ int main(int argc, char * argv[]) {
     cout << "  Averaging all voxels in layer column..." << endl;
     for (int it = 0; it < size_time; ++it) {
         for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_x; ++iy) {
-                for (int ix = 0; ix < size_y; ++ix) {
-                    if (*(nim_layers_data + nxy * iz + nx * ix + iy) > 0 && *(nim_columns_data + nxy * iz + nx * ix + iy) > 0) {
-                        layer_zi = *(nim_layers_data + nxy * iz + nx * ix + iy)-1;
-                        column_yi = *(nim_columns_data + nxy * iz + nx * ix + iy)-1;
-                        depth_xi = iz;
-                        value_ofinput_data = *(nim_data_data + nxyz * it + nxy * iz + nx * ix + iy) / *(imagiro_vnr_data + nxy_imagiro * layer_zi + nx_imagiro * depth_xi + column_yi);
-                        // cout << "value_ofinput_data " << value_ofinput_data << endl;
-                        *(imagiro_data + nxyz_imagiro * it + nxy_imagiro * layer_zi + nx_imagiro * depth_xi + column_yi) = *(imagiro_data + nxyz_imagiro * it + nxy_imagiro * layer_zi + nx_imagiro * depth_xi + column_yi) + value_ofinput_data;
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x; ++ix) {
+                    int voxel_i = nxy * iz + nx * iy + ix;
+
+                    if (*(nim_layers_data + voxel_i) > 0
+                        && *(nim_columns_data + voxel_i) > 0) {
+                        lay = *(nim_layers_data + voxel_i) - 1;
+                        col = *(nim_columns_data + voxel_i) - 1;
+                        dep = iz;
+                        int voxel_j = nxy_imagiro * lay + nx_imagiro * dep + col;
+
+                        value_ofinput_data =
+                            *(nim_data_data + nxyz * it + voxel_i)
+                            / *(imagiro_vnr_data + voxel_j);
+                        *(imagiro_data + nxyz_imagiro * it + voxel_j) += value_ofinput_data;
                     }
                 }
             }
@@ -261,29 +259,38 @@ int main(int argc, char * argv[]) {
     cout << "  Fixing holes..." << size_time << endl;
     int vinc = 2;  // vicinity
     float value_to_fill = 0;  // Average value in vicinity
-    int number_of_vinces = 0;  // Number of non-zero voxels in vicinity
+    float nr_vic = 0;  // Number of non-zero voxels in vicinity
 
-    for (int iz = 0; iz < sizeLayer_imagiro; ++iz) {
-        for (int iy = 0; iy < sizeColumn_imagiro; ++iy) {
-            for (int ix = 0; ix < sizeDepth_imagiro; ++ix) {
-                // cout << iz << " " << ix << " " << iy << endl;
-                if (*(imagiro_vnr_data + nxy_imagiro * iz + nx_imagiro * ix + iy) == 0) {
-                    // cout << "  iz " << iz << "  ix " << ix << "  iy " << iy << endl;
+    for (int iz = 0; iz < size_z_imagiro; ++iz) {
+        for (int iy = 0; iy < size_y_imagiro; ++iy) {
+            for (int ix = 0; ix < size_x_imagiro; ++ix) {
+                int voxel_i = nxy_imagiro * iz + nx_imagiro * iy + ix;
+
+                if (*(imagiro_vnr_data + voxel_i) == 0) {
                     for (int it = 0; it < size_time; ++it) {
                         value_to_fill = 0;
-                        number_of_vinces = 0;
-                        for (int iy_i=max(0, iy-vinc); iy_i < min(iy+vinc+1, sizeColumn_imagiro); ++iy_i) {
-                            for (int ix_i=max(0, ix-vinc); ix_i < min(ix+vinc+1, sizeDepth_imagiro); ++ix_i) {
-                                for (int iz_i=max(0, iz-vinc); iz_i < min(iz+vinc+1, sizeLayer_imagiro); ++iz_i) {
-                                    if (*(imagiro_vnr_data + nxy_imagiro * iz_i + nx_imagiro * ix_i + iy_i) != 0) {
-                                        number_of_vinces = number_of_vinces +1;
-                                        value_to_fill = (float) value_to_fill + *(imagiro_data + nxyz_imagiro * it + nxy_imagiro * iz_i + nx_imagiro * ix_i + iy_i);
-                                        // cout << "value_to_fill" << value_to_fill << endl;
+                        nr_vic = 0;
+
+                        int jy_start = max(0, iy - vinc);
+                        int jy_stop = min(iy + vinc + 1, size_x_imagiro);
+                        int jx_start = max(0, ix - vinc);
+                        int jx_stop = min(ix + vinc + 1, size_y_imagiro);
+                        int jz_start = max(0, iz - vinc);
+                        int jz_stop = min(iz + vinc + 1, size_z_imagiro);
+
+                        for (int jz = jz_start; jz < jz_stop; ++jz) {
+                            for (int jy = jy_start; jy < jy_stop; ++jy) {
+                                for (int jx = jx_start; jx < jx_stop; ++jx) {
+                                    int voxel_j = nxy_imagiro * jz + nx_imagiro * jy + jx;
+
+                                    if (*(imagiro_vnr_data + voxel_j) != 0) {
+                                        nr_vic += 1;
+                                        value_to_fill += static_cast<float>(*(imagiro_data + nxyz_imagiro * it + voxel_j));
                                     }
                                 }
                             }
                         }
-                        *(imagiro_data + nxyz_imagiro * it + nxy_imagiro * iz + nx_imagiro * ix + iy) = value_to_fill/ (float) number_of_vinces;
+                        *(imagiro_data + nxyz_imagiro * it + voxel_i) = value_to_fill / nr_vic;
                     }
                 }
             }
