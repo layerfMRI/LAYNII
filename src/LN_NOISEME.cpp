@@ -1,7 +1,4 @@
 
-// TODO(Faruk): Seems that variance flag in CLI is actually used as stdev.
-// Need to ask Renzo about this.
-
 #include "../dep/laynii_lib.h"
 
 int N_rand = 1000;
@@ -24,9 +21,9 @@ int show_help(void) {
     "    LN_NOISEME -input input_example.nii -variance 0.4445 \n"
     "\n"
     "Options:\n"
-    "    -help       : Show this help.\n"
-    "    -input      : Specify input dataset.\n"
-    "    -variance   : Noise variance.\n"
+    "    -help   : Show this help.\n"
+    "    -input  : Specify input dataset.\n"
+    "    -std    : Noise standard deviance.\n"
     "\n");
     return 0;
 }
@@ -34,7 +31,7 @@ int show_help(void) {
 int main(int argc, char * argv[]) {
     char *fin = NULL;
     int ac;
-    float variance_val;
+    float std_val;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -53,7 +50,7 @@ int main(int argc, char * argv[]) {
                 fprintf(stderr, "** missing argument for -input\n");
                 return 1;
             }
-            variance_val = atof(argv[ac]);
+            std_val = atof(argv[ac]);
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -72,7 +69,7 @@ int main(int argc, char * argv[]) {
 
     log_welcome("LN_NOISEME");
     log_nifti_descriptives(nii_input);
-    cout << "  Varience chosen to " << variance_val << endl;
+    cout << "  Varience chosen to " << std_val << endl;
 
     // ========================================================================
     // Allocating new nifti
@@ -83,7 +80,7 @@ int main(int argc, char * argv[]) {
     int nr_voxels = nii_input->nvox;
     for (int i = 0; i < nr_voxels; ++i) {
         *(nii_new_data + i) +=
-            adjusted_rand_numbers(0, variance_val,
+            adjusted_rand_numbers(0, std_val,
                                   arb_pdf_num(N_rand, pFunc, lower, upper));
     }
 
@@ -95,7 +92,7 @@ int main(int argc, char * argv[]) {
 
 // Gauss lower = -5 , upper = 5
 double verteilung(double z) {
-    return exp(-z * z / (2.)) * 1. / sqrt(2. * 3.141592653); 
+    return exp(-z * z / (2.)) * 1. / sqrt(2. * 3.141592653);
 }
 
 double_t arb_pdf_num(int N_rand, double (*pFunc)(double), double_t lower,
