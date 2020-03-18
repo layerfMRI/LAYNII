@@ -1,124 +1,159 @@
+# LAYNII makefile
 
-# note the TARFILE_NAME embeds the release version number
-TARFILE_NAME	= nifti2clib-0.0.1
-
-USEZLIB         = -DHAVE_ZLIB
-
-## Compiler  defines
-CC		= g++ 
-IFLAGS          = -I. 
-CFLAGS          = -Wall -pedantic $(USEZLIB) $(IFLAGS)
+CC		= g++
+IFLAGS	= -I.
+USEZLIB	= -DHAVE_ZLIB
+CFLAGS	= -std=c++11 -Wall -pedantic $(USEZLIB) $(IFLAGS)
 
 
+# =============================================================================
+LIBRARIES		=	obj/nifti2_io.o \
+ 					obj/nifticdf.o \
+ 					obj/znzlib.o \
+ 					obj/laynii_lib.o \
 
-MISC_OBJS	= nifticdf.o znzlib.o
-OBJS	   	= nifti2_io.o $(MISC_OBJS)
+HIGH_PRIORITY	= 	LN_BOCO \
+					LN_MP2RAGE_DNOISE \
+					LN_LAYER_SMOOTH \
 
-TOOLS 	   	= nifti_tool nifti1_tool nifti2_tool
+LOW_PRIORITY	=	LN_3DCOLUMNS \
+					LN_COLUMNAR_DIST \
+					LN_CORREL2FILES \
+					LN_DIRECT_SMOOTH \
+					LN_GRADSMOOTH \
+					LN_ZOOM \
+					LN_FLOAT_ME \
+					LN_SHORT_ME \
+					LN_EXTREMETR \
+					LN_GFACTOR \
+					LN_GROW_LAYERS \
+					LN_IMAGIRO \
+					LN_INTPRO \
+					LN_LEAKY_LAYERS \
+					LN_NOISEME \
+					LN_RAGRUG \
+					LN_SKEW \
+					LN_TEMPSMOOTH \
+					LN_TRIAL \
+					LN_PHYSIO_PARS \
 
-# include your future program below: EXAMPLES   	= My_nii_read    My_future_program_name
-EXAMPLES   	=	LN_FAsim 			LN_NOISEME			LN_GROW_LAYERS \
-				LN_3DGROW_LAYERS 	LN_DEBUGGING 		LN_GFACTOR 				LN_LEAKY_LAYERS \
-				LN_LAYER_SMOOTH 	LN_3DCOLUMNS 		LN_SHORT_ME 			\
-				LN_FIX_RIM 			LN_FLOAT_ME 		LN_IMAGIRO 				LN_DIRECT_SMOOTH \
-				LN_RAGRUG			LN_CORREL2FILES		LN_EXTREMETR			LN_BOCO\
-				LN_TRIAL			LN_ZOOM				LN_SMOOTH_RIM 			LN_COLUMNAR_DIST \
-				LN_GRADSMOOTH		LN_SKEW 			LN_INTPRO				LN_TEMPSMOOTH \
-				LN_MP2RAGE_DNOISE 	LN_PHYSIO_PARS 
-				
-# main targets (primary is nifti_tool, for now)
-nifti_tool: nifti_tool.o nifti_tool.h nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS)
+LAYNII2	= LN2_LAYERS
 
-#all: $(TOOLS) $(EXAMPLES)
-all:  $(EXAMPLES)
+LAYNII 	= $(HIGH_PRIORITY) $(LOW_PRIORITY) $(LAYNII2)
 
-nifti2objs: $(OBJS)
+# =============================================================================
+dependencies :
+	$(CC) -c -std=c++11 -o obj/nifti2_io.o dep/nifti2_io.cpp
+	$(CC) -c -std=c++11 -o obj/nifticdf.o dep/nifticdf.cpp
+	$(CC) -c -std=c++11 -o obj/znzlib.o dep/znzlib.cpp
+	$(CC) -c -std=c++11 -o obj/laynii_lib.o dep/laynii_lib.cpp
 
-LN_FAsim: LN_FAsim.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
+all : dependencies $(LAYNII)
 
-LN_NOISEME: LN_NOISEME.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
+.PHONY: all $(HIGH_PRIORITY) $(LOW_PRIORITY) $(LAYNII2)
 
-LN_GROW_LAYERS: LN_GROW_LAYERS.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
-	
-LN_3DGROW_LAYERS: LN_3DGROW_LAYERS.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
-	
-LN_DEBUGGING: LN_DEBUGGING.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
-	
-LN_GFACTOR: LN_GFACTOR.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
+# =============================================================================
+# LAYNII v2.0.0 programs
+LN2_LAYERS:
+	$(CC) -c -std=c++11 -o  obj/LN2_LAYERS.o src/LN2_LAYERS.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN2_LAYERS.o $(LIBRARIES)
 
-LN_LEAKY_LAYERS: LN_LEAKY_LAYERS.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
+# -----------------------------------------------------------------------------
+# High priority programs
+LN_BOCO:
+	$(CC) -c -std=c++11 -o  obj/LN_BOCO.o src/LN_BOCO.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_BOCO.o $(LIBRARIES)
 
-LN_LAYER_SMOOTH: LN_LAYER_SMOOTH.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
+LN_MP2RAGE_DNOISE:
+	$(CC) -c -std=c++11 -o  obj/LN_MP2RAGE_DNOISE.o src/LN_MP2RAGE_DNOISE.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_MP2RAGE_DNOISE.o $(LIBRARIES)
 
-LN_3DCOLUMNS: LN_3DCOLUMNS.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS)
+LN_LAYER_SMOOTH:
+	$(CC) -c -std=c++11 -o  obj/LN_LAYER_SMOOTH.o src/LN_LAYER_SMOOTH.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_LAYER_SMOOTH.o $(LIBRARIES)
 
-LN_SHORT_ME: LN_SHORT_ME.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS)
-	
-LN_FLOAT_ME: LN_FLOAT_ME.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
+# -----------------------------------------------------------------------------
+# Low priority programs
+LN_CORREL2FILES:
+	$(CC) -c -std=c++11 -o  obj/LN_CORREL2FILES.o src/LN_CORREL2FILES.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_CORREL2FILES.o $(LIBRARIES)
 
-LN_FIX_RIM: LN_FIX_RIM.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
+LN_DIRECT_SMOOTH:
+	$(CC) -c -std=c++11 -o  obj/LN_DIRECT_SMOOTH.o src/LN_DIRECT_SMOOTH.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_DIRECT_SMOOTH.o $(LIBRARIES)
 
-LN_IMAGIRO: LN_IMAGIRO.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
-	
-LN_DIRECT_SMOOTH: LN_DIRECT_SMOOTH.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
-	
-LN_RAGRUG: LN_RAGRUG.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
-	
-LN_CORREL2FILES: LN_CORREL2FILES.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
+LN_GRADSMOOTH:
+	$(CC) -c -std=c++11 -o  obj/LN_GRADSMOOTH.o src/LN_GRADSMOOTH.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_GRADSMOOTH.o $(LIBRARIES)
 
-LN_EXTREMETR: LN_EXTREMETR.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS)
-	
-LN_BOCO: LN_BOCO.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS)
-	
-LN_TRIAL: LN_TRIAL.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS)
-	
-LN_ZOOM: LN_ZOOM.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
-	
-LN_SMOOTH_RIM: LN_SMOOTH_RIM.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS)
-	
-LN_COLUMNAR_DIST: LN_COLUMNAR_DIST.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
-	
-LN_GRADSMOOTH: LN_GRADSMOOTH.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
-	
-LN_SKEW: LN_SKEW.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
+LN_ZOOM:
+	$(CC) -c -std=c++11 -o  obj/LN_ZOOM.o src/LN_ZOOM.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_ZOOM.o $(LIBRARIES)
 
-LN_INTPRO: LN_INTPRO.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS)
-	
-LN_TEMPSMOOTH: LN_TEMPSMOOTH.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS)
-	
-LN_MP2RAGE_DNOISE: LN_MP2RAGE_DNOISE.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
-	
-LN_PHYSIO_PARS: LN_PHYSIO_PARS.o nifti2objs
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) 
-	
+LN_FLOAT_ME:
+	$(CC) -c -std=c++11 -o  obj/LN_FLOAT_ME.o src/LN_FLOAT_ME.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_FLOAT_ME.o $(LIBRARIES)
+
+LN_SHORT_ME:
+	$(CC) -c -std=c++11 -o  obj/LN_SHORT_ME.o src/LN_SHORT_ME.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_SHORT_ME.o $(LIBRARIES)
+
+
+LN_3DCOLUMNS:
+	$(CC) -c -std=c++11 -o  obj/LN_3DCOLUMNS.o src/LN_3DCOLUMNS.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_3DCOLUMNS.o $(LIBRARIES)
+
+LN_COLUMNAR_DIST:
+	$(CC) -c -std=c++11 -o  obj/LN_COLUMNAR_DIST.o src/LN_COLUMNAR_DIST.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_COLUMNAR_DIST.o $(LIBRARIES)
+
+LN_EXTREMETR:
+	$(CC) -c -std=c++11 -o  obj/LN_EXTREMETR.o src/LN_EXTREMETR.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_EXTREMETR.o $(LIBRARIES)
+
+LN_GFACTOR:
+	$(CC) -c -std=c++11 -o  obj/LN_GFACTOR.o src/LN_GFACTOR.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_GFACTOR.o $(LIBRARIES)
+
+LN_GROW_LAYERS:
+	$(CC) -c -std=c++11 -o  obj/LN_GROW_LAYERS.o src/LN_GROW_LAYERS.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_GROW_LAYERS.o $(LIBRARIES)
+
+LN_IMAGIRO:
+	$(CC) -c -std=c++11 -o  obj/LN_IMAGIRO.o src/LN_IMAGIRO.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_IMAGIRO.o $(LIBRARIES)
+
+LN_INTPRO:
+	$(CC) -c -std=c++11 -o  obj/LN_INTPRO.o src/LN_INTPRO.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_INTPRO.o $(LIBRARIES)
+
+LN_LEAKY_LAYERS:
+	$(CC) -c -std=c++11 -o  obj/LN_LEAKY_LAYERS.o src/LN_LEAKY_LAYERS.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_LEAKY_LAYERS.o $(LIBRARIES)
+
+LN_NOISEME:
+	$(CC) -c -std=c++11 -o  obj/LN_NOISEME.o src/LN_NOISEME.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_NOISEME.o $(LIBRARIES)
+
+LN_RAGRUG:
+	$(CC) -c -std=c++11 -o  obj/LN_RAGRUG.o src/LN_RAGRUG.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_RAGRUG.o $(LIBRARIES)
+
+LN_SKEW:
+	$(CC) -c -std=c++11 -o  obj/LN_SKEW.o src/LN_SKEW.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_SKEW.o $(LIBRARIES)
+
+LN_TEMPSMOOTH:
+	$(CC) -c -std=c++11 -o  obj/LN_TEMPSMOOTH.o src/LN_TEMPSMOOTH.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_TEMPSMOOTH.o $(LIBRARIES)
+
+LN_TRIAL:
+	$(CC) -c -std=c++11 -o  obj/LN_TRIAL.o src/LN_TRIAL.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_TRIAL.o $(LIBRARIES)
+
+LN_PHYSIO_PARS:
+	$(CC) -c -std=c++11 -o  obj/LN_PHYSIO_PARS.o src/LN_PHYSIO_PARS.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_PHYSIO_PARS.o $(LIBRARIES)
+
 clean:
-	$(RM) *.o $(TOOLS) $(EXAMPLES)
-
+	$(RM) obj/*.o $(LAYNII)

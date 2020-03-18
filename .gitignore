@@ -31,37 +31,15 @@
 *.out
 *.app
 
-.DS_Store
-# Test data
-test_data/.DS_Store
-#*.nii
+# Mac stuff
+*.DS_Store
 
-# Ignore compiled files
-LN_3DCOLUMNS
-LN_3DGROW_LAYERS
-LN_BOCO
-LN_COLUMNAR_DIST
-LN_CORREL2FILES
-LN_DEBUGGING
-LN_DIRECT_SMOOTH
-LN_EXTREMETR
-LN_FAsim
-LN_FIX_RIM
-LN_FLOAT_ME
-LN_GFACTOR
-LN_GRADSMOOTH
-LN_GROW_LAYERS
-LN_IMAGIRO
-LN_INTPRO
-LN_LAYER_SMOOTH
-LN_LEAKY_LAYERS
-LN_MP2RAGE_DNOISE
-LN_NOISEME
-LN_PHYSIO_PARS
-LN_RAGRUG
-LN_SHORT_ME
-LN_SKEW
-LN_SMOOTH_RIM
-LN_TEMPSMOOTH
-LN_TRIAL
-LN_ZOOM
+# Ignore nii at top level
+/*.nii
+/*.nii.gz
+
+# Test data (uncomment when pushing new nii to repo)
+test_data/*.nii
+
+# Ignore compiled files at top level
+/LN*
