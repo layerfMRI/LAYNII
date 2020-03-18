@@ -16,7 +16,6 @@ int show_help(void) {
     "                   Only the first time point of this file is used. It \n"
     "                   should have the same spatial dimensions as the input.\n"
     "    -FWHM        : Amount of smoothing in mm.\n"
-    "    -twodim      : (Optional) Smooth in 2 dimensions only. \n"
     "    -mask        : (Optional) Nifti (.nii) that is used mask activity \n"
     "                   outside. This option can speed up processing.\n"
     "    -within      : (Optional) Determines that smoothing should happen \n"
@@ -42,7 +41,7 @@ int show_help(void) {
 
 int main(int argc, char * argv[]) {
     char * fin_2 = NULL, * fin_1 = NULL, * fin_3 = NULL;
-    int ac, twodim = 0, do_masking = 0, within = 0, acros = 0;
+    int ac, do_masking = 0, within = 0, acros = 0;
     float FWHM_val = 0, selectivity = 0.1;
     if (argc < 3) return show_help();
 
@@ -68,9 +67,6 @@ int main(int argc, char * argv[]) {
                 return 1;
             }
             fin_1 = argv[ac];
-        } else if (!strcmp(argv[ac], "-twodim")) {
-            twodim = 1;
-            cout << "Smooth only in 2D." << endl;
         } else if (!strcmp(argv[ac], "-within")) {
             within = 1;
             cout << "Within similar values." << endl;
@@ -141,12 +137,6 @@ int main(int argc, char * argv[]) {
     float dX = nii2->pixdim[1];
     float dY = nii2->pixdim[2];
     float dZ = nii2->pixdim[3];
-    // If you are running the smoothing in 2D, it will still go thought the
-    // entire pipeline the only difference is that the weights in a certain
-    // direction are suppressed doing it in 2D, will not speed up the program
-    if  (twodim == 1) {
-        dZ = 1000 * dZ;
-    }
 
     // ========================================================================
     // Fix datatype issues
