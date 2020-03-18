@@ -103,7 +103,7 @@ int main(int argc, char * argv[]) {
     int size_x = nii->nx;
     int size_y = nii->ny;
     int size_z = nii->nz;
-    int size_t = nii->nt;
+    int size_time = nii->nt;
     int nx = nii->nx;
     int nxy = nii->nx * nii->ny;
     int nxyz = nii->nx * nii->ny * nii->nz;
@@ -132,7 +132,7 @@ int main(int argc, char * argv[]) {
 
     // ========================================================================
 
-    // for (int it = 0; it < size_t; ++it) {
+    // for (int it = 0; it < size_time; ++it) {
     //     for (int iz = 0; iz < size_z; ++iz) {
     //         for (int iy = 0; iy < size_x; ++iy) {
     //             for (int ix = 0; ix < size_y; ++ix) {
@@ -143,7 +143,7 @@ int main(int argc, char * argv[]) {
     //     }
     // }
 
-    for (int it = 0; it < size_t; ++it) {
+    for (int it = 0; it < size_time; ++it) {
         for (int iz = 0; iz < size_z; ++iz) {
             for (int iy = 0; iy < size_x; ++iy) {
                 for (int ix = 0; ix < size_y; ++ix) {
@@ -160,7 +160,7 @@ int main(int argc, char * argv[]) {
     save_output_nifti(fin, "Gfactormap_binary", nii_binary, false);
 
     // Setting initial condition
-    for (int it = 0; it < size_t; ++it) {
+    for (int it = 0; it < size_time; ++it) {
         for (int iz = 0; iz < size_z; ++iz) {
             for (int iy = 0; iy < size_x; ++iy) {
                 for (int ix = 0; ix < size_y; ++ix) {
@@ -177,7 +177,7 @@ int main(int argc, char * argv[]) {
 
     if (direction_int == 0) {
         for (int grappa_seg = 0; grappa_seg < grappa_int; ++grappa_seg) {
-            for (int it = 0; it < size_t; ++it) {
+            for (int it = 0; it < size_time; ++it) {
                 for (int iz = 0; iz < size_z; ++iz) {
                     for (int iy = 0; iy < size_x / grappa_int; ++iy) {
                         for (int ix = 0; ix < size_y; ++ix) {
@@ -189,7 +189,7 @@ int main(int argc, char * argv[]) {
         }
         // Completing dataset to full slice
         for (int grappa_seg=1; grappa_seg < grappa_int; ++grappa_seg) {
-            for (int it = 0; it < size_t; ++it) {
+            for (int it = 0; it < size_time; ++it) {
                 for (int iz = 0; iz < size_z; ++iz) {
                     for (int iy = 0; iy < size_x / grappa_int; ++iy) {
                         for (int ix = 0; ix < size_y; ++ix) {
@@ -203,7 +203,7 @@ int main(int argc, char * argv[]) {
 
     if (direction_int == 1) {
         for (int grappa_seg = 0; grappa_seg < grappa_int; ++grappa_seg) {
-            for (int it = 0; it < size_t; ++it) {
+            for (int it = 0; it < size_time; ++it) {
                 for (int iz = 0; iz < size_z; ++iz) {
                     for (int iy = 0; iy < size_x; ++iy) {
                         for (int ix = 0; ix < size_y / grappa_int; ++ix) {
@@ -215,7 +215,7 @@ int main(int argc, char * argv[]) {
         }
         // Completing dataset to full slice
         for (int grappa_seg = 0; grappa_seg < grappa_int; ++grappa_seg) {
-            for (int it = 0; it < size_t; ++it) {
+            for (int it = 0; it < size_time; ++it) {
                 for (int iz = 0; iz < size_z; ++iz) {
                     for (int iy = 0; iy < size_x; ++iy) {
                         for (int ix = 0; ix < size_y / grappa_int; ++ix) {
@@ -229,7 +229,7 @@ int main(int argc, char * argv[]) {
 
     if (direction_int == 2) {
         for (int grappa_seg = 0; grappa_seg < grappa_int; ++grappa_seg) {
-            for (int it = 0; it < size_t; ++it) {
+            for (int it = 0; it < size_time; ++it) {
                 for (int iz = 0; iz < size_z / grappa_int; ++iz) {
                     for (int iy = 0; iy < size_x; ++iy) {
                         for (int ix = 0; ix < size_y; ++ix) {
@@ -241,7 +241,7 @@ int main(int argc, char * argv[]) {
         }
         // Completing dataset to full slice
         for (int grappa_seg = 0; grappa_seg < grappa_int; ++grappa_seg) {
-            for (int it = 0; it < size_t; ++it) {
+            for (int it = 0; it < size_time; ++it) {
                 for (int iz = 0; iz < size_z / grappa_int; ++iz) {
                     for (int iy = 0; iy < size_x; ++iy) {
                         for (int ix = 0; ix < size_y; ++ix) {
@@ -253,7 +253,7 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    for (int it = 0; it < size_t; ++it) {
+    for (int it = 0; it < size_time; ++it) {
         for (int iz = 0; iz < size_z; ++iz) {
             for (int iy = 0; iy < size_x; ++iy) {
                 for (int ix = 0; ix < size_y; ++ix) {
@@ -262,7 +262,7 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    for (int it = 0; it < size_t; ++it) {
+    for (int it = 0; it < size_time; ++it) {
         for (int iz = 0; iz < size_z; ++iz) {
             for (int iy = 0; iy < size_x; ++iy) {
                 for (int ix = 0; ix < size_y; ++ix) {
@@ -273,11 +273,11 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    save_output_nifti(fin, "Gfactormap", nii_gfactormap, true); 
+    save_output_nifti(fin, "Gfactormap", nii_gfactormap, true);
     save_output_nifti(fin, "Amplified_GRAPPA", nii_noise, true);
 
     cout << "  Finished." << endl;
-    return 0; 
+    return 0;
 }
 
 // Gauss lower = -5, upper = 5

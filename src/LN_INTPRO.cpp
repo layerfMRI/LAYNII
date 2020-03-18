@@ -103,7 +103,7 @@ int main(int argc, char * argv[]) {
     int size_x = nii_input->nx;
     int size_y = nii_input->ny;
     int size_z = nii_input->nz;
-    int size_t = nii_input->nt;
+    int size_time = nii_input->nt;
     int nx = nii_input->nx;
     int nxy = nii_input->nx * nii_input->ny;
     int nxyz = nii_input->nx * nii_input->ny * nii_input->nz;
@@ -124,13 +124,13 @@ int main(int argc, char * argv[]) {
     // Allocate new nifti images
     nifti_image * nii_collapse = nifti_copy_nim_info(nii);
     nii_collapse->nt = 1;
-    nii_collapse->nvox = nii->nvox / size_t;
+    nii_collapse->nvox = nii->nvox / size_time;
     nii_collapse->datatype = NIFTI_TYPE_FLOAT32;
     nii_collapse->nbyper = sizeof(float);
     nii_collapse->data = calloc(nii_collapse->nvox, nii_collapse->nbyper);
     float* nii_collapse_data = static_cast<float*>(nii_collapse->data);
 
-    double vec_file1[size_t];
+    double vec_file1[size_time];
 
     // ========================================================================
     cout << "  Starting with dimensionality collapse = " << endl;
@@ -150,7 +150,7 @@ int main(int argc, char * argv[]) {
                 if (is_direction == 1) {
                     for (int ix_i = max(ix - is_range, 0);
                          ix_i < min(ix + is_range, size_y); ++ix_i) {
-                        for (int it = 0; it < size_t; ++it) {
+                        for (int it = 0; it < size_time; ++it) {
                             voxel_i = nxyz * it + nxy * iz + nx * ix + iy;
                             voxel_j = nxyz * it + nxy * iz + nx * ix_i + iy;
                             if (is_min == 1
@@ -164,7 +164,7 @@ int main(int argc, char * argv[]) {
                             }
                         }
                     }
-                    for (int it = 0; it < size_t; ++it) {
+                    for (int it = 0; it < size_time; ++it) {
                         if (is_min == 1
                             && *(nii_data + voxel_i) >= extreme_val) {
                             *(nii_collapse_data + voxel_i) = extreme_val;
@@ -178,7 +178,7 @@ int main(int argc, char * argv[]) {
                 } else if (is_direction == 2) {
                     for (int iy_i = max(iy - is_range, 0);
                          iy_i < min(iy + is_range, size_x); ++iy_i) {
-                        for (int it = 0; it < size_t; ++it) {
+                        for (int it = 0; it < size_time; ++it) {
                             voxel_i = nxyz * it + nxy * iz + nx * ix + iy;
                             voxel_j = nxyz * it + nxy * iz + nx * ix + iy_i;
 
@@ -193,7 +193,7 @@ int main(int argc, char * argv[]) {
                             }
                         }
                     }
-                    for (int it = 0; it < size_t; ++it) {
+                    for (int it = 0; it < size_time; ++it) {
                         if (is_min == 1
                             && *(nii_data + voxel_i) >= extreme_val) {
                             *(nii_collapse_data + voxel_i) = extreme_val;
@@ -207,7 +207,7 @@ int main(int argc, char * argv[]) {
                 } else if (is_direction == 3) {
                     for (int iz_i = max(iz - is_range, 0);
                          iz_i < min(iz + is_range, size_z); ++iz_i) {
-                        for (int it = 0; it < size_t; ++it) {
+                        for (int it = 0; it < size_time; ++it) {
                             voxel_i = nxyz * it + nxy * iz + nx * ix + iy;
                             voxel_j = nxyz * it + nxy * iz_i + nx * ix + iy;
                             if (is_min == 1
@@ -221,7 +221,7 @@ int main(int argc, char * argv[]) {
                             }
                         }
                     }
-                    for (int it = 0; it < size_t; ++it) {
+                    for (int it = 0; it < size_time; ++it) {
                         if (is_min == 1
                             && *(nii_data + voxel_i) >= extreme_val) {
                             *(nii_collapse_data + voxel_i) = extreme_val;

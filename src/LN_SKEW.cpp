@@ -54,7 +54,7 @@ int main(int argc, char * argv[]) {
     int size_x = nii_input->nx;
     int size_y = nii_input->ny;
     int size_z = nii_input->nz;
-    int size_t = nii_input->nt;
+    int size_time = nii_input->nt;
     int nx = nii_input->nx;
     int nxy = nii_input->nx * nii_input->ny;
     int nxyz = nii_input->nx * nii_input->ny * nii_input->nz;
@@ -67,7 +67,7 @@ int main(int argc, char * argv[]) {
     // Allocate new nifti
     nifti_image* nii_skew = nifti_copy_nim_info(nii);
     nii_skew->nt = 1;
-    nii_skew->nvox = nii->nvox / size_t;
+    nii_skew->nvox = nii->nvox / size_time;
     nii_skew->datatype = NIFTI_TYPE_FLOAT32;
     nii_skew->nbyper = sizeof(float);
     nii_skew->data = calloc(nii_skew->nvox, nii_skew->nbyper);
@@ -85,20 +85,20 @@ int main(int argc, char * argv[]) {
     // ========================================================================
     cout << "  Calculating skew, kurtosis, and autocorrelation..." << endl;
 
-    double vec1[size_t];
-    double vec2[size_t];
+    double vec1[size_time];
+    double vec2[size_time];
 
     for (int iz = 0; iz < size_z; ++iz) {
         for (int iy = 0; iy < size_y; ++iy) {
             for (int ix = 0; ix < size_x; ++ix) {
                 int voxel_i = nxy * iz + nx * iy + ix;
-                for (int it = 0; it < size_t; ++it) {
+                for (int it = 0; it < size_time; ++it) {
                     vec1[it] =
                         static_cast<double>(*(nii_data + nxyz * it + voxel_i));
                 }
-                *(nii_skew_data + voxel_i) = ren_skew(vec1, size_t);
-                *(nii_kurt_data + voxel_i) = ren_kurt(vec1, size_t);
-                *(nii_autocorr_data + voxel_i) = ren_autocor(vec1, size_t);
+                *(nii_skew_data + voxel_i) = ren_skew(vec1, size_time);
+                *(nii_kurt_data + voxel_i) = ren_kurt(vec1, size_time);
+                *(nii_autocorr_data + voxel_i) = ren_autocor(vec1, size_time);
             }
         }
     }
@@ -110,7 +110,7 @@ int main(int argc, char * argv[]) {
     // ========================================================================
     cout << "  Calculating correlation with everything..." << endl;
 
-    for (int it = 0; it < size_t; ++it) {
+    for (int it = 0; it < size_time; ++it) {
         vec1[it] = 0;
         vec2[it] = 0;
     }
@@ -120,7 +120,7 @@ int main(int argc, char * argv[]) {
         for (int iy = 0; iy < size_y; ++iy) {
             for (int ix = 0; ix < size_x; ++ix) {
                 int voxel_i = nxy * iz + nx * iy + ix;
-                for (int it = 0; it < size_t; ++it) {
+                for (int it = 0; it < size_time; ++it) {
                     vec1[it] +=
                         static_cast<double>(*(nii_data + nxyz * it + voxel_i)
                                             / nxyz);
@@ -134,11 +134,11 @@ int main(int argc, char * argv[]) {
         for (int iy = 0; iy < size_y; ++iy) {
             for (int ix = 0; ix <size_x; ++ix) {
                 int voxel_i = nxy * iz + nx * iy + ix;
-                for (int it = 0; it < size_t; ++it)   {
+                for (int it = 0; it < size_time; ++it)   {
                     vec2[it] =
                         static_cast<double>(*(nii_data + nxyz * it + voxel_i));
                 }
-                *(nii_conc_data + voxel_i) = ren_correl(vec1, vec2, size_t);
+                *(nii_conc_data + voxel_i) = ren_correl(vec1, vec2, size_time);
             }
         }
     }

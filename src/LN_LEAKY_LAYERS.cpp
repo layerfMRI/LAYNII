@@ -68,11 +68,9 @@ int main(int argc, char * argv[]) {
     int size_x = nii_input->nx;
     int size_y = nii_input->ny;
     int size_z = nii_input->nz;
-    int size_t = nii_input->nt;
     int nr_voxels = nii_input->nvox;
     int nx = nii_input->nx;
     int nxy = nii_input->nx * nii_input->ny;
-    int nxyz = nii_input->nx * nii_input->ny * nii_input->nz;
     float dX = nii_input->pixdim[1];
     float dY = nii_input->pixdim[2];
     float dZ = nii_input->pixdim[3];

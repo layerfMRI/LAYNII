@@ -107,7 +107,7 @@ int main(int argc, char* argv[]) {
     const int size_x = nii1->nx;
     const int size_y = nii1->ny;
     const int size_z = nii1->nz;
-    const int size_t = nii1->nt;
+    const int size_time = nii1->nt;
     const int nx = nii1->nx;
     const int nxy = nii1->nx * nii1->ny;
     const int nxyz = nii1->nx * nii1->ny * nii1->nz;
@@ -135,7 +135,7 @@ int main(int argc, char* argv[]) {
     // ========================================================================
     cout << "  Smoothing dimension = " << direction << endl;
 
-    for (int t = 0; t < size_t; ++t) {
+    for (int t = 0; t < size_time; ++t) {
         for (int z = 0; z < size_z; ++z) {
             for (int y = 0; y < size_y; ++y) {
                 for (int x = 0; x < size_x; ++x) {

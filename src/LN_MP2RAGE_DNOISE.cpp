@@ -117,8 +117,7 @@ int main(int argc, char* argv[]) {
     const int size_x = nii1->nx;
     const int size_y = nii1->ny;
     const int size_z = nii1->nz;
-    const int size_t = nii1->nt;
-    const int nr_voxels = size_t * size_z * size_y * size_x;
+    const int nr_voxels = size_z * size_y * size_x;
 
     // ========================================================================
     // Fix datatype issues

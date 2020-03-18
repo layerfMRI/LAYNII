@@ -96,11 +96,11 @@ int main(int argc, char * argv[]) {
     const int size_x = nii1->nx;
     const int size_y = nii1->ny;
     const int size_z = nii1->nz;
-    const int size_t = nii1->nt;
+    const int size_time = nii1->nt;
     const int nx = nii1->nx;
     const int nxy = nii1->nx * nii1->ny;
     const int nxyz = nii1->nx * nii1->ny * nii1->nz;
-    const int nr_voxels = size_t * size_z * size_y * size_x;
+    const int nr_voxels = size_time * size_z * size_y * size_x;
 
     // ========================================================================
     // Fix datatype issues
@@ -135,29 +135,29 @@ int main(int argc, char * argv[]) {
     if (shift == 1) {
         nifti_image* correl_file  = nifti_copy_nim_info(nii_nulled);
         correl_file->nt = 7;
-        correl_file->nvox = nii_nulled->nvox / size_t *7;
+        correl_file->nvox = nii_nulled->nvox / size_time *7;
         correl_file->datatype = NIFTI_TYPE_FLOAT32;
         correl_file->nbyper = sizeof(float);
         correl_file->data = calloc(correl_file->nvox, correl_file->nbyper);
         float* correl_file_data = static_cast<float*>(correl_file->data);
 
-        double vec_file1[size_t];
-        double vec_file2[size_t];
+        double vec_file1[size_time];
+        double vec_file2[size_time];
 
         for (int shift = -3; shift <= 3; ++shift) {
             cout << "  Calculating shift = " << shift << endl;
             for (int j = 0; j != size_z * size_y * size_x; ++j) {
-                for (int t = 3; t < size_t-3; ++t) {
+                for (int t = 3; t < size_time-3; ++t) {
                     *(nii_boco_vaso_data + nxyz * t + j) =
                         *(nii_nulled_data + nxyz * t + j)
                         / *(nii_bold_data + nxyz * (t + shift) + j);
                 }
-                for (int t = 0; t < size_t; ++t) {
+                for (int t = 0; t < size_time; ++t) {
                     vec_file1[t] = *(nii_boco_vaso_data + nxyz * t + j);
                     vec_file2[t] = *(nii_bold_data + nxyz * t + j);
                 }
                 *(correl_file_data + nxyz * (shift + 3) + j) =
-                    ren_correl(vec_file1, vec_file2, size_t);
+                    ren_correl(vec_file1, vec_file2, size_time);
             }
         }
 
@@ -184,14 +184,14 @@ int main(int argc, char * argv[]) {
     if (trialdur != 0) {
         cout << "  Also do BOLD correction after trial average." << endl;
         cout << "  Trial duration is " << trialdur << ". This means there are "
-             << static_cast<float>(size_t)/static_cast<float>(trialdur)
+             << static_cast<float>(size_time)/static_cast<float>(trialdur)
              << " trials recorded here." << endl;
 
-        int nr_trials = size_t/trialdur;
+        int nr_trials = size_time/trialdur;
         // Trial average file
         nifti_image *nii_triavg = nifti_copy_nim_info(nii_nulled);
         nii_triavg->nt = trialdur;
-        nii_triavg->nvox = nii_nulled->nvox / size_t * trialdur;
+        nii_triavg->nvox = nii_nulled->nvox / size_time * trialdur;
         nii_triavg->datatype = NIFTI_TYPE_FLOAT32;
         nii_triavg->nbyper = sizeof(float);
         nii_triavg->data = calloc(nii_triavg->nvox, nii_triavg->nbyper);
@@ -199,7 +199,7 @@ int main(int argc, char * argv[]) {
 
         nifti_image *nii_triavg_B = nifti_copy_nim_info(nii_nulled);
         nii_triavg_B->nt = trialdur;
-        nii_triavg_B->nvox = nii_nulled->nvox / size_t * trialdur;
+        nii_triavg_B->nvox = nii_nulled->nvox / size_time * trialdur;
         nii_triavg_B->datatype = NIFTI_TYPE_FLOAT32;
         nii_triavg_B->nbyper = sizeof(float);
         nii_triavg_B->data = calloc(nii_triavg_B->nvox, nii_triavg_B->nbyper);

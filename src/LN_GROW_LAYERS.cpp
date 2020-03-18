@@ -94,7 +94,7 @@ int main(int argc, char * argv[]) {
     int size_z = nim_input_i->nz;
     int size_x = nim_input_i->nx;
     int size_y = nim_input_i->ny;
-    int size_t = nim_input_i->nt;
+    int size_time = nim_input_i->nt;
     int nx = nim_input_i->nx;
     int nxy = nim_input_i->nx * nim_input_i->ny;
     int nxyz = nim_input_i->nx * nim_input_i->ny * nim_input_i->nz;

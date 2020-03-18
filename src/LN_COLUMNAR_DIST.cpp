@@ -1,5 +1,6 @@
-// Note to Renzo. tjere are the comments about copying the same voxel to itself when the distance is smaller than 1.7. 
-// remove this stuff
+
+// TODO(Renzo): There are the comments about copying the same voxel to itself
+// when the distance is smaller than 1.7. remove this stuff.
 
 #include "../dep/laynii_lib.h"
 

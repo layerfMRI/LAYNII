@@ -93,11 +93,9 @@ int main(int argc, char *argv[]) {
     const int size_x = nii_input1->nx;
     const int size_y = nii_input1->ny;
     const int size_z = nii_input1->nz;
-    const int size_t = nii_input1->nt;
     const int nr_voxels = nii_input1->nvox;
     const int nx = nii_input1->nx;
     const int nxy = nii_input1->nx * nii_input1->ny;
-    const int nxyz = nii_input1->nx * nii_input1->ny * nii_input1->nz;
     const float dX = nii_input1->pixdim[1];
     const float dY = nii_input1->pixdim[2];
     const float dZ = nii_input1->pixdim[3];

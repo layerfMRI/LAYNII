@@ -2,7 +2,7 @@
 // TODO(Faruk): Requires columnar_coordinated.nii and data2unfold.nii from Renzo for tests.
 
 
-#include "../dep/laynii_lib.h" 
+#include "../dep/laynii_lib.h"
 
 int show_help(void) {
     printf(
@@ -98,7 +98,7 @@ int main(int argc, char * argv[]) {
     int size_z = nim_layers_r->nz;
     int size_x = nim_layers_r->nx;
     int size_y = nim_layers_r->ny;
-    int size_t = nim_data_r->nt;
+    int size_time = nim_data_r->nt;
     int nx = nim_layers_r->nx;
     int nxy = nim_layers_r->nx * nim_layers_r->ny;
     int nxyz = nim_layers_r->nx * nim_layers_r->ny * nim_layers_r->nz;
@@ -150,7 +150,7 @@ int main(int argc, char * argv[]) {
     imagiro->nx = nr_columns;
     imagiro->ny = size_z;
     imagiro->nz = nr_layers;
-    imagiro->nt = size_t;
+    imagiro->nt = size_time;
 
     imagiro->dim[1] = imagiro->nx;
     imagiro->dim[2] = imagiro->ny;
@@ -239,7 +239,7 @@ int main(int argc, char * argv[]) {
     // Averaging all voxels in layer\column //
     //////////////////////////////////////////
     cout << "  Averaging all voxels in layer column..." << endl;
-    for (int it = 0; it < size_t; ++it) {
+    for (int it = 0; it < size_time; ++it) {
         for (int iz = 0; iz < size_z; ++iz) {
             for (int iy = 0; iy < size_x; ++iy) {
                 for (int ix = 0; ix < size_y; ++ix) {
@@ -258,7 +258,7 @@ int main(int argc, char * argv[]) {
     //////////////////
     // Fixing holes //
     //////////////////
-    cout << "  Fixing holes..." << size_t << endl;
+    cout << "  Fixing holes..." << size_time << endl;
     int vinc = 2;  // vicinity
     float value_to_fill = 0;  // Average value in vicinity
     int number_of_vinces = 0;  // Number of non-zero voxels in vicinity
@@ -269,7 +269,7 @@ int main(int argc, char * argv[]) {
                 // cout << iz << " " << ix << " " << iy << endl;
                 if (*(imagiro_vnr_data + nxy_imagiro * iz + nx_imagiro * ix + iy) == 0) {
                     // cout << "  iz " << iz << "  ix " << ix << "  iy " << iy << endl;
-                    for (int it = 0; it < size_t; ++it) {
+                    for (int it = 0; it < size_time; ++it) {
                         value_to_fill = 0;
                         number_of_vinces = 0;
                         for (int iy_i=max(0, iy-vinc); iy_i < min(iy+vinc+1, sizeColumn_imagiro); ++iy_i) {

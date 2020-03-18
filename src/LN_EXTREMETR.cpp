@@ -55,7 +55,7 @@ int main(int argc, char * argv[]) {
     const int size_x = nii_in->nx;
     const int size_y = nii_in->ny;
     const int size_z = nii_in->nz;
-    const int size_t = nii_in->nt;
+    const int size_time = nii_in->nt;
     const int nx = size_x;
     const int nxy = size_x * size_y;
     const int nxyz = size_x * size_y * size_z;
@@ -91,7 +91,7 @@ int main(int argc, char * argv[]) {
                 int voxel_i = nxy * iz + nx * iy + ix;
                 float max_val = 0;
                 float min_val = std::numeric_limits<float>::max();
-                for (int it = 0; it < size_t; ++it) {
+                for (int it = 0; it < size_time; ++it) {
                     int voxel_j = nxyz * it + nxy * iz + nx * iy + ix;
                     if (*(nii_data + voxel_j) > max_val) {
                         max_val = *(nii_data + voxel_j);

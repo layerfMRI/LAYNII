@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
     int size_z = nii1->nz;
     int size_x = nii1->nx;
     int size_y = nii1->ny;
-    int size_t = nii1->nt;
+    int size_time = nii1->nt;
     int nx = nii1->nx;
     int nxy = nii1->nx * nii1->ny;
     int nxyz = nii1->nx * nii1->ny * nii1->nz;
@@ -99,18 +99,18 @@ int main(int argc, char *argv[]) {
     float *correl_file_data = static_cast<float*>(correl_file->data);
     // ========================================================================
 
-    double vec1[size_t], vec2[size_t];
+    double vec1[size_time], vec2[size_time];
     for (int iz = 0; iz < size_z; ++iz) {
         for (int iy = 0; iy < size_y; ++iy) {
             for (int ix = 0; ix < size_x; ++ix) {
                 int voxel_i = nxy * iz + nx * iy + ix;
-                for (int it = 0; it < size_t; ++it) {
+                for (int it = 0; it < size_time; ++it) {
                     int voxel_j = nxyz * it + nxy * iz + nx * iy + ix;
                     vec1[it] = *(nii1_temp_data + voxel_j);
                     vec2[it] = *(nii2_temp_data + voxel_j);
                 }
                 *(correl_file_data + voxel_i) =
-                    static_cast<float>(ren_correl(vec1, vec2, size_t));
+                    static_cast<float>(ren_correl(vec1, vec2, size_time));
             }
         }
     }

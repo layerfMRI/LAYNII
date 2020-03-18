@@ -62,12 +62,12 @@ int main(int argc, char * argv[]) {
     const int size_x = nii_input->nx;
     const int size_y = nii_input->ny;
     const int size_z = nii_input->nz;
-    const int size_t = nii_input->nt;
+    const int size_time = nii_input->nt;
     const int nx = nii_input->nx;
     const int nxy = nii_input->nx * nii_input->ny;
     const int nxyz = nii_input->nx * nii_input->ny * nii_input->nz;
 
-    const int nr_trials = size_t / trial_dur;
+    const int nr_trials = size_time / trial_dur;
 
     cout << "  Trial duration is " << trial_dur << ". This means there are "
          << nr_trials << " trials recorded here." << endl;

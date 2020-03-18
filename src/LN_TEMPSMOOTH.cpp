@@ -89,14 +89,12 @@ int main(int argc, char * argv[]) {
     int size_x = nii_input->nx;
     int size_y = nii_input->ny;
     int size_z = nii_input->nz;
-    int size_t = nii_input->nt;
+    int size_time = nii_input->nt;
     int nr_voxels = size_x * size_y * size_z;
     // int nx = nii_input->nx;
     // int nxy = nii_input->nx * nii_input->ny;
     int nxyz = nii_input->nx * nii_input->ny * nii_input->nz;
-    float dX = nii_input->pixdim[1];
-    // float dY = nii_input->pixdim[2];
-    // float dZ = nii_input->pixdim[3];
+    float dT = 1;
 
     // ========================================================================
     // Fixing potential problems with different input datatypes
@@ -118,9 +116,6 @@ int main(int argc, char * argv[]) {
     // ========================================================================
     // Smoothing loop
     // ========================================================================
-    // TODO(Faruk): Might be better to use dT to give a meaning to Gaussian.
-    // I should ask to renzo about this.
-    float dT = 1; 
     int vic;
     if (do_gaus) {
         vic = max(1., 2. * gFWHM_val / dT);  // Ignore if voxel is too far
@@ -133,14 +128,14 @@ int main(int argc, char * argv[]) {
     for (int i = 0; i < nr_voxels; ++i) {
         *(nii_weight_data + i) = 0;
         if (*(nii_data + i) != 0) {
-            for (int it = 0; it < size_t; ++it) {
+            for (int it = 0; it < size_time; ++it) {
                 int j = nxyz * it + i;
                 *(nii_smooth_data + j) = 0;
 
                 if (do_gaus) {
                     float weight = 0;
                     int jt_start = max(0, it - vic);
-                    int jt_stop = min(it + vic + 1, size_t);
+                    int jt_stop = min(it + vic + 1, size_time);
                     for (int jt = jt_start; jt < jt_stop; ++jt) {
                         int k = nxyz * jt + i;
                         float dist = abs(it - jt);
@@ -152,7 +147,7 @@ int main(int argc, char * argv[]) {
                 } else if (do_box) {
                     float weight = 0;
                     int jt_start = max(0, it - vic);
-                    int jt_stop = min(it + vic + 1, size_t);
+                    int jt_stop = min(it + vic + 1, size_time);
                     for (int jt = jt_start; jt < jt_stop; ++jt) {
                         int k = nxyz * jt + i;
                         *(nii_smooth_data + j) += *(nii_data + k);

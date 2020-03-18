@@ -130,7 +130,7 @@ int main(int argc, char * argv[]) {
     int size_x = nii2->nx;
     int size_y = nii2->ny;
     int size_z = nii2->nz;
-    int size_t = nii1->nt;
+    int size_time = nii1->nt;
     int nx = nii2->nx;
     int nxy = nii2->nx * nii2->ny;
     int nxyz = nii2->nx * nii2->ny * nii2->nz;
@@ -273,7 +273,7 @@ int main(int argc, char * argv[]) {
                                 // might be avoidable, if the Gauss fucnction
                                 // is better normalized.
                                 w += temp_w;
-                                for (int it = 0; it < size_t; ++it) {
+                                for (int it = 0; it < size_time; ++it) {
                                     *(smooth_data + nxyz * it + voxel_i) +=
                                         *(nii_input_data + nxyz * it + voxel_j) * temp_w;
                                 }
@@ -282,7 +282,7 @@ int main(int argc, char * argv[]) {
                     }
                     // Scaling signal intensity with the overall Gauss leakage
                     if (w > 0) {
-                        for (int it = 0; it < size_t; ++it) {
+                        for (int it = 0; it < size_time; ++it) {
                             *(smooth_data + nxyz * it + voxel_i) /= w;
                         }
                     }

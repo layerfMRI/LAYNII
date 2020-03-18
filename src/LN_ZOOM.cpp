@@ -78,7 +78,7 @@ int main(int argc, char*  argv[]) {
     const int size_z = nii1->nz;
     const int size_x = nii1->nx;
     const int size_y = nii1->ny;
-    const int size_t = nii1->nt;
+    const int size_time = nii1->nt;
     const int nx = nii1->nx;
     const int nxy = nii1->nx * nii1->ny;
     const int nxyz = nii1->nx * nii1->ny * nii1->nz;
@@ -134,7 +134,7 @@ int main(int argc, char*  argv[]) {
     const int nx_2 = nii_new->nx;
     const int nxy_2 = nii_new->nx * nii_new->ny;
     const int nxyz_2 = nii_new->nx * nii_new->ny * nii_new->nz;
-    for (int it = 0; it < size_t; ++it) {
+    for (int it = 0; it < size_time; ++it) {
         for (int iz = min_z; iz <= max_z; ++iz) {
             for (int iy = min_y; iy <= max_y; ++iy) {
                 for (int ix = min_x; ix <= max_x; ++ix) {
