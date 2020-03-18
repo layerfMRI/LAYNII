@@ -6,7 +6,7 @@
 
 ../LN_3DCOLUMNS -layers sc_layers_3dcolumns.nii -landmarks sc_landmarks_3dcolumns.nii
 ../LN_CORREL2FILES -file1 lo_Nulled_intemp.nii -file2 lo_BOLD_intemp.nii
-../LN_COLUMNAR_DIST -layers sc_layers_3dcolumns.nii -landmarks sc_landmarks_3dcolumns.nii
+../LN_COLUMNAR_DIST -layers sc_layers_3dcolumns.nii -landmarks sc_landmarks.nii
 ../LN_DIRECT_SMOOTH -input sc_UNI.nii -FWHM 2 -direction 3
 ../LN_EXTREMETR -input lo_BOLD_intemp.nii
 ../LN_FLOAT_ME -input sc_rim.nii

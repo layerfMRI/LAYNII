@@ -2,6 +2,8 @@
 // TODO(Faruk): Seems there might be an issue with the gaussian kernel's
 // symmetry and size corresponding to what is written in CLI
 
+// To do make the vincinity direction specific vinc_x, vinc_y, vinc_z
+
 
 #include "../dep/laynii_lib.h"
 
