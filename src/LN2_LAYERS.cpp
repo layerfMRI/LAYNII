@@ -968,8 +968,8 @@ int main(int argc, char*  argv[]) {
             *(hotspots_data + j) -= 1;
         }
     }
-    save_output_nifti(fin, "layers_equidist", nii_layers);
     save_output_nifti(fin, "thickness", thickness);
+    save_output_nifti(fin, "layers_equidist", nii_layers);
     if (debug_mode) {
         save_output_nifti(fin, "hotspots", hotspots, false);
         save_output_nifti(fin, "disterror", err_dist, false);
@@ -1136,108 +1136,39 @@ int main(int argc, char*  argv[]) {
     save_output_nifti(fin, "curvature", curvature, true);
 
     // ========================================================================
-    // Find column centroids
+    // Equi-volume layers
     // ========================================================================
-    nifti_image* column_centroid_id = copy_nifti_as_int32(nii_columns);
-    int32_t* column_centroid_id_data = static_cast<int32_t*>(column_centroid_id->data);
-
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        *(coords_x_data + i) = 0;
-        *(coords_y_data + i) = 0;
-        *(coords_z_data + i) = 0;
-        *(coords_count_data + i) = 0;
-        *(centroid_data + i) = 0;
-    }
-
-    // Sum x, y, z coordinates of same-column voxels
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_rim_data + i) == 3) {
-            tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
-            j = *(nii_columns_data + i);  // used to determine storage voxel
-            *(coords_x_data + j) += x;
-            *(coords_y_data + j) += y;
-            *(coords_z_data + j) += z;
-            *(coords_count_data + j) += 1;
-        }
-    }
-    // Divide summed coordinates to find centroid
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(coords_count_data + i) != 0) {
-            // Assign centroid id in place of inner/outer border voxel id
-            x = floor(*(coords_x_data + i) / *(coords_count_data + i));
-            y = floor(*(coords_y_data + i) / *(coords_count_data + i));
-            z = floor(*(coords_z_data + i) / *(coords_count_data + i));
-            j = sub2ind_3D(x, y, z, size_x, size_y);
-            *(centroid_data + i) = j;
-        }
-    }
-    // Map new centroid IDs to columns/streamlines
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_rim_data + i) == 3) {
-            j = *(nii_columns_data + i);
-            *(column_centroid_id_data + i) = *(centroid_data + j);
-        }
-    }
-    // save_output_nifti(fin, "columns2", column_centroid_id, false);
-
-    // ------------------------------------------------------------------------
-    // Debug centroids
-    if (debug_mode) {
-        nifti_image *debug = copy_nifti_as_int32(nii_rim);
-        int32_t *debug_data = static_cast<int32_t*>(debug->data);
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
-            if (*(nii_rim_data + i) == 3) {
-                j = *(midGM_centroid_id_data + i);
-                *(debug_data + j) = 1;
-                j = *(column_centroid_id_data + i);
-                *(debug_data + j) = 2;
-            } else {
-                *(debug_data + i) = 0;
-            }
-        }
-        save_output_nifti(fin, "centroid_debug", debug, false);
-    }
-    // ------------------------------------------------------------------------
-
-    // ========================================================================
-    // Equi-volume
-    // ========================================================================
+    // float dist1_new, dist2_new;
     // for (uint32_t i = 0; i != nr_voxels; ++i) {
     //     if (*(nii_rim_data + i) == 3) {
-    //         // Normalize distance
-    //         float dist1 = *(innerGM_dist_data + i);
-    //         float dist2 = *(outerGM_dist_data + i);
-    //         float total_dist = (dist1 + dist2);
-    //         *(innerGM_dist_data + i) /= total_dist;
-    //         *(outerGM_dist_data + i) /= total_dist;
-    //     }
-    // }
     //
-    // for (uint32_t i = 0; i != nr_voxels; ++i) {
-    //     if (*(nii_rim_data + i) == 3) {
-    //         j = *(midGM_centroid_id_data + i);
-    //         k = *(column_centroid_id_data + j);
+    //         // Find normalized distances from a given point on a column
+    //         float dist1 = *(innerGM_dist_data + i) / *(thickness_data + i);
+    //         float dist2 = *(outerGM_dist_data + i) / *(thickness_data + i);
     //
-    //         float j1 = *(innerGM_dist_data + j);
-    //         float j2 = *(outerGM_dist_data + j);
+    //         // Find mass at each end of the given column
+    //         float curv = *(curvature_data + i);
+    //         float curv1, curv2;
+    //         if (curv == 0) {
+    //              curv1 = 0.5;
+    //              curv2 = 0.5;
+    //         } else if (curv < 0) {  // sulci
+    //             curv1 = - curv;
+    //             curv2 = 1 - curv1;
+    //         } else if (curv > 0) {  // gyri
+    //             curv2 = curv;
+    //             curv1 = 1 - curv2;
+    //         }
     //
-    //         float k1 = *(innerGM_dist_data + k);
-    //         float k2 = *(outerGM_dist_data + k);
+    //         // Perturb using masses to modify distances in simplex space
+    //         tie(dist1_new, dist2_new) = simplex_perturb_2D(dist1, dist2, curv1, curv2);
     //
-    //         float a = j1 / k1;
-    //         float b = j2 / k2;
-    //
-    //         // Normalize distance (completely discrete)
-    //         float dist1 = *(innerGM_dist_data + i) * exp(a);
-    //         float dist2 = *(outerGM_dist_data + i) * exp(b);
-    //         float norm_dist = dist1 / (dist1 + dist2);
-    //
-    //         // Difference of normalized distances
-    //         *(normdistdiff_data + i) = (dist1 - dist2) / (dist1 + dist2);
+    //         // Difference of normalized distances (used in finding midGM)
+    //         *(normdistdiff_data + i) = dist1_new - dist2_new;
     //
     //         // Cast distances to integers as number of desired layers
-    //         if (norm_dist != 0) {
-    //             *(nii_layers_data + i) = ceil(nr_layers * norm_dist);
+    //         if (dist1_new != 0) {
+    //             *(nii_layers_data + i) = ceil(nr_layers * dist1_new);
     //         } else {
     //             *(nii_layers_data + i) = 1;
     //         }
