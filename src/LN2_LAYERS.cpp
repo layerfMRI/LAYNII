@@ -1044,7 +1044,7 @@ int main(int argc, char*  argv[]) {
             k = *(outerGM_id_data + i);  // These values are negative
             *(curvature_data + i) = *(hotspots_data + j) + *(hotspots_data + k);
             *(curvature_data + i) /=
-                *(hotspots_data + j) - *(hotspots_data + k);  // normalize
+                max(*(hotspots_data + j), -*(hotspots_data + k));  // normalize
 
             // Re-assign mid-GM id based on curvature
             if (*(curvature_data + i) >= 0) {  // Gyrus
@@ -1147,21 +1147,11 @@ int main(int argc, char*  argv[]) {
     //         float dist2 = *(outerGM_dist_data + i) / *(thickness_data + i);
     //
     //         // Find mass at each end of the given column
-    //         float curv = *(curvature_data + i);
-    //         float curv1, curv2;
-    //         if (curv == 0) {
-    //              curv1 = 0.5;
-    //              curv2 = 0.5;
-    //         } else if (curv < 0) {  // sulci
-    //             curv1 = - curv;
-    //             curv2 = 1 - curv1;
-    //         } else if (curv > 0) {  // gyri
-    //             curv2 = curv;
-    //             curv1 = 1 - curv2;
-    //         }
+    //         float curv1 = (*(curvature_data + i)/5 + 1) / 2;
+    //         float curv2 = 1 - curv1;
     //
     //         // Perturb using masses to modify distances in simplex space
-    //         tie(dist1_new, dist2_new) = simplex_perturb_2D(dist1, dist2, curv1, curv2);
+    //         tie(dist1_new, dist2_new) = simplex_perturb_2D(dist1, dist2, curv2, curv1);
     //
     //         // Difference of normalized distances (used in finding midGM)
     //         *(normdistdiff_data + i) = dist1_new - dist2_new;
