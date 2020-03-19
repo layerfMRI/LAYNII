@@ -1059,6 +1059,9 @@ int main(int argc, char*  argv[]) {
             }
         }
     }
+    if (debug_mode) {
+        save_output_nifti(fin, "curvature_init", curvature, true);
+    }
 
     // ========================================================================
     // Find Middle Gray Matter centroids
@@ -1138,20 +1141,81 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Equi-volume layers
     // ========================================================================
-    // float dist1_new, dist2_new;
+    // nifti_image* hotspots_i = copy_nifti_as_float32(nii_rim);
+    // float* hotspots_i_data = static_cast<float*>(hotspots_i->data);
+    // nifti_image* hotspots_o = copy_nifti_as_float32(nii_rim);
+    // float* hotspots_o_data = static_cast<float*>(hotspots_o->data);
+    //
+    // for (uint32_t i = 0; i != nr_voxels; ++i) {
+    //     *(hotspots_i_data + i) = 0;
+    //     *(hotspots_o_data + i) = 0;
+    // }
+    //
     // for (uint32_t i = 0; i != nr_voxels; ++i) {
     //     if (*(nii_rim_data + i) == 3) {
+    //         // Find inner/outer anchors
+    //         j = *(innerGM_id_data + i);
+    //         k = *(outerGM_id_data + i);
     //
+    //         // Count how many voxels fall inner and outer shells from MidGM
+    //         if (*(curvature_data + i) < 0) {
+    //             if (*(normdistdiff_data + i) <= 0) {
+    //                 *(hotspots_i_data + k) += 1;
+    //             }
+    //             if (*(normdistdiff_data + i) >= 0) {
+    //                 *(hotspots_o_data + k) += 1;
+    //             }
+    //         }
+    //         if (*(curvature_data + i) > 0) {
+    //             if (*(normdistdiff_data + i) <= 0) {
+    //                 *(hotspots_i_data + j) += 1;
+    //             }
+    //             if (*(normdistdiff_data + i) >= 0) {
+    //                 *(hotspots_o_data + j) += 1;
+    //             }
+    //         }
+    //     }
+    // }
+    // save_output_nifti(fin, "hotspots_in", hotspots_i, false);
+    // save_output_nifti(fin, "hotspots_out", hotspots_o, false);
+    //
+    // // ------------------------------------------------------------------------
+    // nifti_image* temp = copy_nifti_as_float32(nii_rim);
+    // float* temp_data = static_cast<float*>(temp->data);
+    // for (uint32_t i = 0; i != nr_voxels; ++i) {
+    //     *(temp_data + i) = 0;
+    // }
+    //
+    // float w;
+    // for (uint32_t i = 0; i != nr_voxels; ++i) {
+    //     if (*(nii_rim_data + i) == 3) {
+    //         // Find mass at each end of the given column
+    //         j = *(innerGM_id_data + i);
+    //         k = *(outerGM_id_data + i);
+    //         if (*(curvature_data + i) == 0) {
+    //             w = 0.5;
+    //         } else if (*(curvature_data + i) < 0) {
+    //             w = *(hotspots_i_data + k) / (*(hotspots_i_data + k) + *(hotspots_o_data + k));
+    //         } else if (*(curvature_data + i) > 0) {
+    //             w = *(hotspots_i_data + j) / (*(hotspots_i_data + j) + *(hotspots_o_data + j));
+    //         }
+    //         *(temp_data + i) = w;
+    //     }
+    // }
+    // save_output_nifti(fin, "equivol_factors", temp);
+    //
+    // float dist1_new, dist2_new, a, b;
+    // for (uint32_t i = 0; i != nr_voxels; ++i) {
+    //     if (*(nii_rim_data + i) == 3) {
     //         // Find normalized distances from a given point on a column
     //         float dist1 = *(innerGM_dist_data + i) / *(thickness_data + i);
     //         float dist2 = *(outerGM_dist_data + i) / *(thickness_data + i);
     //
-    //         // Find mass at each end of the given column
-    //         float curv1 = (*(curvature_data + i)/5 + 1) / 2;
-    //         float curv2 = 1 - curv1;
+    //         a = *(temp_data + i);
+    //         b = 1 - a;
     //
     //         // Perturb using masses to modify distances in simplex space
-    //         tie(dist1_new, dist2_new) = simplex_perturb_2D(dist1, dist2, curv2, curv1);
+    //         tie(dist1_new, dist2_new) = simplex_perturb_2D(dist1, dist2, a, b);
     //
     //         // Difference of normalized distances (used in finding midGM)
     //         *(normdistdiff_data + i) = dist1_new - dist2_new;
