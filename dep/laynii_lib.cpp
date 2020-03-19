@@ -429,3 +429,24 @@ uint32_t sub2ind_3D(const uint32_t x, const uint32_t y, const uint32_t z,
                     const uint32_t size_x, const uint32_t size_y) {
     return size_x * size_y * z + size_x * y + x;
 }
+
+std::tuple<float, float> simplex_closure_2D(float x, float y) {
+    float component_sum = x + y;
+    float x_new = x / component_sum;
+    float y_new = y / component_sum;
+    return std::make_tuple(x_new, y_new);
+}
+
+std::tuple<float, float> simplex_perturb_2D(float x, float y, float a, float b) {
+    float x_new = x * a;
+    float y_new = y * b;
+    tie(x_new, y_new) = simplex_closure_2D(x_new, y_new);
+    return std::make_tuple(x_new, y_new);
+}
+
+// std::tuple<float, float> simplex_power_2D(float x, float y, float a) {
+//     float x_new = std::pow(x, a);
+//     float y_new = std::pow(y, a);
+//     tie(x_new, y_new) = simplex_closure_2D(x_new, y_new);
+//     return std::make_tuple(x_new, y_new);
+// }

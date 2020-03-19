@@ -44,6 +44,9 @@ std::tuple<uint32_t, uint32_t, uint32_t> ind2sub_3D(
 uint32_t sub2ind_3D(const uint32_t x, const uint32_t y, const uint32_t z,
                     const uint32_t size_x, const uint32_t size_y);
 
+std::tuple<float, float> simplex_closure_2D(float x, float y);
+std::tuple<float, float> simplex_perturb_2D(float x, float y, float a, float b);
+
 // ============================================================================
 // Preprocessor macros.
 // ============================================================================
