@@ -194,6 +194,13 @@ if (have_output == 0) {
     string prefix = "dnoised_" ;
     string filename = (string) (fout) ;
     string outfilename = prefix+filename ;
+    cout <<" writing "<< outfilename << endl; 
+      const char  *fout_1=outfilename.c_str() ;
+    if( nifti_set_filenames(nii_denoised, fout_1 , 1, 1) ) return 1;
+    nifti_image_write( nii_denoised );
+
+    //if( nifti_set_filenames(nii_denoised, outfilename , 1, 1) ) return 1;
+    //nifti_image_write( nii_denoised );
 }
     
     save_output_nifti(fout, "border_enhance", nii_phaseerr, true);
