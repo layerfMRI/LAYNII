@@ -181,63 +181,102 @@ int main(int argc, char * argv[]) {
 
     // ========================================================================
     // Trial average
-    if (trialdur != 0) {
-        cout << "  Also do BOLD correction after trial average." << endl;
-        cout << "  Trial duration is " << trialdur << ". This means there are "
-             << static_cast<float>(size_time)/static_cast<float>(trialdur)
-             << " trials recorded here." << endl;
+if (trialdur!=0) {
 
-        int nr_trials = size_time/trialdur;
-        // Trial average file
-        nifti_image *nii_triavg = nifti_copy_nim_info(nii_nulled);
-        nii_triavg->nt = trialdur;
-        nii_triavg->nvox = nii_nulled->nvox / size_time * trialdur;
-        nii_triavg->datatype = NIFTI_TYPE_FLOAT32;
-        nii_triavg->nbyper = sizeof(float);
-        nii_triavg->data = calloc(nii_triavg->nvox, nii_triavg->nbyper);
-        float *nii_triavg_data = static_cast<float*>(nii_triavg->data);
+cout << " I will also do the BOLD correction after the trial average " << endl; 
 
-        nifti_image *nii_triavg_B = nifti_copy_nim_info(nii_nulled);
-        nii_triavg_B->nt = trialdur;
-        nii_triavg_B->nvox = nii_nulled->nvox / size_time * trialdur;
-        nii_triavg_B->datatype = NIFTI_TYPE_FLOAT32;
-        nii_triavg_B->nbyper = sizeof(float);
-        nii_triavg_B->data = calloc(nii_triavg_B->nvox, nii_triavg_B->nbyper);
-        float *nii_triavg_B_data = static_cast<float*>(nii_triavg_B->data);
+   
+   
+   int nrep = size_time ; 
+   int sizeRead= size_y ;
+   int sizePhase = size_x ;
+   int sizeSlice = size_z ;
+   
+   cout << " Trial duration is " <<trialdur << " this means there are " << (float)nrep/(float)trialdur <<  " trials recorted here " << endl; 
 
-        float AV_nulled[trialdur];
-        float AV_bold[trialdur];
 
-        for (int j = 0; j != size_z * size_y * size_x; ++j) {
-            for (int t = 0; t < trialdur; ++t) {
-                AV_nulled[t] = 0;
-                AV_bold[t] = 0;
-            }
-            for (int t = 0; t < trialdur * nr_trials; ++t) {
-                int m = t % trialdur;
-                AV_nulled[m] += (*(nii_nulled_data + nxyz * t + j)) / nr_trials;
-                AV_bold[m] += (*(nii_bold_data + nxyz * t + j)) / nr_trials;
-            }
-            for (int t = 0; t < trialdur; ++t) {
-                *(nii_triavg_data + nxyz * t + j) = AV_nulled[t] / AV_bold[t];
-                *(nii_triavg_B_data + nxyz * t + j) = AV_bold[t];
-            }
-        }
+   int numberofTrials = nrep/trialdur ; 
+   // Trial averave file
+    nifti_image * triav_file    = nifti_copy_nim_info(nii1);
+    triav_file->nt 				= trialdur	; 
+    triav_file->nvox 			= nii1->nvox / nrep * trialdur; 
+    triav_file->datatype 		= NIFTI_TYPE_FLOAT32; 
+    triav_file->nbyper 			= sizeof(float);
+    triav_file->data 			= calloc(triav_file->nvox, triav_file->nbyper);
+    float  *nii_triavg_data 	= (float *) triav_file->data;
+    
+    
+    nifti_image * triav_B_file  = nifti_copy_nim_info(nii1);
+    triav_B_file->nt 			= trialdur	; 
+    triav_B_file->nvox 			= nii1->nvox / nrep * trialdur; 
+    triav_B_file->datatype 		= NIFTI_TYPE_FLOAT32; 
+    triav_B_file->nbyper 		= sizeof(float);
+    triav_B_file->data 			= calloc(triav_B_file->nvox, triav_B_file->nbyper);
+    float  *nii_triavg_B_data 	= (float *) triav_B_file->data;
+    
+    float AV_Nulled[trialdur] ;
+    float AV_BOLD[trialdur]   ; 
 
-        // Clean VASO values that are unrealistic
-        for (int i = 0; i != nr_voxels; ++i) {
-            if (*(nii_triavg_data + i) <= 0) {
-                *(nii_triavg_data + i) = 0;
-            }
-            if (*(nii_triavg_data + i) >= 2) {
-                *(nii_triavg_data + i) = 2;
-            }
-        }
 
-        save_output_nifti(fin_2, "trialAV_VASO", nii_triavg, false);
-        save_output_nifti(fin_2, "trialAV", nii_triavg_B, false);
-    }
-    save_output_nifti(fin_2, "VASO", nii_boco_vaso, true);
+    
+    
+	  for(int islice=0; islice<sizeSlice; ++islice){  
+	      for(int iy=0; iy<sizePhase; ++iy){
+	        for(int ix=0; ix<sizeRead; ++ix){
+	              for(int it=0; it<trialdur; ++it){  
+					AV_Nulled[it] = 0 ;
+					AV_BOLD  [it] = 0 ;
+				  }  
+	           	  for(int it=0; it<trialdur*numberofTrials; ++it){  
+        		  		AV_Nulled[it%trialdur] = AV_Nulled[it%trialdur] + (*(nii_nulled_data  + nxyz *(it) +  nxy*islice + nx*ix  + iy  ))/numberofTrials ;	
+        		  		AV_BOLD[it%trialdur]   = AV_BOLD[it%trialdur]   + (*(nii_bold_data  + nxyz *(it) +  nxy*islice + nx*ix  + iy  ))/numberofTrials ;	
+			      }         
+			      
+			      for(int it=0; it<trialdur; ++it){  
+			        *(nii_triavg_data    + nxyz *it +  nxy*islice + nx*ix  + iy  ) = AV_Nulled[it]/AV_BOLD[it] ;
+			        *(nii_triavg_B_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = AV_BOLD[it] ;
+
+				  } 
+           } 
+	    }
+	  }
+	
+     // clean VASO values that are unrealistic
+    for(int islice=0; islice<sizeSlice; ++islice){  
+	   for(int iy=0; iy<sizePhase; ++iy){
+	        for(int ix=0; ix<sizeRead; ++ix){
+	        	for(int it=0;  it<trialdur; ++it){  
+	
+	            	if (*(nii_triavg_data + nxyz*it + nxy*islice + nx*ix  + iy  ) <= 0) {
+	            		*(nii_triavg_data + nxyz*it + nxy*islice + nx*ix  + iy  ) = 0 ;
+	            		}
+	            	if (*(nii_triavg_data + nxyz*it + nxy*islice + nx*ix  + iy  ) >= 2) {
+	            		*(nii_triavg_data + nxyz*it + nxy*islice + nx*ix  + iy  ) = 2 ;
+	            		}
+
+	            }
+        	}	
+	    }
+	  }
+
+
+  const char  *fout_trial="VASO_trialAV_LN.nii" ;
+  if( nifti_set_filenames(triav_file, fout_trial , 1, 1) ) return 1;
+  nifti_image_write( triav_file );
+
+  const char  *fout_trial_BOLD="BOLD_trialAV_LN.nii" ;
+  if( nifti_set_filenames(triav_B_file, fout_trial_BOLD , 1, 1) ) return 1;
+  nifti_image_write( triav_B_file );
+
+
+}// Trial Average loop closed
+    
+    const char  *fout_5="VASO_LN.nii" ;
+    if( nifti_set_filenames(nii_boco_vaso, fout_5 , 1, 1) ) return 1;
+    nifti_image_write( nii_boco_vaso );
+    
+//  RENZO needs to include an output option here. For the time beeing, and for the 
+//    save_output_nifti(fin_2, "VASO", nii_boco_vaso, true);
 
     cout << "  Finished." << endl;
     return 0;
