@@ -191,7 +191,7 @@ if (have_output == 1) {
     save_output_nifti(fout, "denoised", nii_denoised, true);
 }
 if (have_output == 0) {
-    string prefix = "dnoised_" ;
+    string prefix = "denoised_" ;
     string filename = (string) (fout) ;
     string outfilename = prefix+filename ;
     cout <<" writing "<< outfilename << endl; 
