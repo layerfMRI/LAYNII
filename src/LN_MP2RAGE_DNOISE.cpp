@@ -28,10 +28,10 @@ int show_help(void) {
 }
 
 int main(int argc, char* argv[]) {
-    float SIEMENS_f = 4095.0;  // uint12 range 0-4095
+    bool use_outpath = false;
     char *fout = NULL, *fin1 = NULL, *fin2 = NULL, *fin3 = NULL;
     int ac;
-    int have_output = 0;
+    float SIEMENS_f = 4095.0;  // uint12 range 0-4095
     float beta = 0.2;
     if (argc < 3) return show_help();
 
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
                 fprintf(stderr, "** missing argument for -output\n");
                 return 1;
             }
-            have_output = 1; 
+            use_outpath = true;
             fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
@@ -187,22 +187,7 @@ int main(int argc, char* argv[]) {
         cout << " ########################################## " << endl;
     }
 
-if (have_output == 1) {
-    save_output_nifti(fout, "denoised", nii_denoised, true);
-}
-if (have_output == 0) {
-    string prefix = "denoised_" ;
-    string filename = (string) (fout) ;
-    string outfilename = prefix+filename ;
-    cout <<" writing "<< outfilename << endl; 
-      const char  *fout_1=outfilename.c_str() ;
-    if( nifti_set_filenames(nii_denoised, fout_1 , 1, 1) ) return 1;
-    nifti_image_write( nii_denoised );
-
-    //if( nifti_set_filenames(nii_denoised, outfilename , 1, 1) ) return 1;
-    //nifti_image_write( nii_denoised );
-}
-    
+    save_output_nifti(fout, "denoised", nii_denoised, true, use_outpath);
     save_output_nifti(fout, "border_enhance", nii_phaseerr, true);
 
     cout << "  Finished." << endl;

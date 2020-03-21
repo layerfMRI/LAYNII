@@ -140,41 +140,47 @@ float gaus(float distance, float sigma) {
 // Utility functions
 // ============================================================================
 
-void save_output_nifti(const string path, const string tag,
-                       nifti_image* nii, const bool log) {
-    // Parse path
-    string dir, file, basename, ext, sep;
-    auto pos1 = path.find_last_of('/');
-    if (pos1 != string::npos) {  // For Unix
-        sep = "/";
-        dir = path.substr(0, pos1);
-        file = path.substr(pos1 + 1);
-    } else {  // For Windows
-        pos1 = path.find_last_of('\\');
-        if (pos1 != string::npos) {
-            sep = "\\";
+void save_output_nifti(const string path, const string tag,  nifti_image* nii,
+                       const bool log, const bool use_outpath) {
+    string path_out;
+
+    if (use_outpath) {
+        path_out = path;
+    } else {
+        // Parse path
+        string dir, file, basename, ext, sep;
+        auto pos1 = path.find_last_of('/');
+        if (pos1 != string::npos) {  // For Unix
+            sep = "/";
             dir = path.substr(0, pos1);
             file = path.substr(pos1 + 1);
-        } else {  // Only the filename
-            sep = "";
-            dir = "";
-            file = path;
+        } else {  // For Windows
+            pos1 = path.find_last_of('\\');
+            if (pos1 != string::npos) {
+                sep = "\\";
+                dir = path.substr(0, pos1);
+                file = path.substr(pos1 + 1);
+            } else {  // Only the filename
+                sep = "";
+                dir = "";
+                file = path;
+            }
         }
+
+        // Parse extension
+        auto const pos2 = file.find_first_of('.');
+        basename = file.substr(0, pos2);
+        ext = ".nii";
+
+        // Prepare output path
+        path_out = dir + sep + basename + "_" + tag + ext;
     }
 
-    // Parse extension
-    auto const pos2 = file.find_first_of('.');
-    basename = file.substr(0, pos2);
-    ext = file.substr(pos2);
-
-    // Prepare output path
-    string out_path = dir + sep + basename + "_" + tag + ext;
-
     // Save nifti
-    nifti_set_filenames(nii, out_path.c_str(), 1, 1);
+    nifti_set_filenames(nii, path_out.c_str(), 1, 1);
     nifti_image_write(nii);
     if (log) {
-        log_output(out_path.c_str());
+        log_output(path_out.c_str());
     }
 }
 

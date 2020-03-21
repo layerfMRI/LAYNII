@@ -13,13 +13,13 @@ int show_help(void) {
     "Options:\n"
     "    -help   : Show this help.\n"
     "    -input  : Dataset that should be shorted data.\n"
-    "    -output : (Optional) Output filename. If this parameter is not set \n"
-    "              .\n"
+    "    -output : (Optional) Output filename.\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char *argv[]) {
+    bool use_outpath = false;
     char *fin = NULL, *fout = NULL;
     int ac;
     if (argc < 3) return show_help();
@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "** missing argument for -output\n");
                 return 2;
             }
+            use_outpath = true;
             fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
@@ -64,7 +65,8 @@ int main(int argc, char *argv[]) {
 
     // Cast input data to float
     nifti_image *nii_new = copy_nifti_as_float32(nii);
-    save_output_nifti(fout, "float", nii_new, true);
+
+    save_output_nifti(fout, "float", nii_new, true, use_outpath);
 
     cout << "  Finished." << endl;
     return 0;
