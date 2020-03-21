@@ -20,6 +20,7 @@ int show_help(void) {
     "                 for temporal shifts.\n"
     "    -trialBOCO : First average trials and then do the BOLD correction. \n"
     "                 The parameter is the trial duration in TRs.\n"
+    "    -output    : (Optional) Custom output name. \n"
     "\n"
     "Notes:\n"
     "    - Here it is assumed that BOLD and VASO refer to the double TR: \n"
@@ -31,7 +32,8 @@ int show_help(void) {
 }
 
 int main(int argc, char * argv[]) {
-    char* fin_1 = NULL, * fin_2 = NULL;
+    bool use_outpath = false;
+    char *fin_1 = NULL, *fin_2 = NULL, *fout = NULL;
     int ac, shift = 0;
     int trialdur = 0;
     if (argc < 2) return show_help();
@@ -46,6 +48,7 @@ int main(int argc, char * argv[]) {
                 return 1;
             }
             fin_1 = argv[ac];
+            fout = fin_1;
         } else if (!strcmp(argv[ac], "-BOLD")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -BOLD\n");
@@ -61,6 +64,13 @@ int main(int argc, char * argv[]) {
         } else if (!strcmp(argv[ac], "-shift")) {
             shift = 1;
             cout << "Do a correlation analysis with temporal shifts."  << endl;
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -176,107 +186,85 @@ int main(int argc, char * argv[]) {
                 *(nii_boco_vaso_data + i) = 2;
             }
         }
-        save_output_nifti(fin_1, "correlated", correl_file, false);
+        save_output_nifti(fout, "correlated", correl_file, false);
     }
 
     // ========================================================================
     // Trial average
-if (trialdur!=0) {
+    if (trialdur != 0) {
+        cout << "  Doing BOLD correction after trial average..." << endl;
+        cout << "    Trial duration is " << trialdur
+        << ". This means there are " << (float)size_time / (float)trialdur
+        <<  " trials recorded here." << endl;
 
-cout << " I will also do the BOLD correction after the trial average " << endl; 
+        int nr_trials = size_time / trialdur;
+        // Trial averave file
+        nifti_image *nii_avg1 = nifti_copy_nim_info(nii1);
+        nii_avg1->nt = trialdur;
+        nii_avg1->nvox = nii1->nvox / size_time * trialdur;
+        nii_avg1->datatype = NIFTI_TYPE_FLOAT32;
+        nii_avg1->nbyper = sizeof(float);
+        nii_avg1->data = calloc(nii_avg1->nvox, nii_avg1->nbyper);
+        float  *nii_avg1_data  = static_cast<float*>(nii_avg1->data);
 
-   
-   
-   int nrep = size_time ; 
-   int sizeRead= size_y ;
-   int sizePhase = size_x ;
-   int sizeSlice = size_z ;
-   
-   cout << " Trial duration is " <<trialdur << " this means there are " << (float)nrep/(float)trialdur <<  " trials recorted here " << endl; 
+        nifti_image *nii_avg2 = nifti_copy_nim_info(nii1);
+        nii_avg2->nt = trialdur;
+        nii_avg2->nvox = nii1->nvox / size_time * trialdur;
+        nii_avg2->datatype = NIFTI_TYPE_FLOAT32;
+        nii_avg2->nbyper = sizeof(float);
+        nii_avg2->data = calloc(nii_avg2->nvox, nii_avg2->nbyper);
+        float  *nii_avg1_B_data  = static_cast<float*>(nii_avg2->data);
 
+        float avg_Nulled[trialdur];
+        float avg_BOLD[trialdur];
 
-   int numberofTrials = nrep/trialdur ; 
-   // Trial averave file
-    nifti_image * triav_file    = nifti_copy_nim_info(nii1);
-    triav_file->nt 				= trialdur	; 
-    triav_file->nvox 			= nii1->nvox / nrep * trialdur; 
-    triav_file->datatype 		= NIFTI_TYPE_FLOAT32; 
-    triav_file->nbyper 			= sizeof(float);
-    triav_file->data 			= calloc(triav_file->nvox, triav_file->nbyper);
-    float  *nii_triavg_data 	= (float *) triav_file->data;
-    
-    
-    nifti_image * triav_B_file  = nifti_copy_nim_info(nii1);
-    triav_B_file->nt 			= trialdur	; 
-    triav_B_file->nvox 			= nii1->nvox / nrep * trialdur; 
-    triav_B_file->datatype 		= NIFTI_TYPE_FLOAT32; 
-    triav_B_file->nbyper 		= sizeof(float);
-    triav_B_file->data 			= calloc(triav_B_file->nvox, triav_B_file->nbyper);
-    float  *nii_triavg_B_data 	= (float *) triav_B_file->data;
-    
-    float AV_Nulled[trialdur] ;
-    float AV_BOLD[trialdur]   ; 
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x; ++ix) {
+                    for (int it = 0; it < trialdur; ++it) {
+                        avg_Nulled[it] = 0;
+                        avg_BOLD[it] = 0;
+                    }
+                    for (int it = 0; it < trialdur * nr_trials; ++it) {
+                        int voxel_i = nxyz * it + nxy * iz + nx * iy + ix;
+                        avg_Nulled[it % trialdur] +=
+                            *(nii_nulled_data + voxel_i) / nr_trials;
+                        avg_BOLD[it % trialdur] +=
+                            *(nii_bold_data + voxel_i) / nr_trials;
+                    }
 
+                    for (int it = 0; it < trialdur; ++it) {
+                        int voxel_i = nxyz * it + nxy * iz + nx * iy + ix;
+                        *(nii_avg1_data + voxel_i) = avg_Nulled[it] / avg_BOLD[it];
+                        *(nii_avg1_B_data + voxel_i) = avg_BOLD[it];
 
-    
-    
-	  for(int islice=0; islice<sizeSlice; ++islice){  
-	      for(int iy=0; iy<sizePhase; ++iy){
-	        for(int ix=0; ix<sizeRead; ++ix){
-	              for(int it=0; it<trialdur; ++it){  
-					AV_Nulled[it] = 0 ;
-					AV_BOLD  [it] = 0 ;
-				  }  
-	           	  for(int it=0; it<trialdur*numberofTrials; ++it){  
-        		  		AV_Nulled[it%trialdur] = AV_Nulled[it%trialdur] + (*(nii_nulled_data  + nxyz *(it) +  nxy*islice + nx*ix  + iy  ))/numberofTrials ;	
-        		  		AV_BOLD[it%trialdur]   = AV_BOLD[it%trialdur]   + (*(nii_bold_data  + nxyz *(it) +  nxy*islice + nx*ix  + iy  ))/numberofTrials ;	
-			      }         
-			      
-			      for(int it=0; it<trialdur; ++it){  
-			        *(nii_triavg_data    + nxyz *it +  nxy*islice + nx*ix  + iy  ) = AV_Nulled[it]/AV_BOLD[it] ;
-			        *(nii_triavg_B_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = AV_BOLD[it] ;
+                    }
+                }
+            }
+        }
 
-				  } 
-           } 
-	    }
-	  }
-	
-     // clean VASO values that are unrealistic
-    for(int islice=0; islice<sizeSlice; ++islice){  
-	   for(int iy=0; iy<sizePhase; ++iy){
-	        for(int ix=0; ix<sizeRead; ++ix){
-	        	for(int it=0;  it<trialdur; ++it){  
-	
-	            	if (*(nii_triavg_data + nxyz*it + nxy*islice + nx*ix  + iy  ) <= 0) {
-	            		*(nii_triavg_data + nxyz*it + nxy*islice + nx*ix  + iy  ) = 0 ;
-	            		}
-	            	if (*(nii_triavg_data + nxyz*it + nxy*islice + nx*ix  + iy  ) >= 2) {
-	            		*(nii_triavg_data + nxyz*it + nxy*islice + nx*ix  + iy  ) = 2 ;
-	            		}
+        // Clean VASO values that are unrealistic
+        for (int iz = 0; iz < size_z; ++iz) {
+            for (int iy = 0; iy < size_y; ++iy) {
+                for (int ix = 0; ix < size_x; ++ix) {
+                    for (int it = 0; it < trialdur; ++it) {
+                        int voxel_i = nxyz * it + nxy * iz + nx * iy + ix;
 
-	            }
-        	}	
-	    }
-	  }
+                        if (*(nii_avg1_data + voxel_i) <= 0) {
+                            *(nii_avg1_data + voxel_i) = 0;
+                        }
+                        if (*(nii_avg1_data + voxel_i) >= 2) {
+                            *(nii_avg1_data + voxel_i) = 2;
+                        }
+                    }
+                }
+            }
+        }
+        save_output_nifti(fout, "VASO_trialAV_LN", nii_avg1, true);
+        save_output_nifti(fout, "BOLD_trialAV_LN", nii_avg2, true);
+    }
 
-
-  const char  *fout_trial="VASO_trialAV_LN.nii" ;
-  if( nifti_set_filenames(triav_file, fout_trial , 1, 1) ) return 1;
-  nifti_image_write( triav_file );
-
-  const char  *fout_trial_BOLD="BOLD_trialAV_LN.nii" ;
-  if( nifti_set_filenames(triav_B_file, fout_trial_BOLD , 1, 1) ) return 1;
-  nifti_image_write( triav_B_file );
-
-
-}// Trial Average loop closed
-    
-    const char  *fout_5="VASO_LN.nii" ;
-    if( nifti_set_filenames(nii_boco_vaso, fout_5 , 1, 1) ) return 1;
-    nifti_image_write( nii_boco_vaso );
-    
-//  RENZO needs to include an output option here. For the time beeing, and for the 
-//    save_output_nifti(fin_2, "VASO", nii_boco_vaso, true);
+    save_output_nifti(fout, "VASO_LN", nii_boco_vaso, true, use_outpath);
 
     cout << "  Finished." << endl;
     return 0;
