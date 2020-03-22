@@ -1,4 +1,10 @@
 
+// TODO(Faruk): Curvature shows some artifacts in rim_circles test case. Needs
+// further investiation.
+// TODO(Faruk): First implementation of equi-volume works but it needs
+// extensive testing. I have think I might need to smooth previous derivatives
+// (hotspots, curvature etc.) a bit to make layering smoother on empirical
+// data overall.
 // TODO(Faruk): Put neighbour visits into a function.
 
 #include "../dep/laynii_lib.h"
@@ -1223,8 +1229,10 @@ int main(int argc, char*  argv[]) {
         *(smooth_data + i) = 0;
     }
 
+    // TODO(Faruk): Might make these varibles user defined in CLI
+    float nr_iterations = 10;
     float FWHM_val = 1;
-    for (uint32_t n = 0; n != 10; ++n) {
+    for (uint32_t n = 0; n != nr_iterations; ++n) {
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             if (*(nii_rim_data + i) == 3) {
                 tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
