@@ -1141,95 +1141,191 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Equi-volume layers
     // ========================================================================
-    // nifti_image* hotspots_i = copy_nifti_as_float32(nii_rim);
-    // float* hotspots_i_data = static_cast<float*>(hotspots_i->data);
-    // nifti_image* hotspots_o = copy_nifti_as_float32(nii_rim);
-    // float* hotspots_o_data = static_cast<float*>(hotspots_o->data);
-    //
-    // for (uint32_t i = 0; i != nr_voxels; ++i) {
-    //     *(hotspots_i_data + i) = 0;
-    //     *(hotspots_o_data + i) = 0;
-    // }
-    //
-    // for (uint32_t i = 0; i != nr_voxels; ++i) {
-    //     if (*(nii_rim_data + i) == 3) {
-    //         // Find inner/outer anchors
-    //         j = *(innerGM_id_data + i);
-    //         k = *(outerGM_id_data + i);
-    //
-    //         // Count how many voxels fall inner and outer shells from MidGM
-    //         if (*(curvature_data + i) < 0) {
-    //             if (*(normdistdiff_data + i) <= 0) {
-    //                 *(hotspots_i_data + k) += 1;
-    //             }
-    //             if (*(normdistdiff_data + i) >= 0) {
-    //                 *(hotspots_o_data + k) += 1;
-    //             }
-    //         }
-    //         if (*(curvature_data + i) > 0) {
-    //             if (*(normdistdiff_data + i) <= 0) {
-    //                 *(hotspots_i_data + j) += 1;
-    //             }
-    //             if (*(normdistdiff_data + i) >= 0) {
-    //                 *(hotspots_o_data + j) += 1;
-    //             }
-    //         }
-    //     }
-    // }
-    // save_output_nifti(fin, "hotspots_in", hotspots_i, false);
-    // save_output_nifti(fin, "hotspots_out", hotspots_o, false);
-    //
-    // // ------------------------------------------------------------------------
-    // nifti_image* temp = copy_nifti_as_float32(nii_rim);
-    // float* temp_data = static_cast<float*>(temp->data);
-    // for (uint32_t i = 0; i != nr_voxels; ++i) {
-    //     *(temp_data + i) = 0;
-    // }
-    //
-    // float w;
-    // for (uint32_t i = 0; i != nr_voxels; ++i) {
-    //     if (*(nii_rim_data + i) == 3) {
-    //         // Find mass at each end of the given column
-    //         j = *(innerGM_id_data + i);
-    //         k = *(outerGM_id_data + i);
-    //         if (*(curvature_data + i) == 0) {
-    //             w = 0.5;
-    //         } else if (*(curvature_data + i) < 0) {
-    //             w = *(hotspots_i_data + k) / (*(hotspots_i_data + k) + *(hotspots_o_data + k));
-    //         } else if (*(curvature_data + i) > 0) {
-    //             w = *(hotspots_i_data + j) / (*(hotspots_i_data + j) + *(hotspots_o_data + j));
-    //         }
-    //         *(temp_data + i) = w;
-    //     }
-    // }
-    // save_output_nifti(fin, "equivol_factors", temp);
-    //
-    // float dist1_new, dist2_new, a, b;
-    // for (uint32_t i = 0; i != nr_voxels; ++i) {
-    //     if (*(nii_rim_data + i) == 3) {
-    //         // Find normalized distances from a given point on a column
-    //         float dist1 = *(innerGM_dist_data + i) / *(thickness_data + i);
-    //         float dist2 = *(outerGM_dist_data + i) / *(thickness_data + i);
-    //
-    //         a = *(temp_data + i);
-    //         b = 1 - a;
-    //
-    //         // Perturb using masses to modify distances in simplex space
-    //         tie(dist1_new, dist2_new) = simplex_perturb_2D(dist1, dist2, a, b);
-    //
-    //         // Difference of normalized distances (used in finding midGM)
-    //         *(normdistdiff_data + i) = dist1_new - dist2_new;
-    //
-    //         // Cast distances to integers as number of desired layers
-    //         if (dist1_new != 0) {
-    //             *(nii_layers_data + i) = ceil(nr_layers * dist1_new);
-    //         } else {
-    //             *(nii_layers_data + i) = 1;
-    //         }
-    //     }
-    // }
-    // save_output_nifti(fin, "layers_equivol", nii_layers);
-    // save_output_nifti(fin, "normdistdiff_equivol", normdistdiff, false);
+    nifti_image* hotspots_i = copy_nifti_as_float32(nii_rim);
+    float* hotspots_i_data = static_cast<float*>(hotspots_i->data);
+    nifti_image* hotspots_o = copy_nifti_as_float32(nii_rim);
+    float* hotspots_o_data = static_cast<float*>(hotspots_o->data);
+
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        *(hotspots_i_data + i) = 0;
+        *(hotspots_o_data + i) = 0;
+    }
+
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) == 3) {
+            // Find inner/outer anchors
+            j = *(innerGM_id_data + i);
+            k = *(outerGM_id_data + i);
+
+            // Count how many voxels fall inner and outer shells from MidGM
+            if (*(curvature_data + i) < 0) {
+                if (*(normdistdiff_data + i) <= 0) {
+                    *(hotspots_i_data + k) += 1;
+                }
+                if (*(normdistdiff_data + i) >= 0) {
+                    *(hotspots_o_data + k) += 1;
+                }
+            }
+            if (*(curvature_data + i) > 0) {
+                if (*(normdistdiff_data + i) <= 0) {
+                    *(hotspots_i_data + j) += 1;
+                }
+                if (*(normdistdiff_data + i) >= 0) {
+                    *(hotspots_o_data + j) += 1;
+                }
+            }
+        }
+    }
+    save_output_nifti(fin, "hotspots_in", hotspots_i, false);
+    save_output_nifti(fin, "hotspots_out", hotspots_o, false);
+
+    // ------------------------------------------------------------------------
+    // Compute equi-volume factors
+    // ------------------------------------------------------------------------
+    nifti_image* equivol_factors = copy_nifti_as_float32(nii_rim);
+    float* equivol_factors_data = static_cast<float*>(equivol_factors->data);
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        *(equivol_factors_data + i) = 0;
+    }
+
+    float w;
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) == 3) {
+            // Find mass at each end of the given column
+            j = *(innerGM_id_data + i);
+            k = *(outerGM_id_data + i);
+            if (*(curvature_data + i) == 0) {
+                w = 0.5;
+            } else if (*(curvature_data + i) < 0) {
+                w = *(hotspots_i_data + k)
+                    / (*(hotspots_i_data + k) + *(hotspots_o_data + k));
+            } else if (*(curvature_data + i) > 0) {
+                w = *(hotspots_i_data + j)
+                    / (*(hotspots_i_data + j) + *(hotspots_o_data + j));
+            }
+            *(equivol_factors_data + i) = w;
+        }
+    }
+
+    if (debug_mode) {
+        save_output_nifti(fin, "equivol_factors", equivol_factors);
+    }
+
+    // ------------------------------------------------------------------------
+    // Smooth equi-volume factors for seamless transitions
+    // ------------------------------------------------------------------------
+    nifti_image* smooth = copy_nifti_as_float32(curvature);
+    float* smooth_data = static_cast<float*>(smooth->data);
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        *(smooth_data + i) = 0;
+    }
+
+    float FWHM_val = 1;
+    for (uint32_t n = 0; n != 10; ++n) {
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(nii_rim_data + i) == 3) {
+                tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+                float new_val = 0, total_weight = 0;
+
+                // Start with the voxel itself
+                w = gaus(0, FWHM_val);
+                new_val += *(equivol_factors_data + i) * w;
+                total_weight += w;
+
+                // ------------------------------------------------------------
+                // 1-jump neighbours
+                // ------------------------------------------------------------
+                if (ix != 0) {
+                    j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        w = gaus(dX, FWHM_val);
+                        new_val += *(equivol_factors_data + j) * w;
+                        total_weight += w;
+                    }
+                }
+                if (ix != size_x) {
+                    j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        w = gaus(dX, FWHM_val);
+                        new_val += *(equivol_factors_data + j) * w;
+                        total_weight += w;
+                    }
+                }
+                if (iy != 0) {
+                    j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        w = gaus(dY, FWHM_val);
+                        new_val += *(equivol_factors_data + j) * w;
+                        total_weight += w;
+                    }
+                }
+                if (iy != size_y) {
+                    j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        w = gaus(dY, FWHM_val);
+                        new_val += *(equivol_factors_data + j) * w;
+                        total_weight += w;
+                    }
+                }
+                if (iz != 0) {
+                    j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        w = gaus(dZ, FWHM_val);
+                        new_val += *(equivol_factors_data + j) * w;
+                        total_weight += w;
+                    }
+                }
+                if (iz != size_z) {
+                    j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        w = gaus(dZ, FWHM_val);
+                        new_val += *(equivol_factors_data + j) * w;
+                        total_weight += w;
+                    }
+                }
+                *(smooth_data + i) = new_val / total_weight;
+            }
+        }
+        // Swap image data
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            *(equivol_factors_data + i) = *(smooth_data + i);
+        }
+    }
+    if (debug_mode) {
+        save_output_nifti(fin, "equivol_factors_smooth", smooth, true);
+    }
+
+    // ------------------------------------------------------------------------
+    // Apply equi-volume factors
+    // ------------------------------------------------------------------------
+    float dist1_new, dist2_new, a, b;
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) == 3) {
+            // Find normalized distances from a given point on a column
+            float dist1 = *(innerGM_dist_data + i) / *(thickness_data + i);
+            float dist2 = *(outerGM_dist_data + i) / *(thickness_data + i);
+
+            a = *(equivol_factors_data + i);
+            b = 1 - a;
+
+            // Perturb using masses to modify distances in simplex space
+            tie(dist1_new, dist2_new) = simplex_perturb_2D(dist1, dist2, a, b);
+
+            // Difference of normalized distances (used in finding midGM)
+            *(normdistdiff_data + i) = dist1_new - dist2_new;
+
+            // Cast distances to integers as number of desired layers
+            if (dist1_new != 0) {
+                *(nii_layers_data + i) = ceil(nr_layers * dist1_new);
+            } else {
+                *(nii_layers_data + i) = 1;
+            }
+        }
+    }
+    if (debug_mode) {
+        save_output_nifti(fin, "layers_equivol", nii_layers);
+        save_output_nifti(fin, "normdistdiff_equivol", normdistdiff, false);
+    }
 
     // ========================================================================
     // Middle gray matter for equi-volume
