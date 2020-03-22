@@ -77,7 +77,7 @@ int main(int argc, char*  argv[]) {
     log_welcome("LN_3DGROW_LAYERS");
     log_nifti_descriptives(nii1);
 
-    cout << "  Nr. layers: " << nr_layers << endl;
+    cout << "\n  Nr. layers: " << nr_layers << endl;
 
     // Get dimensions of input
     const uint32_t size_z = nii1->nz;
@@ -155,7 +155,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Grow from WM
     // ========================================================================
-    cout << "  Start growing from inner GM (WM-facing border)..." << endl;
+    cout << "\n  Start growing from inner GM (WM-facing border)..."   << endl;
 
     // Initialize grow volume
     for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -541,7 +541,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Grow from CSF
     // ========================================================================
-    cout << "  Start growing from outer GM..." << endl;
+    cout << "\n  Start growing from outer GM..."   << endl;
 
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 1) {
@@ -924,7 +924,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Layers
     // ========================================================================
-    cout << "  Start doing layers..." << endl;
+    cout << "\n  Start doing layers (equi-distant)..."   << endl;
     float x, y, z, wm_x, wm_y, wm_z, gm_x, gm_y, gm_z;
 
     for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -979,6 +979,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Middle gray matter
     // ========================================================================
+    cout << "\n  Start finding middle gray matter (equi-distant)..."   << endl;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
             // Check sign changes in normalized distance differences between
@@ -1141,6 +1142,8 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Equi-volume layers
     // ========================================================================
+    cout << "\n  Start layers (equi-volume)..."   << endl;
+
     nifti_image* hotspots_i = copy_nifti_as_float32(nii_rim);
     float* hotspots_i_data = static_cast<float*>(hotspots_i->data);
     nifti_image* hotspots_o = copy_nifti_as_float32(nii_rim);
@@ -1330,73 +1333,73 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Middle gray matter for equi-volume
     // ========================================================================
-    // cout << "  Start finding middle gray matter..." << endl;
-    // for (uint32_t i = 0; i != nr_voxels; ++i) {
-    //     *(midGM_data + i) = 0;
-    //     *(midGM_id_data + i) = 0;
-    // }
-    //
-    // for (uint32_t i = 0; i != nr_voxels; ++i) {
-    //     if (*(nii_rim_data + i) == 3) {
-    //         // Check sign changes in normalized distance differences between
-    //         // neighbouring voxels on a column path (a.k.a. streamline)
-    //         if (*(normdistdiff_data + i) == 0) {
-    //             *(midGM_data + i) = 1;
-    //             *(midGM_id_data + i) = i;
-    //         } else {
-    //             float m = *(normdistdiff_data + i);
-    //             float n;
-    //
-    //             // Inner neighbour
-    //             j = *(innerGM_prevstep_id_data + i);
-    //             if (*(nii_rim_data + j) == 3) {
-    //                 n = *(normdistdiff_data + j);
-    //                 if (signbit(m) - signbit(n) != 0) {
-    //                     if (abs(m) < abs(n)) {
-    //                         *(midGM_data + i) = 1;
-    //                         *(midGM_id_data + i) = i;
-    //                     } else if (abs(m) > abs(n)) {  // Closer to prev. step
-    //                         *(midGM_data + j) = 1;
-    //                         *(midGM_id_data + j) = j;
-    //                     } else {  // Equal +/- normalized distance
-    //                         *(midGM_data + i) = 1;
-    //                         *(midGM_id_data + i) = i;
-    //                         *(midGM_data + j) = 1;
-    //                         *(midGM_id_data + j) = i;  // On purpose
-    //                     }
-    //                 }
-    //             }
-    //
-    //             // Outer neighbour
-    //             j = *(outerGM_prevstep_id_data + i);
-    //             if (*(nii_rim_data + j) == 3) {
-    //                 n = *(normdistdiff_data + j);
-    //                 if (signbit(m) - signbit(n) != 0) {
-    //                     if (abs(m) < abs(n)) {
-    //                         *(midGM_data + i) = 1;
-    //                         *(midGM_id_data + i) = i;
-    //                     } else if (abs(m) > abs(n)) {  // Closer to prev. step
-    //                         *(midGM_data + j) = 1;
-    //                         *(midGM_id_data + j) = j;
-    //                     } else {  // Equal +/- normalized distance
-    //                         *(midGM_data + i) = 1;
-    //                         *(midGM_id_data + i) = i;
-    //                         *(midGM_data + j) = 1;
-    //                         *(midGM_id_data + j) = i;  // On purpose
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-    // save_output_nifti(fin, "midGM_equivol", midGM, false);
+    cout << "\n  Start finding middle gray matter (equi-volume)..."   << endl;
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        *(midGM_data + i) = 0;
+        *(midGM_id_data + i) = 0;
+    }
+
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) == 3) {
+            // Check sign changes in normalized distance differences between
+            // neighbouring voxels on a column path (a.k.a. streamline)
+            if (*(normdistdiff_data + i) == 0) {
+                *(midGM_data + i) = 1;
+                *(midGM_id_data + i) = i;
+            } else {
+                float m = *(normdistdiff_data + i);
+                float n;
+
+                // Inner neighbour
+                j = *(innerGM_prevstep_id_data + i);
+                if (*(nii_rim_data + j) == 3) {
+                    n = *(normdistdiff_data + j);
+                    if (signbit(m) - signbit(n) != 0) {
+                        if (abs(m) < abs(n)) {
+                            *(midGM_data + i) = 1;
+                            *(midGM_id_data + i) = i;
+                        } else if (abs(m) > abs(n)) {  // Closer to prev. step
+                            *(midGM_data + j) = 1;
+                            *(midGM_id_data + j) = j;
+                        } else {  // Equal +/- normalized distance
+                            *(midGM_data + i) = 1;
+                            *(midGM_id_data + i) = i;
+                            *(midGM_data + j) = 1;
+                            *(midGM_id_data + j) = i;  // On purpose
+                        }
+                    }
+                }
+
+                // Outer neighbour
+                j = *(outerGM_prevstep_id_data + i);
+                if (*(nii_rim_data + j) == 3) {
+                    n = *(normdistdiff_data + j);
+                    if (signbit(m) - signbit(n) != 0) {
+                        if (abs(m) < abs(n)) {
+                            *(midGM_data + i) = 1;
+                            *(midGM_id_data + i) = i;
+                        } else if (abs(m) > abs(n)) {  // Closer to prev. step
+                            *(midGM_data + j) = 1;
+                            *(midGM_id_data + j) = j;
+                        } else {  // Equal +/- normalized distance
+                            *(midGM_data + i) = 1;
+                            *(midGM_id_data + i) = i;
+                            *(midGM_data + j) = 1;
+                            *(midGM_id_data + j) = i;  // On purpose
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (debug_mode) {
+        save_output_nifti(fin, "midGM_equivol", midGM, false);
+    }
 
     // ========================================================================
     // TODO(Faruk): Might use bspline weights to smooth curvature maps a bit.
     // TODO(Faruk): Might be better to use step 1 id's to define columns.
-    // TODO(Faruk): Mean coordinate of columns might be used in
-    // equivolume layering
 
-    cout << "  Finished." << endl;
+    cout << "\n  Finished." << endl;
     return 0;
 }
