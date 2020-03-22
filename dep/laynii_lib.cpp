@@ -13,8 +13,8 @@ void log_welcome(const char* programname) {
 }
 
 void log_output(const char* filename) {
-    cout << "  Writing output as:" << endl;
-    cout << "    " << filename << endl;
+    cout << "    Writing output as:" << endl;
+    cout << "      " << filename << endl;
 }
 
 void log_nifti_descriptives(nifti_image* nii) {
