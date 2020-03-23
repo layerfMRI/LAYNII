@@ -35,6 +35,7 @@ void save_output_nifti(string filename, string prefix, nifti_image* nii,
                        bool log = true, bool use_outpath = false);
 
 nifti_image* copy_nifti_as_float32(nifti_image* nii);
+nifti_image* copy_nifti_as_float16(nifti_image* nii);
 nifti_image* copy_nifti_as_int32(nifti_image* nii);
 nifti_image* copy_nifti_as_int16(nifti_image* nii);
 
