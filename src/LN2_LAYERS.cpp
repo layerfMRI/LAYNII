@@ -28,6 +28,7 @@ int show_help(void) {
     "    -debug        : (Optional) Write out in between steps of the\n"
     "                    algorithm and other experimental outputs that are\n"
     "                    under development.\n"
+    "    -iterations  : with getting smooth curvature (default 10) \n"
     "\n");
     return 0;
 }
@@ -37,6 +38,7 @@ int main(int argc, char*  argv[]) {
     char* fin = NULL;
     uint16_t ac, nr_layers = 3;
     float column_size = 1;
+    int iterations_smooth = 10;
     bool debug_mode = false;
     if (argc < 2) {
         return show_help();   // typing '-help' is sooo much work
@@ -57,6 +59,12 @@ int main(int argc, char*  argv[]) {
                 fprintf(stderr, "** missing argument for -nr_layers\n");
             } else {
                 nr_layers = atof(argv[ac]);
+            }
+        } else if (!strcmp(argv[ac], "-iterations")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -iterations\n");
+            } else {
+                iterations_smooth = atof(argv[ac]);
             }
         } else if (!strcmp(argv[ac], "-column_size")) {
             if (++ac >= argc) {
@@ -1234,7 +1242,7 @@ int main(int argc, char*  argv[]) {
     }
 
     // TODO(Faruk): Might make these varibles user defined in CLI
-    float nr_iterations = 10;
+    float nr_iterations = (float)iterations_smooth;
     float FWHM_val = 1;
     for (uint32_t n = 0; n != nr_iterations; ++n) {
         for (uint32_t i = 0; i != nr_voxels; ++i) {
