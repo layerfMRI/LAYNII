@@ -12,9 +12,11 @@ int show_help(void) {
     "    LN_LEAKY_LAYERS -rim rim.nii -dim 2 \n"
     "\n"
     "Options:\n"
-    "    -help   : Show this help.\n"
-    "    -rim    : Specify input dataset.\n"
-    "    -dim    : Specify value (2 or 3) layer algorithm.Default is 3 (3D).\n"
+    "    -help         : Show this help.\n"
+    "    -rim          : Specify input dataset.\n"
+    "    -dim          : Specify value (2 or 3) layer algorithm.Default is 3 (3D).\n"
+    "    -itertions    : number of iterations, in most cases 100 (default) should be enough.\n"
+    "    -nr_layers    : number of layers, default is 20.\n"
     "\n"
     "Notes:\n"
     "    - This can be 3D. Hence the rim file should be dmsmooth in all\n"
@@ -26,6 +28,8 @@ int show_help(void) {
 int main(int argc, char * argv[]) {
     char *fin = NULL;
     int ac, dim;
+    int nr_iterations = 30 ; 
+    int nr_layers = 20 ; 
     if (argc < 2) return show_help();
 
     // Process user options.
@@ -34,16 +38,28 @@ int main(int argc, char * argv[]) {
             return show_help();
         } else if (!strcmp(argv[ac], "-rim")) {
             if (++ac >= argc) {
-                fprintf(stderr, " * * missing argument for -input\n");
+                fprintf(stderr, " * * missing argument for -rim\n");
                 return 1;
             }
             fin = argv[ac];
         } else if (!strcmp(argv[ac], "-dim")) {
             if (++ac >= argc) {
-                fprintf(stderr, " * * missing argument for -input\n");
+                fprintf(stderr, " * * missing argument for -dim\n");
                 return 1;
             }
             dim = atof(argv[ac]);
+        } else if (!strcmp(argv[ac], "-iterations")) {
+            if (++ac >= argc) {
+                fprintf(stderr, " * * missing argument for -iterations\n");
+                return 1;
+            }
+            nr_iterations = atof(argv[ac]);
+        } else if (!strcmp(argv[ac], "-nr_layers")) {
+            if (++ac >= argc) {
+                fprintf(stderr, " * * missing argument for -nr_layers\n");
+                return 1;
+            }
+            nr_layers = atof(argv[ac]);
         } else {
             fprintf(stderr, " * * invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -89,22 +105,24 @@ int main(int argc, char * argv[]) {
     float* smooth_data = static_cast<float*>(smooth->data);
     nifti_image* layers = copy_nifti_as_float32(nii_rim);
     float* layers_data = static_cast<float*>(layers->data);
-    nifti_image* leaky = copy_nifti_as_float32(nii_rim);
-    float* leaky_data = static_cast<float*>(leaky->data);
-
+    nifti_image* leaky = copy_nifti_as_int16(nii_rim);
+    int16_t* leaky_data = static_cast<int16_t*>(leaky->data);
+    nifti_image* gaus_weigth = copy_nifti_as_float32(nii_rim);
+    float* gaus_weigth_data = static_cast<float*>(gaus_weigth->data);
+    
     // ========================================================================
-    float kernel_size = 2;  // Corresponds to one voxel sice.
-    int vic = max(1., 2. * kernel_size);  // Ignore if voxel is too far
+    float kernel_size = 1;  // Corresponds to one voxel sice.
+    int vic = max(1., 1. * kernel_size);  // Ignore if voxel is too far
     float d = 0.;
     cout << "  vic = " << vic << endl;
     cout << "  Kernel size = " << kernel_size << endl;
 
     for (int i = 0; i < nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 1) {
-            *(layers_data + i) = -200.;
+            *(layers_data + i) = 200.;
         }
         if (*(nii_rim_data + i) == 2) {
-            *(layers_data + i) = 200.;
+            *(layers_data + i) = -200.;
         }
         if (*(nii_rim_data + i) == 3) {
             *(layers_data + i) = 0.;
@@ -114,7 +132,10 @@ int main(int argc, char * argv[]) {
     // ========================================================================
     // Start iterative loop here
     // ========================================================================
-    int iter_max = 500;
+    int iter_max = nr_iterations ; 
+    float total_weigth = 0;
+    int voxel_j = 0; 
+    float w =  0 ; 
 
     for (int iter = 0; iter < iter_max; ++iter) {
         cout << "\r  Iteration: " << iter << " of " << iter_max << flush;
@@ -122,10 +143,12 @@ int main(int argc, char * argv[]) {
             for (int iy = 0; iy < size_y; ++iy) {
                 for (int ix = 0; ix < size_x; ++ix) {
                     int voxel_i = nxy * iz + nx * iy + ix;
-                    *(smooth_data + voxel_i) = 0;
-
-                    if (*(nii_rim_data + voxel_i)  > 0) {
-                        float total_weigth = 0;
+                    if (*(nii_rim_data + voxel_i)  == 3) {
+                      *(smooth_data + voxel_i) = *(layers_data + voxel_i);
+                      *(gaus_weigth_data + voxel_i) = 1; 
+                    
+                    
+                         total_weigth = 0;
 
                         int jz_start = max(0, iz - vic);
                         int jz_stop = min(iz + vic + 1, size_z);
@@ -137,22 +160,22 @@ int main(int argc, char * argv[]) {
                         for (int jz = jz_start; jz < jz_stop; ++jz) {
                             for (int jy = jy_start; jy < jy_stop; ++jy) {
                                 for (int jx = jx_start; jx < jx_stop; ++jx) {
-                                    int voxel_j = nxy * jz + nx * jy + jx;
-                                    if (*(nii_rim_data + voxel_j)  > 0) {
+                                     voxel_j = nxy * jz + nx * jy + jx;
+                                    
                                         d = dist((float)ix, (float)iy, (float)iz,
                                                  (float)jx, (float)jy, (float)jz,
                                                  dX, dY, dZ);
-                                        if (d < vic && *(nii_rim_data + voxel_i) == 3) {
-                                            float w = gaus(d, kernel_size);
-                                            *(smooth_data + voxel_i) += *(layers_data + voxel_j) * w;
-                                            total_weigth += w;
+                                        if (*(nii_rim_data + voxel_j)  > 0. ) {
+                                            w = gaus(d, kernel_size);
+                                            *(smooth_data + voxel_i)      += *(layers_data + voxel_j) * w;
+                                            *(gaus_weigth_data + voxel_i) += w;
                                         }
-                                    }
+                                    
                                 }
                             }
                         }
-                        if (total_weigth >= 0) {
-                            *(smooth_data + voxel_i) /= total_weigth;
+                        if (*(gaus_weigth_data + voxel_i) > 0) {
+                            *(smooth_data + voxel_i) /= *(gaus_weigth_data + voxel_i);
                         }
                     }
                 }
@@ -163,10 +186,10 @@ int main(int argc, char * argv[]) {
                 for (int ix = 0; ix < size_x; ++ix) {
                     int voxel_i = nxy * iz + nx * iy + ix;
                     if (*(nii_rim_data + voxel_i) == 1) {
-                        *(layers_data + voxel_i) = -200;
+                        *(layers_data + voxel_i) = 200.0;
                     }
                     if (*(nii_rim_data + voxel_i) == 2) {
-                        *(layers_data + voxel_i) = 200;
+                        *(layers_data + voxel_i) = -200.0;
                     }
                     if (*(nii_rim_data + voxel_i) == 3) {
                         *(layers_data + voxel_i) = *(smooth_data + voxel_i);
@@ -175,7 +198,7 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-
+/*
     // ------------------------------------------------------------------------
     for (int i = 0; i < nr_voxels; ++i) {
         *(leaky_data + i) = 2 + 19 * (*(smooth_data + i) - (-200))
@@ -184,7 +207,7 @@ int main(int argc, char * argv[]) {
             *(leaky_data + i) = 1;
         }
         if (*(nii_rim_data + i) == 2) {
-            *(leaky_data + i) = 21;
+            *(leaky_data + i) = nr_layers;
         }
         if (*(nii_rim_data + i) == 0) {
             *(leaky_data + i) = 0;
@@ -193,19 +216,15 @@ int main(int argc, char * argv[]) {
             *(leaky_data + i) = 0;
         }
     }
-
+*/
     for (int i = 0; i < nr_voxels; ++i) {
         if (*(nii_rim_data + i) != 0) {
-            *(leaky_data + i) = floor(22 - *(leaky_data + i));
-        }
-        if (*(leaky_data + i) == 20) {
-            *(leaky_data + i) = 19;
-        }
-        if (*(leaky_data + i) == 21) {
-            *(leaky_data + i) = 20;
+            *(leaky_data + i) = (int16_t)  (1+floor((*(layers_data + i)+200.)/400.*(nr_layers-0.5)));
         }
     }
+   
     save_output_nifti(fin, "leaky_layers", leaky, true);
+    //save_output_nifti(fin, "gauswight", gaus_weigth, true); 
 
     cout << "  Finished." << endl;
     return 0;
