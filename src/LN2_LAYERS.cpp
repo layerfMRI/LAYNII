@@ -38,7 +38,7 @@ int main(int argc, char*  argv[]) {
     char* fin = NULL;
     uint16_t ac, nr_layers = 3;
     bool debug_mode = false, devel_mode = false;
-    int iter_smooth = 10;
+    uint16_t iter_smooth = 10;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -1072,7 +1072,7 @@ int main(int argc, char*  argv[]) {
         }
     }
     if (debug_mode) {
-        save_output_nifti(fin, "curvature_init", curvature, true);
+        save_output_nifti(fin, "curvature_init", curvature, false);
     }
 
     // ========================================================================
@@ -1205,10 +1205,7 @@ int main(int argc, char*  argv[]) {
             *(equivol_factors_data + i) = 0;
         }
 
-    // TODO(Faruk): Might make these varibles user defined in CLI
-    float nr_iterations = static_cast<float>(iter_smooth);
-    float w;
-    for (uint32_t n = 0; n != nr_iterations; ++n) {
+        float w;
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             if (*(nii_rim_data + i) == 3) {
                 // Find mass at each end of the given column
@@ -1228,7 +1225,7 @@ int main(int argc, char*  argv[]) {
         }
 
         if (debug_mode) {
-            save_output_nifti(fin, "equivol_factors", equivol_factors);
+            save_output_nifti(fin, "equivol_factors", equivol_factors, false);
         }
 
         // ------------------------------------------------------------------------
@@ -1240,10 +1237,8 @@ int main(int argc, char*  argv[]) {
             *(smooth_data + i) = 0;
         }
 
-        // TODO(Faruk): Might make these varibles user defined in CLI
-        float nr_iterations = 10;
-        float FWHM_val = 1;
-        for (uint32_t n = 0; n != nr_iterations; ++n) {
+        float FWHM_val = 1;  // TODO(Faruk): Might tweak this one
+        for (uint16_t n = 0; n != iter_smooth; ++n) {
             for (uint32_t i = 0; i != nr_voxels; ++i) {
                 if (*(nii_rim_data + i) == 3) {
                     tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
@@ -1314,7 +1309,7 @@ int main(int argc, char*  argv[]) {
             }
         }
         if (debug_mode) {
-            save_output_nifti(fin, "equivol_factors_smooth", smooth, true);
+            save_output_nifti(fin, "equivol_factors_smooth", smooth, false);
         }
 
         // ------------------------------------------------------------------------
@@ -1411,7 +1406,7 @@ int main(int argc, char*  argv[]) {
                 }
             }
         }
-        save_output_nifti(fin, "midGM_equivol", midGM, false);
+        save_output_nifti(fin, "midGM_equivol", midGM, true);
     }
 
     // ========================================================================
