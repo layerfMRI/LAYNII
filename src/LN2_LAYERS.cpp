@@ -24,9 +24,10 @@ int show_help(void) {
     "    -help         : Show this help. \n"
     "    -rim          : Specify input dataset.\n"
     "    -nr_layers    : Number of layers. Default is 3.\n"
-    "    -column_size  : 1.\n"
-    "    -debug        : optional flag to write out in between steps of\n"
-    "                    the algorithm.\n"
+    "    -column_size  : [Feature in development]\n"
+    "    -debug        : (Optional) Write out in between steps of the\n"
+    "                    algorithm and other experimental outputs that are\n"
+    "                    under development.\n"
     "\n");
     return 0;
 }
