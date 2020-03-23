@@ -837,6 +837,9 @@ int main(int argc, char * argv[]) {
                     if (*(nim_input_data + nxy * iz + nx * ix + iy) != 0) {
                         *(nii_layers_data + nxy * iz + nx * ix + iy) = (int)((double) *(nii_layers_data + nxy * iz + nx * ix + iy) * (double) (Nlayer_real - 1) / ((double)(Nlayer)) + 1.5);
                     }
+                    if (*(nim_input_data + nxy * iz + nx * ix + iy) == 1) {
+                        *(nii_layers_data + nxy * iz + nx * ix + iy) = Nlayer_real;
+                    }
                 }
             }
         }
