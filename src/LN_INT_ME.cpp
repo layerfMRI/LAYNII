@@ -4,11 +4,12 @@
 
 int show_help(void) {
     printf(
-    "LN_SHORT_ME: Convert nifti datatype to SHORT (INT16). \n"
+    "LN_INT_ME: Convert nifti datatype to intager values in SHORT (INT16). \n"
+    "           This can be usefull to convert a value of 3.00000 to 31\n"
     "\n"
     "Usage:\n"
-    "    LN_SHORT_ME -input data_file.nii \n"
-    "    LN_SHORT_ME -input data_file.nii -output output_filename.nii \n"
+    "    LN_INT_ME -input data_file.nii \n"
+    "    LN_INT_ME -input data_file.nii -output output_filename.nii \n"
     "\n"
     "Options:\n"
     "    -help   : Show this help.\n"
@@ -60,7 +61,7 @@ int main(int argc, char *argv[]) {
         return 2;
     }
 
-    log_welcome("LN_SHORT_ME");
+    log_welcome("LN_INT_ME");
     log_nifti_descriptives(nii);
 
     // Cast input data to short (int16)
