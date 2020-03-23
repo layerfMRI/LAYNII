@@ -21,9 +21,12 @@ int show_help(void) {
     "    LN2_LAYERS -rim rim.nii \n"
     "\n"
     "Options:\n"
-    "    -help       : Show this help. \n"
-    "    -rim        : Specify input dataset.\n"
-    "    -nr_layers  : Number of layers. Default is 3.\n"
+    "    -help         : Show this help. \n"
+    "    -rim          : Specify input dataset.\n"
+    "    -nr_layers    : Number of layers. Default is 3.\n"
+    "    -column_size  : 1.\n"
+    "    -debug        : optional flag to write out in between steps of\n"
+    "                    the algorithm.\n"
     "\n");
     return 0;
 }
