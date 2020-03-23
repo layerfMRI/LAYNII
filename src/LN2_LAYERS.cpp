@@ -28,6 +28,7 @@ int show_help(void) {
     "    -debug        : (Optional) Save in between steps of the algorithm.\n"
     "    -devel        : (Optional) Save experimental outputs that are under"
     "                  : development.\n"
+    "    -iter_smooth  : (Optional) Nr. of iterations in experimental part.\n"
     "\n");
     return 0;
 }
@@ -37,6 +38,7 @@ int main(int argc, char*  argv[]) {
     char* fin = NULL;
     uint16_t ac, nr_layers = 3;
     bool debug_mode = false, devel_mode = false;
+    int iter_smooth = 10;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -54,6 +56,12 @@ int main(int argc, char*  argv[]) {
                 fprintf(stderr, "** missing argument for -nr_layers\n");
             } else {
                 nr_layers = atof(argv[ac]);
+            }
+        } else if (!strcmp(argv[ac], "-iter_smooth")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -iter_smooth\n");
+            } else {
+                iter_smooth = atof(argv[ac]);
             }
         } else if (!strcmp(argv[ac], "-debug")) {
             debug_mode = true;
@@ -1197,7 +1205,10 @@ int main(int argc, char*  argv[]) {
             *(equivol_factors_data + i) = 0;
         }
 
-        float w;
+    // TODO(Faruk): Might make these varibles user defined in CLI
+    float nr_iterations = static_cast<float>(iter_smooth);
+    float w;
+    for (uint32_t n = 0; n != nr_iterations; ++n) {
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             if (*(nii_rim_data + i) == 3) {
                 // Find mass at each end of the given column
