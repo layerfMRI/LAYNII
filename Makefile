@@ -36,6 +36,7 @@ LOW_PRIORITY	=	LN_3DCOLUMNS \
 					LN_TEMPSMOOTH \
 					LN_TRIAL \
 					LN_PHYSIO_PARS \
+					LN_INT_ME \
 
 LAYNII2	= LN2_LAYERS
 
@@ -98,6 +99,9 @@ LN_SHORT_ME:
 	$(CC) -c -std=c++11 -o  obj/LN_SHORT_ME.o src/LN_SHORT_ME.cpp
 	$(CC) -o $@ $(CFLAGS) obj/LN_SHORT_ME.o $(LIBRARIES)
 
+LN_INT_ME:
+	$(CC) -c -std=c++11 -o  obj/LN_INT_ME.o src/LN_INT_ME.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_INT_ME.o $(LIBRARIES)
 
 LN_3DCOLUMNS:
 	$(CC) -c -std=c++11 -o  obj/LN_3DCOLUMNS.o src/LN_3DCOLUMNS.cpp
