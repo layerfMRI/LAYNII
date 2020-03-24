@@ -83,17 +83,17 @@ int main(int argc, char*  argv[]) {
 
     // ========================================================================
     // Fix datatype issues
-    nifti_image* nim_file_1 = copy_nifti_as_float32(nii1);
-    float* nii1_data = static_cast<float*>(nim_file_1->data);
-    nifti_image* nim_file_2 = copy_nifti_as_float32(nii2);
-    float* nii2_data = static_cast<float*>(nim_file_2->data);
+    nifti_image* nim_file_1 = copy_nifti_as_int16(nii1);
+    short* nii1_data = static_cast<short*>(nim_file_1->data);
+    nifti_image* nim_file_2 = copy_nifti_as_int16(nii2);
+    short* nii2_data = static_cast<short*>(nim_file_2->data);
 
     // ========================================================================
     // Initialize min-max inversely to increas-decrease in the loop
     int min_z = 10000, max_z = 0;
     int min_x = 10000, max_x = 0;
     int min_y = 10000, max_y = 0;
-    float mask_val = 0;
+    short mask_val = 0;
     for (int iz = 0; iz < size_z; ++iz) {
         for (int iy = 0; iy < size_y; ++iy) {
             for (int ix = 0; ix < size_x; ++ix) {
@@ -122,10 +122,10 @@ int main(int argc, char*  argv[]) {
     nii_new->ny = new_size_y;
     nii_new->nz = new_size_z;
     nii_new->nvox = new_nr_voxels;
-    nii_new->datatype = NIFTI_TYPE_FLOAT32;
-    nii_new->nbyper = sizeof(float);
+    nii_new->datatype = NIFTI_TYPE_INT16;
+    nii_new->nbyper = sizeof(short);
     nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
-    float* nii_new_data = static_cast<float*>(nii_new->data);
+    short* nii_new_data = static_cast<short*>(nii_new->data);
 
     // ========================================================================
     // Copy voxel from the bigger input nifti image
