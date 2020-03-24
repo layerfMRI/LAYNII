@@ -26,3 +26,4 @@
 ../LN_TEMPSMOOTH -input lo_BOLD_intemp.nii -gaus 1
 ../LN_TRIAL -input lo_BOLD_intemp.nii -trialdur 20
 ../LN_ZOOM -mask sc_layers_3dcolumns.nii -input sc_UNI.nii
+../LN_LOITUMA -equidist sc_distlay_1000.nii -leaky sc_leakylay_1000.nii -FWHM 1 -nr_layers 10

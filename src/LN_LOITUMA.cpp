@@ -8,7 +8,7 @@ int show_help( void )
       "    This program does not necessarily assume any curcatures smoothness ,\n"
       "    ,\n"
       "\n"
-      "    basic usage: LN_LOITUMA -equidist layers_equi_dist.nii -leaky layers_leaky.nii \n"
+      "    basic usage: LN_LOITUMA -equidist sc_rim_layers.nii -leaky sc_rim_leaky_layers.nii -FWHM 1 -nr_layers 10 \n"
       "\n"
       "\n"
       "   This program now supports INT16, INT32 and FLOAT23 \n"
@@ -22,15 +22,15 @@ int show_help( void )
       "                               Ideally, the cortex is devided into 1000 layers.  \n"
       "                               The layers are estimated based on the leaky-layer principle.  \n"
       "       -FWHM                 : Optional parameter to enforce a smooth curvature \n"
-      "       -nr_layers            : Optional parameter to enforce a smooth curvature \n"
+      "       -nr_layers            : Optional parameter of the number of layers (default is 20) \n"
       "       -output               : Optional parameter for output fine name (path) \n"
       "                               default is equivol_layers_.nii in current folder \n"
       "                                \n"
       "                                \n"
       "                                \n"
       "                               If you run this on EPI-T1 data consider preparing them as follwos, E.g:  \n"
-      "                               LN_GROWLAYERS -rim rim.nii -N 1000 \n"
-      "                               LN_LEAKY_LAYERS -rim rim.nii -nr_layers 100 \n"     
+      "                               LN_GROW_LAYERS -rim sc_rim.nii -N 1000 \n"
+      "                               LN_LEAKY_LAYERS -rim sc_rim.nii -nr_layers 1000 -iterations 100 \n"     
       "\n");
    return 0;
 }
@@ -40,7 +40,7 @@ int main(int argc, char * argv[])
    bool use_outpath = false;
    char       * fleakyi=NULL, * fdisti=NULL,  * froii=NULL ;
    const char * fout="equivol_layers.nii";
-   int          ac ; 
+   int          ac, nr_layers = 20  ; 
    float        FWHM_val=1  ;
    if( argc < 3 ) return show_help();   // typing '-help' is sooo much work 
 
@@ -55,6 +55,14 @@ int main(int argc, char * argv[])
             return 1;
          }
          fdisti = argv[ac];  // no string copy, just pointer assignment 
+      }
+      else if( ! strcmp(argv[ac], "-nr_layers") ) {
+        if( ++ac >= argc ) {
+            fprintf(stderr, "** missing argument for -nr_layers\n");
+            return 1;
+         }
+         nr_layers = atof(argv[ac]);  // no string copy, just pointer assignment 
+         cout << "I will estimate "  << nr_layers << " layers" << endl; 
       }
       else if( ! strcmp(argv[ac], "-FWHM") ) {
         if( ++ac >= argc ) {
@@ -136,6 +144,7 @@ int main(int argc, char * argv[])
        uint32_t ix, iy, iz, j, k;
        float w = 0;
        
+        cout << " smoothing in GM " << endl; 
 
         // ------------------------------------------------------------------------
         // Smooth equi-dist data within GM
@@ -149,6 +158,8 @@ int main(int argc, char * argv[])
             *(smooth_data + i) = 0;
             *(smooth_eqdist_data + i ) = *(nii_dist_data + i ) ; 
         }
+                cout << " here 4 " << endl; 
+
 
         for (uint16_t n = 0; n != iter_smooth; ++n) {
             for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -220,11 +231,13 @@ int main(int argc, char * argv[])
                 *(smooth_eqdist_data + i) = *(smooth_data + i);
             }
         }
+        cout << " here 5 " << endl; 
 
             save_output_nifti(fout, "smooth_equi_dist.nii", smooth_eqdist, false);
         for (uint32_t i = 0; i != nr_voxels; ++i) *(nii_dist_data + i) = *(smooth_eqdist_data + i) ; 
    } // smoothing loop closed
    
+        cout << " estimating equivol " << endl; 
 
         // ------------------------------------------------------------------------
         // estimating equ vol
@@ -356,17 +369,35 @@ cout << " min layer is " <<  min_layer << "   max layers is " << max_layer << en
                 *(smooth_eqvol_data + i) = *(smooth_data + i);
             }
         }
+        
 
-            save_output_nifti(fout, "", smooth_eqvol,true, use_outpath);
-
-
+           // save_output_nifti(fout, "", smooth_eqvol,true, use_outpath);
+            
+        for (uint32_t i = 0; i != nr_voxels; ++i) *(equi_vol_data + i) = *(smooth_eqvol_data + i) ; 
+            
    } // smoothing loop closed
 
 
 
+            for (uint32_t i = 0; i != nr_voxels; ++i)  {
+                if (*(nii_leak_data + i) > 0){
+                    *(equi_vol_data + i) = floor ((float)(*(equi_vol_data + i))*(float)(nr_layers)/(float)max_layer + 1.); 
+                    *(nii_dist_data + i) = floor ((float)(*(nii_dist_data + i))*(float)(nr_layers)/(float)max_layer + 1.); 
+                    *(nii_leak_data + i) = floor ((float)(*(nii_leak_data + i))*(float)(nr_layers)/(float)max_layer + 1.); 
+                    if (*(equi_vol_data + i) > nr_layers) *(equi_vol_data + i) = nr_layers;
+                    if (*(nii_dist_data + i) > nr_layers) *(nii_dist_data + i) = nr_layers;
+                    if (*(nii_leak_data + i) > nr_layers) *(nii_leak_data + i) = nr_layers;
+                }
+            }
+    const char *fouteqvol = "equi_volume_layers.nii"; 
+    save_output_nifti(fouteqvol, "", equi_vol,true,true);
+    const char *fouteqdis = "equi_distance_layers.nii"; 
+    save_output_nifti(fouteqdis, "", nii_dist,true,true);
+    const char *foutleaky = "leaky_layers.nii"; 
+    save_output_nifti(foutleaky, "", nii_leak,true,true);
+    
+     //   save_output_nifti(fout, "denoised", nii_denoised, true, use_outpath);
 
-
-    save_output_nifti(fout, "unsmoothed_equi_vol.nii", equi_vol,false); 
 
   return 0;
 }
