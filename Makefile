@@ -37,6 +37,7 @@ LOW_PRIORITY	=	LN_3DCOLUMNS \
 					LN_TRIAL \
 					LN_PHYSIO_PARS \
 					LN_INT_ME \
+					LN_LOITUMA \
 
 LAYNII2	= LN2_LAYERS
 
@@ -154,6 +155,10 @@ LN_TEMPSMOOTH:
 LN_TRIAL:
 	$(CC) -c -std=c++11 -o  obj/LN_TRIAL.o src/LN_TRIAL.cpp
 	$(CC) -o $@ $(CFLAGS) obj/LN_TRIAL.o $(LIBRARIES)
+
+LN_LOITUMA:
+	$(CC) -c -std=c++11 -o  obj/LN_LOITUMA.o src/LN_LOITUMA.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_LOITUMA.o $(LIBRARIES)
 
 LN_PHYSIO_PARS:
 	$(CC) -c -std=c++11 -o  obj/LN_PHYSIO_PARS.o src/LN_PHYSIO_PARS.cpp
