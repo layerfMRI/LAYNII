@@ -177,51 +177,57 @@ int main(int argc, char * argv[])
                     // ------------------------------------------------------------
                     if (ix != 0) {
                         j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                        if (*(nii_leak_data + j) > 0) {
+                        if (j < nr_voxels && j >= 0 ){
+                        if (*(nii_leak_data + j ) > 0 ) {
                             w = gaus(dX, FWHM_val);
                             new_val += *(smooth_eqdist_data + j) * w;
                             total_weight += w;
-                        }
+                        }}
                     }
-                    if (ix != size_x) {
+                    if (ix != size_x) { 
                         j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                        if (j < nr_voxels && j >= 0 ){
                         if (*(nii_leak_data + j) > 0) {
                             w = gaus(dX, FWHM_val);
                             new_val += *(smooth_eqdist_data + j) * w;
                             total_weight += w;
-                        }
+                        }}
                     }
                     if (iy != 0) {
                         j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                        if (j < nr_voxels && j >= 0 ){
                         if (*(nii_leak_data + j) > 0) {
                             w = gaus(dY, FWHM_val);
                             new_val += *(smooth_eqdist_data + j) * w;
                             total_weight += w;
-                        }
+                        }}
                     }
                     if (iy != size_y) {
                         j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                        if (j < nr_voxels && j >= 0 ){
                         if (*(nii_leak_data + j) > 0) {
                             w = gaus(dY, FWHM_val);
                             new_val += *(smooth_eqdist_data + j) * w;
                             total_weight += w;
-                        }
+                        }}
                     }
                     if (iz != 0) {
                         j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                        if (j < nr_voxels && j >= 0 ){
                         if (*(nii_leak_data + j) > 0) {
                             w = gaus(dZ, FWHM_val);
                             new_val += *(smooth_eqdist_data + j) * w;
                             total_weight += w;
-                        }
+                        }}
                     }
                     if (iz != size_z) {
                         j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                        if (j < nr_voxels && j >= 0 ){
                         if (*(nii_leak_data + j) > 0) {
                             w = gaus(dZ, FWHM_val);
                             new_val += *(smooth_eqdist_data + j) * w;
                             total_weight += w;
-                        }
+                        }}
                     }
                     *(smooth_data + i) = new_val / total_weight;
                 }
@@ -315,51 +321,57 @@ cout << " min layer is " <<  min_layer << "   max layers is " << max_layer << en
                     // ------------------------------------------------------------
                     if (ix != 0) {
                         j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                        if (j < nr_voxels && j >= 0 ) {
                         if (*(nii_leak_data + j) > 0) {
                             w = gaus(dX, FWHM_val);
                             new_val += *(smooth_eqvol_data + j) * w;
                             total_weight += w;
-                        }
+                        }}
                     }
                     if (ix != size_x) {
                         j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                        if (j < nr_voxels && j >= 0 ) {
                         if (*(nii_leak_data + j) > 0) {
                             w = gaus(dX, FWHM_val);
                             new_val += *(smooth_eqvol_data + j) * w;
                             total_weight += w;
-                        }
+                        }}
                     }
                     if (iy != 0) {
                         j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                        if (j < nr_voxels && j >= 0 ) {
                         if (*(nii_leak_data + j) > 0) {
                             w = gaus(dY, FWHM_val);
                             new_val += *(smooth_eqvol_data + j) * w;
                             total_weight += w;
-                        }
+                        }}
                     }
                     if (iy != size_y) {
                         j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                        if (j < nr_voxels && j >= 0 ) {
                         if (*(nii_leak_data + j) > 0) {
                             w = gaus(dY, FWHM_val);
                             new_val += *(smooth_eqvol_data + j) * w;
                             total_weight += w;
-                        }
+                        }}
                     }
                     if (iz != 0) {
                         j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                        if (j < nr_voxels && j >= 0 ) {
                         if (*(nii_leak_data + j) > 0) {
                             w = gaus(dZ, FWHM_val);
                             new_val += *(smooth_eqvol_data + j) * w;
                             total_weight += w;
-                        }
+                        }}
                     }
                     if (iz != size_z) {
                         j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                        if (j < nr_voxels && j >= 0 ) {
                         if (*(nii_leak_data + j) > 0) {
                             w = gaus(dZ, FWHM_val);
                             new_val += *(smooth_eqvol_data + j) * w;
                             total_weight += w;
-                        }
+                        }}
                     }
                     *(smooth_data + i) = new_val / total_weight;
                 }
