@@ -4,8 +4,7 @@
 
 int show_help(void) {
     printf(
-    "LN_INT_ME: Convert nifti datatype to intager values in SHORT (INT16). \n"
-    "           This can be usefull to convert a value of 3.00000 to 31\n"
+    "LN_INT_ME: Convert nifti datatype to INT16.\n"
     "\n"
     "Usage:\n"
     "    LN_INT_ME -input data_file.nii \n"
@@ -66,7 +65,7 @@ int main(int argc, char *argv[]) {
 
     // Cast input data to short (int16)
     nifti_image *nii_new = copy_nifti_as_int16(nii);
-    save_output_nifti(fout, "short", nii_new, true, use_outpath);
+    save_output_nifti(fout, "int16", nii_new, true, use_outpath);
 
     cout << "  Finished." << endl;
     return 0;
