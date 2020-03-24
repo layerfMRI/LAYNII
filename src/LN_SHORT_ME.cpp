@@ -4,7 +4,7 @@
 
 int show_help(void) {
     printf(
-    "LN_SHORT_ME: Convert nifti datatype to SHORT (INT16). \n"
+    "LN_SHORT_ME: Convert nifti datatype to SHORT. \n"
     "\n"
     "Usage:\n"
     "    LN_SHORT_ME -input data_file.nii \n"
