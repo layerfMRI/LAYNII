@@ -1253,7 +1253,7 @@ int main(int argc, char*  argv[]) {
                     // 1-jump neighbours
                     // ------------------------------------------------------------
                     if (ix != 0) {
-                        j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                        j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);  // Comment from Renzo. If I get this right, you might be stepping out of your memory bounds here. So for real data that are not padded on each side, you will run into segmentation fault errors. You could fix is by puting it in another if loop if: (j < nr_voxels && j >= 0 ) {
                         if (*(nii_rim_data + j) == 3) {
                             w = gaus(dX, FWHM_val);
                             new_val += *(equivol_factors_data + j) * w;
