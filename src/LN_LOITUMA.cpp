@@ -30,7 +30,9 @@ int show_help( void )
       "                                \n"
       "                               If you run this on EPI-T1 data consider preparing them as follwos, E.g:  \n"
       "                               LN_GROW_LAYERS -rim sc_rim.nii -N 1000 -vinc 60 -threeD \n"
-      "                               LN_LEAKY_LAYERS -rim sc_rim.nii -nr_layers 1000 -iterations 100 \n"     
+      "                               LN_LEAKY_LAYERS -rim sc_rim.nii -nr_layers 1000 -iterations 100 \n"   
+      "                                \n"
+      "                               Just like the Loituma girl, this program uses leeks to make volume \n"  
       "\n");
    return 0;
 }
