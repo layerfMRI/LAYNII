@@ -29,7 +29,7 @@ int show_help( void )
       "                                \n"
       "                                \n"
       "                               If you run this on EPI-T1 data consider preparing them as follwos, E.g:  \n"
-      "                               LN_GROW_LAYERS -rim sc_rim.nii -N 1000 \n"
+      "                               LN_GROW_LAYERS -rim sc_rim.nii -N 1000 -vinc 60 -threeD \n"
       "                               LN_LEAKY_LAYERS -rim sc_rim.nii -nr_layers 1000 -iterations 100 \n"     
       "\n");
    return 0;
@@ -239,7 +239,7 @@ int main(int argc, char * argv[])
         }
         cout << " here 5 " << endl; 
 
-            save_output_nifti(fout, "smooth_equi_dist.nii", smooth_eqdist, false);
+           // save_output_nifti(fout, "smooth_equi_dist.nii", smooth_eqdist, false);
         for (uint32_t i = 0; i != nr_voxels; ++i) *(nii_dist_data + i) = *(smooth_eqdist_data + i) ; 
    } // smoothing loop closed
    
