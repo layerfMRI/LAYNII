@@ -80,9 +80,14 @@ int main(int argc, char * argv[]) {
     int32_t* ragrug_data = static_cast<int32_t*>(ragrug->data);
 
     nifti_image* coord = nifti_copy_nim_info(nii);
-    coord->nt = 3;  // For three spatial dimensions
-    coord->nvox = nii_input->nvox * 3;
     coord->datatype = NIFTI_TYPE_INT32;
+    coord->dim[0] = 4;  // For proper 4D nifti
+    coord->dim[1] = size_x;
+    coord->dim[2] = size_y;
+    coord->dim[3] = size_z;
+    coord->dim[4] = 3;
+    nifti_update_dims_from_array(coord);
+    coord->nvox = nii_input->nvox * 3;
     coord->nbyper = sizeof(int32_t);
     coord->data = calloc(coord->nvox, coord->nbyper);
     coord->scl_slope = 1;
