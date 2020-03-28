@@ -81,11 +81,11 @@ int main(int argc, char*  argv[]) {
     // Read input dataset, including data
     nii1 = nifti_image_read(fin, 1);
     if (!nii1) {
-        fprintf(stderr, "** failed to read NIfTI image from '%s'\n", fin);
+        fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin);
         return 2;
     }
 
-    log_welcome("LN_3DGROW_LAYERS");
+    log_welcome("LN2_LAYERS");
     log_nifti_descriptives(nii1);
 
     cout << "\n  Nr. layers: " << nr_layers << endl;
