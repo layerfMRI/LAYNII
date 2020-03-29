@@ -11,25 +11,25 @@
 
 int show_help(void) {
     printf(
-        "LN2_LAYERS: Cortical gray matter layering.\n"
-        "\n"
-        "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-        "!! BEWARE! WORK IN PROGRESS... USE WITH CAUTION !!\n"
-        "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-        "\n"
-        "Usage:\n"
-        "    LN2_LAYERS -rim rim.nii\n"
-        "    LN2_LAYERS -rim rim.nii -nr_layers 10\n"
-        "\n"
-        "Options:\n"
-        "    -help         : Show this help. \n"
-        "    -rim          : Specify input dataset.\n"
-        "    -nr_layers    : Number of layers. Default is 3.\n"
-        "    -debug        : (Optional) Save in between steps of the algorithm.\n"
-        "    -devel        : (Optional) Save experimental outputs that are under"
-        "                  : development.\n"
-        "    -iter_smooth  : (Optional) Nr. of iterations in experimental part.\n"
-        "\n");
+    "LN2_LAYERS: Cortical gray matter layering.\n"
+    "\n"
+    "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+    "!! BEWARE! WORK IN PROGRESS... USE WITH CAUTION !!\n"
+    "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+    "\n"
+    "Usage:\n"
+    "    LN2_LAYERS -rim rim.nii\n"
+    "    LN2_LAYERS -rim rim.nii -nr_layers 10\n"
+    "\n"
+    "Options:\n"
+    "    -help         : Show this help. \n"
+    "    -rim          : Specify input dataset.\n"
+    "    -nr_layers    : Number of layers. Default is 3.\n"
+    "    -debug        : (Optional) Save in between steps of the algorithm.\n"
+    "    -devel        : (Optional) Save experimental outputs that are under"
+    "                  : development.\n"
+    "    -iter_smooth  : (Optional) Nr. of iterations in experimental part.\n"
+    "\n");
     return 0;
 }
 
