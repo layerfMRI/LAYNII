@@ -522,7 +522,7 @@ int main(int argc, char*  argv[]) {
                         }
                     }
                 }
-                if (ix < end_x && iy < end_y && iz < end_z) {
+                if (ix < end_x && iy > 0 && iz < end_z) {
                     j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
 
                     if (*(nii_rim_data + j) == 3) {
@@ -931,7 +931,7 @@ int main(int argc, char*  argv[]) {
                         }
                     }
                 }
-                if (ix < end_x && iy < end_y && iz < end_z) {
+                if (ix < end_x && iy > 0 && iz < end_z) {
                     j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
 
                     if (*(nii_rim_data + j) == 3) {
