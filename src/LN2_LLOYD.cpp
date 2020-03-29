@@ -29,6 +29,7 @@ int show_help(void) {
 void run_updates(int i, int j, float d, float grow_step,
                  float * dist_data, float * step_data, int32_t * cell_data) {
     // Procedure for updating nifti data in neighbour grow section
+    // d = pow(d, 2);
     if (d < *(dist_data + j) || *(step_data + j) == 0) {
         *(dist_data + j) = d;
         *(step_data + j) = grow_step + 1;
@@ -159,6 +160,9 @@ int main(int argc, char*  argv[]) {
     nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
     float* nii_new_data = static_cast<float*>(nii_new->data);
 
+    nifti_image* nii_new_cells = copy_nifti_as_int32(nii_new);
+    int32_t* nii_new_cell_data = static_cast<int32_t*>(nii_new_cells->data);
+
     // ========================================================================
     // Find centroid ids
     // ========================================================================
@@ -204,25 +208,25 @@ int main(int argc, char*  argv[]) {
     }
     save_output_nifti(fin1, "centroids", nii_centroid, true);
 
-
     // ====================================================================
     // Grow from centroids
     // ====================================================================
     cout << "\n  Start growing from centroids..." << endl;
 
+    // Initialize grow volume
+    for (int i = 0; i != nr_voxels; ++i) {
+        if (*(nii_centroid_data + i) != 0) {
+            *(nii_step_data + i) = 1.;
+            *(nii_dist_data + i) = 0.;
+            *(nii_cell_data + i) = *(nii_centroid_data + i);
+        } else {
+            *(nii_step_data + i) = 0.;
+            *(nii_dist_data + i) = 0.;
+        }
+    }
+
     for (int n = 0; n < nr_iter; ++n) {
         cout << "\r    Iteration: " << n+1 << "/" << nr_iter << flush;
-        // Initialize grow volume
-        for (int i = 0; i != nr_voxels; ++i) {
-            if (*(nii_centroid_data + i) != 0) {
-                *(nii_step_data + i) = 1.;
-                *(nii_dist_data + i) = 0.;
-                *(nii_cell_data + i) = *(nii_centroid_data + i);
-            } else {
-                *(nii_step_data + i) = 0.;
-                *(nii_dist_data + i) = 0.;
-            }
-        }
 
         int grow_step = 1, voxel_counter = nr_voxels;
         int ix, iy, iz, k;
@@ -235,7 +239,7 @@ int main(int argc, char*  argv[]) {
                     && *(nii_rim_data + i) == 3) {
                     tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
                     voxel_counter += 1;
-                    k = *(nii_cell_data + i);
+                    // k = *(nii_cell_data + i);
 
                     // --------------------------------------------------------
                     // 1-jump neighbours
@@ -243,7 +247,6 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0) {
                         j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix-1, iy, iz, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dX;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -254,7 +257,6 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x) {
                         j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix+1, iy, iz, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dX;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -265,7 +267,6 @@ int main(int argc, char*  argv[]) {
                     if (iy > 0) {
                         j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix, iy-1, iz, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dY;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -276,7 +277,6 @@ int main(int argc, char*  argv[]) {
                     if (iy < end_y) {
                         j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix, iy+1, iz, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dY;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -287,7 +287,6 @@ int main(int argc, char*  argv[]) {
                     if (iz > 0) {
                         j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix, iy, iz-1, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dZ;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -298,7 +297,6 @@ int main(int argc, char*  argv[]) {
                     if (iz < end_z) {
                         j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix, iy, iz+1, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dZ;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -313,7 +311,6 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy > 0) {
                         j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix-1, iy-1, iz, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_xy;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -324,7 +321,6 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy < end_y) {
                         j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix-1, iy+1, iz, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_xy;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -335,7 +331,6 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy > 0) {
                         j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix+1, iy-1, iz, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_xy;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -346,7 +341,6 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy < end_y) {
                         j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix+1, iy+1, iz, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_xy;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -357,7 +351,6 @@ int main(int argc, char*  argv[]) {
                     if (iy > 0 && iz > 0) {
                         j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix, iy-1, iz-1, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_yz;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -368,7 +361,6 @@ int main(int argc, char*  argv[]) {
                     if (iy > 0 && iz < end_z) {
                         j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix, iy-1, iz+1, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_yz;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -379,7 +371,6 @@ int main(int argc, char*  argv[]) {
                     if (iy < end_y && iz > 0) {
                         j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix, iy+1, iz-1, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_yz;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -390,7 +381,6 @@ int main(int argc, char*  argv[]) {
                     if (iy < end_y && iz < end_z) {
                         j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix, iy+1, iz+1, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_yz;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -401,7 +391,6 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iz > 0) {
                         j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix-1, iy, iz-1, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_xz;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -412,7 +401,6 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iz > 0) {
                         j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix+1, iy, iz-1, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_xz;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -423,7 +411,6 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iz < end_z) {
                         j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix-1, iy, iz+1, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_xz;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -434,7 +421,6 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iz < end_z) {
                         j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix+1, iy, iz+1, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_xz;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -449,7 +435,6 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy > 0 && iz > 0) {
                         j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix-1, iy-1, iz-1, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_xyz;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -460,7 +445,6 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy > 0 && iz < end_z) {
                         j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix-1, iy-1, iz+1, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_xyz;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -471,7 +455,6 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy < end_y && iz > 0) {
                         j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix-1, iy+1, iz-1, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_xyz;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -482,7 +465,6 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy > 0 && iz > 0) {
                         j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix+1, iy-1, iz-1, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_xyz;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -493,7 +475,6 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy < end_y && iz < end_z) {
                         j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix-1, iy+1, iz+1, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_xyz;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -501,10 +482,9 @@ int main(int argc, char*  argv[]) {
                                         nii_cell_data);
                         }
                     }
-                    if (ix < end_x && iy < end_y && iz < end_z) {
+                    if (ix < end_x && iy > 0 && iz < end_z) {
                         j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix+1, iy-1, iz+1, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_xyz;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -515,7 +495,6 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy < end_y && iz > 0) {
                         j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix+1, iy+1, iz-1, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_xyz;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -526,7 +505,6 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy < end_y && iz < end_z) {
                         j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            // d = dist(c_x[k], c_y[k], c_z[k], ix+1, iy+1, iz+1, dX, dY, dZ);
                             d = *(nii_dist_data + i) + dia_xyz;
                             run_updates(i, j, d, grow_step,
                                         nii_dist_data,
@@ -542,62 +520,63 @@ int main(int argc, char*  argv[]) {
         // Update 4D image
         for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + n * nr_voxels + i) = *(nii_dist_data + i);
+            *(nii_new_cell_data + n * nr_voxels + i) = *(nii_cell_data + i);
         }
 
-        // ----------------------------------------------------------------
-        // Find borders
-        // ----------------------------------------------------------------
-        for (int i = 0; i < nr_voxels; ++i) {
-            if (*(nii_rim_data + i) == 3) {
-                tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
-                // --------------------------------------------------------
-                // 1-jump neighbours
-                // --------------------------------------------------------
-                int count_n = 0;
-                if (ix > 0) {
-                    j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                    if (*(nii_cell_data + j) == *(nii_cell_data + i)) {
-                        count_n += 1;
-                    }
-                }
-                if (ix < end_x) {
-                    j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-                    if (*(nii_cell_data + j) == *(nii_cell_data + i)) {
-                        count_n += 1;
-                    }
-                }
-                if (iy > 0) {
-                    j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                    if (*(nii_cell_data + j) == *(nii_cell_data + i)) {
-                        count_n += 1;
-                    }
-                }
-                if (iy < end_y) {
-                    j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-                    if (*(nii_cell_data + j) == *(nii_cell_data + i)) {
-                        count_n += 1;
-                    }
-                }
-                if (iz > 0) {
-                    j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                    if (*(nii_cell_data + j) == *(nii_cell_data + i)) {
-                        count_n += 1;
-                    }
-                }
-                if (iz < end_z) {
-                    j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-                    if (*(nii_cell_data + j) == *(nii_cell_data + i)) {
-                        count_n += 1;
-                    }
-                }
-
-                if (count_n < 6) {
-                    *(nii_border_data + i) = *(nii_cell_data + i);
-                } else {
-                    *(nii_border_data + i) = 0;
-                }
-            }
-        }
+        // // ----------------------------------------------------------------
+        // // Find borders
+        // // ----------------------------------------------------------------
+        // for (int i = 0; i < nr_voxels; ++i) {
+        //     if (*(nii_rim_data + i) == 3) {
+        //         tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+        //         // --------------------------------------------------------
+        //         // 1-jump neighbours
+        //         // --------------------------------------------------------
+        //         int count_n = 0;
+        //         if (ix > 0) {
+        //             j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+        //             if (*(nii_cell_data + j) == *(nii_cell_data + i)) {
+        //                 count_n += 1;
+        //             }
+        //         }
+        //         if (ix < end_x) {
+        //             j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+        //             if (*(nii_cell_data + j) == *(nii_cell_data + i)) {
+        //                 count_n += 1;
+        //             }
+        //         }
+        //         if (iy > 0) {
+        //             j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+        //             if (*(nii_cell_data + j) == *(nii_cell_data + i)) {
+        //                 count_n += 1;
+        //             }
+        //         }
+        //         if (iy < end_y) {
+        //             j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+        //             if (*(nii_cell_data + j) == *(nii_cell_data + i)) {
+        //                 count_n += 1;
+        //             }
+        //         }
+        //         if (iz > 0) {
+        //             j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+        //             if (*(nii_cell_data + j) == *(nii_cell_data + i)) {
+        //                 count_n += 1;
+        //             }
+        //         }
+        //         if (iz < end_z) {
+        //             j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+        //             if (*(nii_cell_data + j) == *(nii_cell_data + i)) {
+        //                 count_n += 1;
+        //             }
+        //         }
+        //
+        //         if (count_n < 6) {
+        //             *(nii_border_data + i) = *(nii_cell_data + i);
+        //         } else {
+        //             *(nii_border_data + i) = 0;
+        //         }
+        //     }
+        // }
 
         if (n == 0) {  // For debugging
             save_output_nifti(fin1, "lloyd_step", nii_step, false);
@@ -607,8 +586,9 @@ int main(int argc, char*  argv[]) {
         }
 
         // ====================================================================
-        // Find centroids of new cells only using borders
+        // Find centroids of new cells
         // ====================================================================
+        // NOTE(Faruk): This part can be move at the top of the loop
         if (n != nr_iter - 1) {
             for (int i = 0; i != nr_cells; ++i) {
                 c_x[i] = 0;
@@ -619,8 +599,8 @@ int main(int argc, char*  argv[]) {
 
             // Sum x, y, z coordinates
             for (int i = 0; i != nr_voxels; ++i) {
-                j = *(nii_border_data + i);
-                // j = *(nii_cell_data + i);
+                // j = *(nii_border_data + i);
+                j = *(nii_cell_data + i);
                 if (j > 0) {
                     tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
                     c_x[j] += x;
@@ -643,11 +623,24 @@ int main(int argc, char*  argv[]) {
                     *(nii_centroid_data + j) = i;
                 }
             }
+
+            // Reset other images
+            for (int i = 0; i != nr_voxels; ++i) {
+                if (*(nii_centroid_data + i) != 0) {
+                    *(nii_step_data + i) = 1.;
+                    *(nii_dist_data + i) = 0.;
+                    *(nii_cell_data + i) = *(nii_centroid_data + i);
+                } else {
+                    *(nii_step_data + i) = 0.;
+                    *(nii_dist_data + i) = 0.;
+                }
+            }
         }
     }
     cout << "\n" << endl;
 
-    save_output_nifti(fin1, "lloyd", nii_new, true);
+    save_output_nifti(fin1, "lloyd_dist", nii_new, true);
+    save_output_nifti(fin1, "lloyd", nii_new_cells, true);
 
     // For debugging
     save_output_nifti(fin1, "lloyd_step_final", nii_step, false);
