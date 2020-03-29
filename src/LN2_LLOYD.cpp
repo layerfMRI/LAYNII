@@ -163,6 +163,14 @@ int main(int argc, char*  argv[]) {
     nifti_image* nii_new_cells = copy_nifti_as_int32(nii_new);
     int32_t* nii_new_cell_data = static_cast<int32_t*>(nii_new_cells->data);
 
+    // ------------------------------------------------------------------------
+    int nr_valid_voxels = 0;
+    for (int i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) == 3) {
+            nr_valid_voxels += 1;
+        }
+    }
+
     // ========================================================================
     // Find centroid ids
     // ========================================================================
@@ -229,7 +237,7 @@ int main(int argc, char*  argv[]) {
         cout << "\r    Iteration: " << n+1 << "/" << nr_iter << flush;
 
         int grow_step = 1, voxel_counter = nr_voxels;
-        int ix, iy, iz, k;
+        int ix, iy, iz;
         float d;
 
         while (voxel_counter != 0) {
@@ -239,7 +247,6 @@ int main(int argc, char*  argv[]) {
                     && *(nii_rim_data + i) == 3) {
                     tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
                     voxel_counter += 1;
-                    // k = *(nii_cell_data + i);
 
                     // --------------------------------------------------------
                     // 1-jump neighbours
@@ -623,6 +630,13 @@ int main(int argc, char*  argv[]) {
                     *(nii_centroid_data + j) = i;
                 }
             }
+
+            // // TODO(Faruk): To penalize unequal volume cells
+            // for (int i = 0; i != nr_cells; ++i) {
+            //     counts[i] /= nr_valid_voxels / (nr_cells-1);
+            //     cout << "  " << counts[i] << " | " << flush;
+            // }
+            // cout << endl;
 
             // Reset other images
             for (int i = 0; i != nr_voxels; ++i) {
