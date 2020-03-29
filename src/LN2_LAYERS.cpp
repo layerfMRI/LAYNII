@@ -364,7 +364,7 @@ int main(int argc, char*  argv[]) {
                         }
                     }
                 }
-                if (iy != size_z && iz > 0) {
+                if (iy < end_y && iz > 0) {
                     j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
 
                     if (*(nii_rim_data + j) == 3) {
@@ -378,7 +378,7 @@ int main(int argc, char*  argv[]) {
                         }
                     }
                 }
-                if (iy != size_z && iz < end_z) {
+                if (iy < end_y && iz < end_z) {
                     j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
 
                     if (*(nii_rim_data + j) == 3) {
@@ -773,7 +773,7 @@ int main(int argc, char*  argv[]) {
                         }
                     }
                 }
-                if (iy != size_z && iz > 0) {
+                if (iy < end_y && iz > 0) {
                     j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
 
                     if (*(nii_rim_data + j) == 3) {
@@ -787,7 +787,7 @@ int main(int argc, char*  argv[]) {
                         }
                     }
                 }
-                if (iy != size_z && iz < end_z) {
+                if (iy < end_y && iz < end_z) {
                     j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
 
                     if (*(nii_rim_data + j) == 3) {
