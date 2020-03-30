@@ -1,5 +1,6 @@
 #include "../dep/laynii_lib.h"
 
+
 int show_help(void) {
     printf(
     "LN_NOISE_KERNEL: \n"
@@ -7,11 +8,12 @@ int show_help(void) {
     "         by looking at shared sources of variance across different directions.\n"
     "\n"
     "Usage:\n"
-    "    LN_NOISE_KERNEL -input timeseries.nii  \n"
+    "    LN_NOISE_KERNEL -input timeseries.nii -kernel_size 11 \n"
     "\n"
     "Options:\n"
-    "    -help   : Show this help.\n"
-    "    -input  : Nifti (.nii) time series.\n"
+    "    -help          : Show this help.\n"
+    "    -input         : Nifti (.nii) time series.\n"
+    "    -kernal_size   : optional parameter for kernel size, use an odd positive intager (default 11)\n"
     "\n");
     return 0;
 }
@@ -19,12 +21,19 @@ int show_help(void) {
 int main(int argc, char * argv[]) {
     char *fin = NULL;
     int ac;
+    int kernal_size = 11; // This is the maximal number of layers. I don't know how to allocate it dynamically. this should be an odd number. That is smaller than half of the shortest matrix size to make sense
     if (argc < 2) return show_help();
 
     // Process user options
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
+        } else if (!strcmp(argv[ac], "-kernel_size")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -kernel_size\n");
+                return 1;
+            }
+            kernal_size = atoi(argv[ac]);  // No string copy, pointer assignment
         } else if (!strcmp(argv[ac], "-input")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -input\n");
@@ -33,11 +42,12 @@ int main(int argc, char * argv[]) {
             fin = argv[ac];
         }
     }
-
     if (!fin) {
         fprintf(stderr, "** missing option '-input'\n");
         return 1;
     }
+
+
 
     // Read input dataset
     nifti_image * nii_input = nifti_image_read(fin, 1);
@@ -62,22 +72,30 @@ int main(int argc, char * argv[]) {
     // Fix data type issues
     nifti_image* nii = copy_nifti_as_float32(nii_input);
     float* nii_data = static_cast<float*>(nii->data);
+
+
+if (kernal_size%2==0) {
+    cout << " you chose a kernel size of " << kernal_size << " even though I tols you to use an odd value... SHAME ON YOU" ; 
+    kernal_size = kernal_size -1 ; 
+    cout << "    I am using " << kernal_size << " instead" << endl;
+}
     
-    int kernal_size = 13; // This is the maximal number of layers. I don't know how to allocate it dynamically.
-    float Nkernal[kernal_size][kernal_size][kernal_size] ; 
+    int kernal_vol = kernal_size * kernal_size* kernal_size ; 
+    double Nkernal[kernal_size][kernal_size][kernal_size] ; 
     int Number_of_averages = 0; 
-    float Number_AVERAG[kernal_size][kernal_size][kernal_size] ; 
+    double Number_AVERAG[kernal_size][kernal_size][kernal_size] ; 
 
 /////////////////////////////////
 ////////allokate and se zero ////
 /////////////////////////////////
 
-double vec_n[size_time] ;
-double vec_nn[size_time] ;
+double vec1[size_time] ;
+double vec2[size_time] ;
+double dummy = 0; 
 
     for(int timestep = 0; timestep < size_time ; timestep++) {
-        vec_n[timestep] = 0; 
-        vec_nn[timestep] = 0; 
+        vec1[timestep] = 0; 
+        vec2[timestep] = 0; 
     }
 
 
@@ -97,77 +115,109 @@ for(int i = 0; i < kernal_size; i++) {
     nii_kernel->nx = kernal_size;
     nii_kernel->ny = kernal_size;
     nii_kernel->nz = kernal_size;
-    nii_kernel->nvox =  kernal_size *  kernal_size *  kernal_size;
+    nii_kernel->nvox =  kernal_vol;
     nii_kernel->datatype = NIFTI_TYPE_FLOAT32;
     nii_kernel->nbyper = sizeof(float);
     nii_kernel->data = calloc(nii_kernel->nvox, nii_kernel->nbyper);
     float* nii_kernel_data = static_cast<float*>(nii_kernel->data);
-
-
-    // ========================================================================
-/* cout << "  Calculating skew, kurtosis, and autocorrelation..." << endl;
-
-    double vec1[size_time];
-    double vec2[size_time];
-
-    for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_y; ++iy) {
-            for (int ix = 0; ix < size_x; ++ix) {
-                int voxel_i = nxy * iz + nx * iy + ix;
-                for (int it = 0; it < size_time; ++it) {
-                    vec1[it] =
-                        static_cast<double>(*(nii_data + nxyz * it + voxel_i));
-                }
-                *(nii_skew_data + voxel_i) = ren_skew(vec1, size_time);
-                *(nii_kurt_data + voxel_i) = ren_kurt(vec1, size_time);
-                *(nii_autocorr_data + voxel_i) = ren_autocor(vec1, size_time);
-            }
-        }
-    }
-
-    save_output_nifti(fin, "skew", nii_skew, true);
-    save_output_nifti(fin, "kurt", nii_kurt, true);
-    save_output_nifti(fin, "autocorr", nii_autocorr, true);
-
-    // ========================================================================
-    cout << "  Calculating correlation with everything..." << endl;
-
-    for (int it = 0; it < size_time; ++it) {
-        vec1[it] = 0;
-        vec2[it] = 0;
-    }
-
-    // Mean time course of everything
-    for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_y; ++iy) {
-            for (int ix = 0; ix < size_x; ++ix) {
-                int voxel_i = nxy * iz + nx * iy + ix;
-                for (int it = 0; it < size_time; ++it) {
-                    vec1[it] +=
-                        static_cast<double>(*(nii_data + nxyz * it + voxel_i)
-                                            / nxyz);
-                }
-            }
-        }
-    }
-
-    // Voxel-wise corelation to mean of everything
-    for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_y; ++iy) {
-            for (int ix = 0; ix <size_x; ++ix) {
-                int voxel_i = nxy * iz + nx * iy + ix;
-                for (int it = 0; it < size_time; ++it)   {
-                    vec2[it] =
-                        static_cast<double>(*(nii_data + nxyz * it + voxel_i));
-                }
-                *(nii_conc_data + voxel_i) = ren_correl(vec1, vec2, size_time);
-            }
-        }
-    }
-    
-*/ 
-
     nii_kernel->scl_slope = 1; // to make sure that the units are given in Pearson correlations (-1...1) 
+    for(int ivoxel=0; ivoxel<kernal_vol; ++ivoxel) *(nii_kernel_data + ivoxel ) = 0.09; 
+    int knx = nii_kernel->nx;
+    int knxy = nii_kernel->nx * nii_kernel->ny;
+    int knxyz = nii_kernel->nx * nii_kernel->ny * nii_kernel->nz;
+
+
+    // ========================================================================
+
+cout << " Kernel size = " << kernal_size << endl; 
+cout << " Kernel size/2 = " << kernal_size/2 << endl; 
+
+//cout << " float = " << sizeof(float32_t) << endl; 
+//cout << " double = " << sizeof(double) << endl; 
+
+if ( size_x < kernal_size*2 || size_y < kernal_size*2 || size_z < kernal_size*2) {
+    cout << "####################################################" << endl; 
+    cout << "#### WARNING your Kernel might be too big ##########" << endl; 
+    cout << "####################################################" << endl; 
+} 
+
+int vinc_x = 0 , vinc_y = 0 , vinc_z = 0; 
+int kern_ix, kern_iy, kern_iz ; 
+
+
+// four time estimate 
+int all_loops = size_y * size_x ; 
+int loop_counter = 0; 
+
+for(int iy=0; iy<size_y; ++iy){
+    for(int ix=0; ix<size_x; ++ix){
+       cout << "\r"<<  loop_counter*100/all_loops  << "    % done "  << flush ; 
+       loop_counter++ ;  
+       for(int iz=0; iz<size_z; ++iz){           
+               
+          for(int it = 0 ; it < size_time  ; it++) {
+               //cout  << "  it=" << it << "   ix="  <<ix << "   iy="  <<iy << "   iz="  <<iz<<   endl; 
+               vec1[it] =  (double)*(nii_data  + nxyz *it +  nxy*iz + nx*iy + ix) ;
+
+
+          }
+
+          // going trhough vincinity of every voxel 
+        for(int kernaly= -1*kernal_size/2; kernaly<=kernal_size/2; ++kernaly){
+             for(int kernalx= -1*kernal_size/2; kernalx<=kernal_size/2; ++kernalx){
+                 for(int kernalz= -1*kernal_size/2; kernalz<=kernal_size/2; ++kernalz){
+                     
+                    vinc_x = ix + kernalx ; 
+                    vinc_y = iy + kernaly ; 
+                    vinc_z = iz + kernalz ; 
+                    kern_ix = kernalx+kernal_size/2; 
+                    kern_iy = kernaly+kernal_size/2; 
+                    kern_iz = kernalz+kernal_size/2; 
+
+                    if (vinc_x >= 0 && vinc_x < size_x && vinc_y >= 0 && vinc_y < size_y && vinc_z >= 0 && vinc_z < size_z) {
+
+                        for(int it = 0 ; it < size_time  ; it++) {
+                           vec2[it] = (double) *(nii_data  + nxyz *it +  nxy*vinc_z + nx*vinc_y + vinc_x) ;
+                        }
+                        dummy  = ren_correl(vec1, vec2, size_time) ; 
+
+                        //dummy = kernaly ; 
+                        if (isfinite(dummy) && dummy != 0 ) {
+                          //*(nii_kernel_data + knxy*kern_iz + knx*kern_iy + kern_ix) += dummy; 
+                           Nkernal[kern_iz][kern_iy][kern_ix] = Nkernal[kern_iz][kern_iy][kern_ix] +  dummy ; 
+                           Number_AVERAG[kern_iz][kern_iy][kern_ix]++ ; 
+
+                        }
+                    }
+                     
+                 }
+              }
+          }
+         
+         
+         
+       }
+    }
+}
+
+  
+cout << endl; 
+
+
+        for(int kernaly= 0; kernaly<kernal_size; ++kernaly){
+             for(int kernalx= 0; kernalx<kernal_size; ++kernalx){
+                 for(int kernalz= 0; kernalz<kernal_size; ++kernalz){
+                      
+                    if (Number_AVERAG[kernalz][kernaly][kernalx] > 0 ){
+                       *(nii_kernel_data + knxy*kernalz + knx*kernaly + kernalx) = (float) (Nkernal[kernalz][kernaly][kernalx] / Number_AVERAG[kernalz][kernaly][kernalx]); //dummy; 
+                    }
+                    else *(nii_kernel_data + knxy*kernalz + knx*kernaly + kernalx) =  0; 
+                 }
+              }
+          }             
+
+
+
     save_output_nifti(fin, "fPSF", nii_kernel, true);
 
     cout << "  Finished." << endl;
