@@ -1247,9 +1247,9 @@ int main(int argc, char*  argv[]) {
             save_output_nifti(fin, "hotspots_out", hotspots_o, false);
         }
 
-        // ------------------------------------------------------------------------
+        // --------------------------------------------------------------------
         // Compute equi-volume factors
-        // ------------------------------------------------------------------------
+        // --------------------------------------------------------------------
         nifti_image* equivol_factors = copy_nifti_as_float32(nii_rim);
         float* equivol_factors_data = static_cast<float*>(equivol_factors->data);
         for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -1279,16 +1279,22 @@ int main(int argc, char*  argv[]) {
             save_output_nifti(fin, "equivol_factors", equivol_factors, false);
         }
 
-        // ------------------------------------------------------------------------
+        // --------------------------------------------------------------------
         // Smooth equi-volume factors for seamless transitions
-        // ------------------------------------------------------------------------
+        // --------------------------------------------------------------------
         nifti_image* smooth = copy_nifti_as_float32(curvature);
         float* smooth_data = static_cast<float*>(smooth->data);
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             *(smooth_data + i) = 0;
         }
 
+        // Pre-compute weights
         float FWHM_val = 1;  // TODO(Faruk): Might tweak this one
+        float w_0 = gaus(0, FWHM_val);
+        float w_dX = gaus(dX, FWHM_val);
+        float w_dY = gaus(dY, FWHM_val);
+        float w_dZ = gaus(dZ, FWHM_val);
+
         for (uint16_t n = 0; n != iter_smooth; ++n) {
             for (uint32_t i = 0; i != nr_voxels; ++i) {
                 if (*(nii_rim_data + i) == 3) {
@@ -1296,59 +1302,52 @@ int main(int argc, char*  argv[]) {
                     float new_val = 0, total_weight = 0;
 
                     // Start with the voxel itself
-                    w = gaus(0, FWHM_val);
-                    new_val += *(equivol_factors_data + i) * w;
-                    total_weight += w;
+                    new_val += *(equivol_factors_data + i) * w_0;
+                    total_weight += w_0;
 
-                    // ------------------------------------------------------------
+                    // --------------------------------------------------------
                     // 1-jump neighbours
-                    // ------------------------------------------------------------
+                    // --------------------------------------------------------
                     if (ix > 0) {
                         j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            w = gaus(dX, FWHM_val);
-                            new_val += *(equivol_factors_data + j) * w;
-                            total_weight += w;
+                            new_val += *(equivol_factors_data + j) * w_dX;
+                            total_weight += w_dX;
                         }
                     }
                     if (ix < end_x) {
                         j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            w = gaus(dX, FWHM_val);
-                            new_val += *(equivol_factors_data + j) * w;
-                            total_weight += w;
+                            new_val += *(equivol_factors_data + j) * w_dX;
+                            total_weight += w_dX;
                         }
                     }
                     if (iy > 0) {
                         j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            w = gaus(dY, FWHM_val);
-                            new_val += *(equivol_factors_data + j) * w;
-                            total_weight += w;
+                            new_val += *(equivol_factors_data + j) * w_dY;
+                            total_weight += w_dY;
                         }
                     }
                     if (iy < end_y) {
                         j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            w = gaus(dY, FWHM_val);
-                            new_val += *(equivol_factors_data + j) * w;
-                            total_weight += w;
+                            new_val += *(equivol_factors_data + j) * w_dY;
+                            total_weight += w_dY;
                         }
                     }
                     if (iz > 0) {
                         j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            w = gaus(dZ, FWHM_val);
-                            new_val += *(equivol_factors_data + j) * w;
-                            total_weight += w;
+                            new_val += *(equivol_factors_data + j) * w_dZ;
+                            total_weight += w_dZ;
                         }
                     }
                     if (iz < end_z) {
                         j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
                         if (*(nii_rim_data + j) == 3) {
-                            w = gaus(dZ, FWHM_val);
-                            new_val += *(equivol_factors_data + j) * w;
-                            total_weight += w;
+                            new_val += *(equivol_factors_data + j) * w_dZ;
+                            total_weight += w_dZ;
                         }
                     }
                     *(smooth_data + i) = new_val / total_weight;
@@ -1363,12 +1362,10 @@ int main(int argc, char*  argv[]) {
             save_output_nifti(fin, "equivol_factors_smooth", smooth, false);
         }
 
-        // ------------------------------------------------------------------------
+        // --------------------------------------------------------------------
         // Apply equi-volume factors
-        // ------------------------------------------------------------------------
-
-
-        float dist1_new, dist2_new, a, b;
+        // --------------------------------------------------------------------
+        float d1_new, d2_new, a, b;
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             if (*(nii_rim_data + i) == 3) {
                 // Find normalized distances from a given point on a column
@@ -1379,15 +1376,14 @@ int main(int argc, char*  argv[]) {
                 b = 1 - a;
 
                 // Perturb using masses to modify distances in simplex space
-                tie(dist1_new, dist2_new) = simplex_perturb_2D(dist1, dist2, a, b);
+                tie(d1_new, d2_new) = simplex_perturb_2D(dist1, dist2, a, b);
 
                 // Difference of normalized distances (used in finding midGM)
-                *(normdistdiff_data + i) = dist1_new - dist2_new;
+                *(normdistdiff_data + i) = d1_new - d2_new;
 
                 // Cast distances to integers as number of desired layers
-                if (dist1_new != 0 && isfinite(dist1_new)) {
-                    //if ( ceil(nr_layers * dist1_new) < 0 ) cout << nr_layers << "  " << dist1_new << endl;
-                    *(nii_layers_data + i) =  ceil(nr_layers * dist1_new);
+                if (d1_new != 0 && isfinite(d1_new)) {
+                    *(nii_layers_data + i) =  ceil(nr_layers * d1_new);
                 } else {
                     *(nii_layers_data + i) = 1;
                 }
@@ -1398,10 +1394,10 @@ int main(int argc, char*  argv[]) {
             save_output_nifti(fin, "normdistdiff_equivol", normdistdiff, false);
         }
 
-        // ========================================================================
+        // ====================================================================
         // Middle gray matter for equi-volume
-        // ========================================================================
-        cout << "\n  Start finding middle gray matter (equi-volume)..."   << endl;
+        // ====================================================================
+        cout << "\n  Start finding middle gray matter (equi-volume)..." << endl;
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             *(midGM_data + i) = 0;
             *(midGM_id_data + i) = 0;
