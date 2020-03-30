@@ -62,27 +62,50 @@ int main(int argc, char * argv[]) {
     // Fix data type issues
     nifti_image* nii = copy_nifti_as_float32(nii_input);
     float* nii_data = static_cast<float*>(nii->data);
+    
+    int kernal_size = 13; // This is the maximal number of layers. I don't know how to allocate it dynamically.
+    float Nkernal[kernal_size][kernal_size][kernal_size] ; 
+    int Number_of_averages = 0; 
+    float Number_AVERAG[kernal_size][kernal_size][kernal_size] ; 
+
+/////////////////////////////////
+////////allokate and se zero ////
+/////////////////////////////////
+
+double vec_n[size_time] ;
+double vec_nn[size_time] ;
+
+    for(int timestep = 0; timestep < size_time ; timestep++) {
+        vec_n[timestep] = 0; 
+        vec_nn[timestep] = 0; 
+    }
+
+
+for(int i = 0; i < kernal_size; i++) {
+    for(int j = 0; j < kernal_size ; j++) {
+        for(int k = 0; k < kernal_size ; k++) {
+            Nkernal[i][j][k] = 0; 
+            Number_AVERAG[i][j][k] = 0; 
+        }
+    }
+}
+
 
     // Allocate new nifti
-    nifti_image* nii_skew = nifti_copy_nim_info(nii);
-    nii_skew->nt = 1;
-    nii_skew->nvox = nii->nvox / size_time;
-    nii_skew->datatype = NIFTI_TYPE_FLOAT32;
-    nii_skew->nbyper = sizeof(float);
-    nii_skew->data = calloc(nii_skew->nvox, nii_skew->nbyper);
-    float* nii_skew_data = static_cast<float*>(nii_skew->data);
+    nifti_image* nii_kernel = nifti_copy_nim_info(nii);
+    nii_kernel->nt = 1;
+    nii_kernel->nx = kernal_size;
+    nii_kernel->ny = kernal_size;
+    nii_kernel->nz = kernal_size;
+    nii_kernel->nvox =  kernal_size *  kernal_size *  kernal_size;
+    nii_kernel->datatype = NIFTI_TYPE_FLOAT32;
+    nii_kernel->nbyper = sizeof(float);
+    nii_kernel->data = calloc(nii_kernel->nvox, nii_kernel->nbyper);
+    float* nii_kernel_data = static_cast<float*>(nii_kernel->data);
 
-    nifti_image* nii_kurt = copy_nifti_as_float32(nii_skew);
-    float* nii_kurt_data = static_cast<float*>(nii_kurt->data);
-
-    nifti_image* nii_autocorr = copy_nifti_as_float32(nii_skew);
-    float* nii_autocorr_data = static_cast<float*>(nii_autocorr->data);
-
-    nifti_image* nii_conc = copy_nifti_as_float32(nii_skew);
-    float* nii_conc_data = static_cast<float*>(nii_conc->data);
 
     // ========================================================================
-    cout << "  Calculating skew, kurtosis, and autocorrelation..." << endl;
+/* cout << "  Calculating skew, kurtosis, and autocorrelation..." << endl;
 
     double vec1[size_time];
     double vec2[size_time];
@@ -141,7 +164,11 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    save_output_nifti(fin, "overall_correl", nii_conc, true);
+    
+*/ 
+
+    nii_kernel->scl_slope = 1; // to make sure that the units are given in Pearson correlations (-1...1) 
+    save_output_nifti(fin, "fPSF", nii_kernel, true);
 
     cout << "  Finished." << endl;
     return 0;
