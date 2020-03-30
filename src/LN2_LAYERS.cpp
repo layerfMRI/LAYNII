@@ -26,7 +26,7 @@ int show_help(void) {
     "    -rim          : Specify input dataset.\n"
     "    -nr_layers    : Number of layers. Default is 3.\n"
     "    -debug        : (Optional) Save in between steps of the algorithm.\n"
-    "    -devel        : (Optional) Save experimental outputs that are under"
+    "    -devel        : (Optional) Save experimental outputs that are under\n"
     "                  : development.\n"
     "    -iter_smooth  : (Optional) Nr. of iterations in experimental part.\n"
     "\n");
@@ -38,7 +38,7 @@ int main(int argc, char*  argv[]) {
     char* fin = NULL;
     uint16_t ac, nr_layers = 3;
     bool debug_mode = false, devel_mode = false;
-    uint16_t iter_smooth = 10;
+    uint16_t iter_smooth = 100;
 
     // Process user options
     if (argc < 2) return show_help();
