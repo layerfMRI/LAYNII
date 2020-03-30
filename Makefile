@@ -38,6 +38,7 @@ LOW_PRIORITY	=	LN_3DCOLUMNS \
 					LN_PHYSIO_PARS \
 					LN_INT_ME \
 					LN_LOITUMA \
+					LN_NOISE_KERNEL \
 
 LAYNII2	= LN2_LAYERS
 
@@ -163,6 +164,10 @@ LN_TRIAL: dependencies
 LN_LOITUMA: dependencies
 	$(CC) -c -std=c++11 -o  obj/LN_LOITUMA.o src/LN_LOITUMA.cpp
 	$(CC) -o $@ $(CFLAGS) obj/LN_LOITUMA.o $(LIBRARIES)
+
+LN_NOISE_KERNEL: dependencies
+	$(CC) -c -std=c++11 -o  obj/LN_NOISE_KERNEL.o src/LN_NOISE_KERNEL.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN_NOISE_KERNEL.o $(LIBRARIES)
 
 LN_PHYSIO_PARS: dependencies
 	$(CC) -c -std=c++11 -o  obj/LN_PHYSIO_PARS.o src/LN_PHYSIO_PARS.cpp
