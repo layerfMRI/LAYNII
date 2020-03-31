@@ -21,8 +21,19 @@ int show_help(void) {
     "Options:\n"
     "    -help          : Show this help.\n"
     "    -layer_file    : Nifti (.nii) file that contains layers. \n"
-    "    -column_file   : Nifti (.nii) file that should be smooth. It \n"
-    "    -FWHM          : optional amount of smoothing in mm.\n"
+    "    -column_file   : Nifti (.nii) file that should be smooth.  \n"
+    "    -lambda        : Optional for the peak to tail ratio \n"
+    "                     Default is 0.25 from Makuerikiaga Fig. 5B at 7T.\n"
+    "                     If you assume that your CBF is exeptionally low, use 0.3, \n"
+    "                     If you assume that your CBV is exeptionally high, use 0.2 \n"
+    "                     If you use 3T instead of 7T, use 20 percent larger values \n"
+    "                     Larger values will result in stronger deconvolution \n"
+    "                     These variations will not affect the resulting profiles a lot\n"
+    "                     So I would recommend to not touch this parameter to begin with\n"
+    "    -linear        : Optional flag for linear layer scaling \n"
+    "                     This means that there will be no deconvolution, just layer-dependent scaling\n"
+    "    -CBV           : Optional flag for CBV scaling \n"
+    "                     This means that there will be no deconvolution, just scaling of the baseline venous CBV\n"
     "    -input         : BOLD file that should be corrected from macro-vascular contaminations\n"
     "                     This can be a time series or an activity map (not z-scores though). \n"
     "    -ALF           : File with estiates of Amplitude of low frequencies as a correlate ot venous CBV  \n"
@@ -34,6 +45,9 @@ int main(int argc, char* argv[]) {
     char* f_input = NULL, *f_layer = NULL, *f_column = NULL, *f_ALF = NULL;
     int ac, do_masking = 0, sulctouch = 0;
     float FWHM_val = 0;
+    bool linear = false; 
+    bool CBV = false; 
+    float lambda = 0.25 ; // this is the peak to tail ratio from Makuerikiaga Fig. 5B at 7T
     if (argc < 3) return show_help();
 
     for (ac = 1; ac < argc; ac++) {
@@ -57,12 +71,18 @@ int main(int argc, char* argv[]) {
                 return 1;
             }
             f_ALF = argv[ac];
-        } else if (!strcmp(argv[ac], "-FWHM")) {
+        } else if (!strcmp(argv[ac], "-lambda")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -FWHM\n");
+                fprintf(stderr, "** missing argument for -lambda\n");
                 return 1;
             }
-            FWHM_val = atof(argv[ac]);  // No string copy, pointer assignment
+            lambda = atof(argv[ac]);  // No string copy, pointer assignment
+        } else if (!strcmp(argv[ac], "-linear")) {
+            linear = true ; 
+            cout << " there will be no deconvolution, just layer-dependent depth scaling" << endl; 
+        } else if (!strcmp(argv[ac], "-CBV")) {
+            CBV = true ; 
+            cout << " there will be no deconvolution, just layer-dependent CBV scaling" << endl; 
         } else if (!strcmp(argv[ac], "-input")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -input\n");
@@ -73,6 +93,11 @@ int main(int argc, char* argv[]) {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
         }
+    }
+
+   if (linear && CBV) {
+        fprintf(stderr, " I don't know what you want me to do linear or CBV? Both is not possible at the same time");
+        return 1;
     }
 
     if (!f_input) {
@@ -277,12 +302,19 @@ int main(int argc, char* argv[]) {
                           //getting whieghted sum
             for (int i = 0; i < nr_layers; ++i) {
                 sum = 0;
-                for (int j = i+1; j < nr_layers; ++j) {
-                    
-                    if (nx_voxls[j] > 0 ) sum = sum + vec1[j][timestep]/(float)nr_layers * 0.005 ; 
+                for (int j = i-1; j >= 0; --j) {
+                    // this is the actual deconvolution, It is whieghted with CBV. 
+                    // the lambda is the inverse of the peak to tail ratio from Markuerikiaga Fig. 5B (7Tesla)
+                    // 
+                    if (nx_voxls[j] > 0 ) sum = sum + vec1[j][timestep]/(float)nr_layers/vecALF[j]*lambda  ; 
                 }
-                if (nx_voxls[i] > 0 ) vec2[i][timestep] = (vec1[i][timestep] - sum)/vecALF[i] ;  
-                 
+                if (nx_voxls[i] > 0 ) vec2[i][timestep] = (vec1[i][timestep] - sum) ;  
+                
+                // if just linear correction
+                if (nx_voxls[i] > 0 && linear) vec2[i][timestep] = vec1[i][timestep]/(float)(i+1)*nr_layers ;
+                
+                // if just CBV normalication
+                if (nx_voxls[i] > 0 && CBV ) vec2[i][timestep] = vec1[i][timestep]/vecALF[i]*(float)nr_layers ;
             }
          }
          
