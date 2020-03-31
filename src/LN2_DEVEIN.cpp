@@ -130,6 +130,8 @@ int main(int argc, char* argv[]) {
     const int nx = nii->nx;
     const int nxy = nii->nx * nii->ny;
     const int nr_voxels = size_z * size_y * size_x;
+    const int nrep = nii->nt;
+    const int nr_voxt = nr_voxels * nrep;
     const float dX = nii->pixdim[1];
     const float dY = nii->pixdim[2];
     const float dZ = nii->pixdim[3];
@@ -146,224 +148,166 @@ int main(int argc, char* argv[]) {
     float *nii_ALF_data = static_cast<float*>(nii_ALF->data);
 
     // Allocate new niftis
-    nifti_image *nii_smooth = copy_nifti_as_float32(nii_input);
-    float *nii_smooth_data = static_cast<float*>(nii_smooth->data);
-    nifti_image* nii_gaussw = copy_nifti_as_float32(nii_input);
-    float *nii_gaussw_data = static_cast<float*>(nii_gaussw->data);
-/*
-    // Zero new images
-    for (int i = 0; i < nr_voxels; ++i) {
-        *(nii_smooth_data + i) = 0;
-        *(nii_gaussw_data + i) = 0;
-    }
+    nifti_image *nii_decov = copy_nifti_as_float32(nii_input);
+    float *nii_decov_data = static_cast<float*>(nii_decov->data);
 
-    // ========================================================================
-    // TODO(Faruk): Why using dX but not others? Need to ask Renzo about this.
-    int vic = max(1., 2. * FWHM_val / dX);  // Ignore if voxel is too far
-    cout << "  Vicinity = " << vic << endl;
-    cout << "  FWHM = " << FWHM_val << endl;
+
+    // Zero new images
+    for (int i = 0; i < nr_voxt; ++i) *(nii_decov_data + i) = 0;
+
 
     ///////////////////////////
     // Find number of layers //
     ///////////////////////////
-    int32_t nr_layers = 0;
+    int nr_layers = 0;
     for (int i = 0; i < nr_voxels; ++i) {
-        if (*(nii_layer_data + i) > nr_layers) {
-            nr_layers = *(nii_layer_data + i);
-        }
+        if (*(nii_layer_data + i) > nr_layers)  nr_layers = *(nii_layer_data + i);
     }
-    cout << "  There are " << nr_layers << " layers to smooth within." << endl;
-
-    ////////////////////
-    // SMOOTHING LOOP //
-    ////////////////////
-    // For time estimation
-    int nr_vox_to_loop = 0, idx = 0, prev_n = 0;
+    cout << "  There are " << nr_layers << " layers to deconvolve." << endl;
+    
+    ///////////////////////////
+    // Find number of columns //
+    ///////////////////////////
+    int nr_columns = 0;
     for (int i = 0; i < nr_voxels; ++i) {
-        if (*(nii_layer_data + i) > 0) {
-            nr_vox_to_loop++;
+        if (*(nii_column_data + i) > nr_columns)  nr_columns = *(nii_column_data + i);
+    }
+    cout << "  There are " << nr_columns << " columns to do the deconvolution within." << endl;
+    
+    
+    /////////////////////////////////////////////////////////////
+    //   I will do the deconvolution column by column ///////////
+    //   first, I allocate all, I need to do the deconvolution //
+    /////////////////////////////////////////////////////////////
+
+    float vec1[nr_layers][nrep], vec2[nr_layers][nrep], vecALF[nr_layers];
+    int nx_voxls[nr_layers];
+    for (int i = 0; i < nr_layers; ++i) {
+        for (int timestep = 0; timestep < nrep; timestep++){
+             vec1[i][timestep] = 0.;  
+             vec2[i][timestep] = 0.; 
+         }
+        vecALF[i] = 0.;
+        nx_voxls[i] = 0; 
+    }
+    int cur_layer = 0; 
+    float cur_ALFmean = 0.; 
+    float sum = 0. ; // value of macrovascular contribution, that needs to be subtracted from the current voxel
+
+    //////////////////////////////////////////////////////
+    // Making sure that every column voxel has a layer  //
+    //////////////////////////////////////////////////////
+    for (int ivox = 0; ivox < nr_voxels; ++ivox) {
+        if (*(nii_column_data + ivox) > 0 &&  *(nii_layer_data + ivox) == 0 ){
+            cout << " You gave me a file where some column voxels don't have layers "<< endl;
+            cout << " This meand that you likely gave me the wrong data" << endl; 
+            cout << " Though, I will try to work with is anyway" << endl; 
+            *(nii_column_data + ivox) = 0;
         }
     }
 
-    if (sulctouch == 0) {
-        cout << "  Smoothing in layer, not considering sulci." << endl;
-        for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_y; ++iy) {
-                for (int ix = 0; ix < size_x; ++ix) {
-                    int voxel_i = nxy * iz + nx * iy + ix;
-                    int layer_i = *(nii_layer_data + voxel_i);
 
-                    if (layer_i > 0) {
-                        idx += 1;
-                        int n = (idx * 100) / nr_vox_to_loop;
-                        if (n != prev_n) {
-                            cout << "\r    " << n <<  "%" << flush;
-                            prev_n = n;
-                        }
 
-                        int jz_start = max(0, iz - vic);
-                        int jz_stop = min(iz + vic, size_z - 1);
-                        int jy_start = max(0, iy - vic);
-                        int jy_stop = min(iy + vic, size_y - 1);
-                        int jx_start = max(0, ix - vic);
-                        int jx_stop = min(ix + vic, size_x - 1);
+    ////////////////////////////
+    // Big loop across colums //
+    ////////////////////////////
+    for (int icol = 1; icol <= nr_columns; ++icol) {
+        
+        // resetting vector
+        for (int i = 0; i < nr_layers; ++i) {
+            for (int timestep = 0; timestep < nrep; timestep++){
+                 vec1[i][timestep] = 0.;  
+                 vec2[i][timestep] = 0.; 
+             }
+            vecALF[i] = 0.;
+            nx_voxls[i] = 0; 
+         }
+        
+       // filling vector of column #icol
+       for (int ivox = 0; ivox < nr_voxels; ++ivox) {
+           if (icol == *(nii_column_data + ivox)) {
+               cur_layer = *(nii_layer_data + ivox)-1 ; 
+               vecALF[cur_layer] = vecALF[cur_layer] +  *(nii_ALF_data + ivox) ;
+               nx_voxls[cur_layer]++ ; 
+               for (int timestep = 0; timestep < nrep; timestep++) vec1[cur_layer][timestep] = vec1[cur_layer][timestep] + *(nii_input_data + timestep*nr_voxels + ivox ) ;
+           }
+        } 
+        
+        // getting mean of falues within column vector 
+        for (int i = 0; i < nr_layers; ++i) {
+                for (int timestep = 0; timestep < nrep; timestep++) vec1[i][timestep] = vec1[i][timestep]/(float)nx_voxls[i] ;  
+                vecALF[i] = vecALF[i]/(float)nx_voxls[i];
+        }
+        
+        
+        ///////////////////////////////
+        // doing voxel deconvolution
+        ////////////////////////////
+        
+        // before output for debugging
+        cout <<  "column " << icol << "    of " << nr_columns << " Nvoxles = " ;
+        for (int i = 0; i < nr_layers; ++i) cout << nx_voxls[i] << "  " ;
+        cout << endl;  
+        
+        cout <<  "column " << icol << "    of " << nr_columns << " ALF = " ;
+        for (int i = 0; i < nr_layers; ++i) cout << vecALF[i] << "  " ;
+        cout << endl;  
+        
+        cout <<  "column " << icol << "    of " << nr_columns << " vec1 = " ;
+        for (int i = 0; i < nr_layers; ++i) cout << vec1[i][0] << "  " ; 
+        cout << endl;  
 
-                        for (int jz = jz_start; jz <= jz_stop; ++jz) {
-                            for (int jy = jy_start; jy <= jy_stop; ++jy) {
-                                for (int jx = jx_start; jx <= jx_stop; ++jx) {
-                                    int voxel_j = nxy * jz + nx * jy + jx;
-                                    if (*(nii_layer_data + voxel_j) == layer_i) {
-                                        float d = dist((float)ix, (float)iy, (float)iz,
-                                                       (float)jx, (float)jy, (float)jz,
-                                                       dX, dY, dZ);
-                                        float g = gaus(d, FWHM_val);
-                                        *(nii_smooth_data + voxel_i) += *(nii_input_data + voxel_j) * g;
-                                        *(nii_gaussw_data + voxel_i) += g;
-                                    }
-                                }
-                            }
-                        }
-                        // Normalize
-                        *(nii_smooth_data + voxel_i) /= *(nii_gaussw_data + voxel_i);
-                    } else {
-                        *(nii_smooth_data + voxel_i) = *(nii_input_data + voxel_i);
-                    }
+               //doing normalization of ALF
+               cur_ALFmean = 0 ; 
+        for (int i = 0; i < nr_layers; ++i) {
+            if (nx_voxls[i] > 0 ) cur_ALFmean = cur_ALFmean + vecALF[i];   
+         }
+        for (int i = 0; i < nr_layers; ++i) {
+            if (nx_voxls[i] > 0 ) vecALF[i] = vecALF[i] /cur_ALFmean ;   
+         }
+         
+        cout <<  "column " << icol << "    of " << nr_columns << " ALF normaliced = " ;
+        for (int i = 0; i < nr_layers; ++i) cout << vecALF[i] << "  " ;
+        cout << endl;  
+        
+        for (int timestep = 0; timestep < nrep; timestep++){
+                           //inicializing vec 2
+            //for (int i = 0; i < nr_layers; ++i) vec2[i][timestep] = vec1[i][timestep];   
+    
+                          //getting whieghted sum
+            for (int i = 0; i < nr_layers; ++i) {
+                sum = 0;
+                for (int j = i+1; j < nr_layers; ++j) {
+                    
+                    if (nx_voxls[j] > 0 ) sum = sum + vec1[j][timestep]/(float)nr_layers * 0.005 ; 
                 }
+                if (nx_voxls[i] > 0 ) vec2[i][timestep] = (vec1[i][timestep] - sum)/vecALF[i] ;  
+                 
             }
-        }
-        cout << endl;
-    }
+         }
+         
+         // after output for debugging
+        cout <<  "column " << icol << "    of " << nr_columns << " vec2 = " ;
+        for (int i = 0; i < nr_layers; ++i) cout << vec2[i][0] << "  " ; 
+        cout << endl;  
+  
+        
+        // filling the file with the deconvolved values 
+        for (int ivox = 0; ivox < nr_voxels; ++ivox) {
+           if (icol == *(nii_column_data + ivox)) {
+               cur_layer = *(nii_layer_data + ivox)-1 ; 
+               for (int timestep = 0; timestep < nrep; timestep++) *(nii_decov_data + timestep*nr_voxels + ivox ) = vec2[cur_layer][timestep] ;
+           }
+        } 
+        
+    //cout << "\r" << "column " << icol << "    of " << nr_columns << "   " <<  flush ;  
+    cout << endl << endl; 
+    }// loop acrtoss columns closed
+    cout << endl; 
+    
 
-    ///////////////////////////////////////////////////////
-    // if requested, smooth only within connected layers //
-    ///////////////////////////////////////////////////////
-    if (sulctouch == 1) {
-        // Allocating local connected vicinity file
-        nifti_image* hairy_brain = copy_nifti_as_int32(nii_layer);
-        int32_t* hairy_brain_data = static_cast<int32_t*>(hairy_brain->data);
-        hairy_brain->scl_slope = 1.;
-        int vic_steps = 1;
 
-        vic = max(1., 2. * FWHM_val / dX);  // Ignore if voxel is too far
-        cout << "  vic " << vic << endl;
-        cout << "  FWHM_val " << FWHM_val << endl;
-        cout << "  Starting within sulcus smoothing..." <<  endl;
-
-        for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_y; ++iy) {
-                for (int ix = 0; ix < size_x; ++ix) {
-                    int voxel_i = nxy * iz + nx * iy + ix;
-
-                    if (*(nii_layer_data + voxel_i) > 0) {
-                        idx++;
-                        int n = (idx * 100) / nr_vox_to_loop;
-                        if (n != prev_n) {
-                            cout << "\r " << n <<  "% " << flush;
-                            prev_n = n;
-                        }
-                        int layer_i = *(nii_layer_data + voxel_i);
-
-                        /////////////////////////////////////////////////
-                        // Find area that is not from the other sulcus //
-                        /////////////////////////////////////////////////
-                        int jz_start = max(0, iz - vic - vic_steps);
-                        int jz_stop = min(iz + vic + vic_steps, size_z - 1);
-                        int jy_start = max(0, iy - vic - vic_steps);
-                        int jy_stop = min(iy + vic + vic_steps, size_y - 1);
-                        int jx_start = max(0, ix - vic - vic_steps);
-                        int jx_stop = min(ix + vic + vic_steps, size_x - 1);
-
-                        for (int jz = jz_start; jz <= jz_stop; ++jz) {
-                            for (int jy = jy_start; jy <= jy_stop; ++jy) {
-                                for (int jx = jx_start; jx <= jx_stop; ++jx) {
-                                    *(hairy_brain_data + nxy * jz + nx * jy + jx) = 0;
-                                }
-                            }
-                        }
-                        *(hairy_brain_data + voxel_i) = 1;
-
-                        // Grow into neigbouring voxels.
-                        for (int K_= 0; K_< vic; K_++) {
-                            int kz_start = max(0, iz - vic);
-                            int kz_stop = min(iz + vic, size_z - 1);
-                            int ky_start = max(0, iy - vic);
-                            int ky_stop = min(iy + vic, size_x - 1);
-                            int kx_start = max(0, ix - vic);
-                            int kx_stop = min(ix + vic, size_y - 1);
-
-                            for (int kz = kz_start; kz <= kz_stop; ++kz) {
-                                for (int ky = ky_start; ky <= ky_stop; ++ky) {
-                                    for (int kx = kx_start; kx <= kx_stop; ++kx) {
-                                        if (*(hairy_brain_data + nxy * kz + nx * ky + kx) == 1) {
-                                            int mz_start = max(0, kz - vic_steps);
-                                            int mz_stop = min(kz + vic_steps, size_z - 1);
-                                            int my_start = max(0, ky - vic_steps);
-                                            int my_stop = min(ky + vic_steps, size_y - 1);
-                                            int mx_start = max(0, kx - vic_steps);
-                                            int mx_stop = min(kx + vic_steps, size_x - 1);
-
-                                            for (int mz = mz_start; mz <= mz_stop; ++mz) {
-                                                for (int my = my_start; my <= my_stop; ++my) {
-                                                    for (int mx = mx_start; mx <= mx_stop; ++mx) {
-                                                        if (dist((float)kx, (float)ky, (float)kz, (float)mx, (float)my, (float)mz, 1, 1, 1) <= 1.74
-                                                            && *(nii_layer_data + nxy * mz + nx * my + mx) == layer_i) {
-                                                            *(hairy_brain_data + nxy * mz + nx * my + mx) = 1;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // Smooth within each layer and within local patch
-                        jz_start = max(0, iz - vic);
-                        jz_stop = min(iz + vic, size_z - 1);
-                        jy_start = max(0, iy - vic);
-                        jy_stop = min(iy + vic, size_y - 1);
-                        jx_start = max(0, ix - vic);
-                        jx_stop = min(ix + vic, size_x - 1);
-
-                        for (int jz = jz_start; jz <= jz_stop; ++jz) {
-                            for (int jy = jy_start; jy <= jz_stop; ++jy) {
-                                for (int jx = jx_start; jx <= jx_stop; ++jx) {
-                                    if (*(hairy_brain_data + nxy * jz + nx * jy + jx) == 1) {
-                                        float d = dist((float)ix, (float)iy, (float)iz,
-                                                       (float)jx, (float)jy, (float)jz,
-                                                       dX, dY, dZ);
-                                        float g = gaus(d, FWHM_val);
-
-                                        *(nii_smooth_data + voxel_i) += *(nii_input_data + nxy * jz + nx * jy + jx) * g;
-                                        *(nii_gaussw_data + voxel_i) += g;
-                                    }
-                                }
-                            }
-                        }
-                        if (*(nii_gaussw_data + voxel_i) > 0) {
-                        *(nii_smooth_data + voxel_i) /= *(nii_gaussw_data + voxel_i);
-                        }
-                    }
-
-                }
-            }
-        }
-        save_output_nifti(f_input, "hairy_brain", hairy_brain, false);
-    }
-    cout << "  Smoothing is done. " <<  endl;
-
-    ////////////////////////////////
-    // Masking if it is it wanted //
-    ////////////////////////////////
-    if (do_masking == 1) {
-        for (int i = 0; i < nr_voxels; ++i)
-            if (*(nii_layer_data + i) == 0) {
-                *(nii_smooth_data + i) = 0;
-        }
-    }
-*/
-    save_output_nifti(f_input, "deconvolved", nii_smooth, true);
+    save_output_nifti(f_input, "deconvolved", nii_decov, true);
 
     cout << "  Finished." << endl;
     return 0;
