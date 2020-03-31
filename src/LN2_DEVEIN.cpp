@@ -9,14 +9,14 @@
 
 int show_help(void) {
     printf(
-    "LN_DEVEIN : Program that tries to remove the macrovascular component in BOLD.\n"
+    "LN2_DEVEIN : Program that tries to remove the macrovascular component in BOLD.\n"
     "\n"
     "    This program tries to estimate the micrcovascular component in layer-fMRI GE-BOLD \n"
     "    It does so by using an estimate of the local macrovascular blood volume ALF \n"
     "\n"
     "\n"
     "Usage:\n"
-    "    LN_DEVEIN -layer_file layers.nii -column_file columns.nii -input input time_series.nii -ALF ALF.nii  -FWHM 1\n"
+    "    LN2_DEVEIN -layer_file layers.nii -column_file columns.nii -input input time_series.nii -ALF ALF.nii  -FWHM 1\n"
     "\n"
     "Options:\n"
     "    -help          : Show this help.\n"
@@ -117,7 +117,7 @@ int main(int argc, char* argv[]) {
         return 2;
     }
 
-    log_welcome("LN_DEVEIN");
+    log_welcome("LN2_DEVEIN");
     log_nifti_descriptives(nii);
     log_nifti_descriptives(nii_layeri);
     log_nifti_descriptives(nii_columni);

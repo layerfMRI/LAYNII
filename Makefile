@@ -39,7 +39,7 @@ LOW_PRIORITY	=	LN_3DCOLUMNS \
 					LN_INT_ME \
 					LN_LOITUMA \
 					LN_NOISE_KERNEL \
-					LN_DEVEIN \
+					LN2_DEVEIN \
 
 LAYNII2	= LN2_LAYERS
 
@@ -170,7 +170,7 @@ LN_NOISE_KERNEL: dependencies
 	$(CC) -c -std=c++11 -o  obj/LN_NOISE_KERNEL.o src/LN_NOISE_KERNEL.cpp
 	$(CC) -o $@ $(CFLAGS) obj/LN_NOISE_KERNEL.o $(LIBRARIES)
 
-LN_DEVEIN: dependencies
+LN2_DEVEIN: dependencies
 	$(CC) -c -std=c++11 -o  obj/LN_DEVEIN.o src/LN_DEVEIN.cpp
 	$(CC) -o $@ $(CFLAGS) obj/LN_DEVEIN.o $(LIBRARIES)
 
