@@ -121,7 +121,7 @@ int main(int argc, char* argv[]) {
     log_nifti_descriptives(nii);
     log_nifti_descriptives(nii_layeri);
     log_nifti_descriptives(nii_columni);
-    log_nifti_descriptives(nii_alfi);
+    log_nifti_descriptives(nii_ALFi);
 
     // Get dimensions of input
     const int size_z = nii->nz;
@@ -150,7 +150,7 @@ int main(int argc, char* argv[]) {
     float *nii_smooth_data = static_cast<float*>(nii_smooth->data);
     nifti_image* nii_gaussw = copy_nifti_as_float32(nii_input);
     float *nii_gaussw_data = static_cast<float*>(nii_gaussw->data);
-
+/*
     // Zero new images
     for (int i = 0; i < nr_voxels; ++i) {
         *(nii_smooth_data + i) = 0;
@@ -362,8 +362,8 @@ int main(int argc, char* argv[]) {
                 *(nii_smooth_data + i) = 0;
         }
     }
-
-    save_output_nifti(f_input, "layer_smoothed", nii_smooth, true);
+*/
+    save_output_nifti(f_input, "deconvolved", nii_smooth, true);
 
     cout << "  Finished." << endl;
     return 0;

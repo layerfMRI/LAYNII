@@ -171,8 +171,8 @@ LN_NOISE_KERNEL: dependencies
 	$(CC) -o $@ $(CFLAGS) obj/LN_NOISE_KERNEL.o $(LIBRARIES)
 
 LN2_DEVEIN: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_DEVEIN.o src/LN_DEVEIN.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_DEVEIN.o $(LIBRARIES)
+	$(CC) -c -std=c++11 -o  obj/LN2_DEVEIN.o src/LN2_DEVEIN.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN2_DEVEIN.o $(LIBRARIES)
 
 LN_PHYSIO_PARS: dependencies
 	$(CC) -c -std=c++11 -o  obj/LN_PHYSIO_PARS.o src/LN_PHYSIO_PARS.cpp
