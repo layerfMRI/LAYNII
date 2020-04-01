@@ -16,7 +16,7 @@ int show_help(void) {
     "\n"
     "\n"
     "Usage:\n"
-    "    LN2_DEVEIN -layer_file layers.nii -column_file columns.nii -input input time_series.nii -ALF ALF.nii  -FWHM 1\n"
+    "    LN2_DEVEIN -layer_file 10_layers.nii -column_file columns.nii -input to_deconvolve.nii -ALF ALF.ni \n"
     "\n"
     "Options:\n"
     "    -help          : Show this help.\n"
@@ -270,17 +270,17 @@ int main(int argc, char* argv[]) {
         ////////////////////////////
         
         // before output for debugging
-        cout <<  "column " << icol << "    of " << nr_columns << " Nvoxles = " ;
-        for (int i = 0; i < nr_layers; ++i) cout << nx_voxls[i] << "  " ;
-        cout << endl;  
+        //cout <<  "column " << icol << "    of " << nr_columns << " Nvoxles = " ;
+        //for (int i = 0; i < nr_layers; ++i) cout << nx_voxls[i] << "  " ;
+        //cout << endl;  
         
-        cout <<  "column " << icol << "    of " << nr_columns << " ALF = " ;
-        for (int i = 0; i < nr_layers; ++i) cout << vecALF[i] << "  " ;
-        cout << endl;  
+        //cout <<  "column " << icol << "    of " << nr_columns << " ALF = " ;
+        //for (int i = 0; i < nr_layers; ++i) cout << vecALF[i] << "  " ;
+        //cout << endl;  
         
-        cout <<  "column " << icol << "    of " << nr_columns << " vec1 = " ;
-        for (int i = 0; i < nr_layers; ++i) cout << vec1[i][0] << "  " ; 
-        cout << endl;  
+        //cout <<  "column " << icol << "    of " << nr_columns << " vec1 = " ;
+        //for (int i = 0; i < nr_layers; ++i) cout << vec1[i][0] << "  " ; 
+        //cout << endl;  
 
                //doing normalization of ALF
                cur_ALFmean = 0 ; 
@@ -291,9 +291,9 @@ int main(int argc, char* argv[]) {
             if (nx_voxls[i] > 0 ) vecALF[i] = vecALF[i] /cur_ALFmean ;   
          }
          
-        cout <<  "column " << icol << "    of " << nr_columns << " ALF normaliced = " ;
-        for (int i = 0; i < nr_layers; ++i) cout << vecALF[i] << "  " ;
-        cout << endl;  
+        //cout <<  "column " << icol << "    of " << nr_columns << " ALF normaliced = " ;
+        //for (int i = 0; i < nr_layers; ++i) cout << vecALF[i] << "  " ;
+        //cout << endl;  
         
         for (int timestep = 0; timestep < nrep; timestep++){
                            //inicializing vec 2
@@ -319,9 +319,9 @@ int main(int argc, char* argv[]) {
          }
          
          // after output for debugging
-        cout <<  "column " << icol << "    of " << nr_columns << " vec2 = " ;
-        for (int i = 0; i < nr_layers; ++i) cout << vec2[i][0] << "  " ; 
-        cout << endl;  
+        //cout <<  "column " << icol << "    of " << nr_columns << " vec2 = " ;
+        //for (int i = 0; i < nr_layers; ++i) cout << vec2[i][0] << "  " ; 
+        //cout << endl;  
   
         
         // filling the file with the deconvolved values 
