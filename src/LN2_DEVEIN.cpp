@@ -16,7 +16,7 @@ int show_help(void) {
     "\n"
     "\n"
     "Usage:\n"
-    "    LN2_DEVEIN -layer_file 10_layers.nii -column_file columns.nii -input to_deconvolve.nii -ALF ALF.ni \n"
+    "    LN2_DEVEIN -layer_file lo_layers.nii -column_file lo_columns.nii -input lo_BOLD_stat.nii -ALF lo_ALF.nii \n"
     "\n"
     "Options:\n"
     "    -help          : Show this help.\n"
@@ -333,9 +333,9 @@ int main(int argc, char* argv[]) {
         } 
         
     //cout << "\r" << "column " << icol << "    of " << nr_columns << "   " <<  flush ;  
-    cout << endl << endl; 
+    //cout << endl << endl; 
     }// loop acrtoss columns closed
-    cout << endl; 
+    //cout << endl; 
     
 
 
