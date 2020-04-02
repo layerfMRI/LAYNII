@@ -23,6 +23,7 @@ int show_help(void) {
     "    -layer_file : Nifti (.nii) file that contains layer or column masks.\n"
     "    -input      : Nifti (.nii) file that should be smooth. It \n"
     "                  should have same dimensions as layer file.\n"
+    "    -twodim      : Nifti (.nii) file that should be smooth. It \n"
     "    -FWHM       : The amount of smoothing in mm.\n"
     "    -mask       : (Optional) Mask activity outside of layers. \n"
     "    -sulctouch  : (Optional) Allows smoothing across sucli. This is \n"
@@ -39,6 +40,7 @@ int main(int argc, char* argv[]) {
     char* f_input = NULL, *f_layer = NULL;
     int ac, do_masking = 0, sulctouch = 0;
     float FWHM_val = 0;
+    bool twodim = false ; 
     if (argc < 3) return show_help();
 
     for (ac = 1; ac < argc; ac++) {
@@ -65,6 +67,9 @@ int main(int argc, char* argv[]) {
         } else if (!strcmp(argv[ac], "-sulctouch")) {
             sulctouch = 1;
             cout << "Smooth across sluci, might take longer."  << endl;
+        } else if( ! strcmp(argv[ac], "-twodim") ) {
+           twodim = true;
+           cout << "I will do smoothing only in 2D"  << endl; 
         } else if (!strcmp(argv[ac], "-mask")) {
             do_masking = 1;
             cout << "Set voxels to zero outside layers (mask option)"  << endl;
@@ -109,7 +114,10 @@ int main(int argc, char* argv[]) {
     const int nr_voxels = size_z * size_y * size_x;
     const float dX = nii2->pixdim[1];
     const float dY = nii2->pixdim[2];
-    const float dZ = nii2->pixdim[3];
+    float dZ = nii2->pixdim[3];
+    
+    if  (twodim) dZ = 1000 * dZ ; 
+
 
     // ========================================================================
     // Fix datatype issues
