@@ -14,6 +14,7 @@ LIBRARIES		=	obj/nifti2_io.o \
 
 HIGH_PRIORITY	= 	LN_BOCO \
 					LN_MP2RAGE_DNOISE \
+					LN2_LAYER_SMOOTH \
 					LN_LAYER_SMOOTH \
 
 LOW_PRIORITY	=	LN_3DCOLUMNS \
@@ -79,6 +80,10 @@ LN_MP2RAGE_DNOISE: dependencies
 LN_LAYER_SMOOTH: dependencies
 	$(CC) -c -std=c++11 -o  obj/LN_LAYER_SMOOTH.o src/LN_LAYER_SMOOTH.cpp
 	$(CC) -o $@ $(CFLAGS) obj/LN_LAYER_SMOOTH.o $(LIBRARIES)
+
+LN2_LAYER_SMOOTH: dependencies
+	$(CC) -c -std=c++11 -o  obj/LN2_LAYER_SMOOTH.o src/LN2_LAYER_SMOOTH.cpp
+	$(CC) -o $@ $(CFLAGS) obj/LN2_LAYER_SMOOTH.o $(LIBRARIES)
 
 # -----------------------------------------------------------------------------
 # Low priority programs
