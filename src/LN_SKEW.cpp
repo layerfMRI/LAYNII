@@ -4,7 +4,7 @@
 
 int show_help(void) {
     printf(
-    "LN_SKEW: Calculates skew, kurtosis, and autocorrelation of timeseries.\n"
+    "LN_SKEW: Calculates mean, standard deviation, tSNR, skew, kurtosis, and autocorrelation of timeseries.\n"
     "         This is helpful for artifact hunting (e.g. ghosting).\n"
     "\n"
     "Usage:\n"
@@ -81,6 +81,15 @@ int main(int argc, char * argv[]) {
 
     nifti_image* nii_conc = copy_nifti_as_float32(nii_skew);
     float* nii_conc_data = static_cast<float*>(nii_conc->data);
+    
+    nifti_image* nii_mean = copy_nifti_as_float32(nii_skew);
+    float* nii_mean_data = static_cast<float*>(nii_mean->data);
+    
+    nifti_image* nii_stdev = copy_nifti_as_float32(nii_skew);
+    float* nii_stdev_data = static_cast<float*>(nii_stdev->data);
+    
+    nifti_image* nii_tSNR = copy_nifti_as_float32(nii_skew);
+    float* nii_tSNR_data = static_cast<float*>(nii_tSNR->data);
 
     // ========================================================================
     cout << "  Calculating skew, kurtosis, and autocorrelation..." << endl;
@@ -99,6 +108,9 @@ int main(int argc, char * argv[]) {
                 *(nii_skew_data + voxel_i) = ren_skew(vec1, size_time);
                 *(nii_kurt_data + voxel_i) = ren_kurt(vec1, size_time);
                 *(nii_autocorr_data + voxel_i) = ren_autocor(vec1, size_time);
+                *(nii_mean_data + voxel_i) =  ren_average(vec1, size_time);
+                *(nii_stdev_data + voxel_i) = ren_stdev(vec1, size_time);
+                *(nii_tSNR_data + voxel_i) = ren_average(vec1, size_time)/ren_stdev(vec1, size_time);
             }
         }
     }
@@ -106,7 +118,9 @@ int main(int argc, char * argv[]) {
     save_output_nifti(fin, "skew", nii_skew, true);
     save_output_nifti(fin, "kurt", nii_kurt, true);
     save_output_nifti(fin, "autocorr", nii_autocorr, true);
-
+    save_output_nifti(fin, "mean", nii_mean, true);
+    save_output_nifti(fin, "stedev", nii_stdev, true);
+    save_output_nifti(fin, "tSNR", nii_tSNR, true);
     // ========================================================================
     cout << "  Calculating correlation with everything..." << endl;
 
