@@ -45,9 +45,9 @@ int main(int argc, char * argv[]) {
                 return 1;
             }
             fin = argv[ac];
-        } else if (!strcmp(argv[ac], "-variance")) {
+        } else if (!strcmp(argv[ac], "-std")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -input\n");
+                fprintf(stderr, "** missing argument for -variance\n");
                 return 1;
             }
             std_val = atof(argv[ac]);
