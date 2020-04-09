@@ -10,6 +10,12 @@ int show_help(void) {
     "Usage:\n"
     "    LN_IMAGIRO -layers equi_dist_layers.nii -columns columnar_coordinated.nii -data data2unfold.nii\n"
     "\n"
+    "Test application in the test_data folder: \n"
+    "    ../LN_IMAGIRO -layers sc_layers_3dcolumns.nii -column_file sc_columns_3dcolumns.nii -data sc_BOLD_act.nii \n"
+    "\n"
+    "a potiential application case is described on this blog post: \n'
+    "    https://layerfmri.com/columns/ \n"
+    "    \n"
     "Options:\n"
     "    -help       : Show this help.\n"
     "    -layers     : Nifti (.nii) file that contains layer.\n"
