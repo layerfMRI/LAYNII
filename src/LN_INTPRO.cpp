@@ -5,10 +5,16 @@
 int show_help(void) {
     printf(
     "LN_INTPRO: Do maximun and minimum intensity projections. For example,\n"
-    "           this is useful for visualizing vessels.\n"
+    "      this is useful for visualizing vessels.\n"
     "\n"
     "Usage:\n"
-    "    LN_INTPRO -image file.nii -min -direction 3 \n"
+    "     LN_INTPRO -image file.nii -min -direction 3 \n"
+    "\n"
+    "Test usage in the test_data folder: \n"
+    "     ../LN_INTPRO -image sc_UNI.nii -min -direction 2 -range 3 \n"
+    "\n"
+    "An example application in a blog post is here: \n"
+    "    https://layerfmri.comintensity-projections-in-laynii/ \n"
     "\n"
     "Options:\n"
     "    -help       : Show this help\n"

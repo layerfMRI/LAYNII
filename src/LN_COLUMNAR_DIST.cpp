@@ -8,6 +8,13 @@ int show_help(void) {
     printf(
     "LN_COLUMNAR_DIST : Calculates cortical distances (columnar structures) \n"
     "                   based on the gray matter geometry.\n"
+    "                   \n"
+    "                   The working principles of the underlying algorithm \n"
+    "                   and an example explanantion is given on as a blog post \n"
+    "                   https://layerfmri.com/columns/ \n"
+    "                   \n"
+    "                   test application in the test_data folder would be:\n"
+    "                   ../LN_COLUMNAR_DIST -layers sc_layers_3dcolumns.nii -landmarks sc_landmarks.nii \n"
     "\n"
     "Usage:\n"
     "    LN_COLUMNAR_DIST -layers layers.nii -landmarks landmarks.nii \n"
