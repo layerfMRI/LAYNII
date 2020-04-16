@@ -5,8 +5,8 @@ CFLAGS	= -std=c++11 -DHAVE_ZLIB -lm -lz
 # CFLAGS	= -std=c++11 -pedantic -DHAVE_ZLIB -lm -lz
 
 # =============================================================================
-LIBRARIES		=	dep/nifti1_io.c \
-					dep/znzlib.c \
+LIBRARIES		=	dep/nifti1_io.cpp \
+					dep/znzlib.cpp \
 					dep/laynii_lib.cpp \
 					-I./niftilib \
 					-I./znzlib \
