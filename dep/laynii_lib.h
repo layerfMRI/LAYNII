@@ -7,7 +7,7 @@
 #include <iostream>
 #include <string>
 #include <tuple>
-#include "./nifti2_io.h"
+#include "./nifti1_io.h"
 
 using namespace std;
 

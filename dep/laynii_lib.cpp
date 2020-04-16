@@ -170,7 +170,7 @@ void save_output_nifti(const string path, const string tag,  nifti_image* nii,
         // Parse extension
         auto const pos2 = file.find_first_of('.');
         basename = file.substr(0, pos2);
-        ext = ".nii";
+        ext = file.substr(pos2);
 
         // Prepare output path
         path_out = dir + sep + basename + "_" + tag + ext;
@@ -203,57 +203,58 @@ nifti_image* copy_nifti_as_float32(nifti_image* nii) {
     nii_new->nbyper = sizeof(float);
     nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
     float* nii_new_data = static_cast<float*>(nii_new->data);
+    int nr_voxels = nii_new->nvox;
 
     // NOTE(Faruk): See nifti1.h for notes on data types
     // ------------------------------------------------------------------------
     if (nii->datatype == 2) {  // NIFTI_TYPE_UINT8
         uint8_t* nii_data = static_cast<uint8_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else if (nii->datatype == 512) {  // NIFTI_TYPE_UINT16
         uint16_t* nii_data = static_cast<uint16_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else if (nii->datatype == 768) {  // NIFTI_TYPE_UINT32
         uint32_t* nii_data = static_cast<uint32_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else if (nii->datatype == 1280) {  // NIFTI_TYPE_UINT64
         uint64_t* nii_data = static_cast<uint64_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else if (nii->datatype == 256) {  // NIFTI_TYPE_INT8
         int8_t* nii_data = static_cast<int8_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else if (nii->datatype == 4) {  // NIFTI_TYPE_INT16
         int16_t* nii_data = static_cast<int16_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else if (nii->datatype == 8) {  // NIFTI_TYPE_INT32
         int32_t* nii_data = static_cast<int32_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else if (nii->datatype == 1024) {  // NIFTI_TYPE_INT64
         int64_t* nii_data = static_cast<int64_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else if (nii->datatype == 16) {  // NIFTI_TYPE_FLOAT32
         float* nii_data = static_cast<float*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else if (nii->datatype == 64) {  // NIFTI_TYPE_FLOAT64
         double* nii_data = static_cast<double*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else {
@@ -261,7 +262,7 @@ nifti_image* copy_nifti_as_float32(nifti_image* nii) {
     }
 
     // Replace nans with zeros
-    for (int i = 0; i < nii->nvox; ++i) {
+    for (int i = 0; i < nr_voxels; ++i) {
         if (isnan(*(nii_new_data + i))) {
             *(nii_new_data + i) = 0;
         }
@@ -275,6 +276,7 @@ nifti_image* copy_nifti_as_int32(nifti_image* nii) {
     nii_new->datatype = NIFTI_TYPE_INT32;
     nii_new->nbyper = sizeof(int32_t);
     nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
+    int nr_voxels = nii_new->nvox;
 
     int32_t* nii_new_data = static_cast<int32_t*>(nii_new->data);
 
@@ -282,52 +284,52 @@ nifti_image* copy_nifti_as_int32(nifti_image* nii) {
     // ------------------------------------------------------------------------
     if (nii->datatype == 2) {  // NIFTI_TYPE_UINT8
         uint8_t* nii_data = static_cast<uint8_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int32_t>(*(nii_data + i));
         }
     } else if (nii->datatype == 512) {  // NIFTI_TYPE_UINT16
         uint16_t* nii_data = static_cast<uint16_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int32_t>(*(nii_data + i));
         }
     } else if (nii->datatype == 768) {  // NIFTI_TYPE_UINT32
         uint32_t* nii_data = static_cast<uint32_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int32_t>(*(nii_data + i));
         }
     } else if (nii->datatype == 1280) {  // NIFTI_TYPE_UINT64
         uint64_t* nii_data = static_cast<uint64_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int32_t>(*(nii_data + i));
         }
     } else if (nii->datatype == 256) {  // NIFTI_TYPE_INT8
         int8_t* nii_data = static_cast<int8_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int32_t>(*(nii_data + i));
         }
     } else if (nii->datatype == 4) {  // NIFTI_TYPE_INT16
         int16_t* nii_data = static_cast<int16_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int32_t>(*(nii_data + i));
         }
     } else if (nii->datatype == 8) {  // NIFTI_TYPE_INT32
         int32_t* nii_data = static_cast<int32_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int32_t>(*(nii_data + i));
         }
     } else if (nii->datatype == 1024) {  // NIFTI_TYPE_INT64
         int64_t* nii_data = static_cast<int64_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int32_t>(*(nii_data + i));
         }
     } else if (nii->datatype == 16) {  // NIFTI_TYPE_FLOAT32
         float* nii_data = static_cast<float*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int32_t>(*(nii_data + i));
         }
     } else if (nii->datatype == 64) {  // NIFTI_TYPE_FLOAT64
         double* nii_data = static_cast<double*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int32_t>(*(nii_data + i));
         }
     } else {
@@ -335,7 +337,7 @@ nifti_image* copy_nifti_as_int32(nifti_image* nii) {
     }
 
     // Replace nans with zeros
-    for (int i = 0; i < nii->nvox; ++i) {
+    for (int i = 0; i < nr_voxels; ++i) {
         if (isnan(*(nii_new_data + i))) {
             *(nii_new_data + i) = 0;
         }
@@ -351,6 +353,7 @@ nifti_image* copy_nifti_as_float16(nifti_image* nii) {
     nii_new->datatype = NIFTI_TYPE_INT16;
     nii_new->nbyper = sizeof(short);
     nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
+    int nr_voxels = nii_new->nvox;
 
     short *nii_new_data = static_cast<short*>(nii_new->data);
 
@@ -358,52 +361,52 @@ nifti_image* copy_nifti_as_float16(nifti_image* nii) {
     // ------------------------------------------------------------------------
     if (nii->datatype == 2) {  // NIFTI_TYPE_UINT8
         uint8_t* nii_data = static_cast<uint8_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = (short)((double) (*(nii_data + i) * 1000));
         }
     } else if (nii->datatype == 512) {  // NIFTI_TYPE_UINT16
         uint16_t* nii_data = static_cast<uint16_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = (short)((double) (*(nii_data + i) * 1000));
         }
     } else if (nii->datatype == 768) {  // NIFTI_TYPE_UINT32
         uint32_t* nii_data = static_cast<uint32_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = (short)((double) (*(nii_data + i) * 1000));
         }
     } else if (nii->datatype == 1280) {  // NIFTI_TYPE_UINT64
         uint64_t* nii_data = static_cast<uint64_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = (short)((double) (*(nii_data + i) * 1000));
         }
     } else if (nii->datatype == 256) {  // NIFTI_TYPE_INT8
         int8_t* nii_data = static_cast<int8_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = (short)((double) (*(nii_data + i) * 1000));
         }
     } else if (nii->datatype == 4) {  // NIFTI_TYPE_INT16
         int16_t* nii_data = static_cast<int16_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = (short)((double) (*(nii_data + i) * 1000));
         }
     } else if (nii->datatype == 8) {  // NIFTI_TYPE_INT32
         int32_t* nii_data = static_cast<int32_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = (short)((double) (*(nii_data + i) * 1000));
         }
     } else if (nii->datatype == 1024) {  // NIFTI_TYPE_INT64
         int64_t* nii_data = static_cast<int64_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = (short)((double) (*(nii_data + i) * 1000));
         }
     } else if (nii->datatype == 16) {  // NIFTI_TYPE_FLOAT32
         float* nii_data = static_cast<float*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = (short)((double) (*(nii_data + i) * 1000));
         }
     } else if (nii->datatype == 64) {  // NIFTI_TYPE_FLOAT64
         double* nii_data = static_cast<double*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = (short)((double) (*(nii_data + i) * 1000));
         }
     } else {
@@ -411,7 +414,7 @@ nifti_image* copy_nifti_as_float16(nifti_image* nii) {
     }
     nii_new->scl_slope = nii->scl_slope / 1000.;
     // Replace nans with zeros
-    for (int i = 0; i < nii->nvox; ++i) {
+    for (int i = 0; i < nr_voxels; ++i) {
         if (isnan(*(nii_new_data + i))) {
             *(nii_new_data + i) = 0;
         }
@@ -425,6 +428,7 @@ nifti_image* copy_nifti_as_int16(nifti_image* nii) {
     nii_new->datatype = NIFTI_TYPE_INT16;
     nii_new->nbyper = sizeof(int16_t);
     nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
+    int nr_voxels = nii_new->nvox;
 
     int16_t* nii_new_data = static_cast<int16_t*>(nii_new->data);
 
@@ -432,52 +436,52 @@ nifti_image* copy_nifti_as_int16(nifti_image* nii) {
     // ------------------------------------------------------------------------
     if (nii->datatype == 2) {  // NIFTI_TYPE_UINT8
         uint8_t* nii_data = static_cast<uint8_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int16_t>(*(nii_data + i));
         }
     } else if (nii->datatype == 512) {  // NIFTI_TYPE_UINT16
         uint16_t* nii_data = static_cast<uint16_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int16_t>(*(nii_data + i));
         }
     } else if (nii->datatype == 768) {  // NIFTI_TYPE_UINT32
         uint32_t* nii_data = static_cast<uint32_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int16_t>(*(nii_data + i));
         }
     } else if (nii->datatype == 1280) {  // NIFTI_TYPE_UINT64
         uint64_t* nii_data = static_cast<uint64_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int16_t>(*(nii_data + i));
         }
     } else if (nii->datatype == 256) {  // NIFTI_TYPE_INT8
         int8_t* nii_data = static_cast<int8_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int16_t>(*(nii_data + i));
         }
     } else if (nii->datatype == 4) {  // NIFTI_TYPE_INT16
         int16_t* nii_data = static_cast<int16_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int16_t>(*(nii_data + i));
         }
     } else if (nii->datatype == 8) {  // NIFTI_TYPE_INT32
         int32_t* nii_data = static_cast<int32_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int16_t>(*(nii_data + i));
         }
     } else if (nii->datatype == 1024) {  // NIFTI_TYPE_INT64
         int64_t* nii_data = static_cast<int64_t*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int16_t>(*(nii_data + i));
         }
     } else if (nii->datatype == 16) {  // NIFTI_TYPE_FLOAT32
         float* nii_data = static_cast<float*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int16_t>(*(nii_data + i));
         }
     } else if (nii->datatype == 64) {  // NIFTI_TYPE_FLOAT64
         double* nii_data = static_cast<double*>(nii->data);
-        for (int i = 0; i < nii_new->nvox; ++i) {
+        for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<int16_t>(*(nii_data + i));
         }
     } else {
@@ -485,7 +489,7 @@ nifti_image* copy_nifti_as_int16(nifti_image* nii) {
     }
 
     // Replace nans with zeros
-    for (int i = 0; i < nii->nvox; ++i) {
+    for (int i = 0; i < nr_voxels; ++i) {
         if (isnan(*(nii_new_data + i))) {
             *(nii_new_data + i) = 0;
         }

@@ -12,12 +12,13 @@
 #include <math.h>
 #include <ctype.h>
 
+
 #ifndef DONT_INCLUDE_ANALYZE_STRUCT
 #define DONT_INCLUDE_ANALYZE_STRUCT  /*** not needed herein ***/
 #endif
-#include "nifti1.h"                  /*** NIFTI-1 header specification ***/
+#include "./nifti1.h"                  /*** NIFTI-1 header specification ***/
 
-#include <znzlib.h>
+#include "./znzlib.h"
 
 /*=================*/
 #ifdef  __cplusplus
