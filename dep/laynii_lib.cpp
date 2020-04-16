@@ -271,6 +271,92 @@ nifti_image* copy_nifti_as_float32(nifti_image* nii) {
     return nii_new;
 }
 
+nifti_image* copy_nifti_as_double(nifti_image* nii) {
+    ///////////////////////////////////////////////////////////////////////////
+    // NOTE(Renzo): Fixing potential problems with different input datatypes //
+    // here, I am loading them in their native datatype and cast them        //
+    // to the datatype I like best.                                          //
+    ///////////////////////////////////////////////////////////////////////////
+
+    // NOTE(for future reference): Rick's comments:
+    // nifti_copy_nim_info(). It will return with data == NULL.
+    // If you need the data allocated, memory use would not change once you do
+    // so. There is also nifti_make_new_nim()
+    // nifti_image* nifti_make_new_nim(const int64_t dims[],
+    //                                 int datatype, int data_fill)
+
+    nifti_image* nii_new = nifti_copy_nim_info(nii);
+    nii_new->datatype = NIFTI_TYPE_FLOAT32;
+    nii_new->nbyper = sizeof(double);
+    nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
+    double* nii_new_data = static_cast<double*>(nii_new->data);
+
+    // NOTE(Faruk): See nifti1.h for notes on data types
+    // ------------------------------------------------------------------------
+    if (nii->datatype == 2) {  // NIFTI_TYPE_UINT8
+        uint8_t* nii_data = static_cast<uint8_t*>(nii->data);
+        for (int i = 0; i < nii_new->nvox; ++i) {
+            *(nii_new_data + i) = static_cast<double>(*(nii_data + i));
+        }
+    } else if (nii->datatype == 512) {  // NIFTI_TYPE_UINT16
+        uint16_t* nii_data = static_cast<uint16_t*>(nii->data);
+        for (int i = 0; i < nii_new->nvox; ++i) {
+            *(nii_new_data + i) = static_cast<double>(*(nii_data + i));
+        }
+    } else if (nii->datatype == 768) {  // NIFTI_TYPE_UINT32
+        uint32_t* nii_data = static_cast<uint32_t*>(nii->data);
+        for (int i = 0; i < nii_new->nvox; ++i) {
+            *(nii_new_data + i) = static_cast<double>(*(nii_data + i));
+        }
+    } else if (nii->datatype == 1280) {  // NIFTI_TYPE_UINT64
+        uint64_t* nii_data = static_cast<uint64_t*>(nii->data);
+        for (int i = 0; i < nii_new->nvox; ++i) {
+            *(nii_new_data + i) = static_cast<double>(*(nii_data + i));
+        }
+    } else if (nii->datatype == 256) {  // NIFTI_TYPE_INT8
+        int8_t* nii_data = static_cast<int8_t*>(nii->data);
+        for (int i = 0; i < nii_new->nvox; ++i) {
+            *(nii_new_data + i) = static_cast<double>(*(nii_data + i));
+        }
+    } else if (nii->datatype == 4) {  // NIFTI_TYPE_INT16
+        int16_t* nii_data = static_cast<int16_t*>(nii->data);
+        for (int i = 0; i < nii_new->nvox; ++i) {
+            *(nii_new_data + i) = static_cast<double>(*(nii_data + i));
+        }
+    } else if (nii->datatype == 8) {  // NIFTI_TYPE_INT32
+        int32_t* nii_data = static_cast<int32_t*>(nii->data);
+        for (int i = 0; i < nii_new->nvox; ++i) {
+            *(nii_new_data + i) = static_cast<double>(*(nii_data + i));
+        }
+    } else if (nii->datatype == 1024) {  // NIFTI_TYPE_INT64
+        int64_t* nii_data = static_cast<int64_t*>(nii->data);
+        for (int i = 0; i < nii_new->nvox; ++i) {
+            *(nii_new_data + i) = static_cast<double>(*(nii_data + i));
+        }
+    } else if (nii->datatype == 16) {  // NIFTI_TYPE_FLOAT32
+        float* nii_data = static_cast<float*>(nii->data);
+        for (int i = 0; i < nii_new->nvox; ++i) {
+            *(nii_new_data + i) = static_cast<double>(*(nii_data + i));
+        }
+    } else if (nii->datatype == 64) {  // NIFTI_TYPE_FLOAT64
+        double* nii_data = static_cast<double*>(nii->data);
+        for (int i = 0; i < nii_new->nvox; ++i) {
+            *(nii_new_data + i) = static_cast<double>(*(nii_data + i));
+        }
+    } else {
+        cout << "Warning! Unrecognized nifti data type!" << endl;
+    }
+
+    // Replace nans with zeros
+    for (int i = 0; i < nii->nvox; ++i) {
+        if (isnan(*(nii_new_data + i))) {
+            *(nii_new_data + i) = 0;
+        }
+    }
+
+    return nii_new;
+}
+
 nifti_image* copy_nifti_as_int32(nifti_image* nii) {
     nifti_image* nii_new = nifti_copy_nim_info(nii);
     nii_new->datatype = NIFTI_TYPE_INT32;

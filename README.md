@@ -106,8 +106,6 @@ g++ -c -std=c++11 -o  obj/LN_FLOAT_ME.o src/LN_FLOAT_ME.cpp
 g++ -o LN_FLOAT_ME -std=c++11 -Wall -pedantic -DHAVE_ZLIB -I. obj/LN_FLOAT_ME.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o 
 g++ -c -std=c++11 -o  obj/LN_SHORT_ME.o src/LN_SHORT_ME.cpp
 g++ -o LN_SHORT_ME -std=c++11 -Wall -pedantic -DHAVE_ZLIB -I. obj/LN_SHORT_ME.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o 
-g++ -c -std=c++11 -o  obj/LN_INT_ME.o src/LN_INT_ME.cpp
-g++ -o LN_INT_ME -std=c++11 -Wall -pedantic -DHAVE_ZLIB -I. obj/LN_INT_ME.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o 
 g++ -c -std=c++11 -o  obj/LN_EXTREMETR.o src/LN_EXTREMETR.cpp
 g++ -o LN_EXTREMETR -std=c++11 -Wall -pedantic -DHAVE_ZLIB -I. obj/LN_EXTREMETR.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o 
 g++ -c -std=c++11 -o  obj/LN_GFACTOR.o src/LN_GFACTOR.cpp
@@ -132,8 +130,16 @@ g++ -c -std=c++11 -o  obj/LN_TRIAL.o src/LN_TRIAL.cpp
 g++ -o LN_TRIAL -std=c++11 -Wall -pedantic -DHAVE_ZLIB -I. obj/LN_TRIAL.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o 
 g++ -c -std=c++11 -o  obj/LN_PHYSIO_PARS.o src/LN_PHYSIO_PARS.cpp
 g++ -o LN_PHYSIO_PARS -std=c++11 -Wall -pedantic -DHAVE_ZLIB -I. obj/LN_PHYSIO_PARS.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o 
+g++ -c -std=c++11 -o  obj/LN_INT_ME.o src/LN_INT_ME.cpp
+g++ -o LN_INT_ME -std=c++11 -Wall -pedantic -DHAVE_ZLIB -I. obj/LN_INT_ME.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o 
+og++ -c -std=c++11 -o  obj/LN_LOITUMA.o src/LN_LOITUMA.cpp
+peg++ -o LN_LOITUMA -std=c++11 -Wall -pedantic -DHAVE_ZLIB -I. obj/LN_LOITUMA.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o 
+ng++ -c -std=c++11 -o  obj/LN_NOISE_KERNEL.o src/LN_NOISE_KERNEL.cpp
+ g++ -o LN_NOISE_KERNEL -std=c++11 -Wall -pedantic -DHAVE_ZLIB -I. obj/LN_NOISE_KERNEL.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o 
+g++ -c -std=c++11 -o  obj/LN2_DEVEIN.o src/LN2_DEVEIN.cpp
+g++ -o LN2_DEVEIN -std=c++11 -Wall -pedantic -DHAVE_ZLIB -I. obj/LN2_DEVEIN.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o 
 g++ -c -std=c++11 -o  obj/LN2_LAYERS.o src/LN2_LAYERS.cpp
-g++ -o LN2_LAYERS -std=c++11 -Wall -pedantic -DHAVE_ZLIB -I. obj/LN2_LAYERS.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o
+g++ -o LN2_LAYERS -std=c++11 -Wall -pedantic -DHAVE_ZLIB -I. obj/LN2_LAYERS.o obj/nifti2_io.o obj/nifticdf.o obj/znzlib.o obj/laynii_lib.o 
 ```
 
 # License
