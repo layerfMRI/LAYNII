@@ -3,13 +3,12 @@
 CC		= g++
 IFLAGS	= -I.
 USEZLIB	= -DHAVE_ZLIB
-CFLAGS	= -std=c++11 -Wall -pedantic $(USEZLIB) $(IFLAGS)
+CFLAGS	= -std=c++11 -pedantic -DHAVE_ZLIB
 
 
 # =============================================================================
-LIBRARIES		=	obj/nifti2_io.o \
- 					obj/nifticdf.o \
- 					obj/znzlib.o \
+LIBRARIES		=	obj/znzlib.o \
+					obj/nifti1_io.o \
  					obj/laynii_lib.o \
 
 HIGH_PRIORITY	= 	LN_BOCO \
@@ -46,9 +45,8 @@ LAYNII 	= $(HIGH_PRIORITY) $(LOW_PRIORITY) $(LAYNII2)
 
 # =============================================================================
 dependencies :
-	$(CC) -c -std=c++11 -o obj/nifti2_io.o dep/nifti2_io.cpp
-	$(CC) -c -std=c++11 -o obj/nifticdf.o dep/nifticdf.cpp
-	$(CC) -c -std=c++11 -o obj/znzlib.o dep/znzlib.cpp
+	$(CC) -c -std=c++11 -o obj/znzlib.o dep/znzlib.c
+	$(CC) -c -std=c++11 -o obj/nifti1_io.o dep/nifti1_io.c
 	$(CC) -c -std=c++11 -o obj/laynii_lib.o dep/laynii_lib.cpp
 
 all : dependencies $(LAYNII)
@@ -57,9 +55,8 @@ all : dependencies $(LAYNII)
 
 # =============================================================================
 # LAYNII v2.0.0 programs
-LN2_LAYERS: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN2_LAYERS.o src/LN2_LAYERS.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN2_LAYERS.o $(LIBRARIES)
+LN2_LAYERS:
+	$(CC) $(CFLAGS) -lm -lz -o LN2_LAYERS src/LN2_LAYERS.cpp dep/nifti1_io.c dep/znzlib.c dep/laynii_lib.cpp -I./niftilib -I./znzlib -I./laynii_lib
 
 LN2_LLOYD: dependencies
 	$(CC) -c -std=c++11 -o  obj/LN2_LLOYD.o src/LN2_LLOYD.cpp
