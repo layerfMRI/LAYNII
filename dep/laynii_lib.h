@@ -1,4 +1,3 @@
-#pragma once
 
 #include <stdio.h>
 #include <math.h>
@@ -7,7 +6,7 @@
 #include <iostream>
 #include <string>
 #include <tuple>
-#include "./nifti1_io.h"
+#include "./nifti2_io.h"
 
 using namespace std;
 

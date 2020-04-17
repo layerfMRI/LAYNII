@@ -21,7 +21,7 @@ NB: seeks for writable files with compression are quite restricted
 
  */
 
-#include "znzlib.h"
+#include "./znzlib.h"
 
 /*
 znzlib.c  (zipped or non-zipped library)
@@ -319,4 +319,3 @@ int znzprintf(znzFile stream, const char *format, ...)
 }
 
 #endif
-
