@@ -3925,12 +3925,13 @@ char * nifti_makehdrname(const char * prefix, int nifti_type, int check,
 #endif
 
    /* check for existence failure */
-   if( check && nifti_fileexists(iname) ){
-      fprintf(stderr,"** failure: NIFTI header file '%s' already exists\n",
-              iname);
-      free(iname);
-      return NULL;
-   }
+   // renzom removed this, it is only annoying
+  // if( check && nifti_fileexists(iname) ){
+  //    fprintf(stderr,"** failure: NIFTI header file '%s' already exists\n",
+  //            iname);
+  //    free(iname);
+  //    return NULL;
+  // }
 
    if(g_opts.debug > 2) fprintf(stderr,"+d made header filename '%s'\n", iname);
 
@@ -5792,7 +5793,8 @@ void * nifti_read_header( const char *hname, int *nver, int check )
       }
       memcpy(hresult, (void *)&n1hdr, h1size);
 
-      if ( check && ! nifti_hdr1_looks_good(hresult) ){
+      if ( check ){
+      // renzo changed it from       if ( check && ! nifti_hdr1_looks_good(hresult) ){
          LNI_FERR(fname,"nifti_1_header looks bad for file", hname);
          return hresult;
       }
@@ -5804,7 +5806,8 @@ void * nifti_read_header( const char *hname, int *nver, int check )
       }
       memcpy(hresult, &n2hdr, h2size);
 
-      if ( check && ! nifti_hdr2_looks_good(hresult) ){
+      if ( check  ){
+          // renzo changed it from       if ( check && ! nifti_hdr2_looks_good(hresult) ){
          LNI_FERR(fname,"nifti_2_header looks bad for file", hname);
          return hresult;
       }
