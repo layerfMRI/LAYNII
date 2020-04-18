@@ -21,7 +21,7 @@ int show_help( void )
       "       -leaky                : nii file that contains many many layers \n"
       "                               Ideally, the cortex is devided into 1000 layers.  \n"
       "                               The layers are estimated based on the leaky-layer principle.  \n"
-      "       -FWHM                 : Optional parameter to enforce a smooth curvature \n"
+      "       -FWHM                 : Optional parameter to enforce a smooth curvature, given in intager values of iteration, default=1 \n"
       "       -nr_layers            : Optional parameter of the number of layers (default is 20) \n"
       "       -output               : Optional parameter for output fine name (path) \n"
       "                               default is equivol_layers_.nii in current folder \n"
@@ -142,7 +142,7 @@ int main(int argc, char * argv[])
 
 
    if (FWHM_val > 0 ){
-       uint32_t iter_smooth = 1; 
+       uint32_t iter_smooth = FWHM_val; 
        uint32_t ix, iy, iz, j, k;
        float w = 0;
        
@@ -288,7 +288,7 @@ cout << " min layer is " <<  min_layer << "   max layers is " << max_layer << en
 
 
    if (FWHM_val > 0 ){
-       uint32_t iter_smooth = 1; 
+       uint32_t iter_smooth = 10; 
        uint32_t ix, iy, iz, j, k;
        float w = 0;
        
