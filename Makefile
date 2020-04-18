@@ -1,7 +1,7 @@
 # LAYNII makefile
 
-CC		= g++
-CFLAGS	= -std=c++11 -DHAVE_ZLIB -fpermissive
+CC		= c++
+CFLAGS	= -std=c++11 -DHAVE_ZLIB 
 LFLAGS	= -lm -lz
 # CFLAGS	= -std=c++11 -pedantic -DHAVE_ZLIB -lm -lz
 
