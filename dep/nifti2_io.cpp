@@ -3999,12 +3999,12 @@ char * nifti_makeimgname(const char * prefix, int nifti_type, int check,
 #endif
 
    /* check for existence failure */
-   if( check && nifti_fileexists(iname) ){
-      fprintf(stderr,"** NIFTI failure: image file '%s' already exists\n",
-              iname);
-      free(iname);
-      return NULL;
-   }
+  // if( check && nifti_fileexists(iname) ){
+  //    fprintf(stderr,"** NIFTI failure: image file '%s' already exists\n",
+  //            iname);
+  //    free(iname);
+  //    return NULL;
+  // }
 
    if( g_opts.debug > 2 ) fprintf(stderr,"+d made image filename '%s'\n",iname);
 
