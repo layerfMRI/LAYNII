@@ -23,6 +23,7 @@ int show_help(void) {
     "\n"
     "Notes:\n"
     "     - Layer nifti and landmarks nifti should have the same dimensions \n"
+    "     - This progrma is originally designed to work for axial slices (consider fslswapdim) \n"
     "\n");
     return 0;
 }
