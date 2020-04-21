@@ -17,7 +17,7 @@ int show_help(void) {
     "                    the center 2 and 3 are the borders. Landmarks \n"
     "                    should be at least 4 voxels thick.\n"
     "    -mask         : (Optional) Mask activity outside of layers.\n"
-    "    -vinc         : Number of columns.\n"
+    "    -nr_columns         : Number of columns.\n"
     "    -jiajiaoption : Include cerebrospinal fluid (CSF). Only do this \n"
     "                    if two sides of the sulcus are not touching. \n"
     "\n"
@@ -53,9 +53,9 @@ int main(int argc, char *argv[]) {
         } else if (!strcmp(argv[ac], "-jiajiaoption")) {
             jiajiaoption = 1;
             cout << "Do not remove CSF." << endl;
-        } else if (!strcmp(argv[ac], "-vinc")) {
+        } else if (!strcmp(argv[ac], "-nr_columns")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -vinc\n");
+                fprintf(stderr, "** missing argument for -nr_columns\n");
                 return 1;
             }
             jiajiavinc_max = atof(argv[ac]);
@@ -97,10 +97,23 @@ int main(int argc, char *argv[]) {
     const int nr_voxels = nii_input1->nvox;
     const int nx = nii_input1->nx;
     const int nxy = nii_input1->nx * nii_input1->ny;
-    const float dX = nii_input1->pixdim[1];
-    const float dY = nii_input1->pixdim[2];
-    const float dZ = nii_input1->pixdim[3];
+     float dX = nii_input1->pixdim[1];
+     float dY = nii_input1->pixdim[2];
+     float dZ = nii_input1->pixdim[3];
+     
+    float min_dim = 10000. ; 
 
+    if (nii_input1->pixdim[1] < min_dim ) min_dim = nii_input1->pixdim[1] ; 
+    if (nii_input1->pixdim[2] < min_dim ) min_dim = nii_input1->pixdim[1] ; 
+    if (nii_input1->pixdim[3] < min_dim ) min_dim = nii_input1->pixdim[1] ; 
+
+     min_dim = min_dim  * 2; 
+    // Renzo update to make this in voxel units, which makes more sense
+    dX = (float)nii_input1->pixdim[1] / min_dim   ; 
+    dY = (float)nii_input1->pixdim[2] / min_dim   ; 
+    dZ = (float)nii_input1->pixdim[3] / min_dim    ; 
+    
+    cout << " dimentions "  <<  dX << " " <<  dY << " " << dZ << endl; 
     // ========================================================================
     // Fixing potential problems with different input datatypes
     nifti_image* nii_layer = copy_nifti_as_float32(nii_input1);
@@ -436,7 +449,7 @@ int main(int argc, char *argv[]) {
     }
 
     int FWHM_val = 1;
-    int vinc_sm = max(1., 2. * FWHM_val / dX);  // Ignore if voxel is too far
+    int vinc_sm = max(1., 2. * FWHM_val  *3 / (dX+dY+dZ));  // Ignore if voxel is too far
     d = 0.;
     cout << "    vinc_sm " << vinc_sm<< endl;
     cout << "    FWHM_val " << FWHM_val<< endl;
@@ -554,7 +567,7 @@ int main(int argc, char *argv[]) {
     cout << "  [Step 7/9] Smoothing hairy brain again... " << endl;
 
     FWHM_val = 1;
-    vinc_sm = max(1., 2. * FWHM_val / dX);
+    vinc_sm = max(1., 2. * FWHM_val *3 / (dX+dY+dZ));
     cout << "    vinc_sm " << vinc_sm << endl;
     cout << "    FWHM_val " << FWHM_val << endl;
 
