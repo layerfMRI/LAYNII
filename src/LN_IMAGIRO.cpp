@@ -11,7 +11,7 @@ int show_help(void) {
     "    LN_IMAGIRO -layers equi_dist_layers.nii -columns columnar_coordinated.nii -data data2unfold.nii\n"
     "\n"
     "  Test application in the test_data folder: \n"
-    "    ../LN_IMAGIRO -layers sc_layers_3dcolumns.nii -column_file sc_columns_3dcolumns.nii -data sc_BOLD_act.nii \n"
+    "    ../LN_IMAGIRO -layers sc_layers_3dcolumns.nii -column sc_columns_3dcolumns.nii -data sc_BOLD_act.nii \n"
     "\n"
     "  a potiential application case is described on this blog post: \n"
     "    https://layerfmri.com/columns/ \n"
@@ -314,12 +314,12 @@ int main(int argc, char * argv[]) {
     }
    }
   }
-
-    for (int ilayer = 0; ilayer < nr_layers; ++ilayer) {
-        for (int icolum = 0; icolum < nr_columns; ++icolum) {
-             cout << *(imagiro_data + nxy_imagiro * 0 + nx_imagiro * ilayer + icolum) << " " ; 
-        }cout << endl ; 
-    }
+    // for debugging
+   // for (int ilayer = 0; ilayer < nr_layers; ++ilayer) {
+    //    for (int icolum = 0; icolum < nr_columns; ++icolum) {
+    //         cout << *(imagiro_data + nxy_imagiro * 0 + nx_imagiro * ilayer + icolum) << " " ; 
+    //    }cout << endl ; 
+   // }
     
 
 
