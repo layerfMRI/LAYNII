@@ -13,8 +13,8 @@
 
 int show_help(void) {
     printf(
-    "LN2_LAYERS: Cortical gray matter layering. Generates equi-distant layers\n"
-    "            by default.\n"
+    "LN2_LAYERS: Generates equi-distant cortical gray matter layers with\n"
+    "            an option to generate equi-volume layers in addition.\n"
     "\n"
     "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
     "!! BEWARE! WORK IN PROGRESS... USE WITH CAUTION !!\n"
@@ -32,9 +32,9 @@ int show_help(void) {
     "    -nr_layers    : Number of layers. Default is 3.\n"
     "    -equivol      : (Optional) Create equi-volume layers.\n"
     "    -iter_smooth  : (Optional) Number of smoothing iterations. Default\n"
-    "                    is 100. Only used together with ... . Use larger\n"
-    "                    values when equi-volume layers are jagged.\n"
-    "    -debug        : (Optional) Save extra in between outputs.\n"
+    "                    is 100. Only used together with '-equivol' flag. Use\n"
+    "                    larger values when equi-volume layers are jagged.\n"
+    "    -debug        : (Optional) Save extra intermediate outputs.\n"
     "\n");
     return 0;
 }
