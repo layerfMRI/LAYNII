@@ -2,16 +2,19 @@
 // TODO(Faruk): Curvature shows some artifacts in rim_circles test case. Needs
 // further investiation.
 // TODO(Faruk): First implementation of equi-volume works but it needs
-// extensive testing. I have think I might need to smooth previous derivatives
+// extensive testing. I might need to smooth previous derivatives
 // (hotspots, curvature etc.) a bit to make layering smoother on empirical
 // data overall.
+// TODO(Faruk): Memory usage is a bit sloppy for now. Low priority but might
+// need to have a look at it in the future if we start hitting ram limits.
 // TODO(Faruk): Put neighbour visits into a function.
 
 #include "../dep/laynii_lib.h"
 
 int show_help(void) {
     printf(
-    "LN2_LAYERS: Cortical gray matter layering.\n"
+    "LN2_LAYERS: Cortical gray matter layering. Generates equi-distant layers\n"
+    "            by default.\n"
     "\n"
     "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
     "!! BEWARE! WORK IN PROGRESS... USE WITH CAUTION !!\n"
@@ -20,15 +23,18 @@ int show_help(void) {
     "Usage:\n"
     "    LN2_LAYERS -rim rim.nii\n"
     "    LN2_LAYERS -rim rim.nii -nr_layers 10\n"
+    "    LN2_LAYERS -rim rim.nii -nr_layers 10 -equivol\n"
+    "    LN2_LAYERS -rim rim.nii -nr_layers 10 -equivol -iter_smooth 1000\n"
     "\n"
     "Options:\n"
-    "    -help         : Show this help. \n"
+    "    -help         : Show this help.\n"
     "    -rim          : Specify input dataset.\n"
     "    -nr_layers    : Number of layers. Default is 3.\n"
-    "    -debug        : (Optional) Save in between steps of the algorithm.\n"
-    "    -devel        : (Optional) Save experimental outputs that are under\n"
-    "                  : development.\n"
-    "    -iter_smooth  : (Optional) Nr. of iterations in experimental part.\n"
+    "    -equivol      : (Optional) Create equi-volume layers.\n"
+    "    -iter_smooth  : (Optional) Number of smoothing iterations. Default\n"
+    "                    is 100. Only used together with ... . Use larger\n"
+    "                    values when equi-volume layers are jagged.\n"
+    "    -debug        : (Optional) Save extra in between outputs.\n"
     "\n");
     return 0;
 }
@@ -37,8 +43,8 @@ int main(int argc, char*  argv[]) {
     nifti_image *nii1 = NULL;
     char* fin = NULL;
     uint16_t ac, nr_layers = 3;
-    bool debug_mode = false, devel_mode = false;
     uint16_t iter_smooth = 100;
+    bool mode_equivol = false, mode_debug = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -63,10 +69,10 @@ int main(int argc, char*  argv[]) {
             } else {
                 iter_smooth = atof(argv[ac]);
             }
+        } else if (!strcmp(argv[ac], "-equivol")) {
+            mode_equivol = true;
         } else if (!strcmp(argv[ac], "-debug")) {
-            debug_mode = true;
-        } else if (!strcmp(argv[ac], "-devel")) {
-            devel_mode = true;
+            mode_debug = true;
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -568,7 +574,7 @@ int main(int argc, char*  argv[]) {
         }
         grow_step += 1;
     }
-    if (debug_mode) {
+    if (mode_debug) {
         save_output_nifti(fin, "innerGM_step", innerGM_step, false);
         save_output_nifti(fin, "innerGM_dist", innerGM_dist, false);
         save_output_nifti(fin, "innerGM_id", innerGM_id, false);
@@ -977,7 +983,7 @@ int main(int argc, char*  argv[]) {
         }
         grow_step += 1;
     }
-    if (debug_mode) {
+    if (mode_debug) {
         save_output_nifti(fin, "outerGM_step", outerGM_step, false);
         save_output_nifti(fin, "outerGM_dist", outerGM_dist, false);
         save_output_nifti(fin, "outerGM_id", outerGM_id, false);
@@ -1032,7 +1038,7 @@ int main(int argc, char*  argv[]) {
     }
     save_output_nifti(fin, "thickness", thickness);
     save_output_nifti(fin, "layers_equidist", nii_layers);
-    if (debug_mode) {
+    if (mode_debug) {
         save_output_nifti(fin, "hotspots", hotspots, false);
         save_output_nifti(fin, "disterror", err_dist, false);
         save_output_nifti(fin, "normdistdiff_equidist", normdistdiff, false);
@@ -1122,7 +1128,7 @@ int main(int argc, char*  argv[]) {
             }
         }
     }
-    if (debug_mode) {
+    if (mode_debug) {
         save_output_nifti(fin, "curvature_init", curvature, false);
     }
 
@@ -1185,7 +1191,7 @@ int main(int argc, char*  argv[]) {
             }
         }
     }
-    if (debug_mode) {
+    if (mode_debug) {
         save_output_nifti(fin, "midGM_equidist_id", midGM_id, false);
         save_output_nifti(fin, "columns", midGM_centroid_id, false);
     }
@@ -1204,7 +1210,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Equi-volume layers
     // ========================================================================
-    if (devel_mode) {
+    if (mode_equivol) {
         cout << "\n  Start layers (equi-volume)..."   << endl;
 
         nifti_image* hotspots_i = copy_nifti_as_float32(nii_rim);
@@ -1242,7 +1248,7 @@ int main(int argc, char*  argv[]) {
                 }
             }
         }
-        if (debug_mode) {
+        if (mode_debug) {
             save_output_nifti(fin, "hotspots_in", hotspots_i, false);
             save_output_nifti(fin, "hotspots_out", hotspots_o, false);
         }
@@ -1275,7 +1281,7 @@ int main(int argc, char*  argv[]) {
             }
         }
 
-        if (debug_mode) {
+        if (mode_debug) {
             save_output_nifti(fin, "equivol_factors", equivol_factors, false);
         }
 
@@ -1358,7 +1364,7 @@ int main(int argc, char*  argv[]) {
                 *(equivol_factors_data + i) = *(smooth_data + i);
             }
         }
-        if (debug_mode) {
+        if (mode_debug) {
             save_output_nifti(fin, "equivol_factors_smooth", smooth, false);
         }
 
@@ -1390,7 +1396,7 @@ int main(int argc, char*  argv[]) {
             }
         }
         save_output_nifti(fin, "layers_equivol", nii_layers);
-        if (debug_mode) {
+        if (mode_debug) {
             save_output_nifti(fin, "normdistdiff_equivol", normdistdiff, false);
         }
 
