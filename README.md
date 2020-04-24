@@ -12,8 +12,6 @@ Most used programs (so far) are:
 
 Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri blog](https://layerfmri.com/category/code/).
 
-**Note:** In order to read and write Nifti (.nii) data, I used code that was originally developed from Bob Cox and Rick Reynolds and adapted it for using here.
-
 ## Installation
 1. Download the all the files with from github E.g. with the command::
 ```
@@ -44,11 +42,13 @@ Add the following to your `.bashrc`:
 ```
 export PATH="/path/to/LAYNII:$PATH"
 ```
+
 ### On Mac
 Add the following to your `.bash_profile` or `.profile`:
 ```
 export PATH="/path/to/LAYNII:$PATH"
 ```
+
 ### On Windows
 You can set paths as follows:
 1. On desktop, right-click the very bottom-left corner of the screen to get the Power User Task Menu.
@@ -73,11 +73,8 @@ Since January 2020, all remaining dependencies have been removed and LAYNII can 
 
 3. On Windows, a C++ compiler needs to be installed manually. For example with [cygwin](https://cygwin.com/). I followed the instructions in this [video](https://www.youtube.com/watch?v=DAlS4hF_PbY).
 
-## Comment on GSL
-Previous versions of LAYNII depend on GSL. I heard your complaints and removed it.
-
 ## Comment on makefile and compiler
-Some users seemed to have a compiler installed that does not match the actual CPU architecture of the computer. In those cases it can be easier to compile the programs one by one with g++. Copy-paste the following into your terminal instead in Step 3::
+Some users seemed to have a compiler installed that does not match the actual CPU architecture of the computer. In those cases it can be easier to compile the programs one by one with g++. Copy-paste the following into your terminal instead in Step 3:
 
 ```
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_BOCO src/LN_BOCO.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
@@ -110,6 +107,9 @@ c++ -std=c++11 -DHAVE_ZLIB  -o LN2_DEVEIN src/LN2_DEVEIN.cpp dep/nifti2_io.cpp d
 c++ -std=c++11 -DHAVE_ZLIB  -o LN2_LAYER_SMOOTH src/LN2_LAYER_SMOOTH.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN2_LAYERS src/LN2_LAYERS.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 ```
-
+---
 # License
-This project is licensed under [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause).
+LAYNII is licensed under [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause).
+
+# Acknowledgments
+In order to read and write Nifti (.nii, .nii.gz) data, we have adapted code that was originally developed from Bob Cox and Rick Reynolds.
