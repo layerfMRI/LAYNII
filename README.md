@@ -3,12 +3,12 @@
 # LAYNII
 <img src="https://layerfmri.files.wordpress.com/2018/01/sensory_motor_grid.png" width=350 align="right" />
 
-This is a package of standalone layer-fMRI C++ programs that depends only on a C++ compiler. The main purpose of this package is to provide layer-analysis software that are not (yet) included in the other major MRI analysis software.
+This is a package of standalone layer functional magnetic resonance imaging (layer-fMRI) C++ programs that depends only on a C++ compiler. The purpose of this package is to provide layer-analysis software that are not (yet) included in the other major MRI analysis software.
 
 Most used programs (so far) are:
-- ``LN_GROW_LAYERS`` : To generate layer masks based on CSF and WM border lines.
-- ``LN_LAYER_SMOOTH`` : For layer-specific spatial smoothing.
-- ``LN_BOCO`` : for BOLD correction in VASO.
+- `LN_GROW_LAYERS` : To generate layer masks based on CSF and WM border lines. Try `LN2_LAYERS` for our newer equi-distant and equi-volume layering algorithm.
+- `LN_LAYER_SMOOTH` : For layer-specific spatial smoothing.
+- `LN_BOCO` : for BOLD correction in VASO.
 
 Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri blog](https://layerfmri.com/category/code/).
 
@@ -82,7 +82,6 @@ Some users seemed to have a compiler installed that does not match the actual CP
 ```
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_BOCO src/LN_BOCO.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_MP2RAGE_DNOISE src/LN_MP2RAGE_DNOISE.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB  -o LN2_LAYER_SMOOTH src/LN2_LAYER_SMOOTH.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_LAYER_SMOOTH src/LN_LAYER_SMOOTH.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_3DCOLUMNS src/LN_3DCOLUMNS.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_COLUMNAR_DIST src/LN_COLUMNAR_DIST.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
@@ -108,6 +107,7 @@ c++ -std=c++11 -DHAVE_ZLIB  -o LN_INT_ME src/LN_INT_ME.cpp dep/nifti2_io.cpp dep
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_LOITUMA src/LN_LOITUMA.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_NOISE_KERNEL src/LN_NOISE_KERNEL.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN2_DEVEIN src/LN2_DEVEIN.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
+c++ -std=c++11 -DHAVE_ZLIB  -o LN2_LAYER_SMOOTH src/LN2_LAYER_SMOOTH.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN2_LAYERS src/LN2_LAYERS.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 ```
 
