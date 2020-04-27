@@ -4,7 +4,7 @@
 
 int show_help(void) {
     printf(
-    "LN_GROW_Layers: Example of gray matter layering.\n"
+    "LN_GROW_LAYERS: Example of gray matter layering.\n"
     "\n"
     "    This program calculates the layers based on GM and CSF border line \n"
     "    rim files.\n"
@@ -12,6 +12,10 @@ int show_help(void) {
     "Usage:\n"
     "    LN_GROW_LAYERS -rim rim.nii -N 21 \n"
     "    LN_GROW_LAYERS -rim rim.nii -N 21 -vinc 40 \n"
+    " \n"
+    "Test usage in the test_data folder: ../LN_GROW_LAYERS -rim sc_rim.nii \n"
+    "\n"
+    "Example application in a blog post: https://layerfmri.com/quick-layering/ \n"
     "\n"
     "Options:\n"
     "    -help       : Show this help.\n"

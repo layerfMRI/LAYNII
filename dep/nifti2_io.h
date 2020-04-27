@@ -17,10 +17,10 @@
 #ifndef DONT_INCLUDE_ANALYZE_STRUCT
 #define DONT_INCLUDE_ANALYZE_STRUCT  /*** not needed herein ***/
 #endif
-#include "nifti1.h"                  /*** NIFTI-1 header specification ***/
-#include "nifti2.h"                  /*** NIFTI-2 header specification ***/
+#include "./nifti1.h"                  /*** NIFTI-1 header specification ***/
+#include "./nifti2.h"                  /*** NIFTI-2 header specification ***/
 
-#include "znzlib.h"
+#include "./znzlib.h"
 
 /*=================*/
 #ifdef  __cplusplus
@@ -383,9 +383,13 @@ char const *nifti_orientation_string( int ii ) ;
 int   nifti_is_inttype( int dt ) ;
 
 mat44        nifti_mat44_inverse ( mat44 R ) ;
+mat44        nifti_mat44_mul      ( mat44 A , mat44 B );
 nifti_dmat44 nifti_dmat44_inverse( nifti_dmat44 R ) ;
 int          nifti_mat44_to_dmat44(mat44 * fm, nifti_dmat44 * dm);
 int          nifti_dmat44_to_mat44(nifti_dmat44 * dm, mat44 * fm);
+nifti_dmat44 nifti_dmat44_mul     ( nifti_dmat44 A , nifti_dmat44 B );
+
+
 
 nifti_dmat33 nifti_dmat33_inverse( nifti_dmat33 R ) ;
 nifti_dmat33 nifti_dmat33_polar  ( nifti_dmat33 A ) ;
@@ -410,7 +414,7 @@ void  nifti_swap_Nbytes ( int64_t n , int siz , void *ar ) ;
 int    nifti_datatype_is_valid       (int dtype, int for_nifti);
 int    nifti_datatype_from_string    (const char * name);
 const char * nifti_datatype_to_string(int dtype);
-int    nifti_header_version          (const char * buf, int nbytes);
+int    nifti_header_version          (const char * buf, size_t nbytes);
 
 int64_t nifti_get_filesize( const char *pathname ) ;
 void  swap_nifti_header ( void * h , int ni_ver ) ;
@@ -493,7 +497,7 @@ int64_t nifti_read_buffer(znzFile fp, void* datatptr, int64_t ntot,
 int     nifti_write_all_data(znzFile fp, nifti_image * nim,
                              const nifti_brick_list * NBL);
 int64_t  nifti_write_buffer(znzFile fp, const void * buffer, int64_t numbytes);
-nifti_image *nifti_read_ascii_image(znzFile fp, char *fname, int flen,
+nifti_image *nifti_read_ascii_image(znzFile fp, const char *fname, int flen,
                          int read_data);
 znzFile nifti_write_ascii_image(nifti_image *nim, const nifti_brick_list * NBL,
                          const char * opts, int write_data, int leave_open);
@@ -581,7 +585,7 @@ int    is_valid_nifti_type         (int nifti_type);
 int    nifti_test_datatype_sizes   (int verb);
 int    nifti_type_and_names_match  (nifti_image * nim, int show_warn);
 int    nifti_update_dims_from_array(nifti_image * nim);
-void   nifti_set_iname_offset      (nifti_image *nim);
+void   nifti_set_iname_offset      (nifti_image *nim, int nifti_ver);
 int    nifti_set_type_from_names   (nifti_image * nim);
 int    nifti_add_extension(nifti_image * nim, const char * data, int len,
                            int ecode );
@@ -654,8 +658,12 @@ int    nifti_valid_header_size(int ni_ver, int whine);
 /* http://www.mathworks.com/matlabcentral/fileexchange/42997-dicom-to-nifti-converter */
 #define NIFTI_ECODE_MATLAB          40  /* MATLAB extension */
 
+/* Quantiphyse extension
+   https://quantiphyse.readthedocs.io/en/latest/advanced/nifti_extension.html*/
+#define NIFTI_ECODE_QUANTIPHYSE     42  /* Quantiphyse extension */
 
-#define NIFTI_MAX_ECODE             40  /******* maximum extension code *******/
+
+#define NIFTI_MAX_ECODE             42  /******* maximum extension code *******/
 
 /* nifti_type file codes */
 #define NIFTI_FTYPE_ANALYZE   0         /* old ANALYZE */
@@ -700,7 +708,8 @@ typedef struct {
 #undef IS_GOOD_FLOAT
 #undef FIXED_FLOAT
 
-#ifdef isfinite       /* use isfinite() to check floats/doubles for goodness */
+//#ifdef isfinite /* Chris Rorden, 2020: disable isfinite to preserve NaN */
+#ifdef isfiniteX       /* use isfinite() to check floats/doubles for goodness */
 #  define IS_GOOD_FLOAT(x) isfinite(x)       /* check if x is a "good" float */
 #  define FIXED_FLOAT(x)   (isfinite(x) ? (x) : 0)           /* fixed if bad */
 #else

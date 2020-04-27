@@ -10,6 +10,12 @@ int show_help(void) {
     "Usage:\n"
     "    LN_IMAGIRO -layers equi_dist_layers.nii -columns columnar_coordinated.nii -data data2unfold.nii\n"
     "\n"
+    "  Test application in the test_data folder: \n"
+    "    ../LN_IMAGIRO -layers sc_layers_3dcolumns.nii -column sc_columns_3dcolumns.nii -data sc_BOLD_act.nii \n"
+    "\n"
+    "  a potiential application case is described on this blog post: \n"
+    "    https://layerfmri.com/columns/ \n"
+    "    \n"
     "Options:\n"
     "    -help       : Show this help.\n"
     "    -layers     : Nifti (.nii) file that contains layer.\n"
@@ -18,6 +24,7 @@ int show_help(void) {
     "\n"
     "Notes:\n"
     "    - All inputs should have the same dimensions.\n"
+    "    - Note that this program requires data that have at lease 3 slices \n"
     "\n");
     return 0;
 }
@@ -148,13 +155,21 @@ int main(int argc, char * argv[]) {
     imagiro->dim[1] = imagiro->nx;
     imagiro->dim[2] = imagiro->ny;
     imagiro->dim[3] = imagiro->nz;
-    imagiro->nvox = imagiro->nx * imagiro->ny * imagiro->nz * imagiro->nt
-                    * imagiro->nu * imagiro->nv * imagiro->nw;
+    imagiro->nvox = imagiro->nx * imagiro->ny * imagiro->nz * imagiro->nt;
 
+
+   
     int size_x_imagiro = imagiro->nx;
     int size_y_imagiro = imagiro->ny;
     int size_z_imagiro = imagiro->nz;
     int size_t_imagiro = imagiro->nt;
+
+
+    cout << "  imagiro column dim " << size_x_imagiro<< endl;
+    cout << "  imagiro depth dim " << size_y_imagiro << endl;
+    cout << "  imagiro layer dim " << size_z_imagiro << endl;
+    cout << "  imagiro time dim " << size_t_imagiro << endl;
+
     int nx_imagiro = imagiro->nx;
     int nxy_imagiro = imagiro->nx * imagiro->ny;
     int nxyz_imagiro = imagiro->nx * imagiro->ny * imagiro->nz;
@@ -162,16 +177,8 @@ int main(int argc, char * argv[]) {
     float dY_imagiro = imagiro->pixdim[2];
     float dZ_imagiro = imagiro->pixdim[3];
 
-    cout << "  imagiro layer dim a " << imagiro->nz << endl;
-    // nifti_update_dims_from_array(imagiro) ;
-    cout << "  imagiro layer dim b " << imagiro->nz << endl;
-    // cout << imagiro->pixdim[1] << endl;
-    // cout << imagiro->pixdim[2] << endl;
-    // cout << imagiro->pixdim[3] << endl;
-    cout << "  imagiro column dim " << imagiro->nx << endl;
-    cout << "  imagiro depth dim " << imagiro->ny << endl;
-    cout << "  imagiro layer dim " << imagiro->nz << endl;
-    cout << "  imagiro time dim " << imagiro->nt << endl;
+    cout << "  here " << imagiro->dim[0] <<  endl;
+
 
     imagiro->data = calloc(imagiro->nvox, imagiro->nbyper);
     float* imagiro_data = static_cast<float*>(imagiro->data);
@@ -192,9 +199,8 @@ int main(int argc, char * argv[]) {
     ////////////////////////////////////////
     cout << "  Resampling..." << endl;
     float value_ofinput_data = 0;
-    imagiro->nz = nr_layers;
-    imagiro->nx = nr_columns;
-    imagiro->ny = size_z;
+
+ 
 
     for (int iz = 0; iz < size_z_imagiro; ++iz) {
         for (int iy = 0; iy < size_y_imagiro; ++iy) {
@@ -249,6 +255,8 @@ int main(int argc, char * argv[]) {
                             / *(imagiro_vnr_data + voxel_j);
                         *(imagiro_data + nxyz_imagiro * it + voxel_j) += value_ofinput_data;
                     }
+                    
+                    
                 }
             }
         }
@@ -296,6 +304,24 @@ int main(int argc, char * argv[]) {
             }
         }
     }
+
+  for (int it = 0; it < size_time; ++it) {
+   for (int iz = 0; iz < size_z_imagiro; ++iz) {
+    for (int ilayer = 0; ilayer < nr_layers; ++ilayer) {
+        for (int icolum = 0; icolum < nr_columns; ++icolum) {
+             if (isnan( *(imagiro_data + nxyz_imagiro * it + nxy_imagiro * iz + nx_imagiro * ilayer +  icolum))) *(imagiro_data + nxyz_imagiro * it + nxy_imagiro * iz + nx_imagiro * ilayer +  icolum) = 0 ;
+        }
+    }
+   }
+  }
+    // for debugging
+   // for (int ilayer = 0; ilayer < nr_layers; ++ilayer) {
+    //    for (int icolum = 0; icolum < nr_columns; ++icolum) {
+    //         cout << *(imagiro_data + nxy_imagiro * 0 + nx_imagiro * ilayer + icolum) << " " ; 
+    //    }cout << endl ; 
+   // }
+    
+
 
     ////////////////////////////////////////
     // Taking care of scale factor if any //

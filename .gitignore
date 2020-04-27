@@ -39,7 +39,7 @@
 /*.nii.gz
 
 # Test data (uncomment when pushing new nii to repo)
-#test_data/*.nii
+test_data/*.nii*
 
 # Ignore compiled files at top level
 /LN*

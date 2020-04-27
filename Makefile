@@ -1,16 +1,15 @@
 # LAYNII makefile
 
-CC		= g++
-IFLAGS	= -I.
-USEZLIB	= -DHAVE_ZLIB
-CFLAGS	= -std=c++11 -Wall -pedantic $(USEZLIB) $(IFLAGS)
-
+CC		= c++
+CFLAGS	= -std=c++11 -DHAVE_ZLIB 
+LFLAGS	= -lm -lz
+# CFLAGS	= -std=c++11 -pedantic -DHAVE_ZLIB -lm -lz
 
 # =============================================================================
-LIBRARIES		=	obj/nifti2_io.o \
- 					obj/nifticdf.o \
- 					obj/znzlib.o \
- 					obj/laynii_lib.o \
+LIBRARIES		=	dep/nifti2_io.cpp \
+					dep/znzlib.cpp \
+					dep/laynii_lib.cpp \
+					-I./dep \
 
 HIGH_PRIORITY	= 	LN_BOCO \
 					LN_MP2RAGE_DNOISE \
@@ -47,141 +46,105 @@ LAYNII2	= LN2_LAYERS
 LAYNII 	= $(HIGH_PRIORITY) $(LOW_PRIORITY) $(LAYNII2)
 
 # =============================================================================
-dependencies :
-	$(CC) -c -std=c++11 -o obj/nifti2_io.o dep/nifti2_io.cpp
-	$(CC) -c -std=c++11 -o obj/nifticdf.o dep/nifticdf.cpp
-	$(CC) -c -std=c++11 -o obj/znzlib.o dep/znzlib.cpp
-	$(CC) -c -std=c++11 -o obj/laynii_lib.o dep/laynii_lib.cpp
-
-all : dependencies $(LAYNII)
+all : $(LAYNII)
 
 .PHONY: all $(HIGH_PRIORITY) $(LOW_PRIORITY) $(LAYNII2)
 
 # =============================================================================
 # LAYNII v2.0.0 programs
-LN2_LAYERS: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN2_LAYERS.o src/LN2_LAYERS.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN2_LAYERS.o $(LIBRARIES)
+LN2_LAYERS:
+	$(CC) $(CFLAGS) -o LN2_LAYERS src/LN2_LAYERS.cpp $(LIBRARIES) $(LFLAGS)
 
-LN2_LLOYD: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN2_LLOYD.o src/LN2_LLOYD.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN2_LLOYD.o $(LIBRARIES)
+LN2_LLOYD:
+	$(CC) $(CFLAGS) -o obj/LN2_LLOYD.o src/LN2_LLOYD.cpp $(LIBRARIES) $(LFLAGS)
 
 # -----------------------------------------------------------------------------
 # High priority programs
-LN_BOCO: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_BOCO.o src/LN_BOCO.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_BOCO.o $(LIBRARIES)
+LN_BOCO:
+	$(CC) $(CFLAGS) -o LN_BOCO src/LN_BOCO.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_MP2RAGE_DNOISE: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_MP2RAGE_DNOISE.o src/LN_MP2RAGE_DNOISE.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_MP2RAGE_DNOISE.o $(LIBRARIES)
+LN_MP2RAGE_DNOISE:
+	$(CC) $(CFLAGS) -o LN_MP2RAGE_DNOISE src/LN_MP2RAGE_DNOISE.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_LAYER_SMOOTH: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_LAYER_SMOOTH.o src/LN_LAYER_SMOOTH.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_LAYER_SMOOTH.o $(LIBRARIES)
+LN_LAYER_SMOOTH:
+	$(CC) $(CFLAGS) -o LN_LAYER_SMOOTH src/LN_LAYER_SMOOTH.cpp $(LIBRARIES) $(LFLAGS)
 
-LN2_LAYER_SMOOTH: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN2_LAYER_SMOOTH.o src/LN2_LAYER_SMOOTH.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN2_LAYER_SMOOTH.o $(LIBRARIES)
+LN2_LAYER_SMOOTH:
+	$(CC) $(CFLAGS) -o LN2_LAYER_SMOOTH src/LN2_LAYER_SMOOTH.cpp $(LIBRARIES) $(LFLAGS)
 
 # -----------------------------------------------------------------------------
 # Low priority programs
-LN_CORREL2FILES: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_CORREL2FILES.o src/LN_CORREL2FILES.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_CORREL2FILES.o $(LIBRARIES)
+LN_CORREL2FILES:
+	$(CC) $(CFLAGS) -o LN_CORREL2FILES src/LN_CORREL2FILES.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_DIRECT_SMOOTH: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_DIRECT_SMOOTH.o src/LN_DIRECT_SMOOTH.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_DIRECT_SMOOTH.o $(LIBRARIES)
+LN_DIRECT_SMOOTH:
+	$(CC) $(CFLAGS) -o LN_DIRECT_SMOOTH src/LN_DIRECT_SMOOTH.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_GRADSMOOTH: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_GRADSMOOTH.o src/LN_GRADSMOOTH.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_GRADSMOOTH.o $(LIBRARIES)
+LN_GRADSMOOTH:
+	$(CC) $(CFLAGS) -o LN_GRADSMOOTH src/LN_GRADSMOOTH.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_ZOOM: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_ZOOM.o src/LN_ZOOM.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_ZOOM.o $(LIBRARIES)
+LN_ZOOM:
+	$(CC) $(CFLAGS) -o LN_ZOOM src/LN_ZOOM.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_FLOAT_ME: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_FLOAT_ME.o src/LN_FLOAT_ME.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_FLOAT_ME.o $(LIBRARIES)
+LN_FLOAT_ME:
+	$(CC) $(CFLAGS) -o LN_FLOAT_ME src/LN_FLOAT_ME.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_SHORT_ME: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_SHORT_ME.o src/LN_SHORT_ME.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_SHORT_ME.o $(LIBRARIES)
+LN_SHORT_ME:
+	$(CC) $(CFLAGS) -o LN_SHORT_ME src/LN_SHORT_ME.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_INT_ME: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_INT_ME.o src/LN_INT_ME.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_INT_ME.o $(LIBRARIES)
+LN_INT_ME:
+	$(CC) $(CFLAGS) -o LN_INT_ME src/LN_INT_ME.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_3DCOLUMNS: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_3DCOLUMNS.o src/LN_3DCOLUMNS.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_3DCOLUMNS.o $(LIBRARIES)
+LN_3DCOLUMNS:
+	$(CC) $(CFLAGS) -o LN_3DCOLUMNS src/LN_3DCOLUMNS.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_COLUMNAR_DIST: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_COLUMNAR_DIST.o src/LN_COLUMNAR_DIST.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_COLUMNAR_DIST.o $(LIBRARIES)
+LN_COLUMNAR_DIST:
+	$(CC) $(CFLAGS) -o LN_COLUMNAR_DIST src/LN_COLUMNAR_DIST.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_EXTREMETR: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_EXTREMETR.o src/LN_EXTREMETR.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_EXTREMETR.o $(LIBRARIES)
+LN_EXTREMETR:
+	$(CC) $(CFLAGS) -o LN_EXTREMETR src/LN_EXTREMETR.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_GFACTOR: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_GFACTOR.o src/LN_GFACTOR.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_GFACTOR.o $(LIBRARIES)
+LN_GFACTOR:
+	$(CC) $(CFLAGS) -o LN_GFACTOR src/LN_GFACTOR.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_GROW_LAYERS: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_GROW_LAYERS.o src/LN_GROW_LAYERS.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_GROW_LAYERS.o $(LIBRARIES)
+LN_GROW_LAYERS:
+	$(CC) $(CFLAGS) -o LN_GROW_LAYERS src/LN_GROW_LAYERS.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_IMAGIRO: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_IMAGIRO.o src/LN_IMAGIRO.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_IMAGIRO.o $(LIBRARIES)
+LN_IMAGIRO:
+	$(CC) $(CFLAGS) -o LN_IMAGIRO src/LN_IMAGIRO.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_INTPRO: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_INTPRO.o src/LN_INTPRO.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_INTPRO.o $(LIBRARIES)
+LN_INTPRO:
+	$(CC) $(CFLAGS) -o LN_INTPRO src/LN_INTPRO.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_LEAKY_LAYERS: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_LEAKY_LAYERS.o src/LN_LEAKY_LAYERS.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_LEAKY_LAYERS.o $(LIBRARIES)
+LN_LEAKY_LAYERS:
+	$(CC) $(CFLAGS) -o LN_LEAKY_LAYERS src/LN_LEAKY_LAYERS.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_NOISEME: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_NOISEME.o src/LN_NOISEME.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_NOISEME.o $(LIBRARIES)
+LN_NOISEME:
+	$(CC) $(CFLAGS) -o LN_NOISEME src/LN_NOISEME.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_RAGRUG: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_RAGRUG.o src/LN_RAGRUG.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_RAGRUG.o $(LIBRARIES)
+LN_RAGRUG:
+	$(CC) $(CFLAGS) -o LN_RAGRUG src/LN_RAGRUG.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_SKEW: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_SKEW.o src/LN_SKEW.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_SKEW.o $(LIBRARIES)
+LN_SKEW:
+	$(CC) $(CFLAGS) -o LN_SKEW src/LN_SKEW.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_TEMPSMOOTH: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_TEMPSMOOTH.o src/LN_TEMPSMOOTH.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_TEMPSMOOTH.o $(LIBRARIES)
+LN_TEMPSMOOTH:
+	$(CC) $(CFLAGS) -o LN_TEMPSMOOTH src/LN_TEMPSMOOTH.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_TRIAL: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_TRIAL.o src/LN_TRIAL.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_TRIAL.o $(LIBRARIES)
+LN_TRIAL:
+	$(CC) $(CFLAGS) -o LN_TRIAL src/LN_TRIAL.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_LOITUMA: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_LOITUMA.o src/LN_LOITUMA.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_LOITUMA.o $(LIBRARIES)
+LN_LOITUMA:
+	$(CC) $(CFLAGS) -o LN_LOITUMA src/LN_LOITUMA.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_NOISE_KERNEL: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_NOISE_KERNEL.o src/LN_NOISE_KERNEL.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_NOISE_KERNEL.o $(LIBRARIES)
+LN_NOISE_KERNEL:
+	$(CC) $(CFLAGS) -o LN_NOISE_KERNEL src/LN_NOISE_KERNEL.cpp $(LIBRARIES) $(LFLAGS)
 
-LN2_DEVEIN: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN2_DEVEIN.o src/LN2_DEVEIN.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN2_DEVEIN.o $(LIBRARIES)
+LN2_DEVEIN:
+	$(CC) $(CFLAGS) -o LN2_DEVEIN src/LN2_DEVEIN.cpp $(LIBRARIES) $(LFLAGS)
 
-LN_PHYSIO_PARS: dependencies
-	$(CC) -c -std=c++11 -o  obj/LN_PHYSIO_PARS.o src/LN_PHYSIO_PARS.cpp
-	$(CC) -o $@ $(CFLAGS) obj/LN_PHYSIO_PARS.o $(LIBRARIES)
+LN_PHYSIO_PARS:
+	$(CC) $(CFLAGS) -o LN_PHYSIO_PARS src/LN_PHYSIO_PARS.cpp $(LIBRARIES) $(LFLAGS)
 
 clean:
 	$(RM) obj/*.o $(LAYNII)
