@@ -26,7 +26,7 @@ int show_help(void) {
     "    -twodim      : Nifti (.nii) file that should be smooth. It \n"
     "    -FWHM       : The amount of smoothing in mm.\n"
     "    -mask       : (Optional) Mask activity outside of layers. \n"
-    "    -sulctouch  : (Optional) Allows smoothing across sucli. This is \n"
+    "    -NoKissing  : (Optional) Allows smoothing across sucli. This is \n"
     "                  necessary, when you do heavy smoothing well bevond \n"
     "                  the spatial scale of the cortical thickness, or heavy\n"
     "                  curvature. It will make things slower. Note that this \n"
@@ -65,9 +65,9 @@ int main(int argc, char* argv[]) {
                 return 1;
             }
             f_input = argv[ac];
-        } else if (!strcmp(argv[ac], "-sulctouch")) {
+        } else if (!strcmp(argv[ac], "-NoKissing")) {
             sulctouch = 1;
-            cout << "Smooth across sluci, might take longer."  << endl;
+            cout << "Smooth across gyri, might take longer."  << endl;
         } else if( ! strcmp(argv[ac], "-twodim") ) {
            twodim = true;
            cout << "I will do smoothing only in 2D"  << endl; 
