@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3514298.svg)](https://doi.org/10.5281/zenodo.3514298)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3514297.svg)](https://doi.org/10.5281/zenodo.3514297)
 
 # LAYNII
 <img src="https://layerfmri.files.wordpress.com/2018/01/sensory_motor_grid.png" width=350 align="right" />
@@ -13,7 +13,7 @@ Most used programs (so far) are:
 Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri blog](https://layerfmri.com/category/code/).
 
 ## Installation
-1. Download the all the files with from github E.g. with the command::
+1. Download the latest release and unzip it or clone the repository with the command:
 ```
 git clone https://github.com/layerfMRI/laynii
 ```
@@ -23,7 +23,7 @@ git clone https://github.com/layerfMRI/laynii
 cd laynii
 ```
 
-3. Compile it with::
+3. Compile it with:
 ```
 make all
 ```
@@ -35,7 +35,7 @@ For example `LN_NOISEME.cpp` reads in a nii file, accesses the data, manipulates
 ```
 
 ### Using LAYNII from a anywhere in your system
-If you want to use LAYNII from anytwhere in your system, you still need to set the paths::
+If you want to use LAYNII from anywhere in your system, you still need to set the paths:
 
 ### On Linux
 Add the following to your `.bashrc`:
@@ -67,9 +67,9 @@ For more information see [this blog post](https://layerfmri.com/2017/11/30/using
 ## Comment on cross-platform compatibility
 Since January 2020, all remaining dependencies have been removed and LAYNII can be compiled on Linux, Max, and Windows. All you need is a terminal and a C++ compiler.
 
-1. On Linux `g++` is natively included.
+1. On Linux `g++` is included by default.
 
-2. On Mac, it will be enabled automatically as part of the `comandline developer tools` as soon as you type `g++` into the terminal. Alternatively, you can also use Xcode.
+2. On Mac, it will be enabled automatically as part of the `commandline developer tools` as soon as you type `g++` into the terminal. Alternatively, you can also use Xcode.
 
 3. On Windows, a C++ compiler needs to be installed manually. For example with [cygwin](https://cygwin.com/). I followed the instructions in this [video](https://www.youtube.com/watch?v=DAlS4hF_PbY).
 
@@ -108,6 +108,9 @@ c++ -std=c++11 -DHAVE_ZLIB  -o LN2_LAYER_SMOOTH src/LN2_LAYER_SMOOTH.cpp dep/nif
 c++ -std=c++11 -DHAVE_ZLIB  -o LN2_LAYERS src/LN2_LAYERS.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 ```
 ---
+# How to contribute?
+If you have any issues when using LAYNII, or want to request a new feature, we are happy to see them posted on our [issues page](https://github.com/layerfMRI/LAYNII/issues). Please prefer this method over sending individual emails by considering the fellow researchers having similar issues and suggestions.
+
 # License
 LAYNII is licensed under [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause).
 
