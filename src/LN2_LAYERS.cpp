@@ -8,13 +8,14 @@
 // TODO(Faruk): Memory usage is a bit sloppy for now. Low priority but might
 // need to have a look at it in the future if we start hitting ram limits.
 // TODO(Faruk): Put neighbour visits into a function.
+// TODO(Faruk): Might replace the smoothing code with a faster method later.
 
 #include "../dep/laynii_lib.h"
 
 int show_help(void) {
     printf(
     "LN2_LAYERS: Generates equi-distant cortical gray matter layers with\n"
-    "            an option to generate equi-volume layers in addition.\n"
+    "            an option to also generate equi-volume layers.\n"
     "\n"
     "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
     "!! BEWARE! WORK IN PROGRESS... USE WITH CAUTION !!\n"
@@ -27,14 +28,24 @@ int show_help(void) {
     "    LN2_LAYERS -rim rim.nii -nr_layers 10 -equivol -iter_smooth 1000\n"
     "\n"
     "Options:\n"
-    "    -help         : Show this help.\n"
-    "    -rim          : Specify input dataset.\n"
-    "    -nr_layers    : Number of layers. Default is 3.\n"
-    "    -equivol      : (Optional) Create equi-volume layers.\n"
-    "    -iter_smooth  : (Optional) Number of smoothing iterations. Default\n"
-    "                    is 100. Only used together with '-equivol' flag. Use\n"
-    "                    larger values when equi-volume layers are jagged.\n"
-    "    -debug        : (Optional) Save extra intermediate outputs.\n"
+    "    -help        : Show this help.\n"
+    "    -rim         : Specify input dataset. Use 1 to code outer gray\n"
+    "                   matter surface (facing mostly CSF), 2 to code gray\n"
+    "                   matter, 3 to code inner gray matter surface voxels.\n"
+    "    -nr_layers   : Number of layers. Default is 3.\n"
+    "    -equivol     : (Optional) Create equi-volume layers. We do not\n"
+    "                   recommend this option if your rim file is above 0.3mm\n"
+    "                   resolution. You can always upsample your rim file to\n"
+    "                   a higher resolution first (<0.3mm) and then use this\n"
+    "                   option.\n"
+    "    -iter_smooth : (Optional) Number of smoothing iterations. Default\n"
+    "                   is 100. Only used together with '-equivol' flag. Use\n"
+    "                   larger values when equi-volume layers are jagged.\n"
+    "    -debug       : (Optional) Save extra intermediate outputs.\n"
+    "\n"
+    "Note:\n"
+    "    You can find further explanation of this algorithm at:\n"
+    "    <[TODO: link here.]>\n"
     "\n");
     return 0;
 }
@@ -120,29 +131,29 @@ int main(int argc, char*  argv[]) {
 
     // ========================================================================
     // Fix input datatype issues
-    nifti_image* nii_rim = copy_nifti_as_int32(nii1);
-    int32_t* nii_rim_data = static_cast<int32_t*>(nii_rim->data);
+    nifti_image* nii_rim = copy_nifti_as_int16(nii1);
+    int16_t* nii_rim_data = static_cast<int16_t*>(nii_rim->data);
 
     // Prepare required nifti images
-    nifti_image* nii_layers  = copy_nifti_as_int32(nii_rim);
-    int32_t* nii_layers_data = static_cast<int32_t*>(nii_layers->data);
+    nifti_image* nii_layers  = copy_nifti_as_int16(nii_rim);
+    int16_t* nii_layers_data = static_cast<int16_t*>(nii_layers->data);
     // Setting zero
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         *(nii_layers_data + i) = 0;
     }
 
-    nifti_image* innerGM_step = copy_nifti_as_float32(nii_layers);
-    float* innerGM_step_data = static_cast<float*>(innerGM_step->data);
+    nifti_image* innerGM_step = copy_nifti_as_int16(nii_layers);
+    int16_t* innerGM_step_data = static_cast<int16_t*>(innerGM_step->data);
     nifti_image* innerGM_dist = copy_nifti_as_float32(nii_layers);
     float* innerGM_dist_data = static_cast<float*>(innerGM_dist->data);
 
-    nifti_image* outerGM_step = copy_nifti_as_float32(nii_layers);
-    float* outerGM_step_data = static_cast<float*>(outerGM_step->data);
+    nifti_image* outerGM_step = copy_nifti_as_int16(nii_layers);
+    int16_t* outerGM_step_data = static_cast<int16_t*>(outerGM_step->data);
     nifti_image* outerGM_dist = copy_nifti_as_float32(nii_layers);
     float* outerGM_dist_data = static_cast<float*>(outerGM_dist->data);
 
-    nifti_image* err_dist = copy_nifti_as_float32(nii_layers);
-    float* err_dist_data = static_cast<float*>(err_dist->data);
+    // nifti_image* err_dist = copy_nifti_as_float16(nii_layers);
+    // short* err_dist_data = static_cast<short*>(err_dist->data);
 
     nifti_image* innerGM_id = copy_nifti_as_int32(nii_layers);
     int32_t* innerGM_id_data = static_cast<int32_t*>(innerGM_id->data);
@@ -161,8 +172,8 @@ int main(int argc, char*  argv[]) {
     nifti_image* nii_columns = copy_nifti_as_int32(nii_layers);
     int32_t* nii_columns_data = static_cast<int32_t*>(nii_columns->data);
 
-    nifti_image* midGM = copy_nifti_as_int32(nii_layers);
-    int32_t* midGM_data = static_cast<int32_t*>(midGM->data);
+    nifti_image* midGM = copy_nifti_as_int16(nii_layers);
+    int16_t* midGM_data = static_cast<int16_t*>(midGM->data);
     nifti_image* midGM_id = copy_nifti_as_int32(nii_layers);
     int32_t* midGM_id_data = static_cast<int32_t*>(midGM_id->data);
 
@@ -176,12 +187,12 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Grow from WM
     // ========================================================================
-    cout << "\n  Start growing from inner GM (WM-facing border)..."   << endl;
+    cout << "\n  Start growing from inner GM (WM-facing border)..." << endl;
 
     // Initialize grow volume
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 2) {  // WM boundary voxels within GM
-            *(innerGM_step_data + i) = 1.;
+            *(innerGM_step_data + i) = 1;
             *(innerGM_dist_data + i) = 0.;
             *(innerGM_id_data + i) = i;
         } else {
@@ -190,7 +201,8 @@ int main(int argc, char*  argv[]) {
         }
     }
 
-    uint32_t grow_step = 1, voxel_counter = nr_voxels;
+    uint16_t grow_step = 1;
+    uint32_t voxel_counter = nr_voxels;
     uint32_t ix, iy, iz, j, k;
     float d;
     while (voxel_counter != 0) {
@@ -583,7 +595,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Grow from CSF
     // ========================================================================
-    cout << "\n  Start growing from outer GM..."   << endl;
+    cout << "\n  Start growing from outer GM..." << endl;
 
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 1) {
@@ -992,7 +1004,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Layers
     // ========================================================================
-    cout << "\n  Start doing layers (equi-distant)..."   << endl;
+    cout << "\n  Start layering (equi-distant)..." << endl;
     float x, y, z, wm_x, wm_y, wm_z, gm_x, gm_y, gm_z;
 
     for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -1025,9 +1037,9 @@ int main(int argc, char*  argv[]) {
                 *(nii_layers_data + i) = 1;
             }
 
-            // NOTE: for debugging purposes
-            float dist3 = dist(wm_x, wm_y, wm_z, gm_x, gm_y, gm_z, dX, dY, dZ);
-            *(err_dist_data + i) = (dist1 + dist2) - dist3;
+            // NOTE: compute error for debugging purposes
+            // float dist3 = dist(wm_x, wm_y, wm_z, gm_x, gm_y, gm_z, dX, dY, dZ);
+            // *(err_dist_data + i) = (dist1 + dist2) - dist3;
 
             // Count inner and outer GM anchor voxels
             j = *(innerGM_id_data + i);
@@ -1040,14 +1052,14 @@ int main(int argc, char*  argv[]) {
     save_output_nifti(fin, "layers_equidist", nii_layers);
     if (mode_debug) {
         save_output_nifti(fin, "hotspots", hotspots, false);
-        save_output_nifti(fin, "disterror", err_dist, false);
+        // save_output_nifti(fin, "disterror", err_dist, false);
         save_output_nifti(fin, "normdistdiff_equidist", normdistdiff, false);
     }
 
     // ========================================================================
     // Middle gray matter
     // ========================================================================
-    cout << "\n  Start finding middle gray matter (equi-distant)..."   << endl;
+    cout << "\n  Start finding middle gray matter (equi-distant)..." << endl;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
             // Check sign changes in normalized distance differences between
@@ -1205,13 +1217,15 @@ int main(int argc, char*  argv[]) {
             *(curvature_data + i) = *(curvature_data + j);
         }
     }
-    save_output_nifti(fin, "curvature", curvature, true);
+    if (mode_debug) {
+        save_output_nifti(fin, "curvature", curvature, true);
+    }
 
     // ========================================================================
     // Equi-volume layers
     // ========================================================================
     if (mode_equivol) {
-        cout << "\n  Start layers (equi-volume)..."   << endl;
+        cout << "\n  Start equi-volume stage..." << endl;
 
         nifti_image* hotspots_i = copy_nifti_as_float32(nii_rim);
         float* hotspots_i_data = static_cast<float*>(hotspots_i->data);
@@ -1256,6 +1270,7 @@ int main(int argc, char*  argv[]) {
         // --------------------------------------------------------------------
         // Compute equi-volume factors
         // --------------------------------------------------------------------
+        cout << "\n  Start computing equi-volume factors..." << endl;
         nifti_image* equivol_factors = copy_nifti_as_float32(nii_rim);
         float* equivol_factors_data = static_cast<float*>(equivol_factors->data);
         for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -1288,6 +1303,7 @@ int main(int argc, char*  argv[]) {
         // --------------------------------------------------------------------
         // Smooth equi-volume factors for seamless transitions
         // --------------------------------------------------------------------
+        cout << "\n  Start smoothing transitions..." << endl;
         nifti_image* smooth = copy_nifti_as_float32(curvature);
         float* smooth_data = static_cast<float*>(smooth->data);
         for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -1302,6 +1318,7 @@ int main(int argc, char*  argv[]) {
         float w_dZ = gaus(dZ, FWHM_val);
 
         for (uint16_t n = 0; n != iter_smooth; ++n) {
+            cout << "\r    Iteration: " << n+1 << "/" << iter_smooth << flush;
             for (uint32_t i = 0; i != nr_voxels; ++i) {
                 if (*(nii_rim_data + i) == 3) {
                     tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
@@ -1364,6 +1381,7 @@ int main(int argc, char*  argv[]) {
                 *(equivol_factors_data + i) = *(smooth_data + i);
             }
         }
+        cout << endl;
         if (mode_debug) {
             save_output_nifti(fin, "equivol_factors_smooth", smooth, false);
         }
@@ -1371,6 +1389,7 @@ int main(int argc, char*  argv[]) {
         // --------------------------------------------------------------------
         // Apply equi-volume factors
         // --------------------------------------------------------------------
+        cout << "\n  Start final layering..." << endl;
         float d1_new, d2_new, a, b;
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             if (*(nii_rim_data + i) == 3) {
