@@ -17,10 +17,6 @@ int show_help(void) {
     "LN2_LAYERS: Generates equi-distant cortical gray matter layers with\n"
     "            an option to also generate equi-volume layers.\n"
     "\n"
-    "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-    "!! BEWARE! WORK IN PROGRESS... USE WITH CAUTION !!\n"
-    "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-    "\n"
     "Usage:\n"
     "    LN2_LAYERS -rim rim.nii\n"
     "    LN2_LAYERS -rim rim.nii -nr_layers 10\n"
@@ -45,7 +41,7 @@ int show_help(void) {
     "\n"
     "Note:\n"
     "    You can find further explanation of this algorithm at:\n"
-    "    <[TODO: link here.]>\n"
+    "    <TODO: Add layerfmri.com link here.>\n"
     "\n");
     return 0;
 }

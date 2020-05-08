@@ -109,7 +109,7 @@ c++ -std=c++11 -DHAVE_ZLIB  -o LN2_LAYERS src/LN2_LAYERS.cpp dep/nifti2_io.cpp d
 ```
 ---
 # How to contribute?
-If you have any issues when using LAYNII, or want to request a new feature, we are happy to see them posted on our [issues page](https://github.com/layerfMRI/LAYNII/issues). Please prefer this method over sending individual emails by considering the fellow researchers having similar issues and suggestions.
+If you have any issues when using LAYNII, or want to request a new feature, we are happy to see them posted on our [issues page](https://github.com/layerfMRI/LAYNII/issues). Please employ this as your preferred method (instead of  sending individual emails to the authors), since fellow researchers might have similar issues and suggestions.
 
 # License
 LAYNII is licensed under [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause).
