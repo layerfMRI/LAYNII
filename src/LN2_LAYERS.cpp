@@ -162,6 +162,8 @@ int main(int argc, char*  argv[]) {
     nifti_image* outerGM_prevstep_id = copy_nifti_as_int32(nii_layers);
     int32_t* outerGM_prevstep_id_data =
         static_cast<int32_t*>(outerGM_prevstep_id->data);
+    nifti_image* normdist = copy_nifti_as_float32(nii_layers);
+    float* normdist_data = static_cast<float*>(normdist->data);
     nifti_image* normdistdiff = copy_nifti_as_float32(nii_layers);
     float* normdistdiff_data = static_cast<float*>(normdistdiff->data);
 
@@ -177,8 +179,6 @@ int main(int argc, char*  argv[]) {
     int32_t* hotspots_data = static_cast<int32_t*>(hotspots->data);
     nifti_image* curvature = copy_nifti_as_float32(nii_layers);
     float* curvature_data = static_cast<float*>(curvature->data);
-    nifti_image* thickness = copy_nifti_as_float32(nii_layers);
-    float* thickness_data = static_cast<float*>(thickness->data);
 
     // ========================================================================
     // Grow from WM
@@ -1014,21 +1014,22 @@ int main(int argc, char*  argv[]) {
             // // Normalize distance
             // float dist1 = dist(x, y, z, wm_x, wm_y, wm_z, dX, dY, dZ);
             // float dist2 = dist(x, y, z, gm_x, gm_y, gm_z, dX, dY, dZ);
-            // float norm_dist = dist1 / (dist1 + dist2);
+            // float dist_normalized = dist1 / (dist1 + dist2);
 
             // Normalize distance (completely discrete)
             float dist1 = *(innerGM_dist_data + i);
             float dist2 = *(outerGM_dist_data + i);
-            float total_dist = dist1 + dist2;
-            *(thickness_data + i) = total_dist;
-            float norm_dist = dist1 / total_dist;
+            float total_dist = dist1 + dist2;;
+            float dist_normalized = dist1 / total_dist;
 
+            // To export equi-distant metric in a simple 0-1 range
+            *(normdist_data + i) = dist_normalized;
             // Difference of normalized distances
             *(normdistdiff_data + i) = (dist1 - dist2) / total_dist;
 
             // Cast distances to integers as number of desired layers
-            if (norm_dist != 0) {
-                *(nii_layers_data + i) = ceil(nr_layers * norm_dist);
+            if (dist_normalized != 0) {
+                *(nii_layers_data + i) = ceil(nr_layers * dist_normalized);
             } else {
                 *(nii_layers_data + i) = 1;
             }
@@ -1044,7 +1045,7 @@ int main(int argc, char*  argv[]) {
             *(hotspots_data + j) -= 1;
         }
     }
-    save_output_nifti(fin, "thickness", thickness);
+    save_output_nifti(fin, "metric_equidist", normdist);
     save_output_nifti(fin, "layers_equidist", nii_layers);
     if (mode_debug) {
         save_output_nifti(fin, "hotspots", hotspots, false);
@@ -1390,8 +1391,11 @@ int main(int argc, char*  argv[]) {
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             if (*(nii_rim_data + i) == 3) {
                 // Find normalized distances from a given point on a column
-                float dist1 = *(innerGM_dist_data + i) / *(thickness_data + i);
-                float dist2 = *(outerGM_dist_data + i) / *(thickness_data + i);
+                float dist1 = *(innerGM_dist_data + i);
+                float dist2 = *(outerGM_dist_data + i);
+                float total_dist = dist1 + dist2;;
+                dist1 /= total_dist;
+                dist2 /= total_dist;
 
                 a = *(equivol_factors_data + i);
                 b = 1 - a;
@@ -1411,6 +1415,15 @@ int main(int argc, char*  argv[]) {
             }
         }
         save_output_nifti(fin, "layers_equivol", nii_layers);
+        // Save equi-volume metric in a simple 0-1 range form.
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(nii_rim_data + i) == 3) {
+                *(normdistdiff_data + i) /= 2;
+                *(normdistdiff_data + i) += 0.5;
+            }
+        }
+        save_output_nifti(fin, "metric_equivol", normdistdiff);
+
         if (mode_debug) {
             save_output_nifti(fin, "normdistdiff_equivol", normdistdiff, false);
         }
@@ -1480,6 +1493,13 @@ int main(int argc, char*  argv[]) {
         save_output_nifti(fin, "midGM_equivol", midGM, true);
     }
 
+    // ========================================================================
+    // Cortical thickness
+    // ========================================================================
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        *(innerGM_dist_data + i) += *(outerGM_dist_data + i);
+    }
+    save_output_nifti(fin, "thickness", innerGM_dist, true);
     // ========================================================================
     // TODO(Faruk): Might use bspline weights to smooth curvature maps a bit.
     // TODO(Faruk): Might be better to use step 1 id's to define columns.
