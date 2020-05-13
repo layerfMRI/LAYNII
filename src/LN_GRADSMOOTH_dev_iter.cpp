@@ -356,6 +356,7 @@ cout << " time dimension of soothed. output file:  " << smoothed->nt <<  endl;
 
 //float kernal_size = 10; // corresponds to one voxel sice. 
 int vinc = max(1.,2. * FWHM_val/dX ); // if voxel is too far away, I ignore it. 
+vinc = 2 ; // for iterative smoothing. and allowing diagonal  
 float dist_i = 0.;
 cout << " vinc " <<  vinc<<  endl; 
 cout << " FWHM_val " <<  FWHM_val<<  endl; 
@@ -388,35 +389,89 @@ if ( do_masking == 1 ) {
 	      for(int iy=0; iy<sizePhase; ++iy){
 	        for(int ix=0; ix<sizeRead; ++ix){
 	          if (*(nim_roi_data  +  nxy*islice + nx*ix  + iy  ) > 0 ) {
-        		 nvoxels_to_go_across = nvoxels_to_go_across +1 ;
-        	  }	 
+                nvoxels_to_go_across = nvoxels_to_go_across +1 ;
+             }   
            } 
-	    }
-	  }
+        }
+      }
 }
  
  
  cout << " The number of voxels to go across = "<< nvoxels_to_go_across << endl ; 
 
+///////////////////////////////////////
+///// Preparing iterative smoothing////
+///////////////////////////////////////
+int smoothing_iter = 0; 
+// base resolution 
+float base_FWHM = 0.; 
+float desired_FWHM = FWHM_val ; 
+if ( base_FWHM < dX )  base_FWHM = dX ; 
+if ( base_FWHM < dY )  base_FWHM = dY ;
+if ( base_FWHM < dZ )  base_FWHM = dZ ;
+
+//desired_FWHM = 2000.87543 ;
+//base_FWHM = 0.5 ; 
+
+
+float iter_FWHM = 0.; 
+float remain_FWHM = 0.; 
+
+
+float kabir_x = 0;
+float kabir_y = desired_FWHM * desired_FWHM;
+float kabir_v = base_FWHM *base_FWHM ; 
+float kabir_z = kabir_y;
+float kabir_w = kabir_y - kabir_z;
+
+
+while  (sqrt(kabir_y - kabir_v*kabir_x) >= 0.) {
+    // smooth with FWHM = base_FWHM (usually 0.5)
+    kabir_x++;
+}
+kabir_x = kabir_x - 1. ; 
+        // smooth with FWHM = Math.sqrt(w)
+  //kabir_x++;
+
+remain_FWHM = sqrt(kabir_y - kabir_v*kabir_x); 
+smoothing_iter =  kabir_x;
+
+cout << " desired smoothing " << desired_FWHM << endl; 
+cout << " base_FWHM " << base_FWHM << endl;
+cout << " remain_FWHM " << remain_FWHM << endl; 
+cout << " smoothing_iter " << smoothing_iter << endl; 
+
+cout << " combined " << sqrt ( smoothing_iter*base_FWHM*base_FWHM + remain_FWHM* remain_FWHM ) <<  endl; 
+
+
+
+ cout << " Big smoothing loop is beeing done now" << endl ; 
+
+cout << " combined " << sqrt ( smoothing_iter*base_FWHM*base_FWHM + remain_FWHM* remain_FWHM ) <<  endl; 
+
+
 /////////////////////////
 ////SMOOTHING LOOP  /////
 /////////////////////////
- cout << " Big smoothing loop is beeing done now" << endl ; 
+for (int smoothing_iter_i = 0 ; smoothing_iter_i < smoothing_iter+1 ;  smoothing_iter_i++) { 
 
+if (smoothing_iter_i < smoothing_iter ) FWHM_val = base_FWHM ; 
+if (smoothing_iter_i == smoothing_iter ) FWHM_val = remain_FWHM ;
 
+cout<< "\r" << "I am in iteration   " << smoothing_iter_i+1 << " of   " << smoothing_iter+1 << "   with FWHM=" << FWHM_val << flush ; 
 
-	for(int iz=0; iz<sizeSlice; ++iz){  
+     for(int iz=0; iz<sizeSlice; ++iz){  
       for(int iy=0; iy<sizePhase; ++iy){
         for(int ix=0; ix<sizeRead; ++ix){
-		 if ( !( !(*(nim_roi_data  +  nxy*iz + nx*ix  + iy  ) > 0) && (do_masking == 1)  ) ) {
+         if ( !( !(*(nim_roi_data  +  nxy*iz + nx*ix  + iy  ) > 0) && (do_masking == 1)  ) ) {
          //if (iz==sizeSlice/2 && iy == sizePhase/2-4 && ix == sizeRead/2-4 ) { // debug loop open
          
            // this is to write out how many more voxels I have to go through. 
-            running_index ++ ; 
-            if ((running_index*100)/nvoxels_to_go_across != pref_ratio ) {
-         	   cout << "\r "<<(running_index*100)/nvoxels_to_go_across <<  "% is done" << flush ; 
-         	   pref_ratio = (running_index*100)/nvoxels_to_go_across ; 
-            }
+           // running_index ++ ; 
+           // if ((running_index*100)/nvoxels_to_go_across != pref_ratio ) {
+           //  cout << "\r "<<(running_index*100)/nvoxels_to_go_across <<  "% is done" << flush ; 
+           // pref_ratio = (running_index*100)/nvoxels_to_go_across ; 
+           // }
          
           // I am cooking in a clean kitchen. 
           // this cleaning might not be necesary, just to be on the save side
@@ -482,6 +537,22 @@ if ( do_masking == 1 ) {
       }
     }
 
+
+
+//////////////////////////////////
+//////// overwriteing the input data with the smoothed data to allow for itterative smoothing ////
+     for(int iz=0; iz<sizeSlice; ++iz){  
+      for(int iy=0; iy<sizePhase; ++iy){
+        for(int ix=0; ix<sizeRead; ++ix){
+            for(int it=0; it<nrep; ++it){
+                 *(nim_inputf_data  + nxyz *it   + nxy*iz + nx*ix  + iy  ) = *(smoothed_data   + nxyz *it   + nxy*iz + nx*ix  + iy  ); 
+            } 
+        }
+      }
+    }
+
+} // smoothing iteration loop closed
+
    cout << endl; 
 
 
@@ -533,4 +604,5 @@ cout << " ############################################################# " << end
 
   return 0;
 }
+
 
