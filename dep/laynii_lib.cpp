@@ -263,7 +263,7 @@ nifti_image* copy_nifti_as_float32(nifti_image* nii) {
 
     // Replace nans with zeros
     for (int i = 0; i < nr_voxels; ++i) {
-        if (isnan(*(nii_new_data + i))) {
+        if (std::isnan(*(nii_new_data + i))) {
             *(nii_new_data + i) = 0;
         }
     }
@@ -349,7 +349,7 @@ nifti_image* copy_nifti_as_double(nifti_image* nii) {
 
     // Replace nans with zeros
     for (int i = 0; i < nii->nvox; ++i) {
-        if (isnan(*(nii_new_data + i))) {
+        if (std::isnan(*(nii_new_data + i))) {
             *(nii_new_data + i) = 0;
         }
     }
@@ -424,7 +424,7 @@ nifti_image* copy_nifti_as_int32(nifti_image* nii) {
 
     // Replace nans with zeros
     for (int i = 0; i < nr_voxels; ++i) {
-        if (isnan(*(nii_new_data + i))) {
+        if (std::isnan(*(nii_new_data + i))) {
             *(nii_new_data + i) = 0;
         }
     }
@@ -501,7 +501,7 @@ nifti_image* copy_nifti_as_float16(nifti_image* nii) {
     nii_new->scl_slope = nii->scl_slope / 1000.;
     // Replace nans with zeros
     for (int i = 0; i < nr_voxels; ++i) {
-        if (isnan(*(nii_new_data + i))) {
+        if (std::isnan(*(nii_new_data + i))) {
             *(nii_new_data + i) = 0;
         }
     }
@@ -576,7 +576,7 @@ nifti_image* copy_nifti_as_int16(nifti_image* nii) {
 
     // Replace nans with zeros
     for (int i = 0; i < nr_voxels; ++i) {
-        if (isnan(*(nii_new_data + i))) {
+        if (std::isnan(*(nii_new_data + i))) {
             *(nii_new_data + i) = 0;
         }
     }

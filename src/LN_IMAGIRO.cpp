@@ -158,7 +158,7 @@ int main(int argc, char * argv[]) {
     imagiro->nvox = imagiro->nx * imagiro->ny * imagiro->nz * imagiro->nt;
 
 
-   
+
     int size_x_imagiro = imagiro->nx;
     int size_y_imagiro = imagiro->ny;
     int size_z_imagiro = imagiro->nz;
@@ -200,7 +200,7 @@ int main(int argc, char * argv[]) {
     cout << "  Resampling..." << endl;
     float value_ofinput_data = 0;
 
- 
+
 
     for (int iz = 0; iz < size_z_imagiro; ++iz) {
         for (int iy = 0; iy < size_y_imagiro; ++iy) {
@@ -255,8 +255,8 @@ int main(int argc, char * argv[]) {
                             / *(imagiro_vnr_data + voxel_j);
                         *(imagiro_data + nxyz_imagiro * it + voxel_j) += value_ofinput_data;
                     }
-                    
-                    
+
+
                 }
             }
         }
@@ -309,7 +309,7 @@ int main(int argc, char * argv[]) {
    for (int iz = 0; iz < size_z_imagiro; ++iz) {
     for (int ilayer = 0; ilayer < nr_layers; ++ilayer) {
         for (int icolum = 0; icolum < nr_columns; ++icolum) {
-             if (isnan( *(imagiro_data + nxyz_imagiro * it + nxy_imagiro * iz + nx_imagiro * ilayer +  icolum))) *(imagiro_data + nxyz_imagiro * it + nxy_imagiro * iz + nx_imagiro * ilayer +  icolum) = 0 ;
+             if (std::isnan( *(imagiro_data + nxyz_imagiro * it + nxy_imagiro * iz + nx_imagiro * ilayer +  icolum))) *(imagiro_data + nxyz_imagiro * it + nxy_imagiro * iz + nx_imagiro * ilayer +  icolum) = 0 ;
         }
     }
    }
@@ -317,10 +317,10 @@ int main(int argc, char * argv[]) {
     // for debugging
    // for (int ilayer = 0; ilayer < nr_layers; ++ilayer) {
     //    for (int icolum = 0; icolum < nr_columns; ++icolum) {
-    //         cout << *(imagiro_data + nxy_imagiro * 0 + nx_imagiro * ilayer + icolum) << " " ; 
-    //    }cout << endl ; 
+    //         cout << *(imagiro_data + nxy_imagiro * 0 + nx_imagiro * ilayer + icolum) << " " ;
+    //    }cout << endl ;
    // }
-    
+
 
 
     ////////////////////////////////////////

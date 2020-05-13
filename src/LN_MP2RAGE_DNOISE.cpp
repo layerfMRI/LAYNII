@@ -149,7 +149,7 @@ int main(int argc, char* argv[]) {
         float new_uni1, new_uni2, val_uni_wrong;
 
         // Skip nan or zero voxels
-        if (isnan(val_uni) || val_uni == 0 || val_uni == 0.0) {
+        if (std::isnan(val_uni) || val_uni == 0 || val_uni == 0.0) {
             *(nii_phaseerr_data + i) = 0;
             *(nii_denoised_data + i) = 0;
         } else {
