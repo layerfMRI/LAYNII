@@ -27,6 +27,11 @@ int show_help(void) {
     "    -laurenzian    : Use Laurenzian smoothing. Default is Gaussian \n"
     "                   : only for division images.\n"
     "    -Anonymous_sri : You know what you did (no FWHM).\n"
+    "    -output        : (Optional) Custom output name. \n"
+    "                     including the path, if you want to write it as specific locations \n"
+    "                     including the file extension: nii or nii.gz \n"
+    "                     This will overwrite excisting files with the same name \n"
+    "\n"
     "    \n"
     "Notes:\n"
     "    - This program ignores zeroes. Thus, sharp borders (e.g. after MOCO)\n"
@@ -37,6 +42,8 @@ int show_help(void) {
 }
 
 int main(int argc, char* argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     char* fin = NULL;
     int ac, direction = 0, option = 0;
     float FWHM_val = 10, strength = 1;
@@ -75,6 +82,13 @@ int main(int argc, char* argv[]) {
             }
             option = 2;
             strength = atof(argv[ac]);
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -202,7 +216,8 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-    save_output_nifti(fin, "smooth", smooth, true);
+    if (!use_outpath) fout = fin;
+    save_output_nifti(fout, "smooth", smooth, true, use_outpath);
 
     cout << "  Finished." << endl;
     return 0;

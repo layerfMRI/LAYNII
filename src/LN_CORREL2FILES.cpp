@@ -10,6 +10,17 @@ int show_help(void) {
     "    This program is motivated by Eli Merriam comparing in hunting down \n"
     "    voxels that out of phase for VASO and BOLD. \n"
     "\n"
+    "Options:\n"
+    "    -help  : Show this help.\n"
+    "    -file1 : First time series.\n"
+    "    -file2 : Second time series with should have the same dimensions \n"
+    "             as first time series.\n"
+    "    -output    : (Optional) Custom output name. \n"
+    "                 including the path, if you want to write it as specific locations \n"
+    "                 including the file extension: nii or nii.gz \n"
+    "                 This will overwrite excisting files with the same name \n"
+    "\n"
+    "\n"
     "\n"
     "    an example application is mentioned on the blog post here: \n"
     "    http://layerfmri.com/QA \n"
@@ -20,17 +31,13 @@ int show_help(void) {
     "    test application in the test_data folder would be:\n"
     "    ../LN_CORREL2FILES -file1 lo_Nulled_intemp.nii -file2 lo_BOLD_intemp.nii \n"
     "\n"
-    "\n"
-    "Options:\n"
-    "    -help  : Show this help.\n"
-    "    -file1 : First time series.\n"
-    "    -file2 : Second time series with should have the same dimensions \n"
-    "             as first time series.\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char *argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     char *fin_1 = NULL, *fin_2 = NULL;
     int ac;
     if (argc < 2) return show_help();
@@ -52,6 +59,13 @@ int main(int argc, char *argv[]) {
                 return 1;
             }
             fin_2 = argv[ac];
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -122,7 +136,9 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-    save_output_nifti(fin_1, "correlated", correl_file, true);
+    
+    if (!use_outpath) fout = fin_1;
+    save_output_nifti(fout, "correlated", correl_file, true, use_outpath);
 
     cout << "  Finished." << endl;
     return 0;

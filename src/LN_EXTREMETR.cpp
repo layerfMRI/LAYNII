@@ -18,13 +18,21 @@ int show_help(void) {
     "    ../LN_EXTREMETR -input lo_BOLD_intemp.nii\n"
     "\n"
     "Options:\n"
-    "    -help  : Show this help.\n"
-    "    -input : Input time series.\n"
+    "    -help      : Show this help.\n"
+    "    -input     : Input time series.\n"
+    "    -output    : (Optional) Custom output prefix. \n"
+    "                 including the path, if you want to write it as specific locations \n"
+    "                 including the file extension: nii or nii.gz \n"
+    "                 This will overwrite excisting files with the same name \n"
+    "                 NOTE that the output name will always contain the prefix MaxTR/MinTR \n"
+    "\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     char *fin_1 = NULL;
     int ac;
     if (argc < 2) return show_help();
@@ -33,6 +41,13 @@ int main(int argc, char * argv[]) {
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
         } else if (!strcmp(argv[ac], "-input")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -input\n");
@@ -111,8 +126,9 @@ int main(int argc, char * argv[]) {
            }
         }
     }
-    save_output_nifti(fin_1, "MaxTR", nii_max, true);
-    save_output_nifti(fin_1, "MinTR", nii_min, true);
+    if (!use_outpath) fout = fin_1;
+    save_output_nifti(fout, "MaxTR", nii_max, true);
+    save_output_nifti(fout, "MinTR", nii_min, true);
 
     cout << "  Finished." << endl;
     return 0;

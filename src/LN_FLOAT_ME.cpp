@@ -13,7 +13,13 @@ int show_help(void) {
     "Options:\n"
     "    -help   : Show this help.\n"
     "    -input  : Dataset that should be shorted data.\n"
-    "    -output : (Optional) Output filename.\n"
+    "    -output    : (Optional) Custom output name. \n"
+    "                 including the path, if you want to write it as specific locations \n"
+    "                 including the file extension: nii or nii.gz \n"
+    "                 This will overwrite excisting files with the same name \n"    
+    "\n"
+    "    test application in the test_data folder would be:\n"
+    "    ../LN_FLOAT_ME -input sc_VASO_act.nii \n"
     "\n");
     return 0;
 }
@@ -66,6 +72,7 @@ int main(int argc, char *argv[]) {
     // Cast input data to float
     nifti_image *nii_new = copy_nifti_as_float32(nii);
 
+    if (!use_outpath) fout = fin;
     save_output_nifti(fout, "float", nii_new, true, use_outpath);
 
     cout << "  Finished." << endl;
