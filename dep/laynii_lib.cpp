@@ -142,6 +142,24 @@ float gaus(float distance, float sigma) {
 
 void save_output_nifti(const string path, const string tag,  nifti_image* nii,
                        const bool log, const bool use_outpath) {
+    ////////////////////////////////////////////////////////////////////////////
+    ///// Note:     
+    //
+    // the first argument is the string of the output file name  
+    //       if there is no explicit output path given, this will be the file name of the main input data
+    //       if there is an explicit output file name given, this wil be the user-defined name following the -output
+    //       (inluding the path and including the file extension)
+    // the second argument is the output file name prefix, that will be added to the above argument,
+    //       this field is ignored, when the flag "use_outpath" (last argument) is selected.
+    // the third argument is the pointer to the data set that is supposed to be written
+    // the fourth argument states if, during the exectution of the program an the writing process should be logged
+    //       this argument is optional with the default: TRUE
+    // the fifth argument states if the output prefix (second argument) should be ignored or not
+    //       this argument is optional the default: FALSE 
+    //
+    // example:     save_output_nifti(fout, "VASO_LN", nii_boco_vaso, true, use_outpath); 
+    ////////////////////////////////////////////////////////////////////////////////////////
+
     string path_out;
 
     if (use_outpath) {

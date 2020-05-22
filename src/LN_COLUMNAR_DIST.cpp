@@ -15,6 +15,10 @@ int show_help(void) {
     "                   \n"
     "                   test application in the test_data folder would be:\n"
     "                   ../LN_COLUMNAR_DIST -layers sc_layers_3dcolumns.nii -landmarks sc_landmarks.nii \n"
+    "    -output    : (Optional) Custom output name. \n"
+    "                 including the path, if you want to write it as specific locations \n"
+    "                 including the file extension: nii or nii.gz \n"
+    "                 This will overwrite excisting files with the same name \n"
     "\n"
     "Usage:\n"
     "    LN_COLUMNAR_DIST -layers layers.nii -landmarks landmarks.nii \n"
@@ -40,6 +44,8 @@ int show_help(void) {
 }
 
 int main(int argc, char *argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     char *fin_layer = NULL, *fin_landmark = NULL;
     int ac, vinc_max = 40, Ncolumns = 0;
     int verbose = 0;
@@ -73,6 +79,13 @@ int main(int argc, char *argv[]) {
                 return 1;
             }
             Ncolumns = atof(argv[ac]);
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
         } else if (!strcmp(argv[ac], "-verbose")) {
             verbose = 1;
             cout << "  Debug mode active. More outputs." << endl;
@@ -732,7 +745,9 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-    save_output_nifti(fin_layer, "coordinates_final", hairy, true);
+    
+    if (!use_outpath) fout = fin_layer;
+    save_output_nifti(fout, "coordinates_final", hairy, true, use_outpath);
 
     cout << "  Finished." << endl;
     return 0;

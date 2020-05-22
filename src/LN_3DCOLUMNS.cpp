@@ -20,15 +20,24 @@ int show_help(void) {
     "    -nr_columns         : Number of columns.\n"
     "    -jiajiaoption : Include cerebrospinal fluid (CSF). Only do this \n"
     "                    if two sides of the sulcus are not touching. \n"
+    "    -output    : (Optional) Custom output name. \n"
+    "                 including the path, if you want to write it as specific locations \n"
+    "                 including the file extension: nii or nii.gz \n"
+    "                 This will overwrite excisting files with the same name \n"
     "\n"
     "Notes:\n"
     "     - Layer nifti and landmarks nifti should have the same dimensions \n"
     "     - This progrma is originally designed to work for axial slices (consider fslswapdim) \n"
+    "\n"
+    "     example in test_data folder: \n"
+    "           ../LN_3DCOLUMNS -layers sc_layers_3dcolumns.nii -landmarks sc_landmarks_3dcolumns.nii "
     "\n");
     return 0;
 }
 
 int main(int argc, char *argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     char *fin_layer = NULL, *fin_landmark = NULL;
     int ac, jiajiavinc_max = 45, jiajiaoption = 0;
     if (argc < 3) return show_help();
@@ -59,6 +68,13 @@ int main(int argc, char *argv[]) {
                 return 1;
             }
             jiajiavinc_max = atof(argv[ac]);
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -779,7 +795,9 @@ int main(int argc, char *argv[]) {
             *(hairy_data + i) = a * b / c;
         }
     }
-    save_output_nifti(fin_layer, "column_coordinates", hairy, true);
+    
+    if (!use_outpath) fout = fin_layer;
+    save_output_nifti(fout, "column_coordinates", hairy, true, use_outpath);
 
     cout << "  Finished." << endl;
     return 0;
