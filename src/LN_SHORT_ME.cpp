@@ -5,6 +5,8 @@
 int show_help(void) {
     printf(
     "LN_SHORT_ME: Convert nifti datatype to SHORT. \n"
+    "   In order not to loose too much depth resolution for \n"
+    "   floating point values, the nii-header slope is scaled by 1000 \n"
     "\n"
     "Usage:\n"
     "    LN_SHORT_ME -input data_file.nii \n"

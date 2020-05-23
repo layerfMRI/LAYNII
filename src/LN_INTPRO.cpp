@@ -25,6 +25,10 @@ int show_help(void) {
     "                  1 for x, 2 for y, and 3 for z.\n"
     "    -range      : (Optional) Range of neigbouring voxels included.\n"
     "                  Default is all aslices. \n"
+    "    -output     : (Optional) Custom output name. \n"
+    "                  including the path, if you want to write it as specific locations \n"
+    "                  including the file extension: nii or nii.gz \n"
+    "                  This will overwrite excisting files with the same name \n"
     "\n"
     "Notes:\n"
     "    - If the input is a time series, the entire time domain is also\n"
@@ -35,6 +39,8 @@ int show_help(void) {
 }
 
 int main(int argc, char * argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     char * fin_1 = NULL;
     int ac, is_max = 0, is_min = 0;
     int is_direction = 0, is_range = 0;
@@ -62,6 +68,13 @@ int main(int argc, char * argv[]) {
         } else if (!strcmp(argv[ac], "-max")) {
             is_max = 1;
             cout << "Doing Max. intensity projections." << endl;
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
         } else if (!strcmp(argv[ac], "-image")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -timeseries\n");
@@ -241,7 +254,10 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    save_output_nifti(fin_1, "collapsed", nii_collapse, true);
+    
+    
+    if (!use_outpath) fout = fin_1;
+    save_output_nifti(fout, "collapsed", nii_collapse, true, use_outpath);
 
     return 0;
 }

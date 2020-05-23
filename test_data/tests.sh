@@ -13,7 +13,7 @@
 ../LN_EXTREMETR -input lo_BOLD_intemp.nii
 ../LN_FLOAT_ME -input lo_BOLD_intemp.nii
 ../LN_SHORT_ME -input lo_VASO_act.nii -output short.nii
-../LN_INT_ME -input sc_rim.nii
+../LN_INT_ME -input LN_INT_ME -input lo_BOLD_act.nii
 ../LN_GFACTOR -input sc_INV2.nii  -variance 1 -direction 1 -grappa 2 -cutoff 200
 ../LN_GRADSMOOTH -gradfile lo_gradT1.nii -input lo_VASO_act.nii -FWHM 1 -within -selectivity 0.1
 ../LN_GROW_LAYERS -rim sc_rim.nii
