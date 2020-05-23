@@ -15,7 +15,7 @@ int show_help( void )
       "    basic usage: LN_LAYER_SMOOTH -layer_file layers.nii -input activity_map.nii -FWHM 1 \n"
       "\n"
       "    test usage in the test_data folder: \n"
-      "        ../LN_LAYER_SMOOTH -input sc_VASO_act.nii -layer_file sc_layers.nii -FWHM 1 -sulctouch \n"
+      "        ../LN_LAYER_SMOOTH -input sc_VASO_act.nii -layer_file sc_layers.nii -FWHM 0.5 -NoKissing \n"
       "\n"
       "   a potiential application of this program is mentioned on these blog posts \n"
       "       https://layerfmri.com/anatomically-informed-spatial-smoothing/ \n"
@@ -27,19 +27,23 @@ int show_help( void )
       "       -FWHM                 : the amount of smoothing in mm\n"
       "       -twodim               : optional argument to do smoothing in 2 Dim only \n"
       "       -mask                 : optional argument to mask activity outside of layers \n"
-      "       -sulctouch            : optional argument that does not allow smoothing across sucli \n"
+      "       -NoKissing            : optional argument that does not allow smoothing across sucli \n"
       "                               this is necessary, when you do very heavy smoothing well bevond\n"
       "                               the spatial scale of the cortical thickness, or heavy cuvature\n"
       "                               it will make things things slower \n"
       "                               Note, that this is best done with not too manny layers,  \n"
       "                               otherwise a single layer has wholes and is not connected.  \n"
+      "      -output                : (Optional) Custom output name of smoothed data. \n"
+      "                               including the path, if you want to write it as specific locations \n"
+      "                               including the file extension: nii or nii.gz \n"
+      "                               This will overwrite excisting files with the same name \n"
       "\n");
    return 0;
 }
 
 int main(int argc, char * argv[])
 {
-
+   bool use_outpath = false ;
    char       * fmaski=NULL, * fout=NULL, * finfi=NULL ;
    int          ac, twodim=0, do_masking=0 , sulctouch = 0 ; 
    float 		FWHM_val=0 ;
@@ -75,13 +79,21 @@ int main(int argc, char * argv[])
          twodim = 1;
          cout << "I will do smoothing only in 2D"  << endl; 
       }
-      else if( ! strcmp(argv[ac], "-sulctouch") ) {
+      else if( ! strcmp(argv[ac], "-NoKissing") ) {
          sulctouch = 1;
          cout << "I will not smooth across sluci, this might make it longer though"  << endl; 
       } 
      else if( ! strcmp(argv[ac], "-mask") ) {
          do_masking = 1;
          cout << "I will set every thing to zero outside the layers (masking option)"  << endl; 
+      } 
+      else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
       }
       else {
          fprintf(stderr,"** invalid option, '%s'\n", argv[ac]);
@@ -545,20 +557,26 @@ cout << " ############################################################# " << end
 //  if( nifti_set_filenames(nim_inputf, fout_5 , 1, 1) ) return 1;
 //  nifti_image_write( nim_inputf );
   
-///  const char  *fout_2="mask.nii" ;
+//  const char  *fout_2="mask.nii" ;
 //  if( nifti_set_filenames(nim_mask, fout_2 , 1, 1) ) return 1;
 //  nifti_image_write( nim_mask );
   
-  string prefix = "smoothed_" ;
-  string filename = (string) (finfi) ;
-  string outfilename = prefix+filename ;
   
-   cout << "writing as = " << outfilename.c_str() << endl; // finfi is: char *
+  if (use_outpath) {
+       save_output_nifti(fout, "not nexessary", smoothed, true, use_outpath);
+   }
+   
+  if (!use_outpath) {
+      string prefix = "smoothed_" ;
+      string filename = (string) (finfi) ;
+      string outfilename = prefix+filename ;
+  
+      cout << "writing as = " << outfilename.c_str() << endl; // finfi is: char *
 
-  const char  *fout_1=outfilename.c_str() ;
-  if( nifti_set_filenames(smoothed, fout_1 , 1, 1) ) return 1;
-  nifti_image_write( smoothed );
-  
+      const char  *fout_1=outfilename.c_str() ;
+      if( nifti_set_filenames(smoothed, fout_1 , 1, 1) ) return 1;
+      nifti_image_write( smoothed );
+  }
 //  const char  *fout_1="layer.nii" ;
 //  if( nifti_set_filenames(layer, fout_1 , 1, 1) ) return 1;
 //  nifti_image_write( layer );

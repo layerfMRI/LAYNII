@@ -1,7 +1,7 @@
 # For internal testing. Just to check whether programs execute.
 
 ../LN2_LAYER_SMOOTH -input sc_VASO_act.nii -layer_file sc_layers.nii -FWHM 1
-../LN_LAYER_SMOOTH -input sc_VASO_act.nii -layer_file sc_layers.nii -FWHM 1 -NoKissing
+../LN_LAYER_SMOOTH -input sc_VASO_act.nii -layer_file sc_layers.nii -FWHM 0.3 -NoKissing
 
 ../LN_BOCO -Nulled lo_Nulled_intemp.nii -BOLD lo_BOLD_intemp.nii -trialBOCO 40 -shift
 ../LN_MP2RAGE_DNOISE -INV1 sc_INV1.nii -INV2 sc_INV2.nii -UNI sc_UNI.nii
