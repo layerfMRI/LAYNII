@@ -11,7 +11,7 @@ int show_help(void) {
     "    LN_IMAGIRO -layers equi_dist_layers.nii -columns columnar_coordinated.nii -data data2unfold.nii\n"
     "\n"
     "  Test application in the test_data folder: \n"
-    "    ../LN_IMAGIRO -layers sc_layers_3dcolumns.nii -column sc_columns_3dcolumns.nii -data sc_BOLD_act.nii \n"
+    "    ../LN_IMAGIRO -layers sc_layers_3dcolumns.nii -columns sc_columns_3dcolumns.nii -data sc_BOLD_act.nii \n"
     "\n"
     "  a potiential application case is described on this blog post: \n"
     "    https://layerfmri.com/columns/ \n"
@@ -21,6 +21,10 @@ int show_help(void) {
     "    -layers     : Nifti (.nii) file that contains layer.\n"
     "    -columns    : Nifti (.nii) file that contains columns.\n"
     "    -data       : Data that will be unfolded.\n"
+    "    -output     : (Optional) Custom output name of the unfolded file. \n"
+    "                  including the path, if you want to write it as specific locations \n"
+    "                  including the file extension: nii or nii.gz \n"
+    "                  This will overwrite excisting files with the same name \n"
     "\n"
     "Notes:\n"
     "    - All inputs should have the same dimensions.\n"
@@ -30,6 +34,8 @@ int show_help(void) {
 }
 
 int main(int argc, char * argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     char* fin_layers = NULL, * fin_columns = NULL, * fin_data = NULL;
     int ac;
     if (argc < 3) return show_help();
@@ -56,6 +62,13 @@ int main(int argc, char * argv[]) {
                 return 1;
             }
             fin_data = argv[ac];
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
         } else {
             fprintf(stderr, " ** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -336,7 +349,8 @@ int main(int argc, char * argv[]) {
         cout << " ########################################## " << endl;
     }
 
-    save_output_nifti(fin_data, "unfolded", imagiro, true);
+    if (!use_outpath) fout = fin_data;
+    save_output_nifti(fout, "unfolded", imagiro, true, use_outpath);
     save_output_nifti(fin_data, "nr_voxels", imagiro_vnr, true);
 
     cout << "  Finished." << endl;
