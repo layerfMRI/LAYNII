@@ -14,15 +14,26 @@ int show_help(void) {
     "Usage:\n"
     "    LN_RAGRUG -input any_file.nii \n"
     "\n"
+    "to test in the test folder: ../LN_RAGRUG -input sc_rim.nii \n"
+    "\n"
+    "\n"
+
     "Options:\n"
-    "    -help  : Show this help.\n"
-    "    -input : Nifti (.nii) file. This program will use the dimension of \n"
-    "             this file to generate a Rag Rug file accordingly.\n"
+    "    -help      : Show this help.\n"
+    "    -input     : Nifti (.nii) file. This program will use the dimension of \n"
+    "                 this file to generate a Rag Rug file accordingly.\n"
+    "    -output    : (Optional) Custom output name. \n"
+    "                 including the path, if you want to write it as specific locations \n"
+    "                 including the file extension: nii or nii.gz \n"
+    "                 This will overwrite excisting files with the same name \n"
+    "\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     char *fin = NULL;
     int ac;
     if (argc < 3) return show_help();
@@ -37,6 +48,13 @@ int main(int argc, char * argv[]) {
                 return 1;
             }
             fin = argv[ac];
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -122,8 +140,10 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    save_output_nifti(fin, "ragrug", ragrug, true);
-    save_output_nifti(fin, "coordinates", coord, true);
+    
+    if (!use_outpath) fout = fin;
+    save_output_nifti(fout, "ragrug", ragrug, true, use_outpath);
+//    save_output_nifti(fin, "coordinates", coord, true);
 
     cout << "  Finished." << endl;
     return 0;

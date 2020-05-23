@@ -20,15 +20,27 @@ int show_help(void) {
     "Usage:\n"
     "    LN_NOISEME -input input_example.nii -std 0.5 \n"
     "\n"
+    "\n"
+    "For tests in test folder: ../LN_NOISEME -input lo_VASO_act.nii -std 1 \n"
+    "\n"
+    "\n"
     "Options:\n"
     "    -help   : Show this help.\n"
     "    -input  : Specify input dataset.\n"
     "    -std    : Noise standard deviance.\n"
+    "    -output    : (Optional) Custom output name. \n"
+    "                 including the path, if you want to write it as specific locations \n"
+    "                 including the file extension: nii or nii.gz \n"
+    "                 This will overwrite excisting files with the same name \n"
+    "                 If not given, the prefix {noised} is added \n"
+    "\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     char *fin = NULL;
     int ac;
     float std_val;
@@ -51,6 +63,13 @@ int main(int argc, char * argv[]) {
                 return 1;
             }
             std_val = atof(argv[ac]);
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -84,7 +103,9 @@ int main(int argc, char * argv[]) {
                                   arb_pdf_num(N_rand, pFunc, lower, upper));
     }
 
-    save_output_nifti(fin, "noised", nii_new, true);
+
+    if (!use_outpath) fout = fin;
+    save_output_nifti(fout, "noised", nii_new, true, use_outpath);
 
     cout << "  Finished." << endl;
     return 0;
