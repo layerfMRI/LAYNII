@@ -20,11 +20,19 @@ int show_help(void) {
     "    -help          : Show this help.\n"
     "    -input         : Nifti (.nii) time series.\n"
     "    -kernal_size   : optional parameter for kernel size, use an odd positive intager (default 11)\n"
+    "    -output        : (Optional) Custom output name. \n"
+    "                     including the path, if you want to write it as specific locations \n"
+    "                     including the file extension: nii or nii.gz \n"
+    "                     This will overwrite excisting files with the same name \n"
+    "                     if not given, the prefix fPSF is added \n"
+    "\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     char *fin = NULL;
     int ac;
     int kernal_size = 11; // This is the maximal number of layers. I don't know how to allocate it dynamically. this should be an odd number. That is smaller than half of the shortest matrix size to make sense
@@ -46,6 +54,13 @@ int main(int argc, char * argv[]) {
                 return 1;
             }
             fin = argv[ac];
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
         }
     }
     if (!fin) {
@@ -223,8 +238,8 @@ cout << endl;
           }             
 
 
-
-    save_output_nifti(fin, "fPSF", nii_kernel, true);
+    if (!use_outpath) fout = fin;
+    save_output_nifti(fout, "fPSF", nii_kernel, true, use_outpath);
 
     cout << "  Finished." << endl;
     return 0;
