@@ -32,11 +32,18 @@ int show_help(void) {
     "    -threeD     : Do layer calculations in 3D. Default is 2D.\n"
     "    -debug      : If you want to see the growing of the respective\n"
     "                  tissue types, it is writen out.\n"
+    "    -output     : (Optional) Custom output name of the main layer output file. \n"
+    "                  including the path, if you want to write it as specific locations \n"
+    "                  including the file extension: nii or nii.gz \n"
+    "                  This will overwrite excisting files with the same name \n"
+    "\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     nifti_image* nim_input_i = NULL;
     char* fin = NULL;
     int ac, Nlayer_real = 20, vinc_int = 50;
@@ -77,6 +84,13 @@ int main(int argc, char * argv[]) {
         } else if (!strcmp(argv[ac], "-centroid")) {
             fprintf(stderr, "Write out another file with centroid depth.\n ");
             centroid_option = 1;
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -872,7 +886,9 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    save_output_nifti(fin, "layers", nii_layers, true);
+    
+    if (!use_outpath) fout = fin;
+    save_output_nifti(fout, "layers", nii_layers, true, use_outpath);
 
     cout << "  Finished." << endl;
     return 0;

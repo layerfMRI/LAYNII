@@ -36,13 +36,20 @@ int show_help(void) {
         "    -direction  : Phase encoding direction [0=x, 1=y, 2=z].\n"
         "    -grappa     : GRAPPA factor."
         "    -cutoff     : Value to seperate noise from signal.\n"
+        "    -output    : (Optional) Custom output prefix, wthat will be added to the suffix. \n"
+        "                 The default is to use the input name \n"
+        "                 including the path, if you want to write it as specific locations \n"
+        "                 including the file extension: nii or nii.gz \n"
+        "                 This will overwrite excisting files with the same name \n"
         "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     nifti_image* nii = NULL;
-    char * fin = NULL, * fout = NULL;
+    char * fin = NULL;
     int grappa_int, direction_int, ac;
     float cutoff, variance_val;
     if (argc < 2) return show_help();
@@ -81,6 +88,13 @@ int main(int argc, char * argv[]) {
                 return 1;
             }
             cutoff = atof(argv[ac]);
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -281,8 +295,9 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    save_output_nifti(fin, "Gfactormap", nii_gfactormap, true);
-    save_output_nifti(fin, "Amplified_GRAPPA", nii_noise, true);
+    if (!use_outpath) fout = fin;
+    save_output_nifti(fout, "Gfactormap", nii_gfactormap, true, false);
+    save_output_nifti(fout, "Amplified_GRAPPA", nii_noise, true, false);
 
     cout << "  Finished." << endl;
     return 0;

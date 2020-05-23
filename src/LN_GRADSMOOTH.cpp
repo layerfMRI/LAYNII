@@ -42,6 +42,11 @@ int show_help( void )
       "                               0.05 is only within very similar values \n"
       "                               0.9 is almost independent of the gradient file \n"
       "                               0.1 is default \n"
+      "       -output               : (Optional) Custom output name. \n"
+      "                               including the path, if you want to write it as specific locations \n"
+      "                               including the file extension: nii or nii.gz \n"
+      "                               This will overwrite excisting files with the same name \n"
+      "                                \n"
       "                                \n"
       "                                \n"
       "                               If you run this on EPI-T1 data consider making them pretty, E.g:  \n"
@@ -56,9 +61,9 @@ int show_help( void )
 
 int main(int argc, char * argv[])
 {
-
-   char       * fmaski=NULL, * fout=NULL, * finfi=NULL,  * froii=NULL ;
-   int          ac, twodim=0, do_masking=0 , within = 0 , acros = 0  ; 
+   bool use_outpath = false ;
+   char  *fout = NULL ; 
+   char       * fmaski=NULL,  * finfi=NULL,  * froii=NULL ;   int          ac, twodim=0, do_masking=0 , within = 0 , acros = 0  ; 
    float 		FWHM_val=0, selectivity=0.1  ;
    if( argc < 3 ) return show_help();   // typing '-help' is sooo much work 
 
@@ -117,8 +122,14 @@ int main(int argc, char * argv[])
             return 1;
          }
          selectivity = atof(argv[ac]);  // no string copy, just pointer assignment 
-      }
-      else {
+      } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
+      } else {
          fprintf(stderr,"** invalid option, '%s'\n", argv[ac]);
          return 1;
       }
@@ -517,19 +528,9 @@ cout << " #############   WARNING   WANRING   WANRING  ################ " << end
 cout << " ############################################################# " << endl; 
 }
 
-  string prefix = "smoothed_" ;
-  string filename = (string) (finfi) ;
-  string outfilename = prefix+filename ;
-  
-  cout << "writing as = " << outfilename.c_str() << endl; // finfi is: char *
+    if (!use_outpath) fout = finfi;
+    save_output_nifti(fout, "smoothed", smoothed, true, use_outpath);
 
-  const char  *fout_1=outfilename.c_str() ;
-  if( nifti_set_filenames(smoothed, fout_1 , 1, 1) ) return 1;
-  nifti_image_write( smoothed );
-  
-//  const char  *fout_2="debug.nii" ;
-//  if( nifti_set_filenames(debug, fout_2 , 1, 1) ) return 1;
-//  nifti_image_write( debug);
 
   return 0;
 }
