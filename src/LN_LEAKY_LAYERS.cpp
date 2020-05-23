@@ -17,6 +17,13 @@ int show_help(void) {
     "    -dim          : Specify value (2 or 3) layer algorithm.Default is 3 (3D).\n"
     "    -itertions    : number of iterations, in most cases 100 (default) should be enough.\n"
     "    -nr_layers    : number of layers, default is 20.\n"
+    "    -output       : (Optional) Custom output name of layer file. \n"
+    "                    including the path, if you want to write it as specific locations \n"
+    "                    including the file extension: nii or nii.gz \n"
+    "                    This will overwrite excisting files with the same name \n"
+    "\n"
+    "\n"
+    "  For tests in the test folder: ../LN_LEAKY_LAYERS -rim lo_rim_LL.nii  \n"
     "\n"
     "Notes:\n"
     "    - This can be 3D. Hence the rim file should be dmsmooth in all\n"
@@ -26,6 +33,8 @@ int show_help(void) {
 }
 
 int main(int argc, char * argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     char *fin = NULL;
     int ac, dim;
     int nr_iterations = 30 ; 
@@ -60,6 +69,13 @@ int main(int argc, char * argv[]) {
                 return 1;
             }
             nr_layers = atof(argv[ac]);
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
         } else {
             fprintf(stderr, " * * invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -222,8 +238,10 @@ int main(int argc, char * argv[]) {
             *(leaky_data + i) = (int16_t)  (1+floor((*(layers_data + i)+200.)/400.*(nr_layers-0.5)));
         }
     }
-   
-    save_output_nifti(fin, "leaky_layers", leaky, true);
+
+    if (!use_outpath) fout = fin;
+    save_output_nifti(fout, "leaky_layers", leaky, true, use_outpath);
+
     //save_output_nifti(fin, "gauswight", gaus_weigth, true); 
 
     cout << "  Finished." << endl;

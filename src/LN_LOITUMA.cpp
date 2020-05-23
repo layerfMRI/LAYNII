@@ -5,8 +5,8 @@ int show_help( void )
    printf(
       "LN_LOITUMA : This program generates equi-volume layers based on Leaky layers and equi-dist layers\n"
       "\n"
-      "    This program does not necessarily assume any curcatures smoothness ,\n"
-      "    ,\n"
+      "    This program does not necessarily assume any curcatures smoothness\n"
+      " \n"
       "\n"
       "    basic usage: LN_LOITUMA -equidist sc_rim_layers.nii -leaky sc_rim_leaky_layers.nii -FWHM 1 -nr_layers 10 \n"
       "\n"
@@ -23,10 +23,12 @@ int show_help( void )
       "                               The layers are estimated based on the leaky-layer principle.  \n"
       "       -FWHM                 : Optional parameter to enforce a smooth curvature, given in intager values of iteration, default=1 \n"
       "       -nr_layers            : Optional parameter of the number of layers (default is 20) \n"
-      "       -output               : Optional parameter for output fine name (path) \n"
-      "                               default is equivol_layers_.nii in current folder \n"
+      "       -output               : Optional parameter for output fine name (including path and file type) \n"
+      "                               default is equi_volume_layers.nii, equi_distance_layers.nii, and leaky_layers.nii in current folder \n"
+      "                               this is used as prefix not the entire name  \n"
       "                                \n"
       "                                \n"
+      "  For test in the test foleder ../LN_LOITUMA -equidist sc_rim_layers.nii -leaky sc_rim_leaky_layers.nii -FWHM 1 -nr_layers 10 \n"
       "                                \n"
       "                               If you run this on EPI-T1 data consider preparing them as follwos, E.g:  \n"
       "                               LN_GROW_LAYERS -rim sc_rim.nii -N 1000 -vinc 60 -threeD \n"
@@ -403,12 +405,18 @@ cout << " min layer is " <<  min_layer << "   max layers is " << max_layer << en
                     if (*(nii_leak_data + i) > nr_layers) *(nii_leak_data + i) = nr_layers;
                 }
             }
-    const char *fouteqvol = "equi_volume_layers.nii"; 
-    save_output_nifti(fouteqvol, "", equi_vol,true,true);
-    const char *fouteqdis = "equi_distance_layers.nii"; 
-    save_output_nifti(fouteqdis, "", nii_dist,true,true);
-    const char *foutleaky = "leaky_layers.nii"; 
-    save_output_nifti(foutleaky, "", nii_leak,true,true);
+    const char *fouteqvol = "equi_volume_layers.nii" ; 
+    if (!use_outpath)  save_output_nifti(fouteqvol, "", equi_vol, true, true);
+    if (use_outpath )  save_output_nifti(fout, "equi_volume_layers", equi_vol, true, false);
+    
+    const char *fouteqdis = "equi_distance_layers.nii" ; 
+    if (!use_outpath)  save_output_nifti(fouteqdis, "", nii_dist, true, true);
+    if (use_outpath )  save_output_nifti(fout, "equi_distance_layers", nii_dist, true, false);
+    
+    const char *foutleaky = "leaky_layers.nii" ; 
+    if (!use_outpath)  save_output_nifti(foutleaky, "", nii_leak, true, true);
+    if (use_outpath )  save_output_nifti(fout, "leaky_layers", nii_leak, true, false);
+    
     
      //   save_output_nifti(fout, "denoised", nii_denoised, true, use_outpath);
 
