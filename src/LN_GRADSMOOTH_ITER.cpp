@@ -5,16 +5,17 @@
 int show_help( void )
 {
    printf(
-      "LN_GRADSMOOTH : Layering algorithm based on iterative smothing\n"
+      "LN_GRADSMOOTH_ITER : Layering algorithm based on iterative smothing\n"
       "\n"
       "    This program is designet smooth data within layer or columns ,\n"
       "    In order to avoid smoothing across masks a crawler smoothed only across connected voxels ,\n"
+      "    This is the only difference to LN_GRADSMOOTH_ITER ,\n"
       "\n"
-      "    basic usage: LN_GRADSMOOTH -gradfile gradfile.nii -input activity_map.nii -FWHM 1 -within  -selectivity 0.1 \n"
+      "    basic usage: LN_GRADSMOOTH_ITER -gradfile gradfile.nii -input activity_map.nii -FWHM 1 -within  -selectivity 0.1 \n"
       "\n"
       "\n"
       "    test usage in the test_data folder: \n"
-      "    ../LN_GRADSMOOTH -gradfile lo_gradT1.nii -input lo_VASO_act.nii -FWHM 1 -within -selectivity 0.1 \n"
+      "    ../LN_GRADSMOOTH_ITER -gradfile lo_gradT1.nii -input lo_VASO_act.nii -FWHM 1 -within -selectivity 0.1 \n"
       "\n"
       "\n"
       "    an example application is mentioned on the blog post here: \n"
