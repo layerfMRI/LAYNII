@@ -23,30 +23,47 @@ int show_help(void) {
     "    LN2_LAYERS -rim rim.nii -nr_layers 10 -equivol\n"
     "    LN2_LAYERS -rim rim.nii -nr_layers 10 -equivol -iter_smooth 1000\n"
     "\n"
+    "for tests in test folder: LN2_LAYERS -rim sc_rim.nii -nr_layers 10 -equivol \n"
+    "\n"
     "Options:\n"
-    "    -help        : Show this help.\n"
-    "    -rim         : Specify input dataset. Use 1 to code outer gray\n"
-    "                   matter surface (facing mostly CSF), 2 to code gray\n"
-    "                   matter, 3 to code inner gray matter surface voxels.\n"
-    "    -nr_layers   : Number of layers. Default is 3.\n"
-    "    -equivol     : (Optional) Create equi-volume layers. We do not\n"
-    "                   recommend this option if your rim file is above 0.3mm\n"
-    "                   resolution. You can always upsample your rim file to\n"
-    "                   a higher resolution first (<0.3mm) and then use this\n"
-    "                   option.\n"
-    "    -iter_smooth : (Optional) Number of smoothing iterations. Default\n"
-    "                   is 100. Only used together with '-equivol' flag. Use\n"
-    "                   larger values when equi-volume layers are jagged.\n"
+    "    -help         : Show this help.\n"
+    "    -rim          : Specify input dataset. Use 1 to code outer gray\n"
+    "                    matter surface (facing mostly CSF), 2 to code gray\n"
+    "                    matter, 3 to code inner gray matter surface voxels.\n"
+    "    -nr_layers    : Number of layers. Default is 3.\n"
+    "    -equivol      : (Optional) Create equi-volume layers. We do not\n"
+    "                    recommend this option if your rim file is above 0.3mm\n"
+    "                    resolution. You can always upsample your rim file to\n"
+    "                    a higher resolution first (<0.3mm) and then use this\n"
+    "                    option.\n"
+    "    -iter_smooth  : (Optional) Number of smoothing iterations. Default\n"
+    "                    is 100. Only used together with '-equivol' flag. Use\n"
+    "                    larger values when equi-volume layers are jagged.\n"
+    "    -output_vol   : (Optional) Custom output name for equi-volume layers \n"
+    "    -output_dist  : (Optional) Custom output name for equi-volume layers \n"
+    "    -output_thick : (Optional) Custom output name for equi-volume layers \n"
+    "                    Output names can include the path, if you want to \n"
+    "                    write it at specific locations \n"
+    "                    Output names include the file extension: nii or nii.gz \n"
+    "                    This will overwrite excisting files with the same name \n"
+    "\n"
     "    -debug       : (Optional) Save extra intermediate outputs.\n"
     "\n"
     "Note:\n"
     "    You can find further explanation of this algorithm at:\n"
-    "    <TODO: Add layerfmri.com link here.>\n"
+    "    https://thingsonthings.org/ln2_layers/  and at    \n"
+    "    https://layerfmri.com/equivol/  \n"
     "\n");
     return 0;
 }
 
 int main(int argc, char*  argv[]) {
+    bool use_outpath_vol = false ;
+    char  *fout_vol = NULL ; 
+    bool use_outpath_dist = false ;
+    char  *fout_dist = NULL ; 
+    bool use_outpath_thick = false ;
+    char  *fout_thick = NULL ; 
     nifti_image *nii1 = NULL;
     char* fin = NULL;
     uint16_t ac, nr_layers = 3;
@@ -78,6 +95,27 @@ int main(int argc, char*  argv[]) {
             }
         } else if (!strcmp(argv[ac], "-equivol")) {
             mode_equivol = true;
+        } else if (!strcmp(argv[ac], "-output_thick")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output_thick\n");
+                return 1;
+            }
+            use_outpath_thick = true;
+            fout_thick = argv[ac];
+        } else if (!strcmp(argv[ac], "-output_vol")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output_vol\n");
+                return 1;
+            }
+            use_outpath_vol = true;
+            fout_vol = argv[ac];
+        } else if (!strcmp(argv[ac], "-output_dist")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output_dist\n");
+                return 1;
+            }
+            use_outpath_dist = true;
+            fout_dist = argv[ac];
         } else if (!strcmp(argv[ac], "-debug")) {
             mode_debug = true;
         } else {
@@ -1046,7 +1084,10 @@ int main(int argc, char*  argv[]) {
         }
     }
     save_output_nifti(fin, "metric_equidist", normdist);
-    save_output_nifti(fin, "layers_equidist", nii_layers);
+    
+    if (!use_outpath_dist) fout_dist = fin;
+    save_output_nifti(fout_dist, "layers_equidist", nii_layers, true, use_outpath_dist);
+
     if (mode_debug) {
         save_output_nifti(fin, "hotspots", hotspots, false);
         // save_output_nifti(fin, "disterror", err_dist, false);
@@ -1414,7 +1455,9 @@ int main(int argc, char*  argv[]) {
                 }
             }
         }
-        save_output_nifti(fin, "layers_equivol", nii_layers);
+        
+        if (!use_outpath_vol) fout_vol = fin;
+        save_output_nifti(fout_vol, "layers_equivol", nii_layers, true, use_outpath_vol);
         // Save equi-volume metric in a simple 0-1 range form.
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             if (*(nii_rim_data + i) == 3) {
@@ -1499,7 +1542,9 @@ int main(int argc, char*  argv[]) {
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         *(innerGM_dist_data + i) += *(outerGM_dist_data + i);
     }
-    save_output_nifti(fin, "thickness", innerGM_dist, true);
+
+    if (!use_outpath_thick) fout_thick = fin;
+    save_output_nifti(fout_thick, "thickness", innerGM_dist, true, use_outpath_thick);
     // ========================================================================
     // TODO(Faruk): Might use bspline weights to smooth curvature maps a bit.
     // TODO(Faruk): Might be better to use step 1 id's to define columns.
