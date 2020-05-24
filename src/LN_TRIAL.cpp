@@ -8,17 +8,27 @@ int show_help(void) {
     "          equi-distant blocks with identical rest and activity periods.\n"
     "\n"
     "Usage:\n"
-    "    LN_TRIAL -input timeseries.nii -trial_dur 12 \n"
+    "    LN_TRIAL -input timeseries.nii -trialdur 12 \n"
+    "\n"
+    "for test in test folder: ../LN_TRIAL -input lo_BOLD_intemp.nii -trialdur 20 \n"
     "\n"
     "Options:\n"
     "    -help      : Show this help.\n"
     "    -input     : Input time series.\n"
     "    -trial_dur : Duration of activity-rest trial in TRs.\n"
+    "    -output    : (Optional) Custom output name. \n"
+    "                 including the path, if you want to write it at specific locations \n"
+    "                 including the file extension: nii or nii.gz \n"
+    "                 This will overwrite excisting files with the same name \n"
+    "\n"
+    "\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     char *fin = NULL;
     int ac;
     int trial_dur;
@@ -34,12 +44,22 @@ int main(int argc, char * argv[]) {
                 return 1;
             }
             fin = argv[ac];
-        } else if (!strcmp(argv[ac], "-trial_dur")) {
+        } else if (!strcmp(argv[ac], "-trialdur")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -trial_dur\n");
                 return 1;
             }
             trial_dur = atof(argv[ac]);
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
+        } else {
+            fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
+            return 1;
         }
     }
 
@@ -97,7 +117,9 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    save_output_nifti(fin, "TrialAverage", nii_trials, true);
+    
+    if (!use_outpath) fout = fin;
+    save_output_nifti(fout, "TrialAverage", nii_trials, true, use_outpath);
 
     cout << "  Finished." << endl;
     return 0;

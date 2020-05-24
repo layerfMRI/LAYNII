@@ -27,11 +27,19 @@ int show_help(void) {
     "    -box    : Doing the smoothing with a box-var. Specify the value \n"
     "              of the box sice (integer value). This is like a \n"
     "              running average sliding window.\n"
+    "    -output : (Optional) Custom output name. \n"
+    "              including the path, if you want to write it at specific locations \n"
+    "              including the file extension: nii or nii.gz \n"
+    "              This will overwrite excisting files with the same name \n"
+    "\n"
+    "\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     char* fin = NULL;
     int ac, do_gaus = 0, do_box = 0, bFWHM_val = 0;
     float gFWHM_val = 0.0;
@@ -61,6 +69,13 @@ int main(int argc, char * argv[]) {
                 return 1;
             }
             fin = argv[ac];
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -164,7 +179,9 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    save_output_nifti(fin, "tempsmooth", nii_smooth, true);
+
+    if (!use_outpath) fout = fin;
+    save_output_nifti(fout, "tempsmooth", nii_smooth, true, use_outpath);
 
     cout << "  Finished." << endl;
     return 0;
