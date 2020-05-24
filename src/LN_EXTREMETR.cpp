@@ -21,7 +21,7 @@ int show_help(void) {
     "    -help      : Show this help.\n"
     "    -input     : Input time series.\n"
     "    -output    : (Optional) Custom output prefix. \n"
-    "                 including the path, if you want to write it as specific locations \n"
+    "                 The output name can contan the location, where the file should be written to\n"
     "                 including the file extension: nii or nii.gz \n"
     "                 This will overwrite excisting files with the same name \n"
     "                 NOTE that the output name will always contain the prefix MaxTR/MinTR \n"

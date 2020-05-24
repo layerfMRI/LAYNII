@@ -18,12 +18,19 @@ int show_help(void) {
     "\n"
     "Options:\n"
     "    -help   : Show this help.\n"
-    "    -input  : Nifti (.nii) time series.\n"
+    "    -input  : Nifti (.nii or nii.gz) time series.\n"
+    "    -output : (Optional) Custom output name. \n"
+    "                 including the path, if you want to write it at specific locations \n"
+    "                 including the file extension: nii or nii.gz \n"
+    "                 This will overwrite excisting files with the same name \n"
+    "\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     char *fin = NULL;
     int ac;
     if (argc < 2) return show_help();
@@ -38,6 +45,16 @@ int main(int argc, char * argv[]) {
                 return 1;
             }
             fin = argv[ac];
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
+        } else {
+            fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
+            return 1;
         }
     }
 
@@ -121,12 +138,14 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    save_output_nifti(fin, "skew", nii_skew, true);
-    save_output_nifti(fin, "kurt", nii_kurt, true);
-    save_output_nifti(fin, "autocorr", nii_autocorr, true);
-    save_output_nifti(fin, "mean", nii_mean, true);
-    save_output_nifti(fin, "stedev", nii_stdev, true);
-    save_output_nifti(fin, "tSNR", nii_tSNR, true);
+    if (!use_outpath) fout = fin;
+
+    save_output_nifti(fout, "skew", nii_skew, true);
+    save_output_nifti(fout, "kurt", nii_kurt, true);
+    save_output_nifti(fout, "autocorr", nii_autocorr, true);
+    save_output_nifti(fout, "mean", nii_mean, true);
+    save_output_nifti(fout, "stedev", nii_stdev, true);
+    save_output_nifti(fout, "tSNR", nii_tSNR, true);
     // ========================================================================
     cout << "  Calculating correlation with everything..." << endl;
 
@@ -162,7 +181,7 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    save_output_nifti(fin, "overall_correl", nii_conc, true);
+    save_output_nifti(fout, "overall_correl", nii_conc, true);
 
     cout << "  Finished." << endl;
     return 0;
