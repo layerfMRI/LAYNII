@@ -43,11 +43,19 @@ int show_help(void) {
     "    -input         : BOLD file that should be corrected from macro-vascular contaminations\n"
     "                     This can be a time series or an activity map (not z-scores though). \n"
     "    -ALF           : File with estiates of Amplitude of low frequencies as a correlate ot venous CBV  \n"
+    "    -output        : (Optional) Custom output name of deconvolved image. \n"
+    "                     including the path, if you want to write it at specific locations \n"
+    "                     including the file extension: nii or nii.gz \n"
+    "                     This will overwrite excisting files with the same name \n"
+    "\n"
+    "\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char* argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     char* f_input = NULL, *f_layer = NULL, *f_column = NULL, *f_ALF = NULL;
     int ac, do_masking = 0, sulctouch = 0;
     float FWHM_val = 0;
@@ -89,6 +97,13 @@ int main(int argc, char* argv[]) {
         } else if (!strcmp(argv[ac], "-CBV")) {
             CBV = true ; 
             cout << " there will be no deconvolution, just layer-dependent CBV scaling" << endl; 
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
         } else if (!strcmp(argv[ac], "-input")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -input\n");
@@ -344,8 +359,8 @@ int main(int argc, char* argv[]) {
     //cout << endl; 
     
 
-
-    save_output_nifti(f_input, "deconvolved", nii_decov, true);
+    if (!use_outpath) fout = f_input;
+    save_output_nifti(fout, "deconvolved", nii_decov, true, use_outpath);
 
     cout << "  Finished." << endl;
     return 0;

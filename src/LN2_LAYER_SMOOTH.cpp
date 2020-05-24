@@ -18,26 +18,36 @@ int show_help(void) {
     "Usage:\n"
     "    LN2_LAYER_SMOOTH -layer_file layers.nii -input activity_map.nii -FWHM 1\n"
     "\n"
+    "for test in test folder: ../LN2_LAYER_SMOOTH -input sc_VASO_act.nii -layer_file sc_layers.nii -FWHM 1 \n"
+    "\n"
+    "\n"
     "Options:\n"
     "    -help       : Show this help.\n"
     "    -layer_file : Nifti (.nii) file that contains layer or column masks.\n"
     "    -input      : Nifti (.nii) file that should be smooth. It \n"
-    "                  should have same dimensions as layer file.\n"
-    "    -twodim      : Nifti (.nii) file that should be smooth. It \n"
+    "                     should have same dimensions as layer file.\n"
+    "    -twodim     : Nifti (.nii) file that should be smooth. It \n"
     "    -FWHM       : The amount of smoothing in mm.\n"
     "    -mask       : (Optional) Mask activity outside of layers. \n"
     "    -NoKissing  : (Optional) Allows smoothing across sucli. This is \n"
-    "                  necessary, when you do heavy smoothing well bevond \n"
-    "                  the spatial scale of the cortical thickness, or heavy\n"
-    "                  curvature. It will make things slower. Note that this \n"
-    "                  is best done with not too many layers. Otherwise a \n"
-    "                  single layer has holes and is not connected.\n"
-    "                  WARNING this option is not well tested for versin 1.5\n"
+    "                     necessary, when you do heavy smoothing well bevond \n"
+    "                     the spatial scale of the cortical thickness, or heavy\n"
+    "                     curvature. It will make things slower. Note that this \n"
+    "                     is best done with not too many layers. Otherwise a \n"
+    "                     single layer has holes and is not connected.\n"
+    "                     WARNING this option is not well tested for versin 1.5\n"
+    "    -output     : (Optional) Custom output name of smoothed image. \n"
+    "                     including the path, if you want to write it at specific locations \n"
+    "                     including the file extension: nii or nii.gz \n"
+    "                     This will overwrite excisting files with the same name \n"
+    "\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char* argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     char* f_input = NULL, *f_layer = NULL;
     int ac, do_masking = 0, sulctouch = 0;
     float FWHM_val = 0;
@@ -74,6 +84,13 @@ int main(int argc, char* argv[]) {
         } else if (!strcmp(argv[ac], "-mask")) {
             do_masking = 1;
             cout << "Set voxels to zero outside layers (mask option)"  << endl;
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -345,7 +362,8 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    save_output_nifti(f_input, "layer_smoothed", nii_smooth, true);
+    if (!use_outpath) fout = f_input;
+    save_output_nifti(fout, "layer_smoothed", nii_smooth, true, use_outpath);
 
     cout << "  Finished." << endl;
     return 0;

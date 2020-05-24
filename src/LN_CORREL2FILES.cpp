@@ -16,7 +16,7 @@ int show_help(void) {
     "    -file2     : Second time series with should have the same dimensions \n"
     "                 as first time series.\n"
     "    -output    : (Optional) Custom output name. \n"
-    "                 including the path, if you want to write it as specific locations \n"
+    "                 including the path, if you want to write it at specific locations \n"
     "                 including the file extension: nii or nii.gz \n"
     "                 This will overwrite excisting files with the same name \n"
     "\n"

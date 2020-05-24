@@ -10,18 +10,28 @@ int show_help(void) {
     "Usage: \n"
     "    LN_ZOOM -input image.nii -mask image_mask.nii\n"
     "\n"
+    "for test in test folder: ../LN_ZOOM -mask sc_layers_3dcolumns.nii -input sc_UNI.nii \n"
+    "\n"
     "Options:\n"
     "\n"
-    "    -help  : Show this help.\n"
-    "    -input : Nifti (.nii) file that should be zoomed (e.g. with \n"
-    "             multiple time points).\n"
-    "    -mask  : Nifti (.nii) file that determines the region of interest\n"
-    "             (e.g. the layer mask with one time point).\n"
+    "    -help   : Show this help.\n"
+    "    -input  : Nifti (.nii) file that should be zoomed (e.g. with \n"
+    "                 multiple time points).\n"
+    "    -mask   : Nifti (.nii) file that determines the region of interest\n"
+    "                 (e.g. the layer mask with one time point).\n"
+    "    -output : (Optional) Custom output name of zoomed image. \n"
+    "                 including the path, if you want to write it at specific locations \n"
+    "                 including the file extension: nii or nii.gz \n"
+    "                 This will overwrite excisting files with the same name \n"
+    "\n"
+    "\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char*  argv[]) {
+    bool use_outpath = false ;
+    char  *fout = NULL ; 
     char* fin_1 = NULL, *fin_2 = NULL;
     int ac;
     if (argc < 2) return show_help();
@@ -42,6 +52,13 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             fin_2 = argv[ac];
+        } else if (!strcmp(argv[ac], "-output")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -output\n");
+                return 1;
+            }
+            use_outpath = true;
+            fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -146,7 +163,9 @@ int main(int argc, char*  argv[]) {
             }
         }
     }
-    save_output_nifti(fin_1, "zoomed", nii_new, true);
+
+    if (!use_outpath) fout = fin_1;
+    save_output_nifti(fout, "zoomed", nii_new, true, use_outpath);
 
     cout << "Finished!" << endl;
     return 0;
