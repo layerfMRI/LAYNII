@@ -79,12 +79,14 @@ Some users seemed to have a compiler installed that does not match the actual CP
 ```
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_BOCO src/LN_BOCO.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_MP2RAGE_DNOISE src/LN_MP2RAGE_DNOISE.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
+c++ -std=c++11 -DHAVE_ZLIB  -o LN2_LAYER_SMOOTH src/LN2_LAYER_SMOOTH.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_LAYER_SMOOTH src/LN_LAYER_SMOOTH.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_3DCOLUMNS src/LN_3DCOLUMNS.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_COLUMNAR_DIST src/LN_COLUMNAR_DIST.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_CORREL2FILES src/LN_CORREL2FILES.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_DIRECT_SMOOTH src/LN_DIRECT_SMOOTH.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_GRADSMOOTH src/LN_GRADSMOOTH.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
+c++ -std=c++11 -DHAVE_ZLIB  -o LN_GRADSMOOTH_ITER src/LN_GRADSMOOTH_ITER.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_ZOOM src/LN_ZOOM.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_FLOAT_ME src/LN_FLOAT_ME.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_SHORT_ME src/LN_SHORT_ME.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
@@ -104,7 +106,6 @@ c++ -std=c++11 -DHAVE_ZLIB  -o LN_INT_ME src/LN_INT_ME.cpp dep/nifti2_io.cpp dep
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_LOITUMA src/LN_LOITUMA.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_NOISE_KERNEL src/LN_NOISE_KERNEL.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN2_DEVEIN src/LN2_DEVEIN.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB  -o LN2_LAYER_SMOOTH src/LN2_LAYER_SMOOTH.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN2_LAYERS src/LN2_LAYERS.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 ```
 ---
