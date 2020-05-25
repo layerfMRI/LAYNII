@@ -7797,10 +7797,10 @@ int doPigz2(nifti_image *nim, struct nifti_2_header nhdr, const nifti_brick_list
     strcat(command, nim->fname);
     strcat(command, "\"");
 	#ifdef _MSC_VER
-	if (( pigzPipe = _popen(command, "w")) == NULL)
+	if (( pigzPipe = _fopen(command, "w")) == NULL)
 		return -1;
 	#else
-	if (( pigzPipe = popen(command, "w")) == NULL)
+	if (( pigzPipe = fopen(command, "w")) == NULL)
 		return -1;		
 	#endif
 	znzFile fp;
@@ -7813,9 +7813,9 @@ int doPigz2(nifti_image *nim, struct nifti_2_header nhdr, const nifti_brick_list
     nifti_write_extensions(fp,nim);
 	nifti_write_all_data(fp,nim,NBL);
 	#ifdef _MSC_VER
-	_pclose(pigzPipe);
+	_fclose(pigzPipe);
 	#else
-	pclose(pigzPipe);		
+	fclose(pigzPipe);		
 	#endif
 	free(fp);
 	return 0;		
@@ -7829,10 +7829,10 @@ int doPigz(nifti_image *nim, struct nifti_1_header nhdr, const nifti_brick_list 
     strcat(command, nim->fname);
     strcat(command, "\"");
 	#ifdef _MSC_VER
-	if (( pigzPipe = _popen(command, "w")) == NULL)
+	if (( pigzPipe = _fopen(command, "w")) == NULL)
 		return -1;
 	#else
-	if (( pigzPipe = popen(command, "w")) == NULL)
+	if (( pigzPipe = fopen(command, "w")) == NULL)
 		return -1;		
 	#endif
 	znzFile fp;
@@ -7845,9 +7845,9 @@ int doPigz(nifti_image *nim, struct nifti_1_header nhdr, const nifti_brick_list 
     nifti_write_extensions(fp,nim);
 	nifti_write_all_data(fp,nim,NBL);
 	#ifdef _MSC_VER
-	_pclose(pigzPipe);
+	_fclose(pigzPipe);
 	#else
-	pclose(pigzPipe);		
+	fclose(pigzPipe);		
 	#endif
 	free(fp);
 	return 0;		
