@@ -11,6 +11,7 @@ Most used programs (so far) are:
 - `LN_BOCO` : for BOLD correction in VASO.
 
 Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri blog](https://layerfmri.com/category/code/).
+Various pipeline script in the context of LAYNII see the [LAYNII_extras](https://github.com/ofgulban/LAYNII_extras)
 
 ## Installation
 1. Download the latest release and unzip it or clone the repository with the command:
@@ -65,7 +66,8 @@ You can set paths as follows:
 For more information see [this blog post](https://layerfmri.com/2017/11/30/using-a-standalone-nii-i-o-in-c/).
 
 ## Comment on cross-platform compatibility
-Since January 2020, all remaining dependencies have been removed and LAYNII can be compiled on Linux, Max, and Windows. All you need is a terminal and a C++ compiler.
+Since May 2020, LAYNII is also distributed as pre-compiled binaries for Linux, macOS, and Windows (64). 
+Since January 2020, all remaining dependencies have been removed and LAYNII can be compiled on Linux, macOS, and Windows. All you need is a terminal and a C++ compiler.
 
 1. On Linux `g++` is included by default.
 
