@@ -17,7 +17,7 @@ int show_help(void) {
     "\n"
     "    test usage in the test_data folder: \n"
     "    ../LN_MP2RAGE_DNOISE -INV1 sc_INV1.nii -INV2 sc_INV2.nii -UNI sc_UNI.nii \n"
-    "/n"
+    "\n"
     "    a potential application of this program is mentioned in this blog post \n"
     "    https://layerfmri.com/mp2rage/ \n"
     "\n"
@@ -149,7 +149,7 @@ int main(int argc, char* argv[]) {
         float new_uni1, new_uni2, val_uni_wrong;
 
         // Skip nan or zero voxels
-        if (std::isnan(val_uni) || val_uni == 0 || val_uni == 0.0) {
+        if ( val_uni != val_uni || val_uni == 0 || val_uni == 0.0) {
             *(nii_phaseerr_data + i) = 0;
             *(nii_denoised_data + i) = 0;
         } else {

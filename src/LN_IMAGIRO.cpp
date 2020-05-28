@@ -322,7 +322,9 @@ int main(int argc, char * argv[]) {
    for (int iz = 0; iz < size_z_imagiro; ++iz) {
     for (int ilayer = 0; ilayer < nr_layers; ++ilayer) {
         for (int icolum = 0; icolum < nr_columns; ++icolum) {
-             if (std::isnan( *(imagiro_data + nxyz_imagiro * it + nxy_imagiro * iz + nx_imagiro * ilayer +  icolum))) *(imagiro_data + nxyz_imagiro * it + nxy_imagiro * iz + nx_imagiro * ilayer +  icolum) = 0 ;
+             if (( *(imagiro_data + nxyz_imagiro * it + nxy_imagiro * iz + nx_imagiro * ilayer +  icolum)) != ( *(imagiro_data + nxyz_imagiro * it + nxy_imagiro * iz + nx_imagiro * ilayer +  icolum))) {
+                  *(imagiro_data + nxyz_imagiro * it + nxy_imagiro * iz + nx_imagiro * ilayer +  icolum) = 0 ;
+              }
         }
     }
    }
