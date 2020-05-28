@@ -12,6 +12,7 @@ Most used programs (so far) are:
 
 Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri blog](https://layerfmri.com/category/code/).
 Various pipeline script in the context of LAYNII see the [LAYNII_extras](https://github.com/ofgulban/LAYNII_extras)
+Links to instuction of the specific progrmans are included in the help output of the respective progrmans. 
 
 ## Installation
 1. Download the latest release and unzip it or clone the repository with the command:
