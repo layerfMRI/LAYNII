@@ -270,6 +270,8 @@ int main(int argc, char * argv[]) {
         save_output_nifti(fout, "BOLD_trialAV_LN", nii_avg2, true);
     }
     if (!use_outpath) fout = fin_1;
+    
+    nii_boco_vaso->scl_slope = 1. ; 
     save_output_nifti(fout, "VASO_LN", nii_boco_vaso, true, use_outpath); 
     // the first argument is the string of the output file name  
     //       if there is no explicit output path given, this will be the file name of the main input data
