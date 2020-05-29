@@ -269,6 +269,17 @@ int main(int argc, char * argv[]) {
         save_output_nifti(fout, "VASO_trialAV_LN", nii_avg1, true);
         save_output_nifti(fout, "BOLD_trialAV_LN", nii_avg2, true);
     }
+    
+    
+            // Replace nans with zeros
+    for (int i = 0; i < nr_voxels; ++i) {
+        if (*(nii_boco_vaso_data + i)!= *(nii_boco_vaso_data + i)) {
+            *(nii_boco_vaso_data + i) = 0;
+        }
+    }
+
+    
+    
     if (!use_outpath) fout = fin_1;
     
     nii_boco_vaso->scl_slope = 1. ; 

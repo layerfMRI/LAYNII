@@ -194,6 +194,7 @@ void save_output_nifti(const string path, const string tag,  nifti_image* nii,
         // Prepare output path
         path_out = dir + sep + basename + "_" + tag + ext;
     }
+    
 
     // Save nifti
     nifti_set_filenames(nii, path_out.c_str(), 1, 1);
