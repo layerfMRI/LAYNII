@@ -3,6 +3,7 @@
 #include "nifti2_io.h"   /* typedefs, prototypes, macros, etc. */
 #include <math.h>
 
+
 /*****===================================================================*****/
 /*****     Sample functions to deal with NIFTI-1,2 and ANALYZE files     *****/
 /*****...................................................................*****/
