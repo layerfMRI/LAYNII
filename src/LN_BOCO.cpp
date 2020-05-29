@@ -130,6 +130,18 @@ int main(int argc, char * argv[]) {
     float *nii_boco_vaso_data = static_cast<float*>(nii_boco_vaso->data);
 
     // ========================================================================
+    // Handle scaling factor effects
+    float scl_slope1=nii_nulled->scl_slope, scl_slope2=nii_bold->scl_slope;
+    for (int i = 0; i != nr_voxels; ++i) {
+        *(nii_nulled_data + i) *= scl_slope1;
+        *(nii_bold_data + i) *= scl_slope2;
+    }
+    // We can set scaling factor to 1 because we have accounted for them above
+    nii_nulled->scl_slope = 1.;
+    nii_bold->scl_slope = 1.;
+    nii_boco_vaso->scl_slope = 1.;
+
+    // ========================================================================
     // AVERAGE across Trials
     for (int i = 0; i != nr_voxels; ++i) {
         *(nii_boco_vaso_data + i) = *(nii_nulled_data + i)
@@ -200,8 +212,8 @@ int main(int argc, char * argv[]) {
     if (trialdur != 0) {
         cout << "  Doing BOLD correction after trial average..." << endl;
         cout << "    Trial duration is " << trialdur
-        << ". This means there are " << (float)size_time / (float)trialdur
-        <<  " trials recorded here." << endl;
+             << ". This means there are " << (float)size_time / (float)trialdur
+             <<  " trials recorded here." << endl;
 
         int nr_trials = size_time / trialdur;
         // Trial averave file
@@ -269,32 +281,17 @@ int main(int argc, char * argv[]) {
         save_output_nifti(fout, "VASO_trialAV_LN", nii_avg1, true);
         save_output_nifti(fout, "BOLD_trialAV_LN", nii_avg2, true);
     }
-    
-    
-            // Replace nans with zeros
+
+
+    // Replace nans with zeros
     for (int i = 0; i < nr_voxels; ++i) {
         if (*(nii_boco_vaso_data + i)!= *(nii_boco_vaso_data + i)) {
             *(nii_boco_vaso_data + i) = 0;
         }
     }
 
-    
-    
     if (!use_outpath) fout = fin_1;
-    
-    nii_boco_vaso->scl_slope = 1. ; 
-    save_output_nifti(fout, "VASO_LN", nii_boco_vaso, true, use_outpath); 
-    // the first argument is the string of the output file name  
-    //       if there is no explicit output path given, this will be the file name of the main input data
-    //       if there is an explicit output file name given, this wil be the user-defined name following the -output
-    //       (inluding the path and including the file extension)
-    // the second argument is the output file name prefix, that will be added to the above argument,
-    //       this field is ignored, when the flag "use_outpath" (last argument) is selected.
-    // the third argument is the pointer to the data set that is supposed to be written
-    // the fourth argument states if, during the exectution of the program an the writing process should be logged
-    //       this argument is optional with the default: TRUE
-    // the fifth argument states if the output prefix (second argument) should be ignored or not
-    //       this argument is optional the default: FALSE 
+    save_output_nifti(fout, "VASO_LN", nii_boco_vaso, true, use_outpath);
 
     cout << "  Finished." << endl;
     return 0;
