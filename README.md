@@ -15,6 +15,9 @@ Various pipeline script in the context of LAYNII see the [LAYNII_extras](https:/
 Links to instuction of the specific progrmans are included in the help output of the respective progrmans. 
 
 ## Installation
+A detailed descriptions of how to set up LAYNII is provided here: [https://layerfmri.com/laynii-setup/](https://layerfmri.com/laynii-setup/)
+A brief instruction is also given below.
+
 1. Download the latest release and unzip it or clone the repository with the command:
 ```
 git clone https://github.com/layerfMRI/laynii
