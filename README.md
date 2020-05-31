@@ -39,39 +39,9 @@ For example `LN_NOISEME.cpp` reads in a nii file, accesses the data, manipulates
 ./LN_NOISEME -input input_example.nii -output Noised.nii -variance 0.4445
 ```
 
-### Using LAYNII from a anywhere in your system
-If you want to use LAYNII from anywhere in your system, you still need to set the paths:
-
-### On Linux
-Add the following to your `.bashrc`:
-```
-export PATH="/path/to/LAYNII:$PATH"
-```
-
-### On Mac
-Add the following to your `.bash_profile` or `.profile`:
-```
-export PATH="/path/to/LAYNII:$PATH"
-```
-
-### On Windows
-You can set paths as follows:
-1. On desktop, right-click the very bottom-left corner of the screen to get the Power User Task Menu.
-2. From the Power User Task Menu, click System.
-3. In the Settings window, scroll down to the related settings section.
-4. Click the System info link.
-5. In the System window, click the Advanced system settings link in the left navigation pane.
-6. In the System Properties window, click on the Advanced tab
-7. Then click the Environment Variables button near the bottom of that tab.
-8. In the Environment Variables window, highlight the Path variable in the System variables section and click the Edit button.
-9. Add or modify the path lines with the paths you want the computer to access. Each different directory is separated with a semicolon, as shown below.
-10. There you can add the path to your LAYNII folder
-
-For more information see [this blog post](https://layerfmri.com/2017/11/30/using-a-standalone-nii-i-o-in-c/).
-
 ## Comment on cross-platform compatibility
-Since May 2020, LAYNII is also distributed as pre-compiled binaries for Linux, macOS, and Windows (64). 
-Since January 2020, all remaining dependencies have been removed and LAYNII can be compiled on Linux, macOS, and Windows. All you need is a terminal and a C++ compiler.
+Since May 2020, LAYNII is also distributed as pre-compiled binaries for Linux, macOS, and Windows (x32 and x64). 
+Since January 2020, all remaining dependencies have been removed. This should allow the user to use pre-compiled binaries of LAYNII for the respective operating system. Altenatively LAYNII should also be compilable on Linux, macOS, and Windows. All you need is a terminal and a C++ compiler.
 
 1. On Linux `g++` is included by default.
 
@@ -80,7 +50,8 @@ Since January 2020, all remaining dependencies have been removed and LAYNII can 
 3. On Windows, a C++ compiler needs to be installed manually. For example with [cygwin](https://cygwin.com/). I followed the instructions in this [video](https://www.youtube.com/watch?v=DAlS4hF_PbY).
 
 ## Comment on makefile and compiler
-Some users seemed to have a compiler installed that does not match the actual CPU architecture of the computer. In those cases it can be easier to compile the programs one by one with g++. Copy-paste the following into your terminal instead in Step 3:
+Some users seemed to have a compiler installed that does not match the actual CPU architecture of the computer. In those cases it can be easier to compile the programs with another compiler one by one with g++ (instead of c++). 
+Some users seemed to have a compiler installed but do not have make installed. Thus, instead of executing 'make all', just copy-paste the following into your terminal in the LAYNII folder.
 
 ```
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_BOCO src/LN_BOCO.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
@@ -122,4 +93,4 @@ If you have any issues when using LAYNII, or want to request a new feature, we a
 LAYNII is licensed under [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause).
 
 # Acknowledgments
-In order to read and write Nifti (.nii, .nii.gz) data, we have adapted code that was originally developed from Bob Cox and Rick Reynolds.
+In order to read and write Nifti (.nii, .nii.gz) data, we have adapted code that was originally developed by the Neuroimaging Informatics Technology Initiative. We thank Bob Cox, Daniel Glen and Rick Reynolds.
