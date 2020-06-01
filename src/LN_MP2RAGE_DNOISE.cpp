@@ -139,6 +139,16 @@ int main(int argc, char* argv[]) {
     nifti_image* nii_phaseerr = copy_nifti_as_float32(nii1);
     float* nii_phaseerr_data = static_cast<float*>(nii_phaseerr->data);
 
+    // fixing slopes
+    for (int i = 0; i != nr_voxels; ++i) {
+        *(nii_inv1_data + i) = *(nii_inv1_data + i) * nii_inv1->scl_slope; 
+        *(nii_inv2_data + i) = *(nii_inv2_data + i) * nii_inv2->scl_slope; 
+        *(nii_uni_data  + i) = *(nii_uni_data  + i) * nii_uni ->scl_slope; 
+    }
+    nii_denoised->scl_slope = 1.0 ; 
+    nii_phaseerr->scl_slope = 1.0 ; 
+
+
     // ========================================================================
     // Big calculation across all voxels
     beta = beta * SIEMENS_f;
