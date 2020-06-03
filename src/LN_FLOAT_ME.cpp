@@ -1,5 +1,4 @@
 
-
 #include "../dep/laynii_lib.h"
 
 int show_help(void) {
@@ -13,13 +12,7 @@ int show_help(void) {
     "Options:\n"
     "    -help   : Show this help.\n"
     "    -input  : Dataset that should be shorted data.\n"
-    "    -output    : (Optional) Custom output name. \n"
-    "                 including the path, if you want to write it as specific locations \n"
-    "                 including the file extension: nii or nii.gz \n"
-    "                 This will overwrite excisting files with the same name \n"    
-    "\n"
-    "    test application in the test_data folder would be:\n"
-    "    ../LN_FLOAT_ME -input sc_VASO_act.nii \n"
+    "    -output : (Optional) Custom output name. Overwrites existing files.\n"
     "\n");
     return 0;
 }
@@ -69,9 +62,25 @@ int main(int argc, char *argv[]) {
     log_welcome("LN_FLOAT_ME");
     log_nifti_descriptives(nii);
 
+    // Get dimensions of input
+    const int size_x = nii->nx;
+    const int size_y = nii->ny;
+    const int size_z = nii->nz;
+    const int size_t = nii->nt;
+    const int nr_voxels = size_t * size_z * size_y * size_x;
+
     // Cast input data to float
     nifti_image *nii_new = copy_nifti_as_float32(nii);
+    float* nii_new_data = static_cast<float*>(nii_new->data);
 
+    // Handle scaling factor effects
+    float scl_slope = nii->scl_slope;
+    for (int i = 0; i != nr_voxels; ++i) {
+        *(nii_new_data + i) *= scl_slope;
+    }
+    nii_new->scl_slope = 1.;
+
+    // Save
     if (!use_outpath) fout = fin;
     save_output_nifti(fout, "float", nii_new, true, use_outpath);
 
