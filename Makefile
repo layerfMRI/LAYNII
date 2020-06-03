@@ -1,7 +1,7 @@
 # LAYNII makefile
 
 CC		= c++
-CFLAGS	= -std=c++11 -DHAVE_ZLIB 
+CFLAGS	= -std=c++11 -DHAVE_ZLIB
 LFLAGS	= -lm -lz
 # CFLAGS	= -std=c++11 -pedantic -DHAVE_ZLIB -lm -lz
 
@@ -41,6 +41,7 @@ LOW_PRIORITY	=	LN_3DCOLUMNS \
 					LN_LOITUMA \
 					LN_NOISE_KERNEL \
 					LN2_DEVEIN \
+					LN2_RIMIFY \
 
 LAYNII2	= LN2_LAYERS
 
@@ -149,6 +150,9 @@ LN2_DEVEIN:
 
 LN_PHYSIO_PARS:
 	$(CC) $(CFLAGS) -o LN_PHYSIO_PARS src/LN_PHYSIO_PARS.cpp $(LIBRARIES) $(LFLAGS)
+
+LN2_RIMIFY:
+	$(CC) $(CFLAGS) -o LN2_RIMIFY src/LN2_RIMIFY.cpp $(LIBRARIES) $(LFLAGS)
 
 clean:
 	$(RM) obj/*.o $(LAYNII)
