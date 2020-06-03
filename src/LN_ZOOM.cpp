@@ -10,8 +10,6 @@ int show_help(void) {
     "Usage: \n"
     "    LN_ZOOM -input image.nii -mask image_mask.nii\n"
     "\n"
-    "for test in test folder: ../LN_ZOOM -mask sc_layers_3dcolumns.nii -input sc_UNI.nii \n"
-    "\n"
     "Options:\n"
     "\n"
     "    -help   : Show this help.\n"
@@ -19,20 +17,15 @@ int show_help(void) {
     "                 multiple time points).\n"
     "    -mask   : Nifti (.nii) file that determines the region of interest\n"
     "                 (e.g. the layer mask with one time point).\n"
-    "    -output : (Optional) Custom output name of zoomed image. \n"
-    "                 including the path, if you want to write it at specific locations \n"
-    "                 including the file extension: nii or nii.gz \n"
-    "                 This will overwrite excisting files with the same name \n"
-    "\n"
-    "\n"
+    "    -output : (Optional) Custom output name. Overwrites existing files.\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char*  argv[]) {
     bool use_outpath = false ;
-    char  *fout = NULL ; 
-    char* fin_1 = NULL, *fin_2 = NULL;
+    char *fout = NULL ;
+    char *fin_1 = NULL, *fin_2 = NULL;
     int ac;
     if (argc < 2) return show_help();
 
