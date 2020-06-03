@@ -12,7 +12,30 @@ Most used programs (so far) are:
 
 Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri blog](https://layerfmri.com/category/code/).
 Various pipeline script in the context of LAYNII see the [LAYNII_extras](https://github.com/ofgulban/LAYNII_extras)
-Links to instuction of the specific progrmans are included in the help output of the respective progrmans. 
+Links to instruction of the specific programs are included in the help output of the respective programs and below"
+
+- [LN2_LAYERS algorithm](https://thingsonthings.org/ln2_layers/)
+- [LN2_LAYERS example application](https://layerfmri.com/2020/04/24/equivol/)
+- [LN_GROW_LAYERS usage](https://layerfmri.com/2018/03/11/quick-layering/)
+- [LN_GROW_LAYERS example application](https://layerfmri.com/2020/04/24/equivol/)
+- [LN_GROW_LAYERS example application](https://layerfmri.com/2018/07/19/how-to-convert-any-paper-figure-into-a-layer-profile/)
+- [LN_GROW_LAYERS example application](https://layerfmri.com/2018/09/26/columns/)
+- [LN_BOCO](https://layerfmri.com/2019/03/22/analysispipeline/)
+- [LN_COLUMNAR_DIST](https://layerfmri.com/2018/09/26/columns/)
+- [LN_IMAGIRO](https://layerfmri.com/2018/09/26/columns/)
+- [LN_LAYER_SMOOTH](https://layerfmri.com/2018/11/03/anatomically-informed-spatial-smoothing/)
+- [LN_GRADSMOOTH](https://layerfmri.com/2018/11/03/anatomically-informed-spatial-smoothing/)
+- [LN_GRADSMOOTH_ITER](https://layerfmri.com/2018/11/03/anatomically-informed-spatial-smoothing/)
+- [LN_DIRECT_SMOOTH](https://layerfmri.com/2018/11/03/anatomically-informed-spatial-smoothing/)
+- [LN_TEMPSMOOTH](https://layerfmri.com/2018/11/03/anatomically-informed-spatial-smoothing/)
+- [LN_INTPRO](https://layerfmri.com/2019/02/05/intensity-projections-in-laynii/)
+- [LN_MP2RAGE_DNOISE](https://layerfmri.com/2019/06/22/mp2rage/)
+- [LN2_DEVEIN](https://layerfmri.com/2020/04/02/devein/)
+- [LN_SKEW](https://layerfmri.com/2020/04/06/qa/)
+- [LN_NOISE_KERNEL](https://layerfmri.com/2020/04/06/qa/)
+- [LN_LEAKY_LAYERS](https://layerfmri.com/2020/04/24/equivol/)
+- [LN_LOITUMA](https://layerfmri.com/2020/04/24/equivol/)
+
 
 ## Installation
 A detailed descriptions of how to set up LAYNII is provided here: [https://layerfmri.com/laynii-setup/](https://layerfmri.com/laynii-setup/)
@@ -45,7 +68,7 @@ Since January 2020, all remaining dependencies have been removed. This should al
 
 1. On Linux `g++` is included by default.
 
-2. On Mac, it will be enabled automatically as part of the `commandline developer tools` as soon as you type `g++` into the terminal. Alternatively, you can also use Xcode.
+2. On Mac, it will be enabled automatically as part of the `command line developer tools` as soon as you type `g++` into the terminal. Alternatively, you can also use Xcode.
 
 3. On Windows, a C++ compiler needs to be installed manually. For example with [cygwin](https://cygwin.com/). I followed the instructions in this [video](https://www.youtube.com/watch?v=DAlS4hF_PbY).
 
