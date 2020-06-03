@@ -19,11 +19,9 @@ int show_help(void) {
     "\n"
     "Usage:\n"
     "    LN2_LAYERS -rim rim.nii\n"
-    "    LN2_LAYERS -rim rim.nii -nr_layers 10\n"
-    "    LN2_LAYERS -rim rim.nii -nr_layers 10 -equivol\n"
-    "    LN2_LAYERS -rim rim.nii -nr_layers 10 -equivol -iter_smooth 1000\n"
-    "\n"
-    "for tests in test folder: LN2_LAYERS -rim sc_rim.nii -nr_layers 10 -equivol \n"
+    "    LN2_LAYERS -rim rim.nii -nr_layers 3\n"
+    "    LN2_LAYERS -rim rim.nii -nr_layers 3 -equivol\n"
+    "    LN2_LAYERS -rim rim.nii -nr_layers 3 -equivol -iter_smooth 1000\n"
     "\n"
     "Options:\n"
     "    -help         : Show this help.\n"
@@ -32,7 +30,7 @@ int show_help(void) {
     "                    matter, 3 to code inner gray matter surface voxels.\n"
     "                    note that values 1 and 2 will NOT be included in the \n"
     "                    layerification, this is in contrast to the programs \n"
-    "                    LN_GROW_LAYERS and LN_LEAKY LAYERS \n" 
+    "                    LN_GROW_LAYERS and LN_LEAKY LAYERS \n"
     "    -nr_layers    : Number of layers. Default is 3.\n"
     "    -equivol      : (Optional) Create equi-volume layers. We do not\n"
     "                    recommend this option if your rim file is above 0.3mm\n"
@@ -42,33 +40,22 @@ int show_help(void) {
     "    -iter_smooth  : (Optional) Number of smoothing iterations. Default\n"
     "                    is 100. Only used together with '-equivol' flag. Use\n"
     "                    larger values when equi-volume layers are jagged.\n"
-    "    -output_vol   : (Optional) Custom output name for equi-volume layers \n"
-    "    -output_dist  : (Optional) Custom output name for equi-volume layers \n"
-    "    -output_thick : (Optional) Custom output name for equi-volume layers \n"
-    "                    Output names can include the path, if you want to \n"
-    "                    write it at specific locations \n"
-    "                    Output names include the file extension: nii or nii.gz \n"
-    "                    This will overwrite excisting files with the same name \n"
+    "    -debug        : (Optional) Save extra intermediate outputs.\n"
+    "    -output       : (Optional) Output basename for all outputs.\n"
     "\n"
-    "    -debug       : (Optional) Save extra intermediate outputs.\n"
-    "\n"
-    "Note:\n"
-    "    You can find further explanation of this algorithm at:\n"
-    "    https://thingsonthings.org/ln2_layers/  and at    \n"
-    "    https://layerfmri.com/equivol/  \n"
+    "Notes:\n"
+    "    - You can find further explanation of this algorithm at:\n"
+    "      <https://thingsonthings.org/ln2_layers>\n"
+    "    - For a general discussion on equi-volume layering:\n"
+    "      <https://layerfmri.com/equivol>\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char*  argv[]) {
-    bool use_outpath_vol = false ;
-    char  *fout_vol = NULL ; 
-    bool use_outpath_dist = false ;
-    char  *fout_dist = NULL ; 
-    bool use_outpath_thick = false ;
-    char  *fout_thick = NULL ; 
     nifti_image *nii1 = NULL;
-    char* fin = NULL;
+    bool use_outpath = false;
+    char *fin = NULL, *fout = NULL;
     uint16_t ac, nr_layers = 3;
     uint16_t iter_smooth = 100;
     bool mode_equivol = false, mode_debug = false;
@@ -84,6 +71,7 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             fin = argv[ac];
+            fout = argv[ac];
         } else if (!strcmp(argv[ac], "-nr_layers")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -nr_layers\n");
@@ -98,27 +86,13 @@ int main(int argc, char*  argv[]) {
             }
         } else if (!strcmp(argv[ac], "-equivol")) {
             mode_equivol = true;
-        } else if (!strcmp(argv[ac], "-output_thick")) {
+        } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -output_thick\n");
+                fprintf(stderr, "** missing argument for -output\n");
                 return 1;
             }
-            use_outpath_thick = true;
-            fout_thick = argv[ac];
-        } else if (!strcmp(argv[ac], "-output_vol")) {
-            if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -output_vol\n");
-                return 1;
-            }
-            use_outpath_vol = true;
-            fout_vol = argv[ac];
-        } else if (!strcmp(argv[ac], "-output_dist")) {
-            if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -output_dist\n");
-                return 1;
-            }
-            use_outpath_dist = true;
-            fout_dist = argv[ac];
+            use_outpath = true;
+            fout = argv[ac];
         } else if (!strcmp(argv[ac], "-debug")) {
             mode_debug = true;
         } else {
@@ -624,9 +598,9 @@ int main(int argc, char*  argv[]) {
         grow_step += 1;
     }
     if (mode_debug) {
-        save_output_nifti(fin, "innerGM_step", innerGM_step, false);
-        save_output_nifti(fin, "innerGM_dist", innerGM_dist, false);
-        save_output_nifti(fin, "innerGM_id", innerGM_id, false);
+        save_output_nifti(fout, "innerGM_step", innerGM_step, false);
+        save_output_nifti(fout, "innerGM_dist", innerGM_dist, false);
+        save_output_nifti(fout, "innerGM_id", innerGM_id, false);
     }
 
     // ========================================================================
@@ -1033,9 +1007,9 @@ int main(int argc, char*  argv[]) {
         grow_step += 1;
     }
     if (mode_debug) {
-        save_output_nifti(fin, "outerGM_step", outerGM_step, false);
-        save_output_nifti(fin, "outerGM_dist", outerGM_dist, false);
-        save_output_nifti(fin, "outerGM_id", outerGM_id, false);
+        save_output_nifti(fout, "outerGM_step", outerGM_step, false);
+        save_output_nifti(fout, "outerGM_dist", outerGM_dist, false);
+        save_output_nifti(fout, "outerGM_id", outerGM_id, false);
     }
 
     // ========================================================================
@@ -1086,15 +1060,13 @@ int main(int argc, char*  argv[]) {
             *(hotspots_data + j) -= 1;
         }
     }
-    save_output_nifti(fin, "metric_equidist", normdist);
-    
-    if (!use_outpath_dist) fout_dist = fin;
-    save_output_nifti(fout_dist, "layers_equidist", nii_layers, true, use_outpath_dist);
+    save_output_nifti(fout, "metric_equidist", normdist);
+    save_output_nifti(fout, "layers_equidist", nii_layers, true);
 
     if (mode_debug) {
-        save_output_nifti(fin, "hotspots", hotspots, false);
-        // save_output_nifti(fin, "disterror", err_dist, false);
-        save_output_nifti(fin, "normdistdiff_equidist", normdistdiff, false);
+        save_output_nifti(fout, "hotspots", hotspots, false);
+        // save_output_nifti(fout, "disterror", err_dist, false);
+        save_output_nifti(fout, "normdistdiff_equidist", normdistdiff, false);
     }
 
     // ========================================================================
@@ -1154,7 +1126,7 @@ int main(int argc, char*  argv[]) {
             }
         }
     }
-    save_output_nifti(fin, "midGM_equidist", midGM, true);
+    save_output_nifti(fout, "midGM_equidist", midGM, true);
 
     // ========================================================================
     // Columns
@@ -1182,7 +1154,7 @@ int main(int argc, char*  argv[]) {
         }
     }
     if (mode_debug) {
-        save_output_nifti(fin, "curvature_init", curvature, false);
+        save_output_nifti(fout, "curvature_init", curvature, false);
     }
 
     // ========================================================================
@@ -1245,8 +1217,8 @@ int main(int argc, char*  argv[]) {
         }
     }
     if (mode_debug) {
-        save_output_nifti(fin, "midGM_equidist_id", midGM_id, false);
-        save_output_nifti(fin, "columns", midGM_centroid_id, false);
+        save_output_nifti(fout, "midGM_equidist_id", midGM_id, false);
+        save_output_nifti(fout, "columns", midGM_centroid_id, false);
     }
 
     // ========================================================================
@@ -1259,7 +1231,7 @@ int main(int argc, char*  argv[]) {
         }
     }
     if (mode_debug) {
-        save_output_nifti(fin, "curvature", curvature, true);
+        save_output_nifti(fout, "curvature", curvature, true);
     }
 
     // ========================================================================
@@ -1304,8 +1276,8 @@ int main(int argc, char*  argv[]) {
             }
         }
         if (mode_debug) {
-            save_output_nifti(fin, "hotspots_in", hotspots_i, false);
-            save_output_nifti(fin, "hotspots_out", hotspots_o, false);
+            save_output_nifti(fout, "hotspots_in", hotspots_i, false);
+            save_output_nifti(fout, "hotspots_out", hotspots_o, false);
         }
 
         // --------------------------------------------------------------------
@@ -1338,7 +1310,7 @@ int main(int argc, char*  argv[]) {
         }
 
         if (mode_debug) {
-            save_output_nifti(fin, "equivol_factors", equivol_factors, false);
+            save_output_nifti(fout, "equivol_factors", equivol_factors, false);
         }
 
         // --------------------------------------------------------------------
@@ -1424,7 +1396,7 @@ int main(int argc, char*  argv[]) {
         }
         cout << endl;
         if (mode_debug) {
-            save_output_nifti(fin, "equivol_factors_smooth", smooth, false);
+            save_output_nifti(fout, "equivol_factors_smooth", smooth, false);
         }
 
         // --------------------------------------------------------------------
@@ -1458,9 +1430,9 @@ int main(int argc, char*  argv[]) {
                 }
             }
         }
-        
-        if (!use_outpath_vol) fout_vol = fin;
-        save_output_nifti(fout_vol, "layers_equivol", nii_layers, true, use_outpath_vol);
+
+        save_output_nifti(fout, "layers_equivol", nii_layers, true);
+
         // Save equi-volume metric in a simple 0-1 range form.
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             if (*(nii_rim_data + i) == 3) {
@@ -1468,10 +1440,10 @@ int main(int argc, char*  argv[]) {
                 *(normdistdiff_data + i) += 0.5;
             }
         }
-        save_output_nifti(fin, "metric_equivol", normdistdiff);
+        save_output_nifti(fout, "metric_equivol", normdistdiff);
 
         if (mode_debug) {
-            save_output_nifti(fin, "normdistdiff_equivol", normdistdiff, false);
+            save_output_nifti(fout, "normdistdiff_equivol", normdistdiff, false);
         }
 
         // ====================================================================
@@ -1481,6 +1453,11 @@ int main(int argc, char*  argv[]) {
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             *(midGM_data + i) = 0;
             *(midGM_id_data + i) = 0;
+            // Change back normalized dist. differences after saves above
+            if (*(nii_rim_data + i) == 3) {
+                *(normdistdiff_data + i) -= 0.5;
+                *(normdistdiff_data + i) *= 2;
+            }
         }
 
         for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -1536,7 +1513,7 @@ int main(int argc, char*  argv[]) {
                 }
             }
         }
-        save_output_nifti(fin, "midGM_equivol", midGM, true);
+        save_output_nifti(fout, "midGM_equivol", midGM, true);
     }
 
     // ========================================================================
@@ -1545,9 +1522,7 @@ int main(int argc, char*  argv[]) {
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         *(innerGM_dist_data + i) += *(outerGM_dist_data + i);
     }
-
-    if (!use_outpath_thick) fout_thick = fin;
-    save_output_nifti(fout_thick, "thickness", innerGM_dist, true, use_outpath_thick);
+    save_output_nifti(fout, "thickness", innerGM_dist, true);
     // ========================================================================
     // TODO(Faruk): Might use bspline weights to smooth curvature maps a bit.
     // TODO(Faruk): Might be better to use step 1 id's to define columns.
