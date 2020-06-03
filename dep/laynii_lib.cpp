@@ -197,7 +197,7 @@ void save_output_nifti(const string path, const string tag,  nifti_image* nii,
             ext = file.substr(pos2);
         } else {  // Determine default extension when no extension given
             basename = file;
-            ext = ".nii.gz";
+            ext = ".nii";
         }
 
         // Prepare output path
