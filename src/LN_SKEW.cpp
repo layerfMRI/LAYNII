@@ -4,33 +4,28 @@
 
 int show_help(void) {
     printf(
-    "LN_SKEW: Calculates mean, standard deviation, tSNR, skew, kurtosis, and autocorrelation of timeseries.\n"
-    "         This is helpful for artifact hunting (e.g. ghosting).\n"
+    "LN_SKEW: Calculates mean, standard deviation, tSNR, skew, kurtosis, \n"
+    "         and autocorrelation of timeseries. This is helpful for\n"
+    "         artifact hunting (e.g. ghosting).\n"
     "\n"
     "Usage:\n"
-    "    LN_SKEW -input Nulled_intemp.nii  \n"
-    "\n"
-    "test usage in the test_data folder: \n"
-    "    ../LN_SKEW -input lo_BOLD_intemp.nii \n"
-    "\n"
-    "Applications of this proigram are described in this blog post: \n"
-    "    http://layerfmri.com/QA \n"
+    "    LN_SKEW -input Nulled_intemp.nii \n"
     "\n"
     "Options:\n"
     "    -help   : Show this help.\n"
     "    -input  : Nifti (.nii or nii.gz) time series.\n"
-    "    -output : (Optional) Custom output name. \n"
-    "                 including the path, if you want to write it at specific locations \n"
-    "                 including the file extension: nii or nii.gz \n"
-    "                 This will overwrite excisting files with the same name \n"
+    "    -output : (Optional) Output name. Overwrites existing files.\n"
     "\n"
+    "Notes:\n"
+    "    Applications of this program are described in this blog post: \n"
+    "    <http://layerfmri.com/QA>\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
     bool use_outpath = false ;
-    char  *fout = NULL ; 
+    char  *fout = NULL ;
     char *fin = NULL;
     int ac;
     if (argc < 2) return show_help();
@@ -104,13 +99,13 @@ int main(int argc, char * argv[]) {
 
     nifti_image* nii_conc = copy_nifti_as_float32(nii_skew);
     float* nii_conc_data = static_cast<float*>(nii_conc->data);
-    
+
     nifti_image* nii_mean = copy_nifti_as_float32(nii_skew);
     float* nii_mean_data = static_cast<float*>(nii_mean->data);
-    
+
     nifti_image* nii_stdev = copy_nifti_as_float32(nii_skew);
     float* nii_stdev_data = static_cast<float*>(nii_stdev->data);
-    
+
     nifti_image* nii_tSNR = copy_nifti_as_float32(nii_skew);
     float* nii_tSNR_data = static_cast<float*>(nii_tSNR->data);
 

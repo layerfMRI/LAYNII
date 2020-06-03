@@ -17,26 +17,23 @@ int show_help(void) {
     "    https://layerfmri.com/columns/ \n"
     "    \n"
     "Options:\n"
-    "    -help       : Show this help.\n"
-    "    -layers     : Nifti (.nii) file that contains layer.\n"
-    "    -columns    : Nifti (.nii) file that contains columns.\n"
-    "    -data       : Data that will be unfolded.\n"
-    "    -output     : (Optional) Custom output name of the unfolded file. \n"
-    "                  including the path, if you want to write it as specific locations \n"
-    "                  including the file extension: nii or nii.gz \n"
-    "                  This will overwrite excisting files with the same name \n"
+    "    -help    : Show this help.\n"
+    "    -layers  : Nifti (.nii) file that contains layer.\n"
+    "    -columns : Nifti (.nii) file that contains columns.\n"
+    "    -data    : Data that will be unfolded.\n"
+    "    -output  : (Optional) Output filename. Overwrites existing files.\n"
     "\n"
     "Notes:\n"
     "    - All inputs should have the same dimensions.\n"
-    "    - Note that this program requires data that have at lease 3 slices \n"
+    "    - This program requires data that have at lease 3 slices.\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
     bool use_outpath = false ;
-    char  *fout = NULL ; 
-    char* fin_layers = NULL, * fin_columns = NULL, * fin_data = NULL;
+    char *fout = NULL ;
+    char *fin_layers = NULL, *fin_columns = NULL, *fin_data = NULL;
     int ac;
     if (argc < 3) return show_help();
 

@@ -18,21 +18,17 @@ int show_help(void) {
     "    ../LN_EXTREMETR -input lo_BOLD_intemp.nii\n"
     "\n"
     "Options:\n"
-    "    -help      : Show this help.\n"
-    "    -input     : Input time series.\n"
-    "    -output    : (Optional) Custom output prefix. \n"
-    "                 The output name can contan the location, where the file should be written to\n"
-    "                 including the file extension: nii or nii.gz \n"
-    "                 This will overwrite excisting files with the same name \n"
-    "                 NOTE that the output name will always contain the prefix MaxTR/MinTR \n"
-    "\n"
+    "    -help   : Show this help.\n"
+    "    -input  : Input time series.\n"
+    "    -output : (Optional) Output name. Overwrites existing files.\n"
+    "              Note that the output name will always contain MaxTR/MinTR tags.\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
     bool use_outpath = false ;
-    char  *fout = NULL ; 
+    char  *fout = NULL ;
     char *fin_1 = NULL;
     int ac;
     if (argc < 2) return show_help();

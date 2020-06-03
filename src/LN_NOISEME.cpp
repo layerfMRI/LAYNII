@@ -20,19 +20,12 @@ int show_help(void) {
     "Usage:\n"
     "    LN_NOISEME -input input_example.nii -std 0.5 \n"
     "\n"
-    "\n"
-    "For tests in test folder: ../LN_NOISEME -input lo_VASO_act.nii -std 1 \n"
-    "\n"
-    "\n"
     "Options:\n"
     "    -help   : Show this help.\n"
     "    -input  : Specify input dataset.\n"
     "    -std    : Noise standard deviance.\n"
-    "    -output    : (Optional) Custom output name. \n"
-    "                 including the path, if you want to write it as specific locations \n"
-    "                 including the file extension: nii or nii.gz \n"
-    "                 This will overwrite excisting files with the same name \n"
-    "                 If not given, the prefix {noised} is added \n"
+    "    -output : (Optional) Output filename. Overwrites existing files.\n"
+    "              If not given, the prefix 'noised' is added \n"
     "\n"
     "\n");
     return 0;
@@ -40,7 +33,7 @@ int show_help(void) {
 
 int main(int argc, char * argv[]) {
     bool use_outpath = false ;
-    char  *fout = NULL ; 
+    char *fout = NULL ;
     char *fin = NULL;
     int ac;
     float std_val;

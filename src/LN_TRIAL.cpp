@@ -10,25 +10,18 @@ int show_help(void) {
     "Usage:\n"
     "    LN_TRIAL -input timeseries.nii -trialdur 12 \n"
     "\n"
-    "for test in test folder: ../LN_TRIAL -input lo_BOLD_intemp.nii -trialdur 20 \n"
-    "\n"
     "Options:\n"
     "    -help      : Show this help.\n"
     "    -input     : Input time series.\n"
     "    -trial_dur : Duration of activity-rest trial in TRs.\n"
-    "    -output    : (Optional) Custom output name. \n"
-    "                 including the path, if you want to write it at specific locations \n"
-    "                 including the file extension: nii or nii.gz \n"
-    "                 This will overwrite excisting files with the same name \n"
-    "\n"
-    "\n"
+    "    -output    : (Optional) Output name. Overwrites existing files.\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
     bool use_outpath = false ;
-    char  *fout = NULL ; 
+    char  *fout = NULL ;
     char *fin = NULL;
     int ac;
     int trial_dur;
@@ -117,7 +110,7 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    
+
     if (!use_outpath) fout = fin;
     save_output_nifti(fout, "TrialAverage", nii_trials, true, use_outpath);
 

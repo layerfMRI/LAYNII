@@ -17,7 +17,7 @@ int show_help(void) {
     "                 multiple time points).\n"
     "    -mask   : Nifti (.nii) file that determines the region of interest\n"
     "                 (e.g. the layer mask with one time point).\n"
-    "    -output : (Optional) Custom output name. Overwrites existing files.\n"
+    "    -output : (Optional) Output name. Overwrites existing files.\n"
     "\n");
     return 0;
 }

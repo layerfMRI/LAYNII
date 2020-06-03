@@ -16,38 +16,30 @@ double adjusted_rand_numbers(double mean, double stdev, double value);
 
 int show_help(void) {
     printf(
-        "LN_GFACTOR: Simulating where the g-factor penalty would be largest.\n"
-        "\n"
-        "Usage:\n"
-        "    LN_GFACTOR -input MEAN.nii -variance 1 -direction 1 -grappa 2 -cutoff 150 \n"
-        "\n"
-        "\n"
-        "    an example application is mentioned on the blog post here: \n"
-        "    https://layerfmri.com/grappa-kernel-size/ \n"
-        "\n"
-        "                   \n"
-        "    test application in the test_data folder would be:\n"
-        "    ../LN_GFACTOR -input sc_INV2.nii  -variance 1 -direction 1 -grappa 2 -cutoff 200 \n"
-        "\n"
-        "Options:\n"
-        "    -help       : Show this help.\n"
-        "    -input      : Specify input dataset.\n"
-        "    -variance   : How much noise there will be.\n"
-        "    -direction  : Phase encoding direction [0=x, 1=y, 2=z].\n"
-        "    -grappa     : GRAPPA factor."
-        "    -cutoff     : Value to seperate noise from signal.\n"
-        "    -output    : (Optional) Custom output prefix, wthat will be added to the suffix. \n"
-        "                 The default is to use the input name \n"
-        "                 including the path, if you want to write it as specific locations \n"
-        "                 including the file extension: nii or nii.gz \n"
-        "                 This will overwrite excisting files with the same name \n"
-        "\n");
+    "LN_GFACTOR: Simulating where the g-factor penalty would be largest.\n"
+    "\n"
+    "Usage:\n"
+    "    LN_GFACTOR -input MEAN.nii -variance 1 -direction 1 -grappa 2 -cutoff 150 \n"
+    "\n"
+    "Options:\n"
+    "    -help      : Show this help.\n"
+    "    -input     : Specify input dataset.\n"
+    "    -variance  : How much noise there will be.\n"
+    "    -direction : Phase encoding direction [0=x, 1=y, 2=z].\n"
+    "    -grappa    : GRAPPA factor."
+    "    -cutoff    : Value to seperate noise from signal.\n"
+    "    -output    : (Optional) Output filename. Overwrites existing files.\n"
+    "\n"
+    "Notes:\n"
+    "    An example application is mentioned on the blog post here: \n"
+    "    <https://layerfmri.com/grappa-kernel-size> \n"
+    "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
     bool use_outpath = false ;
-    char  *fout = NULL ; 
+    char  *fout = NULL ;
     nifti_image* nii = NULL;
     char * fin = NULL;
     int grappa_int, direction_int, ac;

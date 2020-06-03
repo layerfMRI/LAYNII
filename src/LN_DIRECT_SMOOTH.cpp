@@ -1,7 +1,4 @@
 
-// TODO(Faruk): I think I have resolved a logical error while tidying up.
-// Need to ask Renzo about this to make sure it was a bug before.
-
 #include "../dep/laynii_lib.h"
 
 int show_help(void) {
@@ -12,12 +9,6 @@ int show_help(void) {
     "    LN_DIRECT_SMOOTH -input activty_map.nii -FWHM 1 -direction 1 \n"
     "    LN_DIRECT_SMOOTH -input bico_VASO.Mean.nii -FWHM 0.5 -direction 3 -laurenzian \n"
     "\n"
-    "    an application case of thei porgram is mentioned in the blog post \n"
-    "    https://layerfmri.com/anatomically-informed-spatial-smoothing/ \n"
-    "    \n"
-    "    test application in the test_data folder would be:\n"
-    "    ../LN_DIRECT_SMOOTH -input sc_UNI.nii -FWHM 2 -direction 3\n"
-    "\n"
     "Options:\n"
     "    -help          : Show this help.\n"
     "    -input         : Nifti (.nii) file that will be smooth. It \n"
@@ -27,23 +18,21 @@ int show_help(void) {
     "    -laurenzian    : Use Laurenzian smoothing. Default is Gaussian \n"
     "                   : only for division images.\n"
     "    -Anonymous_sri : You know what you did (no FWHM).\n"
-    "    -output        : (Optional) Custom output name. \n"
-    "                     including the path, if you want to write it as specific locations \n"
-    "                     including the file extension: nii or nii.gz \n"
-    "                     This will overwrite excisting files with the same name \n"
+    "    -output        : (Optional) Output name. Overwrites existing files.\n"
     "\n"
-    "    \n"
     "Notes:\n"
     "    - This program ignores zeroes. Thus, sharp borders (e.g. after MOCO)\n"
     "    will stay the same.\n"
     "    - This program works in voxel space not it mm space. \n"
+    "    - An application case of this porgram is mentioned in the blog post:\n"
+    "      <https://layerfmri.com/anatomically-informed-spatial-smoothing>\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char* argv[]) {
     bool use_outpath = false ;
-    char  *fout = NULL ; 
+    char  *fout = NULL ;
     char* fin = NULL;
     int ac, direction = 0, option = 0;
     float FWHM_val = 10, strength = 1;

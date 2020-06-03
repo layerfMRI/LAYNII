@@ -7,37 +7,29 @@ int show_help(void) {
     printf(
     "LN_CORREL2FILES: Estimate the voxel wise correlation of two timeseries.\n"
     "\n"
-    "    This program is motivated by Eli Merriam comparing in hunting down \n"
-    "    voxels that out of phase for VASO and BOLD. \n"
-    "\n"
-    "Options:\n"
-    "    -help      : Show this help.\n"
-    "    -file1     : First time series.\n"
-    "    -file2     : Second time series with should have the same dimensions \n"
-    "                 as first time series.\n"
-    "    -output    : (Optional) Custom output name. \n"
-    "                 including the path, if you want to write it at specific locations \n"
-    "                 including the file extension: nii or nii.gz \n"
-    "                 This will overwrite excisting files with the same name \n"
-    "\n"
-    "\n"
-    "\n"
-    "    an example application is mentioned on the blog post here: \n"
-    "    http://layerfmri.com/QA \n"
-    "\n"
     "Usage:\n"
     "    LN_CORREL2FILES -file1 file1.nii -file2 file2.nii \n"
-    "                   \n"
-    "    test application in the test_data folder would be:\n"
-    "    ../LN_CORREL2FILES -file1 lo_Nulled_intemp.nii -file2 lo_BOLD_intemp.nii \n"
     "\n"
+    "Options:\n"
+    "    -help   : Show this help.\n"
+    "    -file1  : First time series.\n"
+    "    -file2  : Second time series with should have the same dimensions \n"
+    "              as first time series.\n"
+    "    -output : (Optional) Output name. Overwrites existing files.\n"
+    "\n"
+    "\n"
+    "Notes:\n"
+    "    - This program is motivated by Eli Merriam comparing in hunting down \n"
+    "    voxels that out of phase for VASO and BOLD."
+    "    - An example application is mentioned in the blog post here:\n"
+    "    <http://layerfmri.com/QA> \n"
     "\n");
     return 0;
 }
 
 int main(int argc, char *argv[]) {
     bool use_outpath = false ;
-    char  *fout = NULL ; 
+    char  *fout = NULL ;
     char *fin_1 = NULL, *fin_2 = NULL;
     int ac;
     if (argc < 2) return show_help();
@@ -136,7 +128,7 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-    
+
     if (!use_outpath) fout = fin_1;
     save_output_nifti(fout, "correlated", correl_file, true, use_outpath);
 

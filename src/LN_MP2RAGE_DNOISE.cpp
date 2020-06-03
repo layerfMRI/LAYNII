@@ -28,7 +28,7 @@ int show_help(void) {
     "    -UNI        : Nifti (.nii) of MP2RAGE UNI. Expecting SIEMENS \n"
     "                  unsigned integer 12 values between 0-4095. \n"
     "    -beta value : Regularization term. Default is 0.2.\n"
-    "    -output     : (Optional) Custom output name. \n"
+    "    -output     : (Optional) Custom output name. Overwrites existing files.\n"
     "\n");
     return 0;
 }
@@ -141,12 +141,12 @@ int main(int argc, char* argv[]) {
 
     // fixing slopes
     for (int i = 0; i != nr_voxels; ++i) {
-        *(nii_inv1_data + i) = *(nii_inv1_data + i) * nii_inv1->scl_slope; 
-        *(nii_inv2_data + i) = *(nii_inv2_data + i) * nii_inv2->scl_slope; 
-        *(nii_uni_data  + i) = *(nii_uni_data  + i) * nii_uni ->scl_slope; 
+        *(nii_inv1_data + i) = *(nii_inv1_data + i) * nii_inv1->scl_slope;
+        *(nii_inv2_data + i) = *(nii_inv2_data + i) * nii_inv2->scl_slope;
+        *(nii_uni_data  + i) = *(nii_uni_data  + i) * nii_uni ->scl_slope;
     }
-    nii_denoised->scl_slope = 1.0 ; 
-    nii_phaseerr->scl_slope = 1.0 ; 
+    nii_denoised->scl_slope = 1.0 ;
+    nii_phaseerr->scl_slope = 1.0 ;
 
 
     // ========================================================================

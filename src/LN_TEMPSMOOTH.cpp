@@ -11,12 +11,6 @@ int show_help(void) {
     "    LN_TEMPSMOOTH -input timeseries.nii -gaus 1.0 \n"
     "    LN_TEMPSMOOTH -input timeseries.nii -box 1 \n"
     "\n"
-    "test usage in the test_data folder \n"
-    "    ../LN_TEMPSMOOTH -input lo_BOLD_intemp.nii -box 3 \n"
-    "\n"
-    "An application of this program is described on this blog post: \n"
-    "    https://layerfmri.com/anatomically-informed-spatial-smoothing/ \n"  
-    "\n"
     "Options:\n"
     "    -help   : Show this help.\n"
     "    -input  : Nifti (.nii) file with time series data that will be \n"
@@ -27,19 +21,18 @@ int show_help(void) {
     "    -box    : Doing the smoothing with a box-var. Specify the value \n"
     "              of the box sice (integer value). This is like a \n"
     "              running average sliding window.\n"
-    "    -output : (Optional) Custom output name. \n"
-    "              including the path, if you want to write it at specific locations \n"
-    "              including the file extension: nii or nii.gz \n"
-    "              This will overwrite excisting files with the same name \n"
+    "    -output : (Optional) Output name. Overwrites existing files.\n"
     "\n"
-    "\n"
+    "Notes:\n"
+    "    An application of this program is described on this blog post:\n"
+    "    <https://layerfmri.com/anatomically-informed-spatial-smoothing> \n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
     bool use_outpath = false ;
-    char  *fout = NULL ; 
+    char  *fout = NULL ;
     char* fin = NULL;
     int ac, do_gaus = 0, do_box = 0, bFWHM_val = 0;
     float gFWHM_val = 0.0;

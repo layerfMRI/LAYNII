@@ -12,24 +12,18 @@ int show_help(void) {
     "    LN_LEAKY_LAYERS -rim rim.nii -dim 2 \n"
     "\n"
     "Options:\n"
-    "    -help         : Show this help.\n"
-    "    -rim          : Specify input dataset.\n"
-    "                    values of 0 are to be ingored \n"
-    "                    values of 1 denote GM/CSF border lines \n"
-    "                    values of 2 neote GM/WM border lines \n"
-    "                    values of 3 denote pure GM \n"
-    "                    note that values 1 and 2 will be included in the layerification \n"
-    "                    this is in contrast to the program LN2_LAYERS \n" 
-    "    -dim          : Specify value (2 or 3) layer algorithm.Default is 3 (3D).\n"
-    "    -itertions    : number of iterations, in most cases 100 (default) should be enough.\n"
-    "    -nr_layers    : number of layers, default is 20.\n"
-    "    -output       : (Optional) Custom output name of layer file. \n"
-    "                    including the path, if you want to write it as specific locations \n"
-    "                    including the file extension: nii or nii.gz \n"
-    "                    This will overwrite excisting files with the same name \n"
-    "\n"
-    "\n"
-    "  For tests in the test folder: ../LN_LEAKY_LAYERS -rim lo_rim_LL.nii  \n"
+    "    -help       : Show this help.\n"
+    "    -rim        : Specify input dataset.\n"
+    "                  values of 0 are to be ingored \n"
+    "                  values of 1 denote GM/CSF border lines \n"
+    "                  values of 2 neote GM/WM border lines \n"
+    "                  values of 3 denote pure GM \n"
+    "                  note that values 1 and 2 will be included in the layerification \n"
+    "                  this is in contrast to the program LN2_LAYERS \n" 
+    "    -dim        : Specify value (2 or 3) layer algorithm.Default is 3 (3D).\n"
+    "    -iterations : number of iterations, in most cases 100 (default) should be enough.\n"
+    "    -nr_layers  : number of layers, default is 20.\n"
+    "    -output     : (Optional) Output filename. Overwrites existing files.\n"
     "\n"
     "Notes:\n"
     "    - This can be 3D. Hence the rim file should be dmsmooth in all\n"
@@ -40,11 +34,11 @@ int show_help(void) {
 
 int main(int argc, char * argv[]) {
     bool use_outpath = false ;
-    char  *fout = NULL ; 
+    char  *fout = NULL ;
     char *fin = NULL;
     int ac, dim;
-    int nr_iterations = 30 ; 
-    int nr_layers = 20 ; 
+    int nr_iterations = 30 ;
+    int nr_layers = 20 ;
     if (argc < 2) return show_help();
 
     // Process user options.
@@ -131,7 +125,7 @@ int main(int argc, char * argv[]) {
     int16_t* leaky_data = static_cast<int16_t*>(leaky->data);
     nifti_image* gaus_weigth = copy_nifti_as_float32(nii_rim);
     float* gaus_weigth_data = static_cast<float*>(gaus_weigth->data);
-    
+
     // ========================================================================
     float kernel_size = 1;  // Corresponds to one voxel sice.
     int vic = max(1., 1. * kernel_size);  // Ignore if voxel is too far
@@ -154,10 +148,10 @@ int main(int argc, char * argv[]) {
     // ========================================================================
     // Start iterative loop here
     // ========================================================================
-    int iter_max = nr_iterations ; 
+    int iter_max = nr_iterations ;
     float total_weigth = 0;
-    int voxel_j = 0; 
-    float w =  0 ; 
+    int voxel_j = 0;
+    float w =  0 ;
 
     for (int iter = 0; iter < iter_max; ++iter) {
         cout << "\r  Iteration: " << iter << " of " << iter_max << flush;
@@ -167,9 +161,9 @@ int main(int argc, char * argv[]) {
                     int voxel_i = nxy * iz + nx * iy + ix;
                     if (*(nii_rim_data + voxel_i)  == 3) {
                       *(smooth_data + voxel_i) = *(layers_data + voxel_i);
-                      *(gaus_weigth_data + voxel_i) = 1; 
-                    
-                    
+                      *(gaus_weigth_data + voxel_i) = 1;
+
+
                          total_weigth = 0;
 
                         int jz_start = max(0, iz - vic);
@@ -183,7 +177,7 @@ int main(int argc, char * argv[]) {
                             for (int jy = jy_start; jy < jy_stop; ++jy) {
                                 for (int jx = jx_start; jx < jx_stop; ++jx) {
                                      voxel_j = nxy * jz + nx * jy + jx;
-                                    
+
                                         d = dist((float)ix, (float)iy, (float)iz,
                                                  (float)jx, (float)jy, (float)jz,
                                                  dX, dY, dZ);
@@ -192,7 +186,7 @@ int main(int argc, char * argv[]) {
                                             *(smooth_data + voxel_i)      += *(layers_data + voxel_j) * w;
                                             *(gaus_weigth_data + voxel_i) += w;
                                         }
-                                    
+
                                 }
                             }
                         }
@@ -248,7 +242,7 @@ int main(int argc, char * argv[]) {
     if (!use_outpath) fout = fin;
     save_output_nifti(fout, "leaky_layers", leaky, true, use_outpath);
 
-    //save_output_nifti(fin, "gauswight", gaus_weigth, true); 
+    //save_output_nifti(fin, "gauswight", gaus_weigth, true);
 
     cout << "  Finished." << endl;
     return 0;

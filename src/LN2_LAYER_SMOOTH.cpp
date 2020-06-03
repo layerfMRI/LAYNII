@@ -2,8 +2,7 @@
 // TODO(Faruk): Seems there might be an issue with the gaussian kernel's
 // symmetry and size corresponding to what is written in CLI
 
-// To do make the vincinity direction specific vinc_x, vinc_y, vinc_z
-
+// TODO(Renzo): make the vicinity direction specific vinc_x, vinc_y, vinc_z
 
 #include "../dep/laynii_lib.h"
 
@@ -18,9 +17,6 @@ int show_help(void) {
     "Usage:\n"
     "    LN2_LAYER_SMOOTH -layer_file layers.nii -input activity_map.nii -FWHM 1\n"
     "\n"
-    "for test in test folder: ../LN2_LAYER_SMOOTH -input sc_VASO_act.nii -layer_file sc_layers.nii -FWHM 1 \n"
-    "\n"
-    "\n"
     "Options:\n"
     "    -help       : Show this help.\n"
     "    -layer_file : Nifti (.nii) file that contains layer or column masks.\n"
@@ -30,28 +26,24 @@ int show_help(void) {
     "    -FWHM       : The amount of smoothing in mm.\n"
     "    -mask       : (Optional) Mask activity outside of layers. \n"
     "    -NoKissing  : (Optional) Allows smoothing across sucli. This is \n"
-    "                     necessary, when you do heavy smoothing well bevond \n"
-    "                     the spatial scale of the cortical thickness, or heavy\n"
-    "                     curvature. It will make things slower. Note that this \n"
-    "                     is best done with not too many layers. Otherwise a \n"
-    "                     single layer has holes and is not connected.\n"
-    "                     WARNING this option is not well tested for versin 1.5\n"
-    "    -output     : (Optional) Custom output name of smoothed image. \n"
-    "                     including the path, if you want to write it at specific locations \n"
-    "                     including the file extension: nii or nii.gz \n"
-    "                     This will overwrite excisting files with the same name \n"
-    "\n"
+    "                  necessary, when you do heavy smoothing well bevond \n"
+    "                  the spatial scale of the cortical thickness, or heavy\n"
+    "                  curvature. It will make things slower. Note that this \n"
+    "                  is best done with not too many layers. Otherwise a \n"
+    "                  single layer has holes and is not connected.\n"
+    "                  !!!WARNING!!! this option is not well tested for version 1.5\n"
+    "    -output      : (Optional) Output name. Overwrites existing files.\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char* argv[]) {
     bool use_outpath = false ;
-    char  *fout = NULL ; 
-    char* f_input = NULL, *f_layer = NULL;
+    char *fout = NULL ;
+    char *f_input = NULL, *f_layer = NULL;
     int ac, do_masking = 0, sulctouch = 0;
     float FWHM_val = 0;
-    bool twodim = false ; 
+    bool twodim = false ;
     if (argc < 3) return show_help();
 
     for (ac = 1; ac < argc; ac++) {
@@ -80,7 +72,7 @@ int main(int argc, char* argv[]) {
             cout << "Smooth across gyri, might take longer."  << endl;
         } else if( ! strcmp(argv[ac], "-twodim") ) {
            twodim = true;
-           cout << "I will do smoothing only in 2D"  << endl; 
+           cout << "I will do smoothing only in 2D"  << endl;
         } else if (!strcmp(argv[ac], "-mask")) {
             do_masking = 1;
             cout << "Set voxels to zero outside layers (mask option)"  << endl;
@@ -133,8 +125,8 @@ int main(int argc, char* argv[]) {
     const float dX = nii2->pixdim[1];
     const float dY = nii2->pixdim[2];
     float dZ = nii2->pixdim[3];
-    
-    if  (twodim) dZ = 1000 * dZ ; 
+
+    if  (twodim) dZ = 1000 * dZ ;
 
 
     // ========================================================================

@@ -8,17 +8,6 @@ int show_help(void) {
     printf(
     "LN_COLUMNAR_DIST : Calculates cortical distances (columnar structures) \n"
     "                   based on the gray matter geometry.\n"
-    "                   \n"
-    "                   The working principles of the underlying algorithm \n"
-    "                   and an example explanantion is given on as a blog post \n"
-    "                   https://layerfmri.com/columns/ \n"
-    "                   \n"
-    "                   test application in the test_data folder would be:\n"
-    "                   ../LN_COLUMNAR_DIST -layers sc_layers_3dcolumns.nii -landmarks sc_landmarks.nii \n"
-    "    -output    : (Optional) Custom output name. \n"
-    "                 including the path, if you want to write it as specific locations \n"
-    "                 including the file extension: nii or nii.gz \n"
-    "                 This will overwrite excisting files with the same name \n"
     "\n"
     "Usage:\n"
     "    LN_COLUMNAR_DIST -layers layers.nii -landmarks landmarks.nii \n"
@@ -35,17 +24,20 @@ int show_help(void) {
     "                  will result in thick columns \n"
     "    -verbose    : (Optional) to write out all the intermediate \n"
     "                  steps of the algorithm (e.g. for debugging) \n"
+    "    -output     : (Optional) Output name. Overwrites existing files.\n"
     "\n"
     "Notes:\n"
     "    - The layer nii file and the landmarks nii file should have the \n"
     "      same dimensions.\n"
+    "    - Algorithm of this program is explained in:\n"
+    "      <https://layerfmri.com/columns/> \n"
     "\n");
     return 0;
 }
 
 int main(int argc, char *argv[]) {
     bool use_outpath = false ;
-    char  *fout = NULL ; 
+    char *fout = NULL ;
     char *fin_layer = NULL, *fin_landmark = NULL;
     int ac, vinc_max = 40, Ncolumns = 0;
     int verbose = 0;
@@ -745,7 +737,7 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-    
+
     if (!use_outpath) fout = fin_layer;
     save_output_nifti(fout, "coordinates_final", hairy, true, use_outpath);
 

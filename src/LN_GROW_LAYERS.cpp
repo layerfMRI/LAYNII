@@ -4,52 +4,45 @@
 
 int show_help(void) {
     printf(
-    "LN_GROW_LAYERS: Example of gray matter layering.\n"
-    "\n"
-    "    This program calculates the layers based on GM and CSF border line \n"
-    "    rim files.\n"
+    "LN_GROW_LAYERS: Calculate layers based on GM & CSF borders from rim file.\n"
     "\n"
     "Usage:\n"
     "    LN_GROW_LAYERS -rim rim.nii -N 21 \n"
     "    LN_GROW_LAYERS -rim rim.nii -N 21 -vinc 40 \n"
-    " \n"
-    "Test usage in the test_data folder: ../LN_GROW_LAYERS -rim sc_rim.nii \n"
-    "\n"
-    "Example application in a blog post: https://layerfmri.com/quick-layering/ \n"
     "\n"
     "Options:\n"
-    "    -help       : Show this help.\n"
-    "    -rim        : Specify input dataset.\n"
-   "                   values of 0 are to be ingored \n"
-    "                  values of 1 denote GM/CSF border lines \n"
-    "                  values of 2 neote GM/WM border lines \n"
-    "                  values of 3 denote pure GM \n"
-    "                  note that values 1 and 2 will be included in the layerification \n"
-    "                  this is in contrast to the program LN2_LAYERS \n" 
-    "    -vinc       : Size of vicinity. Default is 40. This is the maximum\n"
-    "                  thickness of the cortex in units of voxels. Smaller\n"
-    "                  the number the faster the program.\n"
-    "    -N          : (Optional) Number of layers. Default is 20.\n"
-    "                  In visual cortex you might want to use less. \n"
-    "                  Maximum accuracy is 1/100 for now.\n"
-    "    -thin       : (Optional) When the distance between layers is less\n"
-    "                  than the voxel thickness. This deals with missing\n"
-    "                  layers next to the inner most and outer most layers.\n"
-    "    -threeD     : Do layer calculations in 3D. Default is 2D.\n"
-    "    -debug      : If you want to see the growing of the respective\n"
-    "                  tissue types, it is writen out.\n"
-    "    -output     : (Optional) Custom output name of the main layer output file. \n"
-    "                  including the path, if you want to write it as specific locations \n"
-    "                  including the file extension: nii or nii.gz \n"
-    "                  This will overwrite excisting files with the same name \n"
+    "    -help   : Show this help.\n"
+    "    -rim    : Specify input dataset.\n"
+    "              values of 0 are to be ingored \n"
+    "              values of 1 denote GM/CSF border lines \n"
+    "              values of 2 neote GM/WM border lines \n"
+    "              values of 3 denote pure GM \n"
+    "              note that values 1 and 2 will be included in the layerification \n"
+    "              this is in contrast to the program LN2_LAYERS \n"
+    "    -vinc   : Size of vicinity. Default is 40. This is the maximum\n"
+    "              thickness of the cortex in units of voxels. Smaller\n"
+    "              the number the faster the program.\n"
+    "    -N      : (Optional) Number of layers. Default is 20.\n"
+    "              In visual cortex you might want to use less. \n"
+    "              Maximum accuracy is 1/100 for now.\n"
+    "    -thin   : (Optional) When the distance between layers is less\n"
+    "              than the voxel thickness. This deals with missing\n"
+    "              layers next to the inner most and outer most layers.\n"
+    "    -threeD : Do layer calculations in 3D. Default is 2D.\n"
+    "    -debug  : If you want to see the growing of the respective\n"
+    "              tissue types, it is writen out.\n"
+    "    -output : (Optional) Output filename. Overwrites existing files.\n"
     "\n"
+    "Notes:\n"
+    "    Example application in a blog post:\n"
+    "    <https://layerfmri.com/quick-layering>\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
     bool use_outpath = false ;
-    char  *fout = NULL ; 
+    char  *fout = NULL ;
     nifti_image* nim_input_i = NULL;
     char* fin = NULL;
     int ac, Nlayer_real = 20, vinc_int = 50;
@@ -892,7 +885,7 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    
+
     if (!use_outpath) fout = fin;
     save_output_nifti(fout, "layers", nii_layers, true, use_outpath);
 

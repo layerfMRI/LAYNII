@@ -20,24 +20,18 @@ int show_help(void) {
     "    -nr_columns         : Number of columns.\n"
     "    -jiajiaoption : Include cerebrospinal fluid (CSF). Only do this \n"
     "                    if two sides of the sulcus are not touching. \n"
-    "    -output    : (Optional) Custom output name. \n"
-    "                 including the path, if you want to write it as specific locations \n"
-    "                 including the file extension: nii or nii.gz \n"
-    "                 This will overwrite excisting files with the same name \n"
+    "    -output       : (Optional) Output name. Overwrites existing files.\n"
     "\n"
     "Notes:\n"
-    "     - Layer nifti and landmarks nifti should have the same dimensions \n"
-    "     - This progrma is originally designed to work for axial slices (consider fslswapdim) \n"
-    "\n"
-    "     example in test_data folder: \n"
-    "           ../LN_3DCOLUMNS -layers sc_layers_3dcolumns.nii -landmarks sc_landmarks_3dcolumns.nii "
+    "     - Layer nifti and landmarks nifti should have the same dimensions.\n"
+    "     - This program is designed to work for axial slices (consider fslswapdim).\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char *argv[]) {
     bool use_outpath = false ;
-    char  *fout = NULL ; 
+    char  *fout = NULL ;
     char *fin_layer = NULL, *fin_landmark = NULL;
     int ac, jiajiavinc_max = 45, jiajiaoption = 0;
     if (argc < 3) return show_help();
@@ -116,20 +110,20 @@ int main(int argc, char *argv[]) {
      float dX = nii_input1->pixdim[1];
      float dY = nii_input1->pixdim[2];
      float dZ = nii_input1->pixdim[3];
-     
-    float min_dim = 10000. ; 
 
-    if (nii_input1->pixdim[1] < min_dim ) min_dim = nii_input1->pixdim[1] ; 
-    if (nii_input1->pixdim[2] < min_dim ) min_dim = nii_input1->pixdim[1] ; 
-    if (nii_input1->pixdim[3] < min_dim ) min_dim = nii_input1->pixdim[1] ; 
+    float min_dim = 10000. ;
 
-     min_dim = min_dim  * 2; 
+    if (nii_input1->pixdim[1] < min_dim ) min_dim = nii_input1->pixdim[1] ;
+    if (nii_input1->pixdim[2] < min_dim ) min_dim = nii_input1->pixdim[1] ;
+    if (nii_input1->pixdim[3] < min_dim ) min_dim = nii_input1->pixdim[1] ;
+
+     min_dim = min_dim  * 2;
     // Renzo update to make this in voxel units, which makes more sense
-    dX = (float)nii_input1->pixdim[1] / min_dim   ; 
-    dY = (float)nii_input1->pixdim[2] / min_dim   ; 
-    dZ = (float)nii_input1->pixdim[3] / min_dim    ; 
-    
-    cout << " dimentions "  <<  dX << " " <<  dY << " " << dZ << endl; 
+    dX = (float)nii_input1->pixdim[1] / min_dim   ;
+    dY = (float)nii_input1->pixdim[2] / min_dim   ;
+    dZ = (float)nii_input1->pixdim[3] / min_dim    ;
+
+    cout << " dimentions "  <<  dX << " " <<  dY << " " << dZ << endl;
     // ========================================================================
     // Fixing potential problems with different input datatypes
     nifti_image* nii_layer = copy_nifti_as_float32(nii_input1);
@@ -795,7 +789,7 @@ int main(int argc, char *argv[]) {
             *(hairy_data + i) = a * b / c;
         }
     }
-    
+
     if (!use_outpath) fout = fin_layer;
     save_output_nifti(fout, "column_coordinates", hairy, true, use_outpath);
 

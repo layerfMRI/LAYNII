@@ -19,21 +19,17 @@ int show_help(void) {
     "\n"
 
     "Options:\n"
-    "    -help      : Show this help.\n"
-    "    -input     : Nifti (.nii) file. This program will use the dimension of \n"
-    "                 this file to generate a Rag Rug file accordingly.\n"
-    "    -output    : (Optional) Custom output name. \n"
-    "                 including the path, if you want to write it as specific locations \n"
-    "                 including the file extension: nii or nii.gz \n"
-    "                 This will overwrite excisting files with the same name \n"
-    "\n"
+    "    -help   : Show this help.\n"
+    "    -input  : Nifti (.nii) file. This program will use the dimension of \n"
+    "              this file to generate a Rag Rug file accordingly.\n"
+    "    -output : (Optional) Output filename. Overwrites existing files.\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
     bool use_outpath = false ;
-    char  *fout = NULL ; 
+    char  *fout = NULL ;
     char *fin = NULL;
     int ac;
     if (argc < 3) return show_help();
@@ -140,7 +136,7 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    
+
     if (!use_outpath) fout = fin;
     save_output_nifti(fout, "ragrug", ragrug, true, use_outpath);
 //    save_output_nifti(fin, "coordinates", coord, true);

@@ -10,38 +10,31 @@ int show_help(void) {
     "Usage:\n"
     "     LN_INTPRO -image file.nii -min -direction 3 \n"
     "\n"
-    "Test usage in the test_data folder: \n"
-    "     ../LN_INTPRO -image sc_UNI.nii -min -direction 2 -range 3 \n"
-    "\n"
-    "An example application in a blog post is here: \n"
-    "    https://layerfmri.comintensity-projections-in-laynii/ \n"
-    "\n"
     "Options:\n"
-    "    -help       : Show this help\n"
-    "    -image      : Nifti (.nii) for intensity projections. \n"
-    "    -max        : Maximum intensity projection. Do not combine with min.\n"
-    "    -min        : Minimum intensity projection. Do not combine with max.\n"
-    "    -direction  : Direction in which the dimention is collapsted. \n"
-    "                  1 for x, 2 for y, and 3 for z.\n"
-    "    -range      : (Optional) Range of neigbouring voxels included.\n"
-    "                  Default is all aslices. \n"
-    "    -output     : (Optional) Custom output name. \n"
-    "                  including the path, if you want to write it as specific locations \n"
-    "                  including the file extension: nii or nii.gz \n"
-    "                  This will overwrite excisting files with the same name \n"
+    "    -help      : Show this help\n"
+    "    -image     : Nifti (.nii) for intensity projections. \n"
+    "    -max       : Maximum intensity projection. Do not combine with min.\n"
+    "    -min       : Minimum intensity projection. Do not combine with max.\n"
+    "    -direction : Direction in which the dimention is collapsted. \n"
+    "                 1 for x, 2 for y, and 3 for z.\n"
+    "    -range     : (Optional) Range of neigbouring voxels included.\n"
+    "                 Default is all aslices. \n"
+    "    -output    : (Optional) Output filename. Overwrites existing files.\n"
     "\n"
     "Notes:\n"
     "    - If the input is a time series, the entire time domain is also\n"
     "      collapsed. For example, the program chooses the minimum/maximmum \n"
     "      value across time and slices.\n"
+    "    - An example application in a blog post is here: \n"
+    "      <https://layerfmri.comintensity-projections-in-laynii>\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
     bool use_outpath = false ;
-    char  *fout = NULL ; 
-    char * fin_1 = NULL;
+    char *fout = NULL ;
+    char *fin_1 = NULL;
     int ac, is_max = 0, is_min = 0;
     int is_direction = 0, is_range = 0;
     if (argc < 2) return show_help();
@@ -254,8 +247,8 @@ int main(int argc, char * argv[]) {
             }
         }
     }
-    
-    
+
+
     if (!use_outpath) fout = fin_1;
     save_output_nifti(fout, "collapsed", nii_collapse, true, use_outpath);
 

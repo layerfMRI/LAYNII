@@ -5,22 +5,20 @@
 int show_help(void) {
     printf(
     "LN_INT_ME: Convert nifti datatype to INT16.\n"
-    "    Note that this can come along with truncation !!!\n"
-    "    If you want to reduce the file size of floating point data,\n"
-    "    consider using the program LN_SHORT_ME \n"
     "\n"
     "Usage:\n"
     "    LN_INT_ME -input data_file.nii \n"
     "    LN_INT_ME -input data_file.nii -output output_filename.nii \n"
     "\n"
-    "\n"
-    "    to test this in the test folder: ../LN_INT_ME -input lo_BOLD_act.nii \n"
-    "\n"
-    "\n"
     "Options:\n"
     "    -help   : Show this help.\n"
     "    -input  : Dataset that should be shorted data.\n"
-    "    -output : (Optional) Output filename.\n"
+    "    -output : (Optional) Output filename. Overwrites existing files.\n"
+    "\n"
+    "Notes:\n"
+    "    Note that this prgram can come along with truncation!\n"
+    "    If you want to reduce the file size of floating point data,\n"
+    "    consider using the program LN_SHORT_ME \n"
     "\n");
     return 0;
 }

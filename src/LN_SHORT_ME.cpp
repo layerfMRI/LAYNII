@@ -15,7 +15,7 @@ int show_help(void) {
     "Options:\n"
     "    -help   : Show this help.\n"
     "    -input  : Dataset that should be shorted data.\n"
-    "    -output : (Optional) Output filename.\n"
+    "    -output : (Optional) Output filename. Overwrites existing files.\n"
     "\n");
     return 0;
 }
