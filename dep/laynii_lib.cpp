@@ -7,8 +7,8 @@
 
 void log_welcome(const char* programname) {
     cout << "======================="<< endl;
-    cout << "LAYNII v1.5.6   ========="<< endl;
-//    cout << "Compiled for WINDOWS 64"<< endl;
+    cout << "LAYNII v1.5.6          "<< endl;
+    // cout << "Compiled for WINDOWS 64"<< endl;
     cout << "======================="<< endl;
     cout << programname << "\n" << endl;
 }
@@ -143,7 +143,7 @@ float gaus(float distance, float sigma) {
 
 void save_output_nifti(const string path, const string tag,  nifti_image* nii,
                        const bool log, const bool use_outpath) {
-    ////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
     // Note:
     // - 1st argument is the string of the output file name
     //       if there is no explicit output path given, this will be the file
@@ -151,7 +151,7 @@ void save_output_nifti(const string path, const string tag,  nifti_image* nii,
     //       if there is an explicit output file name given, this wil be the
     //       user-defined name following the -output
     //       (inluding the path and including the file extension)
-    // - 2nd argument is the output file name prefix, that will be added to the
+    // - 2nd argument is the output file name tag, that will be added to the
     //       above argument, this field is ignored, when the flag "use_outpath"
     //       (last argument) is selected.
     // - 3rd argument is the pointer to the data set that is supposed to be
@@ -159,10 +159,10 @@ void save_output_nifti(const string path, const string tag,  nifti_image* nii,
     // - 4th argument states if, during the exectution of the program an the
     //   writing process should be logged
     //       this argument is optional with the default: TRUE
-    // - 5th argument states if the output prefix (second argument) should be
+    // - 5th argument states if the output tag (second argument) should be
     //   ignored or not. This argument is optional the default: FALSE
     //
-    // example:     save_output_nifti(fout, "VASO_LN", nii_boco_vaso, true, use_outpath);
+    // example: save_output_nifti(fout, "VASO_LN", nii_boco_vaso, true, use_outpath);
     ///////////////////////////////////////////////////////////////////////////
 
     string path_out;
@@ -192,8 +192,13 @@ void save_output_nifti(const string path, const string tag,  nifti_image* nii,
 
         // Parse extension
         auto const pos2 = file.find_first_of('.');
-        basename = file.substr(0, pos2);
-        ext = file.substr(pos2);
+        if (pos2 != string::npos) {
+            basename = file.substr(0, pos2);
+            ext = file.substr(pos2);
+        } else {  // Determine default extension when no extension given
+            basename = file;
+            ext = ".nii.gz";
+        }
 
         // Prepare output path
         path_out = dir + sep + basename + "_" + tag + ext;
