@@ -26,10 +26,11 @@ int show_help(void) {
     "Options:\n"
     "    -help         : Show this help.\n"
     "    -rim          : Specify input dataset. Use 1 to code outer gray\n"
-    "                    matter surface (facing mostly CSF), 2 to code gray\n"
-    "                    matter, 3 to code inner gray matter surface voxels.\n"
-    "                    note that values 1 and 2 will NOT be included in the \n"
-    "                    layerification, this is in contrast to the programs \n"
+    "                    matter surface (facing mostly CSF), 2 to code inner\n"
+    "                    gray matter surdafe (facing mostly white matter),\n"
+    "                    and 3 to code pure gray matter voxels.\n"
+    "                    note that values 1 and 2 will not be included in the\n"
+    "                    layerification, this is in contrast to the programs\n"
     "                    LN_GROW_LAYERS and LN_LEAKY LAYERS \n"
     "    -nr_layers    : Number of layers. Default is 3.\n"
     "    -equivol      : (Optional) Create equi-volume layers. We do not\n"
@@ -54,7 +55,6 @@ int show_help(void) {
 
 int main(int argc, char*  argv[]) {
     nifti_image *nii1 = NULL;
-    bool use_outpath = false;
     char *fin = NULL, *fout = NULL;
     uint16_t ac, nr_layers = 3;
     uint16_t iter_smooth = 100;
