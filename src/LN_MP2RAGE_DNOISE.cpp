@@ -13,7 +13,7 @@ int show_help(void) {
     "    <DOI:10.1371/journal.pone.0099676>\n"
     "\n"
     "Usage:\n"
-    "LN_MP2RAGE_DNOISE -INV1 INV1.nii -INV2 INV2.nii -UNI UNI.nii -beta 0.2\n"
+    "    LN_MP2RAGE_DNOISE -INV1 INV1.nii -INV2 INV2.nii -UNI UNI.nii -beta 0.2\n"
     "\n"
     "Options\n"
     "    -help   : Show this help.\n"
