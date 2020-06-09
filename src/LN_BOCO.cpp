@@ -130,13 +130,13 @@ int main(int argc, char * argv[]) {
     // Handle scaling factor effects
     float scl_slope1=nii_nulled->scl_slope, scl_slope2=nii_bold->scl_slope;
     for (int i = 0; i != nr_voxels; ++i) {
-        *(nii_nulled_data + i) *= scl_slope1;
-        *(nii_bold_data + i) *= scl_slope2;
+    //    *(nii_nulled_data + i) *= scl_slope1;
+    //    *(nii_bold_data + i) *= scl_slope2;
     }
     // We can set scaling factor to 1 because we have accounted for them above
-    nii_nulled->scl_slope = 1.;
-    nii_bold->scl_slope = 1.;
-    nii_boco_vaso->scl_slope = 1.;
+    // nii_nulled->scl_slope = 1.;
+    //nii_bold->scl_slope = 1.;
+    //nii_boco_vaso->scl_slope = 1.;
 
     // ========================================================================
     // AVERAGE across Trials
@@ -283,7 +283,7 @@ int main(int argc, char * argv[]) {
     // Replace nans with zeros
     for (int i = 0; i < nr_voxels; ++i) {
         if (*(nii_boco_vaso_data + i)!= *(nii_boco_vaso_data + i)) {
-            *(nii_boco_vaso_data + i) = 0;
+        //    *(nii_boco_vaso_data + i) = 0;
         }
     }
 

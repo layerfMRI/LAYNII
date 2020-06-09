@@ -54,6 +54,8 @@ int show_help(void) {
 }
 
 int main(int argc, char*  argv[]) {
+
+bool use_outpath = false;
     nifti_image *nii1 = NULL;
     char *fin = NULL, *fout = NULL;
     uint16_t ac, nr_layers = 3;
