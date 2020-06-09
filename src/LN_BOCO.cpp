@@ -134,6 +134,9 @@ int main(int argc, char * argv[]) {
             *(nii_nulled_data + i) *= scl_slope1;
             *(nii_bold_data + i) *= scl_slope2;
         }
+    } else {
+        cout << "    !!!Warning!!! Input nifti header contains scl_scale=0.\n"
+             << "    Make sure to check the resulting output image.\n"<< endl;
     }
     // We can set scaling factor to 1 because we have accounted for them above
     nii_nulled->scl_slope = 1.;
