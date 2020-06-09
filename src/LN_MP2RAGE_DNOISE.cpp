@@ -13,23 +13,21 @@ int show_help(void) {
     "    <DOI:10.1371/journal.pone.0099676>\n"
     "\n"
     "Usage:\n"
-    "    LN_MP2RAGE_DNOISE -INV1 INV1.nii -INV2 INV2.nii -UNI UNI.nii -beta 0.2\n"
-    "\n"
-    "    test usage in the test_data folder: \n"
-    "    ../LN_MP2RAGE_DNOISE -INV1 sc_INV1.nii -INV2 sc_INV2.nii -UNI sc_UNI.nii \n"
-    "\n"
-    "    a potential application of this program is mentioned in this blog post \n"
-    "    https://layerfmri.com/mp2rage/ \n"
+    "LN_MP2RAGE_DNOISE -INV1 INV1.nii -INV2 INV2.nii -UNI UNI.nii -beta 0.2\n"
     "\n"
     "Options\n"
-    "    -help       : Show this help.\n"
-    "    -INV1       : Nifti (.nii) file of the first inversion time.\n"
-    "    -INV2       : Nifti (.nii) file of the second inversion time.\n"
-    "    -UNI        : Nifti (.nii) of MP2RAGE UNI. Expecting SIEMENS \n"
-    "                  unsigned integer 12 values between 0-4095. \n"
-    "    -beta value : Regularization term. Default is 0.2.\n"
-    "    -output     : (Optional) Custom output name. Overwrites existing files.\n"
-    "\n");
+    "    -help   : Show this help.\n"
+    "    -INV1   : Nifti (.nii) file of the first inversion time.\n"
+    "    -INV2   : Nifti (.nii) file of the second inversion time.\n"
+    "    -UNI    : Nifti (.nii) of MP2RAGE UNI. Expecting SIEMENS \n"
+    "              unsigned integer 12 values between 0-4095. \n"
+    "    -beta   : Regularization term. Default is '0.2'.\n"
+    "    -output : (Optional) Custom output name. Overwrites existing files.\n"
+    "\n"
+    "Notes:\n"
+    "    An application of this program is mentioned in this blog post:\n"
+    "    <https://layerfmri.com/mp2rage>\n"
+    );
     return 0;
 }
 
@@ -140,14 +138,25 @@ int main(int argc, char* argv[]) {
     float* nii_phaseerr_data = static_cast<float*>(nii_phaseerr->data);
 
     // fixing slopes
-    for (int i = 0; i != nr_voxels; ++i) {
-        *(nii_inv1_data + i) = *(nii_inv1_data + i) * nii_inv1->scl_slope;
-        *(nii_inv2_data + i) = *(nii_inv2_data + i) * nii_inv2->scl_slope;
-        *(nii_uni_data  + i) = *(nii_uni_data  + i) * nii_uni ->scl_slope;
+
+    // ========================================================================
+    // Handle scaling factor effects
+    float scl_slope1=nii_inv1->scl_slope;
+    float scl_slope2=nii_inv2->scl_slope;
+    float scl_slope3=nii_uni->scl_slope;
+    if (scl_slope1 != 0 || scl_slope2 != 0 || scl_slope3 != 0) {
+        for (int i = 0; i != nr_voxels; ++i) {
+            *(nii_inv1_data + i) = *(nii_inv1_data + i) * scl_slope1;
+            *(nii_inv2_data + i) = *(nii_inv2_data + i) * scl_slope2;
+            *(nii_uni_data  + i) = *(nii_uni_data + i) * scl_slope3;
+        }
+    } else {
+        cout << "    !!!Warning!!! Input nifti header contains scl_scale=0.\n"
+             << "    Make sure to check the resulting output image.\n"<< endl;
     }
+    // We can set scaling factor to 1 because we have accounted for them above
     nii_denoised->scl_slope = 1.0 ;
     nii_phaseerr->scl_slope = 1.0 ;
-
 
     // ========================================================================
     // Big calculation across all voxels
@@ -189,18 +198,6 @@ int main(int argc, char* argv[]) {
             *(nii_phaseerr_data + i) = val_uni_wrong;
             // ----------------------------------------------------------------
         }
-    }
-
-    nii_denoised->scl_slope = nii_uni->scl_slope;
-
-    // TODO(Faruk): This looks redundant, need to ask Renzo why it is needed.
-    if (nii_uni->scl_inter != 0) {
-        cout << " ########################################## " << endl;
-        cout << " #####   WARNING   WARNING   WARNING  ##### " << endl;
-        cout << " ## the NIFTI scale factor is asymmetric ## " << endl;
-        cout << " ##    Why would you do such a thing?    ## " << endl;
-        cout << " #####   WARNING   WARNING   WARNING  ##### " << endl;
-        cout << " ########################################## " << endl;
     }
 
     save_output_nifti(fout, "denoised", nii_denoised, true, use_outpath);
