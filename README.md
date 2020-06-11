@@ -116,4 +116,4 @@ If you have any issues when using LAYNII, or want to request a new feature, we a
 LAYNII is licensed under [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause).
 
 # Acknowledgments
-In order to read and write Nifti (.nii, .nii.gz) data, we have adapted code that was originally developed by the Neuroimaging Informatics Technology Initiative. We thank Bob Cox, Daniel Glen and Rick Reynolds. Since early 2020, development and maintenance of this project is being actively supported by [BrainInnovation](https://www.brainvoyager.com/) as one of the developers ([Omer Faruk Gulban](https://github.com/ofgulban)) works there.
+In order to read and write Nifti (.nii, .nii.gz) data, we have adapted code that was originally developed by the Neuroimaging Informatics Technology Initiative. We thank Bob Cox, Daniel Glen and Rick Reynolds. Since early 2020, development and maintenance of this project is being actively supported by [Brain Innovation](https://www.brainvoyager.com/) as one of the developers ([Omer Faruk Gulban](https://github.com/ofgulban)) works there.
