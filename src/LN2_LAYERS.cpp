@@ -22,6 +22,7 @@ int show_help(void) {
     "    LN2_LAYERS -rim rim.nii -nr_layers 3\n"
     "    LN2_LAYERS -rim rim.nii -nr_layers 3 -equivol\n"
     "    LN2_LAYERS -rim rim.nii -nr_layers 3 -equivol -iter_smooth 1000\n"
+    "    ../LN2_LAYERS -rim sc_rim.nii -nr_layers 10 -equivol \n"
     "\n"
     "Options:\n"
     "    -help         : Show this help.\n"
@@ -1091,10 +1092,10 @@ bool use_outpath = false;
                 if (*(nii_rim_data + j) == 3) {
                     n = *(normdistdiff_data + j);
                     if (signbit(m) - signbit(n) != 0) {
-                        if (abs(m) < abs(n)) {
+                        if ( m*m < n*n) {
                             *(midGM_data + i) = 1;
                             *(midGM_id_data + i) = i;
-                        } else if (abs(m) > abs(n)) {  // Closer to prev. step
+                        } else if (m*m > n*n) {  // Closer to prev. step
                             *(midGM_data + j) = 1;
                             *(midGM_id_data + j) = j;
                         } else {  // Equal +/- normalized distance
@@ -1111,10 +1112,10 @@ bool use_outpath = false;
                 if (*(nii_rim_data + j) == 3) {
                     n = *(normdistdiff_data + j);
                     if (signbit(m) - signbit(n) != 0) {
-                        if (abs(m) < abs(n)) {
+                        if (m*m < n*n) {
                             *(midGM_data + i) = 1;
                             *(midGM_id_data + i) = i;
-                        } else if (abs(m) > abs(n)) {  // Closer to prev. step
+                        } else if (m*m > n*n) {  // Closer to prev. step
                             *(midGM_data + j) = 1;
                             *(midGM_id_data + j) = j;
                         } else {  // Equal +/- normalized distance
@@ -1478,10 +1479,10 @@ bool use_outpath = false;
                     if (*(nii_rim_data + j) == 3) {
                         n = *(normdistdiff_data + j);
                         if (signbit(m) - signbit(n) != 0) {
-                            if (abs(m) < abs(n)) {
+                            if (m*m < n*n) {
                                 *(midGM_data + i) = 1;
                                 *(midGM_id_data + i) = i;
-                            } else if (abs(m) > abs(n)) {  // Closer to prev. step
+                            } else if (m*m > n*n) {  // Closer to prev. step
                                 *(midGM_data + j) = 1;
                                 *(midGM_id_data + j) = j;
                             } else {  // Equal +/- normalized distance
@@ -1498,10 +1499,10 @@ bool use_outpath = false;
                     if (*(nii_rim_data + j) == 3) {
                         n = *(normdistdiff_data + j);
                         if (signbit(m) - signbit(n) != 0) {
-                            if (abs(m) < abs(n)) {
+                            if (m*m < n*n) {
                                 *(midGM_data + i) = 1;
                                 *(midGM_id_data + i) = i;
-                            } else if (abs(m) > abs(n)) {  // Closer to prev. step
+                            } else if (m*m > n*n) {  // Closer to prev. step
                                 *(midGM_data + j) = 1;
                                 *(midGM_id_data + j) = j;
                             } else {  // Equal +/- normalized distance
