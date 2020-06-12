@@ -8,9 +8,10 @@ int show_help(void) {
     "           commonly used in other LAYNII programs (e.g. LN2_LAYERS).\n"
     "\n"
     "Usage:\n"
-    "    LN_RIMIFY -input data_file.nii -innergm 2 -outergm 3 -gm 1\n"
-    "    LN_RIMIFY -input data_file.nii -innergm 150 -outergm 0 -gm 100\n"
-    "    LN_RIMIFY -input data_file.nii -innergm 240 -outergm 0 -gm 243\n"
+    "    LN2_RIMIFY -input data_file.nii -innergm 2 -outergm 3 -gm 1\n"
+    "    LN2_RIMIFY -input data_file.nii -innergm 150 -outergm 0 -gm 100\n"
+    "    LN2_RIMIFY -input data_file.nii -innergm 240 -outergm 0 -gm 243\n"
+    "    ../LN2_RIMIFY -input sc_rim.nii -innergm 2 -outergm 1 -gm 3 -output rimified_tim.nii \n"
     "    TODO: Add freesurfer example"
     "\n"
     "Options:\n"
@@ -21,7 +22,8 @@ int show_help(void) {
     "    -outergm : Integer that will be regarded as the outer gray matter\n"
     "               boundary (2). CSF tissue label can be used here.\n"
     "    -gm      : Integer that will be regarded as pure gray matter (3).\n"
-    "    -output : (Optional) Output name. Overwrites existing files.\n"
+    "    -output  : (Optional) Output filename, including .nii or\n"
+    "               .nii.gz, and path if needed. Overwrites existing files.\n"    
     "\n"
     "Notes:\n"
     "    - Values not indicated as innergm, outergm or gm will be 0 in\n"
@@ -33,6 +35,7 @@ int show_help(void) {
 }
 
 int main(int argc, char *argv[]) {
+    bool use_outpath = false ;
     char *fin = NULL, *fout = NULL;
     int ac;
     int innergm, outergm, gm;
@@ -72,6 +75,7 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "** missing argument for -output\n");
                 return 2;
             }
+            use_outpath = true ; 
             fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
@@ -111,9 +115,9 @@ int main(int argc, char *argv[]) {
     // Swap input tissue labels with LAYII rim file standards
     for (int i = 0; i != nr_voxels; ++i) {
         if (*(nii_in_data + i) == innergm){
-            *(nii_rim_data + i) = 1;
+            *(nii_rim_data + i) = 2;   // Renzo touched this on June 12th 
         } else if (*(nii_in_data + i) == outergm){
-            *(nii_rim_data + i) = 2;
+            *(nii_rim_data + i) = 1;  // Renzo touched this on June 12th 
         } else if (*(nii_in_data + i) == gm){
             *(nii_rim_data + i) = 3;
         } else {
@@ -122,7 +126,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Save
-    save_output_nifti(fout, "rim", nii_rim, true);
+    save_output_nifti(fout, "rim", nii_rim, true, use_outpath);
 
     cout << "  Finished." << endl;
     return 0;

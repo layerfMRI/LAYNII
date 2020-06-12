@@ -8,11 +8,13 @@ int show_help(void) {
     "Usage:\n"
     "    LN_FLOAT_ME -input data_file.nii \n"
     "    LN_FLOAT_ME -input data_file.nii -output output_filename.nii \n"
+    "    ../LN_FLOAT_ME -input lo_BOLD_intemp.nii \n"
     "\n"
     "Options:\n"
     "    -help   : Show this help.\n"
     "    -input  : Dataset that should be shorted data.\n"
-    "    -output : (Optional) Output name. Overwrites existing files.\n"
+    "    -output       : (Optional) Output filename, including .nii or\n"
+    "                    .nii.gz, and path if needed. Overwrites existing files.\n"
     "\n");
     return 0;
 }

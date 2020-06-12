@@ -9,12 +9,14 @@ int show_help(void) {
     "\n"
     "Usage:\n"
     "    LN_TRIAL -input timeseries.nii -trialdur 12 \n"
+    "    ../LN_TRIAL -input lo_BOLD_intemp.nii -trialdur 20 \n" 
     "\n"
     "Options:\n"
     "    -help      : Show this help.\n"
     "    -input     : Input time series.\n"
     "    -trial_dur : Duration of activity-rest trial in TRs.\n"
-    "    -output    : (Optional) Output name. Overwrites existing files.\n"
+    "    -output    : (Optional) Output filename, including .nii or\n"
+    "                 .nii.gz, and path if needed. Overwrites existing files.\n"    
     "\n");
     return 0;
 }

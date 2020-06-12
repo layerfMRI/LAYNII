@@ -16,6 +16,7 @@ int show_help(void) {
     "\n"
     "Usage:\n"
     "    LN2_LAYER_SMOOTH -layer_file layers.nii -input activity_map.nii -FWHM 1\n"
+    "    ../LN2_LAYER_SMOOTH -input sc_VASO_act.nii -layer_file sc_layers.nii -FWHM 1 \n" 
     "\n"
     "Options:\n"
     "    -help       : Show this help.\n"
@@ -32,7 +33,8 @@ int show_help(void) {
     "                  is best done with not too many layers. Otherwise a \n"
     "                  single layer has holes and is not connected.\n"
     "                  !!!WARNING!!! this option is not well tested for version 1.5\n"
-    "    -output      : (Optional) Output name. Overwrites existing files.\n"
+    "    -output     : (Optional) Output filename, including .nii or\n"
+    "                  .nii.gz, and path if needed. Overwrites existing files.\n"    
     "\n");
     return 0;
 }

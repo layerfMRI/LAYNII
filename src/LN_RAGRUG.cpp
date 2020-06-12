@@ -22,7 +22,8 @@ int show_help(void) {
     "    -help   : Show this help.\n"
     "    -input  : Nifti (.nii) file. This program will use the dimension of \n"
     "              this file to generate a Rag Rug file accordingly.\n"
-    "    -output : (Optional) Output filename. Overwrites existing files.\n"
+    "    -output : (Optional) Output filename, including .nii or\n"
+    "              .nii.gz, and path if needed. Overwrites existing files.\n"
     "\n");
     return 0;
 }

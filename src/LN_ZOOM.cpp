@@ -9,6 +9,7 @@ int show_help(void) {
     "\n"
     "Usage: \n"
     "    LN_ZOOM -input image.nii -mask image_mask.nii\n"
+    "    ../LN_ZOOM -mask sc_layers_3dcolumns.nii -input sc_UNI.nii \n" 
     "\n"
     "Options:\n"
     "\n"
@@ -17,7 +18,8 @@ int show_help(void) {
     "                 multiple time points).\n"
     "    -mask   : Nifti (.nii) file that determines the region of interest\n"
     "                 (e.g. the layer mask with one time point).\n"
-    "    -output : (Optional) Output name. Overwrites existing files.\n"
+    "    -output : (Optional) Output filename, including .nii or\n"
+    "                 .nii.gz, and path if needed. Overwrites existing files.\n"    
     "\n");
     return 0;
 }

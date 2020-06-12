@@ -20,7 +20,8 @@ int show_help(void) {
     "Options:\n"
     "    -help   : Show this help.\n"
     "    -input  : Input time series.\n"
-    "    -output : (Optional) Output name. Overwrites existing files.\n"
+    "    -output : (Optional) Output filename, including .nii or\n"
+    "              .nii.gz, and path if needed. Overwrites existing files.\n"
     "              Note that the output name will always contain MaxTR/MinTR tags.\n"
     "\n");
     return 0;
