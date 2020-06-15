@@ -5,7 +5,7 @@
 This is a package of standalone layer functional magnetic resonance imaging (layer-fMRI) C++ programs that depends only on a C++ compiler. The purpose of this package is to provide layer-analysis software that are not (yet) included in the other major MRI analysis software.
 
 Most used programs (so far) are:
--  `LN2_LAYERS`: To generate equi-distant or equi-volume layers from gray matter segmentation. (Replaced `LN_GROW_LAYERS` in older versions of LAYNII).
+-  `LN2_LAYERS`: To generate equi-distant or equi-volume layers from gray matter segmentation. (Alternative to `LN_GROW_LAYERS` in older versions of LAYNII).
 - `LN_LAYER_SMOOTH` : For layer-specific spatial smoothing.
 - `LN_BOCO` : for BOLD correction in VASO.
 
