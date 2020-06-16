@@ -109,6 +109,8 @@ c++ -std=c++11 -DHAVE_ZLIB  -o LN_LOITUMA src/LN_LOITUMA.cpp dep/nifti2_io.cpp d
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_NOISE_KERNEL src/LN_NOISE_KERNEL.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN2_DEVEIN src/LN2_DEVEIN.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB  -o LN2_LAYERS src/LN2_LAYERS.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
+c++ -std=c++11 -DHAVE_ZLIB  -o LN_INFO src/LN_INFO.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
+
 ```
 ---
 ## How to contribute?

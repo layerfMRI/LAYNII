@@ -34,3 +34,5 @@
 ../LN_NOISE_KERNEL -input lo_Nulled_intemp.nii -kernel_size 7
 ../LN2_DEVEIN -layer_file lo_layers.nii -column_file lo_columns.nii -input lo_BOLD_act.nii -ALF lo_ALF.nii
 ../LN2_RIMIFY -input sc_rim.nii -innergm 2 -outergm 1 -gm 3 -output rimified_tim.nii
+../LN_INFO -input lo_T1EPI.nii
+

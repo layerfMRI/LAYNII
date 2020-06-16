@@ -28,8 +28,10 @@ int show_help(void) {
     "    -output : (Optional) Output filename, including .nii or\n"
     "              .nii.gz, and path if needed. Overwrites existing files.\n"
     "              If not given, the prefix 'noised' is added \n"
+//    "              gray scale test :::: ░▒▓::::\n" 
     "\n"
     "\n");
+    cout << endl ; 
     return 0;
 }
 
@@ -39,6 +41,8 @@ int main(int argc, char * argv[]) {
     char *fin = NULL;
     int ac;
     float std_val;
+    
+    
 
     // Process user options
     if (argc < 2) return show_help();
