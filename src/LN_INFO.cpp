@@ -1,15 +1,13 @@
 #include <stdio.h>
 #include <math.h>
-//#include <cmath>
 #include <stdlib.h>
 #include <iostream>
-#include <string>
 #include "../dep/nifti2_io.h"
 
 using namespace std;
 
 nifti_image* copy_nifti_as_float32(nifti_image* nii);
-void plotgray(double val, double mean, double stdev );
+void plotgray(double val, double mean, double stdev, bool inv );
 double ren_average(double arr[], int size);
 double ren_stdev(double arr[], int size);
 
@@ -33,6 +31,7 @@ int show_help(void) {
     "    -NoPlot : (Optional) In case you do not want to plot the content of the BRIKS.\n"
     "    -sub    : (Optional) subsample plotting to make it smaller.\n"
     "              the number given after -sub is the factor of voxels to skip \n" 
+    "    -inv    : (Optional) invert color scale for black terminal.\n"
     "\n"
     "\n");
     cout << endl ; 
@@ -44,7 +43,8 @@ int main(int argc, char * argv[]) {
     int ac ; 
     int subs = 1. ;
     float std_val;
-    bool NoPlotting = false ; 
+    bool NoPlotting = false ;
+    bool inv = false ;  
     
 
     // Process user options
@@ -62,9 +62,12 @@ int main(int argc, char * argv[]) {
         } else if (!strcmp(argv[ac], "-NoPlot")) {
             NoPlotting = true;
             cout << "I am not viewing the content of the BRIKS"  << endl;
+        } else if (!strcmp(argv[ac], "-inv")) {
+            inv = true;
+            cout << "I am usinf inverse colors"  << endl;
         } else if( ! strcmp(argv[ac], "-sub") ) {
           if( ++ac >= argc ) {
-            fprintf(stderr, "** missing argument for -trialBOCO\n");
+            fprintf(stderr, "** missing argument for -sub\n");
             return 1;
            }
            subs = atof(argv[ac]);  // no string copy, just pointer assignment 
@@ -194,7 +197,7 @@ int main(int argc, char * argv[]) {
        for(int iy=0; iy<sizePhase; iy = iy + 2*subs ){
           for(int ix=0; ix<sizeRead; ix = ix + subs ){
            //cout << ix <<  "  " << iy << "  " ;  
-          plotgray( *(nii_new_data    + nxyz * 0 + nxy*iz + nx*iy  + ix  ), mean_val,  stdev_val)    ; 
+          plotgray( *(nii_new_data    + nxyz * 0 + nxy*iz + nx*iy  + ix  ), mean_val,  stdev_val, inv)    ; 
         
         }
         cout  << "\n"  ;
@@ -212,14 +215,28 @@ int main(int argc, char * argv[]) {
     return 0;
 }
 
-void plotgray(double val, double mean, double stdev ){
+void plotgray(double val, double mean, double stdev, bool inv){
     double val_n = (val-mean) / (stdev) ; 
-    if       (val_n > 0.6745                     ) cout << " " ;  
-    // the value of 0.6745 refers to the z-score that contains 25% of the voxels fro Gausssian distributions
-    else if  (val_n >= 0.      && val_n < 0.6745 ) cout << "░" ; 
-    else if  (val_n >= -0.6745 && val_n < 0.     ) cout << "▒" ;
-    else if  (val_n                     < -0.6745) cout << "▓" ; 
+//    if       (val_n > 0.6745                     ) cout << " " ;  
+//    // the value of 0.6745 refers to the z-score that contains 25% of the voxels fro Gausssian distributions
+//    else if  (val_n >= 0.      && val_n < 0.6745 ) cout << "░" ; 
+//    else if  (val_n >= -0.6745 && val_n < 0.     ) cout << "▒" ;
+//    else if  (val_n                     < -0.6745) cout << "▓" ; 
     ////    else (val_n >= 0.0  && val_n < 0.25 ) cout << "▓" ; 
+
+    if (!inv){
+        if       (val_n > 0.6745                     ) cout << " " ;  
+        else if  (val_n >= 0.      && val_n < 0.6745 ) cout << "-" ; 
+        else if  (val_n >= -0.6745 && val_n < 0.     ) cout << "*" ;
+        else if  (val_n                     < -0.6745) cout << "@" ; 
+    }
+
+    if (inv) {
+        if       (val_n > 0.6745                     ) cout << "▓" ;  
+        else if  (val_n >= 0.      && val_n < 0.6745 ) cout << "▒" ; 
+        else if  (val_n >= -0.6745 && val_n < 0.     ) cout << "░" ;
+        else if  (val_n                     < -0.6745) cout << " " ;
+    }
 
 }
 
