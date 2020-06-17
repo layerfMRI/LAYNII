@@ -156,7 +156,7 @@ LN2_RIMIFY:
 	$(CC) $(CFLAGS) -o LN2_RIMIFY src/LN2_RIMIFY.cpp $(LIBRARIES) $(LFLAGS)
 
 LN_INFO:
-	$(CC) $(CFLAGS) -o LN_INFO src/LN_INFO.cpp $(LIBRARIES) $(LFLAGS)
+	$(CC) $(CFLAGS) -o LN_INFO src/LN_INFO.cpp dep/nifti2_io.cpp dep/znzlib.cpp  -I  -lm -lz
 
 clean:
 	$(RM) obj/*.o $(LAYNII)
