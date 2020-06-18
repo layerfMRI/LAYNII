@@ -224,18 +224,18 @@ void plotgray(double val, double mean, double stdev, bool inv){
 //    else if  (val_n                     < -0.6745) cout << "▓" ; 
     ////    else (val_n >= 0.0  && val_n < 0.25 ) cout << "▓" ; 
 
-    if (!inv){
-        if       (val_n > 0.6745                     ) cout << " " ;  
-        else if  (val_n >= 0.      && val_n < 0.6745 ) cout << "-" ; 
-        else if  (val_n >= -0.6745 && val_n < 0.     ) cout << "*" ;
-        else if  (val_n                     < -0.6745) cout << "@" ; 
+    if (inv){
+        if       (val_n > 0.6745                     ) cout << "@" ;  
+        else if  (val_n >= 0.      && val_n < 0.6745 ) cout << "*" ; 
+        else if  (val_n >= -0.6745 && val_n < 0.     ) cout << "-" ;
+        else if  (val_n                     < -0.6745) cout << " " ; 
     }
 
-    if (inv) {
-        if       (val_n > 0.6745                     ) cout << "▓" ;  
-        else if  (val_n >= 0.      && val_n < 0.6745 ) cout << "▒" ; 
-        else if  (val_n >= -0.6745 && val_n < 0.     ) cout << "░" ;
-        else if  (val_n                     < -0.6745) cout << " " ;
+    if (!inv) {
+        if       (val_n > 0.6745                     ) cout << " " ;  
+        else if  (val_n >= 0.      && val_n < 0.6745 ) cout << "░" ; 
+        else if  (val_n >= -0.6745 && val_n < 0.     ) cout << "▒" ;
+        else if  (val_n                     < -0.6745) cout << "▓" ;
     }
 
 }
