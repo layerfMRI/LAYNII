@@ -43,6 +43,8 @@ LOW_PRIORITY	=	LN_3DCOLUMNS \
 					LN2_DEVEIN \
 					LN2_RIMIFY \
 					LN_INFO \
+					LN_CONLAY \ 
+
 
 LAYNII2	= LN2_LAYERS
 
@@ -61,8 +63,6 @@ LN2_LAYERS:
 LN2_LLOYD:
 	$(CC) $(CFLAGS) -o obj/LN2_LLOYD.o src/LN2_LLOYD.cpp $(LIBRARIES) $(LFLAGS)
 
-# -----------------------------------------------------------------------------
-# High priority programs
 LN_BOCO:
 	$(CC) $(CFLAGS) -o LN_BOCO src/LN_BOCO.cpp $(LIBRARIES) $(LFLAGS)
 
@@ -75,8 +75,6 @@ LN_LAYER_SMOOTH:
 LN2_LAYER_SMOOTH:
 	$(CC) $(CFLAGS) -o LN2_LAYER_SMOOTH src/LN2_LAYER_SMOOTH.cpp $(LIBRARIES) $(LFLAGS)
 
-# -----------------------------------------------------------------------------
-# Low priority programs
 LN_CORREL2FILES:
 	$(CC) $(CFLAGS) -o LN_CORREL2FILES src/LN_CORREL2FILES.cpp $(LIBRARIES) $(LFLAGS)
 
@@ -157,6 +155,9 @@ LN2_RIMIFY:
 
 LN_INFO:
 	$(CC) $(CFLAGS) -o LN_INFO src/LN_INFO.cpp dep/nifti2_io.cpp dep/znzlib.cpp  -I  -lm -lz
+
+LN_CONLAY:
+	$(CC) $(CFLAGS) -o LN_CONLAY src/LN_CONLAY.cpp $(LIBRARIES) $(LFLAGS)
 
 clean:
 	$(RM) obj/*.o $(LAYNII)

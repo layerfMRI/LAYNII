@@ -21,10 +21,8 @@ void log_output(const char* filename) {
 void log_nifti_descriptives(nifti_image* nii) {
     // Print nifti descriptives to command line for debugging
     cout << "    File name: " << nii->fname << endl;
-    cout << "    Image details: " << nii->nz << " Z | " << nii->nx
-         << " X | " << nii->ny << " Y | " << nii->nt << " T " << endl;
-    cout << "    Voxel size = " << nii->pixdim[1] << " x " << nii->pixdim[2]
-         << " x " << nii->pixdim[3] << endl;
+    cout << "    Image details: " << nii->nx  << " X | " << nii->ny << " Y | " << nii->nz << " Z | " << nii->nt << " T " << endl;
+    cout << "    Voxel size = " << nii->pixdim[1] << " x " << nii->pixdim[2]   << " x " << nii->pixdim[3] << endl;
     cout << "    Datatype = " << nii->datatype << "\n" << endl;
 }
 
