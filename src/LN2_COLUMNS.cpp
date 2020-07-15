@@ -1,26 +1,20 @@
 
 #include "../dep/laynii_lib.h"
+#include <limits>
 
 int show_help(void) {
     printf(
     "LN2_COLUMNS: Generate columns using the outputs of LN2_LAYERS.\n"
-    "\n"
-    "!!!!!!!!!!!!!!!!!!!!!!!!\n"
-    "!!! WORK IN PROGRESS !!!\n"
-    "!!!!!!!!!!!!!!!!!!!!!!!!"
+    "             Designed to work both in 2D and 3D.\n"
     "\n"
     "Usage:\n"
-    "    LN2_COLUMNS\n"
+    "    LN2_COLUMNS -rim rim.nii -midgm rim_midgm_equidist.nii -nr_columns 100\n"
     "\n"
     "Options:\n"
     "    -help         : Show this help.\n"
-    "    -rim          : Specify input dataset. Use 1 to code outer gray\n"
-    "                    matter surface (facing mostly CSF), 2 to code inner\n"
-    "                    gray matter surdafe (facing mostly white matter),\n"
-    "                    and 3 to code pure gray matter voxels.\n"
-    "                    note that values 1 and 2 will not be included in the\n"
-    "                    layerification, this is in contrast to the programs\n"
-    "                    LN_GROW_LAYERS and LN_LEAKY LAYERS \n"
+    "    -rim          : Segmentation input. Use 3 to code pure gray matter \n"
+    "                    voxels. This program only generates columns in the \n"
+    "                    voxels coded with 3.\n"
     "    -midgm        : Middle gray matter file (from LN2_LAYERS output).\n"
     "    -nr_columns   : Number of columns.\n"
     "    -debug        : (Optional) Save extra intermediate outputs.\n"
@@ -34,7 +28,7 @@ int main(int argc, char*  argv[]) {
     nifti_image *nii1 = NULL, *nii2 = NULL;
     char *fin1 = NULL, *fout = NULL, *fin2;
     uint16_t ac, nr_columns = 5;
-    bool mode_debug = true;
+    bool mode_debug = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -143,8 +137,29 @@ int main(int argc, char*  argv[]) {
     nifti_image* flood_dist = copy_nifti_as_float32(nii_columns);
     float* flood_dist_data = static_cast<float*>(flood_dist->data);
 
-    nifti_image* anchor_id = copy_nifti_as_int32(nii_columns);
-    int32_t* anchor_id_data = static_cast<int32_t*>(anchor_id->data);
+    // ------------------------------------------------------------------------
+    // NOTE(Faruk): This section is written to constrain the big iterative
+    // flooding distance loop to the subset of voxels. Required for substantial
+    // speed boost.
+    // Find the subset voxels that will be used many times
+    uint32_t nr_voi = 0;  // Voxels of interest
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_midgm_data + i) == 1){
+            nr_voi += 1;
+        }
+    }
+    // Allocate memory to only the voxel of interest
+    int32_t* voi_id;
+    voi_id = (int32_t*) malloc(nr_voi*sizeof(int32_t));
+
+    // Fill in indices to be able to remap from subset to full set of voxels
+    uint32_t ii = 0;
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_midgm_data + i) == 1){
+            *(voi_id + ii) = i;
+            ii += 1;
+        }
+    }
 
     // ========================================================================
     // Find column centers through farthest flood distance
@@ -157,35 +172,41 @@ int main(int argc, char*  argv[]) {
             start_voxel = i;
         }
     }
-    *(anchor_id_data + start_voxel) = 1;
     *(nii_midgm_data + start_voxel) = 2;
+
+    // Initialize new voxel
+    uint32_t new_voxel_id;
+    float flood_dist_thr = std::numeric_limits<float>::infinity();
 
     // Loop until desired number of columns reached
     for (uint32_t n = 0; n != nr_columns; ++n) {
         cout << "\r  Start finding column [" << n+1 << "/" << nr_columns
              << "]..."<< flush;
 
-        // Initialize new point
-        int32_t new_voxel_id;
+        uint16_t grow_step = 1;
+        uint32_t voxel_counter = nr_voxels;
+        uint32_t ix, iy, iz, i, j;
+        float d;
 
         // Initialize grow volume
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             if (*(nii_midgm_data + i) == 2) {
                 *(flood_step_data + i) = 1.;
                 *(flood_dist_data + i) = 0.;
-            } else {
+            } else if (*(flood_dist_data + i) >= flood_dist_thr && *(flood_dist_data + i) > 0) {
                 *(flood_step_data + i) = 0.;
                 *(flood_dist_data + i) = 0.;
+                *(nii_midgm_data + i) = 1;
+            } else if (*(flood_dist_data + i) < flood_dist_thr && *(flood_dist_data + i) > 0) {
+                *(nii_midgm_data + i) = 0;  // no need to recompute
             }
         }
 
-        uint16_t grow_step = 1;
-        uint32_t voxel_counter = nr_voxels;
-        uint32_t ix, iy, iz, j, k;
-        float d;
         while (voxel_counter != 0) {
             voxel_counter = 0;
-            for (uint32_t i = 0; i != nr_voxels; ++i) {
+            for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+                // Map subset to full set
+                i = *(voi_id + ii);
                 if (*(flood_step_data + i) == grow_step) {
                     tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
                     voxel_counter += 1;
@@ -538,6 +559,7 @@ int main(int argc, char*  argv[]) {
             }
             grow_step += 1;
         }
+        flood_dist_thr = *(flood_dist_data + new_voxel_id) / 2.;
         *(nii_midgm_data + new_voxel_id) = 2;
 
         // Remove the initial voxel (reduces arbitrariness of the 1st point)
@@ -545,7 +567,11 @@ int main(int argc, char*  argv[]) {
         // initial point is only used to determine an extremum distance.
         if (n == 0) {
             *(nii_midgm_data + start_voxel) = 1;
-            *(anchor_id_data + start_voxel) = 0;
+            // Also reset distances
+            for (uint32_t i = 0; i != nr_voxels; ++i) {
+                *(flood_step_data + i) = 0.;
+                *(flood_dist_data + i) = 0.;
+            }
         }
     }
     cout << endl;
@@ -553,8 +579,8 @@ int main(int argc, char*  argv[]) {
     if (mode_debug) {
         save_output_nifti(fout, "flood_step", flood_step, false);
         save_output_nifti(fout, "flood_dist", flood_dist, false);
-        save_output_nifti(fout, "anchors", nii_midgm, false);
     }
+    save_output_nifti(fout, "centroids", nii_midgm, true);
 
     // ========================================================================
     // Voronoi cell from the points
