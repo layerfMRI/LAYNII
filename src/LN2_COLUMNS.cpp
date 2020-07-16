@@ -7,6 +7,8 @@ int show_help(void) {
     "LN2_COLUMNS: Generate columns using the outputs of LN2_LAYERS.\n"
     "             Designed to work both in 2D and 3D.\n"
     "\n"
+    "!!! WORK IN PROGRESS !!!\n"
+    "\n"
     "Usage:\n"
     "    LN2_COLUMNS -rim rim.nii -midgm rim_midgm_equidist.nii -nr_columns 100\n"
     "\n"
@@ -180,7 +182,7 @@ int main(int argc, char*  argv[]) {
 
     // Loop until desired number of columns reached
     for (uint32_t n = 0; n != nr_columns; ++n) {
-        cout << "\r  Start finding column [" << n+1 << "/" << nr_columns
+        cout << "\r  Start finding columns [" << n+1 << "/" << nr_columns
              << "]..."<< flush;
 
         uint16_t grow_step = 1;
@@ -561,6 +563,7 @@ int main(int argc, char*  argv[]) {
         }
         flood_dist_thr = *(flood_dist_data + new_voxel_id) / 2.;
         *(nii_midgm_data + new_voxel_id) = 2;
+        *(nii_columns_data + new_voxel_id) = n+1;
 
         // Remove the initial voxel (reduces arbitrariness of the 1st point)
         // NOTE(Faruk): This step guarantees to start from extrememums. The
@@ -580,26 +583,39 @@ int main(int argc, char*  argv[]) {
         save_output_nifti(fout, "flood_step", flood_step, false);
         save_output_nifti(fout, "flood_dist", flood_dist, false);
     }
-    save_output_nifti(fout, "centroids", nii_midgm, true);
+    save_output_nifti(fout, "centroids", nii_columns, true);
 
     // ========================================================================
-    // Voronoi cell from the points
+    // Voronoi cell from MidGM cells to rest of the GM (gray matter)
     // ========================================================================
     cout << "\n  Start Voronoi..." << endl;
 
-    // Prepare centroid ids
-    uint32_t k = 1;  // For ordered column ids (rather than using i)
+    // ------------------------------------------------------------------------
+    // Reduce number of looped-through voxels
+    // TODO[Faruk]: Put this into a function to reduce code repetition.
+    nr_voi = 0;  // Voxels of interest
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_midgm_data + i) == 2) {
-            *(nii_columns_data + i) = k;
-            *(nii_rim_data + i) = 0;
-            k += 1;
+        if (*(nii_rim_data + i) == 3){
+            nr_voi += 1;
         }
     }
+    // Allocate memory to only the voxel of interest
+    free(voi_id);
+    voi_id = (int32_t*) malloc(nr_voi*sizeof(int32_t));
+
+    // Fill in indices to be able to remap from subset to full set of voxels
+    ii = 0;
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) == 3){
+            *(voi_id + ii) = i;
+            ii += 1;
+        }
+    }
+    // ------------------------------------------------------------------------
 
     // Initialize grow volume
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_midgm_data + i) == 2) {
+        if (*(nii_columns_data + i) != 0) {
             *(flood_step_data + i) = 1.;
             *(flood_dist_data + i) = 0.;
         } else {
@@ -610,12 +626,13 @@ int main(int argc, char*  argv[]) {
 
     uint16_t grow_step = 1;
     uint32_t voxel_counter = nr_voxels;
-    uint32_t ix, iy, iz, j;
+    uint32_t ix, iy, iz, i, j;
     float d;
     voxel_counter = nr_voxels;
     while (voxel_counter != 0) {
         voxel_counter = 0;
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            i = *(voi_id + ii);
             if (*(flood_step_data + i) == grow_step) {
                 tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
                 voxel_counter += 1;
@@ -631,8 +648,7 @@ int main(int argc, char*  argv[]) {
                             || *(flood_dist_data + j) == 0) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
-                            *(nii_columns_data + j) = *(nii_columns_data + i);
-                        }
+                            *(nii_columns_data + j) = *(nii_columns_data + i);                        }
                     }
                 }
                 if (ix < end_x) {
@@ -644,7 +660,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
 
                         }
                     }
@@ -658,7 +673,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -671,7 +685,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -684,7 +697,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -698,7 +710,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -716,7 +727,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -730,7 +740,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -744,7 +753,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -758,7 +766,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -772,7 +779,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -786,7 +792,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -800,7 +805,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -814,7 +818,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -828,7 +831,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -842,7 +844,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -856,7 +857,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -870,7 +870,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -888,7 +887,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -902,7 +900,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -916,7 +913,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -930,7 +926,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -944,7 +939,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -958,7 +952,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -972,7 +965,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -986,7 +978,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
