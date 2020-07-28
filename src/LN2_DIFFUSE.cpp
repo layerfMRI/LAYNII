@@ -84,9 +84,9 @@ int main(int argc, char*  argv[]) {
 
     const uint32_t nr_voxels = size_z * size_y * size_x;
 
-    // const float dX = nii1->pixdim[1];
-    // const float dY = nii1->pixdim[2];
-    // const float dZ = nii1->pixdim[3];
+    const float dX = nii1->pixdim[1];
+    const float dY = nii1->pixdim[2];
+    const float dZ = nii1->pixdim[3];
 
     // Short diagonals
     // const float dia_xy = sqrt(dX * dX + dY * dY);
@@ -100,8 +100,16 @@ int main(int argc, char*  argv[]) {
     nifti_image* nii_input = copy_nifti_as_float32(nii1);
     float* nii_input_data = static_cast<float*>(nii_input->data);
 
+    // Output image
+    nifti_image* nii_diffuse = copy_nifti_as_float32(nii_input);
+    float* nii_diffuse_data = static_cast<float*>(nii_diffuse->data);
+    // Set to zero
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        *(nii_diffuse_data + i) = 0;
+    }
+
     // Prepare required nifti images
-    nifti_image * nii_grad = nifti_copy_nim_info(nii_input);
+    nifti_image * nii_grad = nifti_copy_nim_info(nii_diffuse);
     nii_grad->datatype = NIFTI_TYPE_FLOAT32;
     nii_grad->dim[0] = 4;  // For proper 4D nifti
     nii_grad->dim[1] = size_x;
@@ -115,166 +123,303 @@ int main(int argc, char*  argv[]) {
     nii_grad->scl_slope = 1;
     float* nii_grad_data = static_cast<float*>(nii_grad->data);
 
-    // Set to zero
-    for (uint32_t i = 0; i != nr_voxels * 26; ++i) {
-        *(nii_grad_data + i) = 0;
-    }
-
     // ========================================================================
-    // Find differences across neighbours
+    // Gradients
     // ========================================================================
-    cout << "  Start computing gradients..." << endl;
-
     uint32_t ix, iy, iz, j;
     float d;
 
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+    for (uint32_t n = 0; n != nr_steps; ++n) {
 
-        // ------------------------------------------------------------
-        // 1-jump neighbours
-        // ------------------------------------------------------------
-        if (ix > 0) {
-            j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 0 + i) = d;
-        }
-        if (ix < end_x) {
-            j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 1 + i) = d;
-        }
-        if (iy > 0) {
-            j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 2 + i) = d;
-        }
-        if (iy < end_y) {
-            j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 3 + i) = d;
-        }
-        if (iz > 0) {
-            j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 4 + i) = d;
-        }
-        if (iz < end_z) {
-            j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 5 + i) = d;
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+
+            // ------------------------------------------------------------
+            // 1-jump neighbours
+            // ------------------------------------------------------------
+            if (ix > 0) {
+                j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 0 + i) = d;
+            }
+            if (ix < end_x) {
+                j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 1 + i) = d;
+            }
+            if (iy > 0) {
+                j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 2 + i) = d;
+            }
+            if (iy < end_y) {
+                j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 3 + i) = d;
+            }
+            if (iz > 0) {
+                j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 4 + i) = d;
+            }
+            if (iz < end_z) {
+                j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 5 + i) = d;
+            }
+
+            // ------------------------------------------------------------
+            // 2-jump neighbours
+            // ------------------------------------------------------------
+            if (ix > 0 && iy > 0) {
+                j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 6 + i) = d;
+            }
+            if (ix > 0 && iy < end_y) {
+                j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 7 + i) = d;
+            }
+            if (ix < end_x && iy > 0) {
+                j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 8 + i) = d;
+            }
+            if (ix < end_x && iy < end_y) {
+                j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 9 + i) = d;
+            }
+            if (iy > 0 && iz > 0) {
+                j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 10 + i) = d;
+            }
+            if (iy > 0 && iz < end_z) {
+                j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 11 + i) = d;
+            }
+            if (iy < end_y && iz > 0) {
+                j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 12 + i) = d;
+            }
+            if (iy < end_y && iz < end_z) {
+                j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 13 + i) = d;
+            }
+            if (ix > 0 && iz > 0) {
+                j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 14 + i) = d;
+            }
+            if (ix < end_x && iz > 0) {
+                j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 15 + i) = d;
+            }
+            if (ix > 0 && iz < end_z) {
+                j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 16 + i) = d;
+            }
+            if (ix < end_x && iz < end_z) {
+                j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 17 + i) = d;
+            }
+
+            // ------------------------------------------------------------
+            // 3-jump neighbours
+            // ------------------------------------------------------------
+            if (ix > 0 && iy > 0 && iz > 0) {
+                j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 18 + i) = d;
+            }
+            if (ix > 0 && iy > 0 && iz < end_z) {
+                j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 19 + i) = d;
+            }
+            if (ix > 0 && iy < end_y && iz > 0) {
+                j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 20 + i) = d;
+            }
+            if (ix < end_x && iy > 0 && iz > 0) {
+                j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 21 + i) = d;
+            }
+            if (ix > 0 && iy < end_y && iz < end_z) {
+                j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 22 + i) = d;
+            }
+            if (ix < end_x && iy > 0 && iz < end_z) {
+                j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 23 + i) = d;
+            }
+            if (ix < end_x && iy < end_y && iz > 0) {
+                j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 24 + i) = d;
+            }
+            if (ix < end_x && iy < end_y && iz < end_z) {
+                j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
+                d = *(nii_input_data + i) - *(nii_input_data + j);
+                *(nii_grad_data + nr_voxels * 25 + i) = d;
+            }
         }
 
-        // ------------------------------------------------------------
-        // 2-jump neighbours
-        // ------------------------------------------------------------
-        if (ix > 0 && iy > 0) {
-            j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 6 + i) = d;
-        }
-        if (ix > 0 && iy < end_y) {
-            j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 7 + i) = d;
-        }
-        if (ix < end_x && iy > 0) {
-            j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 8 + i) = d;
-        }
-        if (ix < end_x && iy < end_y) {
-            j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 9 + i) = d;
-        }
-        if (iy > 0 && iz > 0) {
-            j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 10 + i) = d;
-        }
-        if (iy > 0 && iz < end_z) {
-            j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 11 + i) = d;
-        }
-        if (iy < end_y && iz > 0) {
-            j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 12 + i) = d;
-        }
-        if (iy < end_y && iz < end_z) {
-            j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 13 + i) = d;
-        }
-        if (ix > 0 && iz > 0) {
-            j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 14 + i) = d;
-        }
-        if (ix < end_x && iz > 0) {
-            j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 15 + i) = d;
-        }
-        if (ix > 0 && iz < end_z) {
-            j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 16 + i) = d;
-        }
-        if (ix < end_x && iz < end_z) {
-            j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 17 + i) = d;
+        // save_output_nifti(fout, "gradients", nii_grad, true);
+
+        // ========================================================================
+        // Diffuse
+        // ========================================================================
+        float d_0, d_1, d_2, d_3;
+
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+            d_1 = (*(nii_input_data + i) / 26.) * 1.;
+            d_2 = (*(nii_input_data + i) / 26.) * (1. - std::sqrt(2)/2.);
+            d_3 = (*(nii_input_data + i) / 26.) * (1. - std::sqrt(3)/2.);
+            d_0 = *(nii_input_data + i) - ((d_1 * 6.) + (d_2 * 12.) + (d_3 * 8.));
+
+            // ------------------------------------------------------------
+            // 1-jump neighbours
+            // ------------------------------------------------------------
+            if (ix > 0) {
+                j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                *(nii_diffuse_data + j) += d_1;
+            }
+            if (ix < end_x) {
+                j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                *(nii_diffuse_data + j) += d_1;
+            }
+            if (iy > 0) {
+                j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                *(nii_diffuse_data + j) += d_1;
+            }
+            if (iy < end_y) {
+                j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                *(nii_diffuse_data + j) += d_1;
+            }
+            if (iz > 0) {
+                j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                *(nii_diffuse_data + j) += d_1;
+            }
+            if (iz < end_z) {
+                j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                *(nii_diffuse_data + j) += d_1;
+            }
+
+            // ------------------------------------------------------------
+            // 2-jump neighbours
+            // ------------------------------------------------------------
+            if (ix > 0 && iy > 0) {
+                j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
+                *(nii_diffuse_data + j) += d_2;
+            }
+            if (ix > 0 && iy < end_y) {
+                j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
+                *(nii_diffuse_data + j) += d_2;
+            }
+            if (ix < end_x && iy > 0) {
+                j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
+                *(nii_diffuse_data + j) += d_2;
+            }
+            if (ix < end_x && iy < end_y) {
+                j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
+                *(nii_diffuse_data + j) += d_2;
+            }
+            if (iy > 0 && iz > 0) {
+                j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
+                *(nii_diffuse_data + j) += d_2;
+            }
+            if (iy > 0 && iz < end_z) {
+                j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
+                *(nii_diffuse_data + j) += d_2;
+            }
+            if (iy < end_y && iz > 0) {
+                j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
+                *(nii_diffuse_data + j) += d_2;
+            }
+            if (iy < end_y && iz < end_z) {
+                j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
+                *(nii_diffuse_data + j) += d_2;
+            }
+            if (ix > 0 && iz > 0) {
+                j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
+                *(nii_diffuse_data + j) += d_2;
+            }
+            if (ix < end_x && iz > 0) {
+                j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
+                *(nii_diffuse_data + j) += d_2;
+            }
+            if (ix > 0 && iz < end_z) {
+                j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
+                *(nii_diffuse_data + j) += d_2;
+            }
+            if (ix < end_x && iz < end_z) {
+                j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
+                *(nii_diffuse_data + j) += d_2;
+            }
+
+            // ------------------------------------------------------------
+            // 3-jump neighbours
+            // ------------------------------------------------------------
+            if (ix > 0 && iy > 0 && iz > 0) {
+                j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
+                *(nii_diffuse_data + j) += d_3;
+            }
+            if (ix > 0 && iy > 0 && iz < end_z) {
+                j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
+                *(nii_diffuse_data + j) += d_3;
+            }
+            if (ix > 0 && iy < end_y && iz > 0) {
+                j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
+                *(nii_diffuse_data + j) += d_3;
+            }
+            if (ix < end_x && iy > 0 && iz > 0) {
+                j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
+                *(nii_diffuse_data + j) += d_3;
+            }
+            if (ix > 0 && iy < end_y && iz < end_z) {
+                j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
+                *(nii_diffuse_data + j) += d_3;
+            }
+            if (ix < end_x && iy > 0 && iz < end_z) {
+                j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
+                *(nii_diffuse_data + j) += d_3;
+            }
+            if (ix < end_x && iy < end_y && iz > 0) {
+                j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
+                *(nii_diffuse_data + j) += d_3;
+            }
+            if (ix < end_x && iy < end_y && iz < end_z) {
+                j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
+                *(nii_diffuse_data + j) += d_3;
+            }
+
+            *(nii_diffuse_data + i) += d_0;
         }
 
-        // ------------------------------------------------------------
-        // 3-jump neighbours
-        // ------------------------------------------------------------
-        if (ix > 0 && iy > 0 && iz > 0) {
-            j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 18 + i) = d;
+        // Replace previous image & reset diffusion step
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            *(nii_input_data + i) = *(nii_diffuse_data + i);
         }
-        if (ix > 0 && iy > 0 && iz < end_z) {
-            j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 19 + i) = d;
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            *(nii_diffuse_data + i) = 0;
         }
-        if (ix > 0 && iy < end_y && iz > 0) {
-            j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 20 + i) = d;
-        }
-        if (ix < end_x && iy > 0 && iz > 0) {
-            j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 21 + i) = d;
-        }
-        if (ix > 0 && iy < end_y && iz < end_z) {
-            j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 22 + i) = d;
-        }
-        if (ix < end_x && iy > 0 && iz < end_z) {
-            j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 23 + i) = d;
-        }
-        if (ix < end_x && iy < end_y && iz > 0) {
-            j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 24 + i) = d;
-        }
-        if (ix < end_x && iy < end_y && iz < end_z) {
-            j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
-            d = *(nii_input_data + i) - *(nii_input_data + j);
-            *(nii_grad_data + nr_voxels * 25 + i) = d;
-        }
+
     }
-
-    save_output_nifti(fout, "gradients", nii_grad, true);
+    save_output_nifti(fout, "diffuse", nii_input, true);
 
     cout << "\n  Finished." << endl;
     return 0;
