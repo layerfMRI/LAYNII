@@ -2,7 +2,7 @@
 #include "../dep/laynii_lib.h"
 #include <limits>
 
-int show_help(void) {
+int shoq_help(void) {
     printf(
     "LN2_DIFFUSE: WORK IN PROGRESS... EXTREMELY EXPERIMENTAL!\n"
     "\n"
@@ -27,10 +27,10 @@ int main(int argc, char*  argv[]) {
     bool mode_debug = false;
 
     // Process user options
-    if (argc < 2) return show_help();
+    if (argc < 2) return shoq_help();
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
-            return show_help();
+            return shoq_help();
         } else if (!strcmp(argv[ac], "-input")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -input\n");
@@ -105,7 +105,7 @@ int main(int argc, char*  argv[]) {
     float* nii_diffuse_data = static_cast<float*>(nii_diffuse->data);
     // Set to zero
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        *(nii_diffuse_data + i) = 0;
+        *(nii_diffuse_data + i) = 0.;
     }
 
     // Prepare required nifti images
@@ -139,32 +139,32 @@ int main(int argc, char*  argv[]) {
             // ------------------------------------------------------------
             if (ix > 0) {
                 j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 0 + i) = d;
             }
             if (ix < end_x) {
                 j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 1 + i) = d;
             }
             if (iy > 0) {
                 j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 2 + i) = d;
             }
             if (iy < end_y) {
                 j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 3 + i) = d;
             }
             if (iz > 0) {
                 j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 4 + i) = d;
             }
             if (iz < end_z) {
                 j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 5 + i) = d;
             }
 
@@ -173,62 +173,62 @@ int main(int argc, char*  argv[]) {
             // ------------------------------------------------------------
             if (ix > 0 && iy > 0) {
                 j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 6 + i) = d;
             }
             if (ix > 0 && iy < end_y) {
                 j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 7 + i) = d;
             }
             if (ix < end_x && iy > 0) {
                 j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 8 + i) = d;
             }
             if (ix < end_x && iy < end_y) {
                 j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 9 + i) = d;
             }
             if (iy > 0 && iz > 0) {
                 j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 10 + i) = d;
             }
             if (iy > 0 && iz < end_z) {
                 j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 11 + i) = d;
             }
             if (iy < end_y && iz > 0) {
                 j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 12 + i) = d;
             }
             if (iy < end_y && iz < end_z) {
                 j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 13 + i) = d;
             }
             if (ix > 0 && iz > 0) {
                 j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 14 + i) = d;
             }
             if (ix < end_x && iz > 0) {
                 j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 15 + i) = d;
             }
             if (ix > 0 && iz < end_z) {
                 j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 16 + i) = d;
             }
             if (ix < end_x && iz < end_z) {
                 j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 17 + i) = d;
             }
 
@@ -237,42 +237,42 @@ int main(int argc, char*  argv[]) {
             // ------------------------------------------------------------
             if (ix > 0 && iy > 0 && iz > 0) {
                 j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 18 + i) = d;
             }
             if (ix > 0 && iy > 0 && iz < end_z) {
                 j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 19 + i) = d;
             }
             if (ix > 0 && iy < end_y && iz > 0) {
                 j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 20 + i) = d;
             }
             if (ix < end_x && iy > 0 && iz > 0) {
                 j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 21 + i) = d;
             }
             if (ix > 0 && iy < end_y && iz < end_z) {
                 j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 22 + i) = d;
             }
             if (ix < end_x && iy > 0 && iz < end_z) {
                 j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 23 + i) = d;
             }
             if (ix < end_x && iy < end_y && iz > 0) {
                 j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 24 + i) = d;
             }
             if (ix < end_x && iy < end_y && iz < end_z) {
                 j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
-                d = *(nii_input_data + i) - *(nii_input_data + j);
+                d = std::abs(*(nii_input_data + i) - *(nii_input_data + j));
                 *(nii_grad_data + nr_voxels * 25 + i) = d;
             }
         }
@@ -282,41 +282,89 @@ int main(int argc, char*  argv[]) {
         // ========================================================================
         // Diffuse
         // ========================================================================
-        float d_0, d_1, d_2, d_3;
+        float d_1, d_2, d_3;
+        float q_01, q_02, q_03, q_04, q_05, q_06, q_07, q_08, q_09, q_10, q_11;
+        float q_12, q_13, q_14, q_15, q_16, q_17, q_18, q_19, q_20, q_21, q_22;
+        float q_23, q_24, q_25, q_26, q_00;
 
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
             d_1 = (*(nii_input_data + i) / 26.) * 1.;
             d_2 = (*(nii_input_data + i) / 26.) * (1. - std::sqrt(2)/2.);
             d_3 = (*(nii_input_data + i) / 26.) * (1. - std::sqrt(3)/2.);
-            d_0 = *(nii_input_data + i) - ((d_1 * 6.) + (d_2 * 12.) + (d_3 * 8.));
+
+            // Normalize gradients with sum
+            float i_max = 0.;
+            for (int m = 0; m != 26; ++m){
+                i_max += *(nii_grad_data + m * nr_voxels + i);
+            }
+            if (i_max != 0) {
+                i_max /= 1.;
+            } else {
+                i_max = 1.;
+            }
+
+            // Quantities that will be moved
+            q_01 = (*(nii_grad_data + 0 * nr_voxels + i) / i_max) * d_1;
+            q_02 = (*(nii_grad_data + 1 * nr_voxels + i) / i_max) * d_1;
+            q_03 = (*(nii_grad_data + 2 * nr_voxels + i) / i_max) * d_1;
+            q_04 = (*(nii_grad_data + 3 * nr_voxels + i) / i_max) * d_1;
+            q_05 = (*(nii_grad_data + 4 * nr_voxels + i) / i_max) * d_1;
+            q_06 = (*(nii_grad_data + 5 * nr_voxels + i) / i_max) * d_1;
+
+            q_07 = (*(nii_grad_data + 6 * nr_voxels + i) / i_max) * d_2;
+            q_08 = (*(nii_grad_data + 7 * nr_voxels + i) / i_max) * d_2;
+            q_09 = (*(nii_grad_data + 8 * nr_voxels + i) / i_max) * d_2;
+            q_10 = (*(nii_grad_data + 9 * nr_voxels + i) / i_max) * d_2;
+            q_11 = (*(nii_grad_data + 10 * nr_voxels + i) / i_max) * d_2;
+            q_12 = (*(nii_grad_data + 11 * nr_voxels + i) / i_max) * d_2;
+            q_13 = (*(nii_grad_data + 12 * nr_voxels + i) / i_max) * d_2;
+            q_14 = (*(nii_grad_data + 13 * nr_voxels + i) / i_max) * d_2;
+            q_15 = (*(nii_grad_data + 14 * nr_voxels + i) / i_max) * d_2;
+            q_16 = (*(nii_grad_data + 15 * nr_voxels + i) / i_max) * d_2;
+            q_17 = (*(nii_grad_data + 16 * nr_voxels + i) / i_max) * d_2;
+            q_18 = (*(nii_grad_data + 17 * nr_voxels + i) / i_max) * d_2;
+
+            q_19 = (*(nii_grad_data + 18 * nr_voxels + i) / i_max) * d_3;
+            q_20 = (*(nii_grad_data + 19 * nr_voxels + i) / i_max) * d_3;
+            q_21 = (*(nii_grad_data + 20 * nr_voxels + i) / i_max) * d_3;
+            q_22 = (*(nii_grad_data + 21 * nr_voxels + i) / i_max) * d_3;
+            q_23 = (*(nii_grad_data + 22 * nr_voxels + i) / i_max) * d_3;
+            q_24 = (*(nii_grad_data + 23 * nr_voxels + i) / i_max) * d_3;
+            q_25 = (*(nii_grad_data + 24 * nr_voxels + i) / i_max) * d_3;
+            q_26 = (*(nii_grad_data + 25 * nr_voxels + i) / i_max) * d_3;
+
+            q_00 = *(nii_input_data + i) - (q_01 + q_02 + q_03 + q_04 + q_05
+                + q_06 + q_07 + q_08 + q_09 + q_10 + q_11 + q_12 + q_13 + q_14
+                + q_15 + q_16 + q_17 + q_18 + q_19 + q_20 + q_21 + q_22 + q_23
+                + q_24 + q_25 + q_26);
 
             // ------------------------------------------------------------
             // 1-jump neighbours
             // ------------------------------------------------------------
             if (ix > 0) {
                 j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                *(nii_diffuse_data + j) += d_1;
+                *(nii_diffuse_data + j) += q_01;
             }
             if (ix < end_x) {
                 j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-                *(nii_diffuse_data + j) += d_1;
+                *(nii_diffuse_data + j) += q_02;
             }
             if (iy > 0) {
                 j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                *(nii_diffuse_data + j) += d_1;
+                *(nii_diffuse_data + j) += q_03;
             }
             if (iy < end_y) {
                 j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-                *(nii_diffuse_data + j) += d_1;
+                *(nii_diffuse_data + j) += q_04;
             }
             if (iz > 0) {
                 j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                *(nii_diffuse_data + j) += d_1;
+                *(nii_diffuse_data + j) += q_05;
             }
             if (iz < end_z) {
                 j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-                *(nii_diffuse_data + j) += d_1;
+                *(nii_diffuse_data + j) += q_06;
             }
 
             // ------------------------------------------------------------
@@ -324,51 +372,51 @@ int main(int argc, char*  argv[]) {
             // ------------------------------------------------------------
             if (ix > 0 && iy > 0) {
                 j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
-                *(nii_diffuse_data + j) += d_2;
+                *(nii_diffuse_data + j) += q_07;
             }
             if (ix > 0 && iy < end_y) {
                 j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
-                *(nii_diffuse_data + j) += d_2;
+                *(nii_diffuse_data + j) += q_08;
             }
             if (ix < end_x && iy > 0) {
                 j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
-                *(nii_diffuse_data + j) += d_2;
+                *(nii_diffuse_data + j) += q_09;
             }
             if (ix < end_x && iy < end_y) {
                 j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
-                *(nii_diffuse_data + j) += d_2;
+                *(nii_diffuse_data + j) += q_10;
             }
             if (iy > 0 && iz > 0) {
                 j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
-                *(nii_diffuse_data + j) += d_2;
+                *(nii_diffuse_data + j) += q_11;
             }
             if (iy > 0 && iz < end_z) {
                 j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
-                *(nii_diffuse_data + j) += d_2;
+                *(nii_diffuse_data + j) += q_12;
             }
             if (iy < end_y && iz > 0) {
                 j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
-                *(nii_diffuse_data + j) += d_2;
+                *(nii_diffuse_data + j) += q_13;
             }
             if (iy < end_y && iz < end_z) {
                 j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
-                *(nii_diffuse_data + j) += d_2;
+                *(nii_diffuse_data + j) += q_14;
             }
             if (ix > 0 && iz > 0) {
                 j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
-                *(nii_diffuse_data + j) += d_2;
+                *(nii_diffuse_data + j) += q_15;
             }
             if (ix < end_x && iz > 0) {
                 j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
-                *(nii_diffuse_data + j) += d_2;
+                *(nii_diffuse_data + j) += q_16;
             }
             if (ix > 0 && iz < end_z) {
                 j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
-                *(nii_diffuse_data + j) += d_2;
+                *(nii_diffuse_data + j) += q_17;
             }
             if (ix < end_x && iz < end_z) {
                 j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
-                *(nii_diffuse_data + j) += d_2;
+                *(nii_diffuse_data + j) += q_18;
             }
 
             // ------------------------------------------------------------
@@ -376,38 +424,38 @@ int main(int argc, char*  argv[]) {
             // ------------------------------------------------------------
             if (ix > 0 && iy > 0 && iz > 0) {
                 j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
-                *(nii_diffuse_data + j) += d_3;
+                *(nii_diffuse_data + j) += q_19;
             }
             if (ix > 0 && iy > 0 && iz < end_z) {
                 j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
-                *(nii_diffuse_data + j) += d_3;
+                *(nii_diffuse_data + j) += q_20;
             }
             if (ix > 0 && iy < end_y && iz > 0) {
                 j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
-                *(nii_diffuse_data + j) += d_3;
+                *(nii_diffuse_data + j) += q_21;
             }
             if (ix < end_x && iy > 0 && iz > 0) {
                 j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
-                *(nii_diffuse_data + j) += d_3;
+                *(nii_diffuse_data + j) += q_22;
             }
             if (ix > 0 && iy < end_y && iz < end_z) {
                 j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
-                *(nii_diffuse_data + j) += d_3;
+                *(nii_diffuse_data + j) += q_23;
             }
             if (ix < end_x && iy > 0 && iz < end_z) {
                 j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
-                *(nii_diffuse_data + j) += d_3;
+                *(nii_diffuse_data + j) += q_24;
             }
             if (ix < end_x && iy < end_y && iz > 0) {
                 j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
-                *(nii_diffuse_data + j) += d_3;
+                *(nii_diffuse_data + j) += q_25;
             }
             if (ix < end_x && iy < end_y && iz < end_z) {
                 j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
-                *(nii_diffuse_data + j) += d_3;
+                *(nii_diffuse_data + j) += q_26;
             }
 
-            *(nii_diffuse_data + i) += d_0;
+            *(nii_diffuse_data + i) += q_00;
         }
 
         // Replace previous image & reset diffusion step
@@ -415,7 +463,7 @@ int main(int argc, char*  argv[]) {
             *(nii_input_data + i) = *(nii_diffuse_data + i);
         }
         for (uint32_t i = 0; i != nr_voxels; ++i) {
-            *(nii_diffuse_data + i) = 0;
+            *(nii_diffuse_data + i) = 0.;
         }
 
     }
