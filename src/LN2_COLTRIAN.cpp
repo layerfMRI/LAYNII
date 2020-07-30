@@ -28,10 +28,9 @@ int main(int argc, char*  argv[]) {
     uint16_t ac;
     bool mode_debug = false;
 
+    // Prepare to write wavefront .obj file
     ofstream myfile;
-    myfile.open ("/home/faruk/Documents/temp_LAYNII_trinagle/example.txt");
-    myfile << "Write wavefront obj here.\n";
-    myfile.close();
+    myfile.open ("/home/faruk/Documents/temp_LAYNII_trinagle/example.obj");
 
     // Process user options
     if (argc < 2) return shoq_help();
@@ -110,9 +109,7 @@ int main(int argc, char*  argv[]) {
     nifti_image* nii_columns = copy_nifti_as_int32(nii1);
     int32_t* nii_columns_data = static_cast<int32_t*>(nii_columns->data);
 
-    nifti_image* nii_centroids = copy_nifti_as_int32(nii2);
-    int32_t* nii_centroids_data = static_cast<int32_t*>(nii_centroids->data);
-
+    // ------------------------------------------------------------------------
     // Voxels of interest
     uint32_t nr_voi = 0;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -133,6 +130,50 @@ int main(int argc, char*  argv[]) {
         }
     }
 
+    // ------------------------------------------------------------------------
+    // Prepare centroid coordinate array
+    nifti_image* nii_centroids = copy_nifti_as_int32(nii2);
+    int32_t* nii_centroids_data = static_cast<int32_t*>(nii_centroids->data);
+
+    uint32_t nr_vertex = 0;
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_centroids_data + i) > 0){
+            nr_vertex += 1;
+        }
+    }
+
+    // Allocate 3D vertex coordinates
+    int32_t* voi_coord;
+    voi_coord = (int32_t*) malloc(nr_vertex*3*sizeof(int32_t));
+
+    // Fill in coordinates
+    // NOTE(Faruk): Strictly written for LN2_COLUMNS output columns. There
+    // should be no integer skips for column IDs.
+    uint32_t ix, iy, iz, j;
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_centroids_data + i) > 0){
+            int32_t column_id = *(nii_centroids_data + i) - 1;
+            // Get array indices
+            tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+            // Adjust to make voxel indices voxel centers
+            float vx = static_cast<float>(ix) + 0.5;
+            float vy = static_cast<float>(iy) + 0.5;
+            float vz = static_cast<float>(iz) + 0.5;
+            // Store float voxel center (or vertices)
+            *(voi_coord + column_id * 3 + 0) = vx;
+            *(voi_coord + column_id * 3 + 1) = vy;
+            *(voi_coord + column_id * 3 + 2) = vz;
+        }
+    }
+
+    // Write the vertices to file in order.
+    for (uint32_t i = 0; i != nr_vertex; ++i) {
+        myfile << "v " << *(voi_coord + i * 3 + 0) << " "
+            << *(voi_coord + i * 3 + 1) << " "
+            << *(voi_coord + i * 3 + 2) << "\n";
+    }
+
+    // ------------------------------------------------------------------------
     // Prepare triplets array to store potential triangular faces
     int32_t size_triplets = nr_voi * 3;
     int32_t* triplets;
@@ -145,8 +186,6 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Triangulation on subset Voronoi cells
     // ========================================================================
-    uint32_t ix, iy, iz, j;
-
     for (uint32_t ii = 0; ii != nr_voi; ++ii) {
         uint32_t i = *(voi_id + ii);
         tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
@@ -257,11 +296,16 @@ int main(int argc, char*  argv[]) {
 
     // Print triplets
     for (int i=0; i<count_triplets; ++i) {
+        myfile << "f ";
         for (int j=0; j<3; ++j){
             cout << *(triplets + i * 3 + j) << " ";
+            myfile << *(triplets + i * 3 + j) << " ";
         }
         cout << endl;
+        myfile << "\n";
     }
+
+    myfile.close();
 
     // save_output_nifti(fout, "gradients", nii_grad, true);
 
