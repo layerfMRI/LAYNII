@@ -1,6 +1,7 @@
 
 #include "../dep/laynii_lib.h"
 #include <limits>
+#include <sstream>
 
 int show_help(void) {
     printf(
@@ -583,7 +584,10 @@ int main(int argc, char*  argv[]) {
         save_output_nifti(fout, "flood_step", flood_step, false);
         save_output_nifti(fout, "flood_dist", flood_dist, false);
     }
-    save_output_nifti(fout, "centroids", nii_columns, true);
+    // Add number of columns into the output tag
+    std::ostringstream tag;
+    tag << nr_columns;
+    save_output_nifti(fout, "centroids" + tag.str(), nii_columns, true);
 
     // ========================================================================
     // Voronoi cell from MidGM cells to rest of the GM (gray matter)
@@ -648,7 +652,8 @@ int main(int argc, char*  argv[]) {
                             || *(flood_dist_data + j) == 0) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
-                            *(nii_columns_data + j) = *(nii_columns_data + i);                        }
+                            *(nii_columns_data + j) = *(nii_columns_data + i);
+                        }
                     }
                 }
                 if (ix < end_x) {
@@ -660,7 +665,6 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
-
                         }
                     }
                 }
@@ -987,7 +991,7 @@ int main(int argc, char*  argv[]) {
     }
 
     // ========================================================================
-    save_output_nifti(fout, "columns", nii_columns, true);
+    save_output_nifti(fout, "columns" + tag.str(), nii_columns, true);
     if (mode_debug) {
         save_output_nifti(fout, "voronoi_flood_step", flood_step, false);
         save_output_nifti(fout, "voronoi_flood_dist", flood_dist, false);
