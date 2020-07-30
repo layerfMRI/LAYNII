@@ -28,10 +28,6 @@ int main(int argc, char*  argv[]) {
     uint16_t ac;
     bool mode_debug = false;
 
-    // Prepare to write wavefront .obj file
-    ofstream myfile;
-    myfile.open ("/home/faruk/Documents/temp_LAYNII_trinagle/example.obj");
-
     // Process user options
     if (argc < 2) return shoq_help();
     for (ac = 1; ac < argc; ac++) {
@@ -89,6 +85,25 @@ int main(int argc, char*  argv[]) {
     log_nifti_descriptives(nii1);
     log_nifti_descriptives(nii2);
 
+    // ------------------------------------------------------------------------
+    // Parse input file to determine output path
+    string ext, basename;
+    string path_out = fout;
+    auto const pos = path_out.find_first_of('.');
+    if (pos != string::npos) {
+        basename = path_out.substr(0, pos);
+    } else {  // Determine default extension when no extension given
+        basename = path_out;
+    }
+    ext = "column_triangulated.obj";
+    path_out = basename + "_" + ext;
+    cout << "  Output:\n    " << path_out << endl;
+
+    // Prepare to write wavefront .obj file
+    ofstream myfile;
+    myfile.open(path_out);
+
+    // ------------------------------------------------------------------------
     // Get dimensions of input
     const uint32_t size_x = nii1->nx;
     const uint32_t size_y = nii1->ny;
@@ -294,14 +309,12 @@ int main(int argc, char*  argv[]) {
         }
     }
 
-    // Print triplets
+    // Write triples (faces) into wavefront .obj file
     for (int i=0; i<count_triplets; ++i) {
         myfile << "f ";
         for (int j=0; j<3; ++j){
-            cout << *(triplets + i * 3 + j) << " ";
             myfile << *(triplets + i * 3 + j) << " ";
         }
-        cout << endl;
         myfile << "\n";
     }
 
