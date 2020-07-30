@@ -45,7 +45,7 @@ int main(int argc, char*  argv[]) {
             }
             fin1 = argv[ac];
             fout = argv[ac];
-        } else if (!strcmp(argv[ac], "-input1")) {
+        } else if (!strcmp(argv[ac], "-input2")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -input2\n");
                 return 1;
@@ -110,6 +110,9 @@ int main(int argc, char*  argv[]) {
     nifti_image* nii_columns = copy_nifti_as_int32(nii1);
     int32_t* nii_columns_data = static_cast<int32_t*>(nii_columns->data);
 
+    nifti_image* nii_centroids = copy_nifti_as_int32(nii2);
+    int32_t* nii_centroids_data = static_cast<int32_t*>(nii_centroids->data);
+
     // Voxels of interest
     uint32_t nr_voi = 0;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -129,6 +132,15 @@ int main(int argc, char*  argv[]) {
             ii += 1;
         }
     }
+
+    // Prepare triplets array to store potential triangular faces
+    int32_t size_triplets = nr_voi * 3;
+    int32_t* triplets;
+    triplets = (int32_t*) malloc(size_triplets*sizeof(int32_t));
+    for (int32_t i = 0; i != size_triplets; ++i) {
+        *(triplets + i) = 0;
+    }
+    int count_triplets = 0;
 
     // ========================================================================
     // Triangulation on subset Voronoi cells
@@ -213,7 +225,8 @@ int main(int argc, char*  argv[]) {
 
         // --------------------------------------------------------------------
         // Find non-zero unique elements in array
-        int count = 0;
+        int count_neigh = 0;
+
         // Have an array to note down columns id's that will form triangles.
         // NOTE(Faruk): I allocate 8 elements here because if the volume is
         // over-parcellated (i.e. too many colmns), hit count can go above 3
@@ -229,19 +242,25 @@ int main(int argc, char*  argv[]) {
             }
             if (m == n) {
                 if (*(neighbours + m) != 0) {
-                    *(trio + count) = *(neighbours + m);
-                    count += 1;
+                    *(trio + count_neigh) = *(neighbours + m);
+                    count_neigh += 1;
                 }
             }
         }
-        if (count >= 3) {
-            cout << count << endl;
-            for (int l=0; l<count; ++l) {
-                cout << *(trio + l) << " ";
+        if (count_neigh == 3) {  // Hard-lock to triplets only
+            for (int l=0; l<count_neigh; ++l) {
+                *(triplets + count_triplets * 3 + l) = *(trio + l);
             }
-            cout << endl;
+            count_triplets += 1;
         }
+    }
 
+    // Print triplets
+    for (int i=0; i<count_triplets; ++i) {
+        for (int j=0; j<3; ++j){
+            cout << *(triplets + i * 3 + j) << " ";
+        }
+        cout << endl;
     }
 
     // save_output_nifti(fout, "gradients", nii_grad, true);
