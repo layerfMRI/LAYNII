@@ -293,46 +293,35 @@ int main(int argc, char*  argv[]) {
             d_2 = (*(nii_input_data + i) / 26.) * (1. - std::sqrt(2)/2.);
             d_3 = (*(nii_input_data + i) / 26.) * (1. - std::sqrt(3)/2.);
 
-            // Normalize gradients with sum
-            float i_max = 0.;
-            for (int m = 0; m != 26; ++m){
-                i_max += *(nii_grad_data + m * nr_voxels + i);
-            }
-            if (i_max != 0) {
-                i_max /= 1.;
-            } else {
-                i_max = 1.;
-            }
-
             // Quantities that will be moved
-            q_01 = (*(nii_grad_data + 0 * nr_voxels + i) / i_max) * d_1;
-            q_02 = (*(nii_grad_data + 1 * nr_voxels + i) / i_max) * d_1;
-            q_03 = (*(nii_grad_data + 2 * nr_voxels + i) / i_max) * d_1;
-            q_04 = (*(nii_grad_data + 3 * nr_voxels + i) / i_max) * d_1;
-            q_05 = (*(nii_grad_data + 4 * nr_voxels + i) / i_max) * d_1;
-            q_06 = (*(nii_grad_data + 5 * nr_voxels + i) / i_max) * d_1;
+            q_01 = *(nii_grad_data + 0 * nr_voxels + i) * d_1;
+            q_02 = *(nii_grad_data + 1 * nr_voxels + i) * d_1;
+            q_03 = *(nii_grad_data + 2 * nr_voxels + i) * d_1;
+            q_04 = *(nii_grad_data + 3 * nr_voxels + i) * d_1;
+            q_05 = *(nii_grad_data + 4 * nr_voxels + i) * d_1;
+            q_06 = *(nii_grad_data + 5 * nr_voxels + i) * d_1;
 
-            q_07 = (*(nii_grad_data + 6 * nr_voxels + i) / i_max) * d_2;
-            q_08 = (*(nii_grad_data + 7 * nr_voxels + i) / i_max) * d_2;
-            q_09 = (*(nii_grad_data + 8 * nr_voxels + i) / i_max) * d_2;
-            q_10 = (*(nii_grad_data + 9 * nr_voxels + i) / i_max) * d_2;
-            q_11 = (*(nii_grad_data + 10 * nr_voxels + i) / i_max) * d_2;
-            q_12 = (*(nii_grad_data + 11 * nr_voxels + i) / i_max) * d_2;
-            q_13 = (*(nii_grad_data + 12 * nr_voxels + i) / i_max) * d_2;
-            q_14 = (*(nii_grad_data + 13 * nr_voxels + i) / i_max) * d_2;
-            q_15 = (*(nii_grad_data + 14 * nr_voxels + i) / i_max) * d_2;
-            q_16 = (*(nii_grad_data + 15 * nr_voxels + i) / i_max) * d_2;
-            q_17 = (*(nii_grad_data + 16 * nr_voxels + i) / i_max) * d_2;
-            q_18 = (*(nii_grad_data + 17 * nr_voxels + i) / i_max) * d_2;
+            q_07 = *(nii_grad_data + 6 * nr_voxels + i) * d_2;
+            q_08 = *(nii_grad_data + 7 * nr_voxels + i) * d_2;
+            q_09 = *(nii_grad_data + 8 * nr_voxels + i) * d_2;
+            q_10 = *(nii_grad_data + 9 * nr_voxels + i) * d_2;
+            q_11 = *(nii_grad_data + 10 * nr_voxels + i) * d_2;
+            q_12 = *(nii_grad_data + 11 * nr_voxels + i) * d_2;
+            q_13 = *(nii_grad_data + 12 * nr_voxels + i) * d_2;
+            q_14 = *(nii_grad_data + 13 * nr_voxels + i) * d_2;
+            q_15 = *(nii_grad_data + 14 * nr_voxels + i) * d_2;
+            q_16 = *(nii_grad_data + 15 * nr_voxels + i) * d_2;
+            q_17 = *(nii_grad_data + 16 * nr_voxels + i) * d_2;
+            q_18 = *(nii_grad_data + 17 * nr_voxels + i) * d_2;
 
-            q_19 = (*(nii_grad_data + 18 * nr_voxels + i) / i_max) * d_3;
-            q_20 = (*(nii_grad_data + 19 * nr_voxels + i) / i_max) * d_3;
-            q_21 = (*(nii_grad_data + 20 * nr_voxels + i) / i_max) * d_3;
-            q_22 = (*(nii_grad_data + 21 * nr_voxels + i) / i_max) * d_3;
-            q_23 = (*(nii_grad_data + 22 * nr_voxels + i) / i_max) * d_3;
-            q_24 = (*(nii_grad_data + 23 * nr_voxels + i) / i_max) * d_3;
-            q_25 = (*(nii_grad_data + 24 * nr_voxels + i) / i_max) * d_3;
-            q_26 = (*(nii_grad_data + 25 * nr_voxels + i) / i_max) * d_3;
+            q_19 = *(nii_grad_data + 18 * nr_voxels + i) * d_3;
+            q_20 = *(nii_grad_data + 19 * nr_voxels + i) * d_3;
+            q_21 = *(nii_grad_data + 20 * nr_voxels + i) * d_3;
+            q_22 = *(nii_grad_data + 21 * nr_voxels + i) * d_3;
+            q_23 = *(nii_grad_data + 22 * nr_voxels + i) * d_3;
+            q_24 = *(nii_grad_data + 23 * nr_voxels + i) * d_3;
+            q_25 = *(nii_grad_data + 24 * nr_voxels + i) * d_3;
+            q_26 = *(nii_grad_data + 25 * nr_voxels + i) * d_3;
 
             q_00 = *(nii_input_data + i) - (q_01 + q_02 + q_03 + q_04 + q_05
                 + q_06 + q_07 + q_08 + q_09 + q_10 + q_11 + q_12 + q_13 + q_14
