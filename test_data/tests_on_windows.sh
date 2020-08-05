@@ -36,3 +36,4 @@
 ..\LN2_RIMIFY -input sc_rim.nii -innergm 2 -outergm 1 -gm 3 -output rimified_tim.nii
 ..\LN_INFO -input lo_T1EPI.nii
 ..\LN_CONLAY -layers lo_sc_layers.nii -ref lo_T1EPI.nii -subsample -output lo_layers_out.nii
+..\LN2_COLUMNS -rim sc_rim.nii -midgm sc_midGM.nii -nr_columns 300

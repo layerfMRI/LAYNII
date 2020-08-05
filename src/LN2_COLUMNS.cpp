@@ -12,6 +12,7 @@ int show_help(void) {
     "\n"
     "Usage:\n"
     "    LN2_COLUMNS -rim rim.nii -midgm rim_midgm_equidist.nii -nr_columns 100\n"
+    "    ../LN2_COLUMNS -rim sc_rim.nii -midgm sc_midGM.nii -nr_columns 300\n"
     "\n"
     "Options:\n"
     "    -help         : Show this help.\n"
