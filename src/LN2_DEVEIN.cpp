@@ -25,7 +25,7 @@ int show_help(void) {
     "    -layer_file  : Nifti (.nii) file that contains layers.\n"
     "    -column_file : Nifti (.nii) file that contains columns.\n"
     "    -ALF         : (Optional) File with estimates of amplitude of low frequencies (ALF)\n"
-    "                   as a correlate to venous CBV.\n"
+    "                   as a correlate to venous CBV. \n"
     "    -CBV         : (Optional) For CBV scaling \n"
     "    -linear      : (Optional) For linear scaling, this is automatially used, when no \n"
     "                   ALF file is given. \n"
@@ -50,9 +50,9 @@ int show_help(void) {
 int main(int argc, char* argv[]) {
     char *f_input = NULL, *f_layer = NULL, *f_column = NULL, *f_ALF = NULL;
     char *f_out = NULL;
-    string tag = "devein";
+    string tag = "deveinDeconv";
     int ac;
-    bool mode_linear = true;  // Default is linear as it requires least inputs
+    bool mode_linear = false;  // Default is linear as it requires least inputs
     bool mode_CBV = false;
 
     // Peak to tail ratio from Markuerkiaga et al. 2016 Fig. 5B at 7T.
@@ -90,7 +90,6 @@ int main(int argc, char* argv[]) {
             }
             lambda = atof(argv[ac]);  // No string copy, pointer assignment
         } else if (!strcmp(argv[ac], "-CBV")) {
-            mode_linear = false;
             mode_CBV = true;
         } else if (!strcmp(argv[ac], "-linear")) {
             mode_linear = true;
