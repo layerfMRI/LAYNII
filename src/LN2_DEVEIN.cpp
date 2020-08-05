@@ -27,6 +27,8 @@ int show_help(void) {
     "    -ALF         : (Optional) File with estimates of amplitude of low frequencies (ALF)\n"
     "                   as a correlate to venous CBV.\n"
     "    -CBV         : (Optional) For CBV scaling \n"
+    "    -linear      : (Optional) For linear scaling, this is automatially used, when no \n"
+    "                   ALF file is given. \n"
     "    -lambda      : (Optional) For peak to tail ratio. Default is 0.25\n"
     "                   from Markuerkiaga et al. 2016, Fig. 5B, at 7T.\n"
     "    -output      : (Optional) Output filename, including .nii or\n"
@@ -90,6 +92,8 @@ int main(int argc, char* argv[]) {
         } else if (!strcmp(argv[ac], "-CBV")) {
             mode_linear = false;
             mode_CBV = true;
+        } else if (!strcmp(argv[ac], "-linear")) {
+            mode_linear = true;
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
