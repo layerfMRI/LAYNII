@@ -155,6 +155,13 @@ int main(int argc, char* argv[]) {
         cout << "    There will be no deconvolution, just layer-dependent CBV scaling.\n" << endl;
     }
 
+    if (mode_linear && mode_CBV) {
+        cout << "  You selected both: Linear and CBV scaling. So I am confused. " << endl;
+        cout << "  I will only use only use linear scaling then. \n" << endl;
+         tag = "deveinLinear";
+         mode_CBV = true;
+    }
+
     // Get dimensions of input
     const int size_x = nii->nx;
     const int size_y = nii->ny;
