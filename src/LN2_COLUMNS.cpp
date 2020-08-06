@@ -291,7 +291,7 @@ int main(int argc, char*  argv[]) {
                             }
                         }
                     }
-
+// Renzo open comment here: 
                     // ------------------------------------------------------------
                     // 2-jump neighbours
                     // ------------------------------------------------------------
@@ -559,6 +559,7 @@ int main(int argc, char*  argv[]) {
                             }
                         }
                     }
+                    // Renzo close commen here
                 }
             }
             grow_step += 1;
