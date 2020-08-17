@@ -8,31 +8,34 @@ int show_help(void) {
     "LN2_COLUMNS: Generate columns using the outputs of LN2_LAYERS.\n"
     "             Designed to work both in 2D and 3D.\n"
     "\n"
-    "!!! WORK IN PROGRESS !!!\n"
-    "\n"
     "Usage:\n"
     "    LN2_COLUMNS -rim rim.nii -midgm rim_midgm_equidist.nii -nr_columns 100\n"
     "    ../LN2_COLUMNS -rim sc_rim.nii -midgm sc_midGM.nii -nr_columns 300\n"
     "\n"
     "Options:\n"
-    "    -help         : Show this help.\n"
-    "    -rim          : Segmentation input. Use 3 to code pure gray matter \n"
-    "                    voxels. This program only generates columns in the \n"
-    "                    voxels coded with 3.\n"
-    "    -midgm        : Middle gray matter file (from LN2_LAYERS output).\n"
-    "    -nr_columns   : Number of columns.\n"
-    "    -debug        : (Optional) Save extra intermediate outputs.\n"
-    "    -output       : (Optional) Output basename for all outputs.\n"
+    "    -help       : Show this help.\n"
+    "    -rim        : Segmentation input. Use 3 to code pure gray matter \n"
+    "                  voxels. This program only generates columns in the \n"
+    "                  voxels coded with 3.\n"
+    "    -midgm      : Middle gray matter file (from LN2_LAYERS output).\n"
+    "    -nr_columns : Number of columns.\n"
+    "    -centroids  : (Optional) Output of LN2_COLUMNS. Can be given as an\n"
+    "                  input to speed up generation of new columns or reduce\n"
+    "                  the desired number of columns. Acts as a checkpoint.\n"
+    "                  Especially useful for large images that takes long\n"
+    "                  time to process.\n"
+    "    -debug      : (Optional) Save extra intermediate outputs.\n"
+    "    -output     : (Optional) Output basename for all outputs.\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char*  argv[]) {
 
-    nifti_image *nii1 = NULL, *nii2 = NULL;
-    char *fin1 = NULL, *fout = NULL, *fin2;
+    nifti_image *nii1 = NULL, *nii2 = NULL, *nii3 = NULL;
+    char *fin1 = NULL, *fout = NULL, *fin2=NULL, *fin3=NULL;
     uint16_t ac, nr_columns = 5;
-    bool mode_debug = false;
+    bool mode_debug = false, mode_centroids_present = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -52,6 +55,13 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             fin2 = argv[ac];
+        } else if (!strcmp(argv[ac], "-centroids")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -centroids\n");
+                return 1;
+            }
+            fin3 = argv[ac];
+            mode_centroids_present = true;
         } else if (!strcmp(argv[ac], "-nr_columns")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -nr_columns\n");
@@ -80,6 +90,12 @@ int main(int argc, char*  argv[]) {
         fprintf(stderr, "** missing option '-midgm'\n");
         return 1;
     }
+    if (mode_centroids_present) {
+        if (!fin3) {
+            fprintf(stderr, "** missing option '-centroids'\n");
+            return 1;
+        }
+    }
 
     // Read input dataset, including data
     nii1 = nifti_image_read(fin1, 1);
@@ -92,12 +108,21 @@ int main(int argc, char*  argv[]) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin2);
         return 2;
     }
+    if (mode_centroids_present) {
+        nii3 = nifti_image_read(fin3, 1);
+        if (!nii3) {
+            fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin2);
+            return 2;
+        }
+    }
 
     log_welcome("LN2_COLUMNS");
     log_nifti_descriptives(nii1);
     log_nifti_descriptives(nii2);
 
-    cout << "\n  Nr. columns: " << nr_columns << endl;
+    if (mode_centroids_present) {
+        log_nifti_descriptives(nii3);
+    }
 
     // Get dimensions of input
     const uint32_t size_x = nii1->nx;
@@ -123,23 +148,50 @@ int main(int argc, char*  argv[]) {
 
     // ========================================================================
     // Fix input datatype issues
-    nifti_image* nii_rim = copy_nifti_as_int16(nii1);
-    int16_t* nii_rim_data = static_cast<int16_t*>(nii_rim->data);
-    nifti_image* nii_midgm = copy_nifti_as_int16(nii2);
-    int16_t* nii_midgm_data = static_cast<int16_t*>(nii_midgm->data);
+    nifti_image* nii_rim = copy_nifti_as_int32(nii1);
+    int32_t* nii_rim_data = static_cast<int32_t*>(nii_rim->data);
+    nifti_image* nii_midgm = copy_nifti_as_int32(nii2);
+    int32_t* nii_midgm_data = static_cast<int32_t*>(nii_midgm->data);
 
     // Prepare required nifti images
-    nifti_image* nii_columns  = copy_nifti_as_int16(nii_rim);
-    int16_t* nii_columns_data = static_cast<int16_t*>(nii_columns->data);
+    nifti_image* nii_columns  = copy_nifti_as_int32(nii_rim);
+    int32_t* nii_columns_data = static_cast<int32_t*>(nii_columns->data);
     // Setting zero
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         *(nii_columns_data + i) = 0;
     }
 
-    nifti_image* flood_step = copy_nifti_as_int16(nii_columns);
-    int16_t* flood_step_data = static_cast<int16_t*>(flood_step->data);
+    nifti_image* flood_step = copy_nifti_as_int32(nii_columns);
+    int32_t* flood_step_data = static_cast<int32_t*>(flood_step->data);
     nifti_image* flood_dist = copy_nifti_as_float32(nii_columns);
     float* flood_dist_data = static_cast<float*>(flood_dist->data);
+
+    // ------------------------------------------------------------------------
+    // Find initial number of columns if the optional input is given
+    int max_column_id = 0;
+    if (mode_centroids_present) {
+        nifti_image* nii_centroids = copy_nifti_as_int32(nii3);
+        int32_t* nii_centroids_data = static_cast<int32_t*>(nii_centroids->data);
+
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            *(nii_columns_data + i) = *(nii_centroids_data + i);
+            if (*(nii_centroids_data + i) > max_column_id) {
+                max_column_id = *(nii_centroids_data + i);
+            }
+        }
+        cout << "  Initial number of columns: " << max_column_id << endl;
+
+        // Remove centroids if the desired number of columns is less than
+        // initially given centroids.
+        if (max_column_id > nr_columns) {
+            for (uint32_t i = 0; i != nr_voxels; ++i) {
+                if (*(nii_columns_data + i) > nr_columns) {
+                    *(nii_columns_data + i) = 0;
+                }
+            }
+        }
+    }
+    cout << "  Desired number of columns: " << nr_columns << endl;
 
     // ------------------------------------------------------------------------
     // NOTE(Faruk): This section is written to constrain the big iterative
@@ -168,7 +220,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Find column centers through farthest flood distance
     // ========================================================================
-    cout << "  Start finding columns " << flush;
+    cout << "  Start generating columns..." << flush;
     // Find the initial voxel
     uint32_t start_voxel;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -183,8 +235,8 @@ int main(int argc, char*  argv[]) {
     float flood_dist_thr = std::numeric_limits<float>::infinity();
 
     // Loop until desired number of columns reached
-    for (uint32_t n = 0; n != nr_columns; ++n) {
-        cout << "\r  Start finding columns [" << n+1 << "/" << nr_columns
+    for (uint32_t n = max_column_id; n < nr_columns; ++n) {
+        cout << "\r  Column [" << n+1 << "/" << nr_columns
              << "]..."<< flush;
 
         uint16_t grow_step = 1;
@@ -197,11 +249,13 @@ int main(int argc, char*  argv[]) {
             if (*(nii_midgm_data + i) == 2) {
                 *(flood_step_data + i) = 1.;
                 *(flood_dist_data + i) = 0.;
-            } else if (*(flood_dist_data + i) >= flood_dist_thr && *(flood_dist_data + i) > 0) {
+            } else if (*(flood_dist_data + i) >= flood_dist_thr
+                       && *(flood_dist_data + i) > 0) {
                 *(flood_step_data + i) = 0.;
                 *(flood_dist_data + i) = 0.;
                 *(nii_midgm_data + i) = 1;
-            } else if (*(flood_dist_data + i) < flood_dist_thr && *(flood_dist_data + i) > 0) {
+            } else if (*(flood_dist_data + i) < flood_dist_thr
+                       && *(flood_dist_data + i) > 0) {
                 *(nii_midgm_data + i) = 0;  // no need to recompute
             }
         }
@@ -215,9 +269,9 @@ int main(int argc, char*  argv[]) {
                     tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
                     voxel_counter += 1;
 
-                    // ------------------------------------------------------------
+                    // --------------------------------------------------------
                     // 1-jump neighbours
-                    // ------------------------------------------------------------
+                    // --------------------------------------------------------
                     if (ix > 0) {
                         j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
                         if (*(nii_midgm_data + j) == 1) {
@@ -291,9 +345,9 @@ int main(int argc, char*  argv[]) {
                             }
                         }
                     }
-                    // ------------------------------------------------------------
+                    // --------------------------------------------------------
                     // 2-jump neighbours
-                    // ------------------------------------------------------------
+                    // --------------------------------------------------------
                     if (ix > 0 && iy > 0) {
                         j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
 
@@ -451,9 +505,9 @@ int main(int argc, char*  argv[]) {
                         }
                     }
 
-                    // ------------------------------------------------------------
+                    // --------------------------------------------------------
                     // 3-jump neighbours
-                    // ------------------------------------------------------------
+                    // --------------------------------------------------------
                     if (ix > 0 && iy > 0 && iz > 0) {
                         j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
 
@@ -580,7 +634,7 @@ int main(int argc, char*  argv[]) {
     }
     cout << endl;
 
-    if (mode_debug) {
+    if (mode_debug && mode_centroids_present) {
         save_output_nifti(fout, "flood_step", flood_step, false);
         save_output_nifti(fout, "flood_dist", flood_dist, false);
     }
@@ -628,7 +682,7 @@ int main(int argc, char*  argv[]) {
         }
     }
 
-    uint16_t grow_step = 1;
+    int32_t grow_step = 1;
     uint32_t voxel_counter = nr_voxels;
     uint32_t ix, iy, iz, i, j;
     float d;
