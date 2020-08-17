@@ -34,7 +34,8 @@ int main(int argc, char*  argv[]) {
 
     nifti_image *nii1 = NULL, *nii2 = NULL, *nii3 = NULL;
     char *fin1 = NULL, *fout = NULL, *fin2=NULL, *fin3=NULL;
-    uint32_t ac, nr_columns = 5;
+    int ac;
+    int32_t nr_columns = 5;
     bool mode_debug = false, mode_initialize_with_centroids = false;
 
     // Process user options
@@ -168,7 +169,7 @@ int main(int argc, char*  argv[]) {
 
     // ------------------------------------------------------------------------
     // Find initial number of columns if the optional input is given
-    int max_column_id = 0;
+    int32_t max_column_id = 0;
     if (mode_initialize_with_centroids) {
         nifti_image* nii_centroids = copy_nifti_as_int32(nii3);
         int32_t* nii_centroids_data = static_cast<int32_t*>(nii_centroids->data);
@@ -235,11 +236,11 @@ int main(int argc, char*  argv[]) {
     float flood_dist_thr = std::numeric_limits<float>::infinity();
 
     // Loop until desired number of columns reached
-    for (uint32_t n = max_column_id; n < nr_columns; ++n) {
+    for (int32_t n = max_column_id; n < nr_columns; ++n) {
         cout << "\r  Column [" << n+1 << "/" << nr_columns
              << "]..."<< flush;
 
-        uint32_t grow_step = 1;
+        int32_t grow_step = 1;
         uint32_t voxel_counter = nr_voxels;
         uint32_t ix, iy, iz, i, j;
         float d;
