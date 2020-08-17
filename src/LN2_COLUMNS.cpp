@@ -221,7 +221,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Find column centers through farthest flood distance
     // ========================================================================
-    cout << "  Start generating columns..." << flush;
+    cout << "  Start generating columns..." << endl;
     // Find the initial voxel
     uint32_t start_voxel;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -237,8 +237,7 @@ int main(int argc, char*  argv[]) {
 
     // Loop until desired number of columns reached
     for (int32_t n = max_column_id; n < nr_columns; ++n) {
-        cout << "\r  Column [" << n+1 << "/" << nr_columns
-             << "]..."<< flush;
+        cout << "\r    Column [" << n+1 << "/" << nr_columns << "]" << flush;
 
         int32_t grow_step = 1;
         uint32_t voxel_counter = nr_voxels;
