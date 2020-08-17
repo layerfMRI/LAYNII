@@ -34,7 +34,7 @@ int main(int argc, char*  argv[]) {
 
     nifti_image *nii1 = NULL, *nii2 = NULL, *nii3 = NULL;
     char *fin1 = NULL, *fout = NULL, *fin2=NULL, *fin3=NULL;
-    uint16_t ac, nr_columns = 5;
+    uint32_t ac, nr_columns = 5;
     bool mode_debug = false, mode_initialize_with_centroids = false;
 
     // Process user options
@@ -239,7 +239,7 @@ int main(int argc, char*  argv[]) {
         cout << "\r  Column [" << n+1 << "/" << nr_columns
              << "]..."<< flush;
 
-        uint16_t grow_step = 1;
+        uint32_t grow_step = 1;
         uint32_t voxel_counter = nr_voxels;
         uint32_t ix, iy, iz, i, j;
         float d;
