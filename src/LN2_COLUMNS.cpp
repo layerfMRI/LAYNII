@@ -174,24 +174,29 @@ int main(int argc, char*  argv[]) {
         nifti_image* nii_centroids = copy_nifti_as_int32(nii3);
         int32_t* nii_centroids_data = static_cast<int32_t*>(nii_centroids->data);
 
+        // Find maximum column id
         for (uint32_t i = 0; i != nr_voxels; ++i) {
-            *(nii_columns_data + i) = *(nii_centroids_data + i);
             if (*(nii_centroids_data + i) > max_column_id) {
                 max_column_id = *(nii_centroids_data + i);
             }
         }
-        cout << "  Initial number of columns: " << max_column_id << endl;
 
         // Remove centroids if the desired number of columns is less than
         // initially given centroids.
-        if (max_column_id > nr_columns) {
-            for (uint32_t i = 0; i != nr_voxels; ++i) {
-                if (*(nii_columns_data + i) > nr_columns) {
-                    *(nii_columns_data + i) = 0;
-                }
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(nii_centroids_data + i) > nr_columns) {
+                *(nii_columns_data + i) = 0;
+            } else if (*(nii_centroids_data + i) < 0) {  // for signed ids error
+                *(nii_columns_data + i) = 0;
+            } else {
+                *(nii_columns_data + i) = *(nii_centroids_data + i);
             }
         }
+        if (mode_debug) {
+            save_output_nifti(fout, "initial_centroids", nii_columns, false);
+        }
     }
+    cout << "  Initial number of columns: " << max_column_id << endl;
     cout << "  Desired number of columns: " << nr_columns << endl;
 
     // ------------------------------------------------------------------------
