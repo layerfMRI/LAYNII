@@ -35,7 +35,7 @@ int main(int argc, char*  argv[]) {
     nifti_image *nii1 = NULL, *nii2 = NULL, *nii3 = NULL;
     char *fin1 = NULL, *fout = NULL, *fin2=NULL, *fin3=NULL;
     uint16_t ac, nr_columns = 5;
-    bool mode_debug = false, mode_centroids_present = false;
+    bool mode_debug = false, mode_initialize_with_centroids = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -61,7 +61,7 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             fin3 = argv[ac];
-            mode_centroids_present = true;
+            mode_initialize_with_centroids = true;
         } else if (!strcmp(argv[ac], "-nr_columns")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -nr_columns\n");
@@ -90,7 +90,7 @@ int main(int argc, char*  argv[]) {
         fprintf(stderr, "** missing option '-midgm'\n");
         return 1;
     }
-    if (mode_centroids_present) {
+    if (mode_initialize_with_centroids) {
         if (!fin3) {
             fprintf(stderr, "** missing option '-centroids'\n");
             return 1;
@@ -108,7 +108,7 @@ int main(int argc, char*  argv[]) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin2);
         return 2;
     }
-    if (mode_centroids_present) {
+    if (mode_initialize_with_centroids) {
         nii3 = nifti_image_read(fin3, 1);
         if (!nii3) {
             fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin2);
@@ -120,7 +120,7 @@ int main(int argc, char*  argv[]) {
     log_nifti_descriptives(nii1);
     log_nifti_descriptives(nii2);
 
-    if (mode_centroids_present) {
+    if (mode_initialize_with_centroids) {
         log_nifti_descriptives(nii3);
     }
 
@@ -169,7 +169,7 @@ int main(int argc, char*  argv[]) {
     // ------------------------------------------------------------------------
     // Find initial number of columns if the optional input is given
     int max_column_id = 0;
-    if (mode_centroids_present) {
+    if (mode_initialize_with_centroids) {
         nifti_image* nii_centroids = copy_nifti_as_int32(nii3);
         int32_t* nii_centroids_data = static_cast<int32_t*>(nii_centroids->data);
 
@@ -634,7 +634,7 @@ int main(int argc, char*  argv[]) {
     }
     cout << endl;
 
-    if (mode_debug && mode_centroids_present) {
+    if (mode_debug) {
         save_output_nifti(fout, "flood_step", flood_step, false);
         save_output_nifti(fout, "flood_dist", flood_dist, false);
     }
@@ -709,7 +709,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
                         }
-                    } else {
+                    } else if (*(nii_rim_data + j) != 0) {
                         jump_lock = true;
                     }
                 }
@@ -723,7 +723,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
                         }
-                    } else {
+                    } else if (*(nii_rim_data + j) != 0) {
                         jump_lock = true;
                     }
                 }
@@ -737,7 +737,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
                         }
-                    } else {
+                    } else if (*(nii_rim_data + j) != 0) {
                         jump_lock = true;
                     }
                 }
@@ -751,7 +751,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
                         }
-                    } else {
+                    } else if (*(nii_rim_data + j) != 0) {
                         jump_lock = true;
                     }
                 }
@@ -765,7 +765,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
                         }
-                    } else {
+                    } else if (*(nii_rim_data + j) != 0) {
                         jump_lock = true;
                     }
                 }
@@ -780,7 +780,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_step_data + j) = grow_step + 1;
                             *(nii_columns_data + j) = *(nii_columns_data + i);
                         }
-                    } else {
+                    } else if (*(nii_rim_data + j) != 0) {
                         jump_lock = true;
                     }
                 }
