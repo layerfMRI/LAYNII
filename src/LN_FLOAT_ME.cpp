@@ -75,12 +75,15 @@ int main(int argc, char *argv[]) {
     nifti_image *nii_new = copy_nifti_as_float32(nii);
     float* nii_new_data = static_cast<float*>(nii_new->data);
 
-    // Handle scaling factor effects
+    // Handle nifti header scl_slope and scl_inter effects
     float scl_slope = nii->scl_slope;
+    float scl_inter = nii->scl_inter;
     for (int i = 0; i != nr_voxels; ++i) {
         *(nii_new_data + i) *= scl_slope;
+        *(nii_new_data + i) += scl_inter;
     }
     nii_new->scl_slope = 1.;
+    nii_new->scl_inter = 0.;
 
     // Save
     if (!use_outpath) fout = fin;
