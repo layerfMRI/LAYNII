@@ -1,5 +1,6 @@
 
 #include "../dep/laynii_lib.h"
+#include <limits>
 
 int show_help(void) {
     printf(
@@ -22,7 +23,8 @@ int show_help(void) {
     "                   contaminations. This means that there will be no\n"
     "                   deconvolution, just scaling of the baseline venous CBV.\n"
     "                   This can be a time series or an activity map (not z-scores though). \n"
-    "    -layer_file  : Nifti (.nii) file that contains layers.\n"
+    "    -layer_file  : Nifti (.nii) file that contains layers. Layers close to white matter\n"
+    "                   should be denoted by smaller numbers.\n"
     "    -column_file : Nifti (.nii) file that contains columns.\n"
     "    -ALF         : (Optional) File with estimates of amplitude of low frequencies (ALF)\n"
     "                   as a correlate to venous CBV. \n"
@@ -192,6 +194,37 @@ int main(int argc, char* argv[]) {
         }
     }
     cout << "  Number of layers = " << nr_layers << endl;
+
+    // ------------------------------------------------------------------------
+    // Find input value ranges
+    // ------------------------------------------------------------------------
+    float layer_max = std::numeric_limits<float>::min();
+    float layer_min = std::numeric_limits<float>::max();
+    float input_max = std::numeric_limits<float>::min();
+    float input_min = std::numeric_limits<float>::max();
+    for (int i = 0; i < nr_voxels; ++i) {
+        if (*(nii_layer_data + i) != 0) {
+            if (*(nii_layer_data + i) > layer_max) {
+                layer_max = *(nii_layer_data + i);
+            }
+            if (*(nii_layer_data + i) < layer_min) {
+                layer_min = *(nii_layer_data + i);
+            }
+            if (*(nii_input_data + i) > input_max) {
+                input_max = *(nii_input_data + i);
+            }
+            if (*(nii_input_data + i) < input_min) {
+                input_min = *(nii_input_data + i);
+            }
+        }
+    }
+    cout << "    Min. layer value = " << layer_min << endl;
+    cout << "    Max. layer value = " << layer_max << endl;
+    cout << endl;
+    cout << "  Before devein:" << endl;
+    cout << "    Min. value = " << input_min << endl;
+    cout << "    Max. value = " << input_max << endl;
+    cout << endl;
 
     // ========================================================================
     // Main chunk
@@ -372,6 +405,26 @@ int main(int argc, char* argv[]) {
             }
         }
     }
+
+    // ------------------------------------------------------------------------
+    // Find input value ranges
+    // ------------------------------------------------------------------------
+    input_max = std::numeric_limits<float>::min();
+    input_min = std::numeric_limits<float>::max();
+    for (int i = 0; i < nr_voxels; ++i) {
+        if (*(nii_layer_data + i) != 0) {
+            if (*(nii_output_data + i) > input_max) {
+                input_max = *(nii_output_data + i);
+            }
+            if (*(nii_output_data + i) < input_min) {
+                input_min = *(nii_output_data + i);
+            }
+        }
+    }
+    cout << "  After devein:" << endl;
+    cout << "    Min. value = " << input_min << endl;
+    cout << "    Max. value = " << input_max << endl;
+    cout << endl;
 
     save_output_nifti(f_out, tag, nii_output, true);
 
