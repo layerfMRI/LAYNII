@@ -19,15 +19,18 @@ int show_help(void){
     "    -twodim      : (Optional) Smoothing in 2 Dim only \n"
     "    -mask        : (Optional) Nifti (.nii) that is used mask activity \n"
     "                   outside. This option can speed up processing.\n"
+    "    -keep_masked : (Optional) Keep masked-out voxels in the output nifti.\n"
+    "                   Useful for having a composite image of smoothed and\n"
+    "                   un-smoothed voxels. Only used with -mask option.\n"
+    "    -selectivity : (Optional) Makes the smoothing more or less specific \n"
+    "                   to a certain gradient range. 0.05 is only within \n"
+    "                   very similar values. 0.9 is almost independent of \n"
+    "                   the gradient file 0.1 is default.\n"
     "    -within      : (Optional) Determines that smoothing should happen \n"
     "                   within similar values, not across different values.\n"
     "    -acros       : (Optional) Determines that smoothing should happen \n"
     "                   across different values, not within similar values.\n"
     "                   NOTE: This option is not working yet.\n"
-    "    -selectivity : (Optional) Makes the smoothing more or less specific \n"
-    "                   to a certain gradient range. 0.05 is only within \n"
-    "                   very similar values. 0.9 is almost independent of \n"
-    "                   the gradient file 0.1 is default.\n"
     "    -output      : (Optional) Output filename, including .nii or\n"
     "                   .nii.gz, and path if needed. Overwrites existing files.\n"
     "\n"
@@ -46,9 +49,9 @@ int show_help(void){
 
 int main(int argc, char * argv[])
 {
-    bool use_outpath = false;
+    bool use_outpath = false, keep_masked_voxels = false;
     char *fout = NULL;
-    char *fmaski=NULL, *finfi=NULL, *froii=NULL;
+    char *fgradi=NULL, *finfi=NULL, *fmaski=NULL;
     int ac, twodim=0, do_masking=0, within = 0, across = 0;
     float FWHM_val=0, selectivity=0.1;
     if( argc < 3 ) return show_help();
@@ -63,7 +66,7 @@ int main(int argc, char * argv[])
                 fprintf(stderr, "** missing argument for -gradfile\n");
                 return 1;
             }
-            fmaski = argv[ac];
+            fgradi = argv[ac];
         }
         else if( !strcmp(argv[ac], "-FWHM") ) {
             if( ++ac >= argc ) {
@@ -96,9 +99,11 @@ int main(int argc, char * argv[])
                 fprintf(stderr, "** missing argument for -mask\n");
                 return 1;
             }
-            froii = argv[ac];
+            fmaski = argv[ac];
             do_masking = 1;
-            cout << "Set everything to zero outside the layers." << endl;
+        }
+        else if( !strcmp(argv[ac], "-keep_masked") ) {
+            keep_masked_voxels = true;
         }
         else if( !strcmp(argv[ac], "-selectivity") ) {
             if( ++ac >= argc ) {
@@ -123,7 +128,7 @@ int main(int argc, char * argv[])
         fprintf(stderr, "** missing option '-input'\n");
         return 1;
     }
-    if (!fmaski) {
+    if (!fgradi) {
         fprintf(stderr, "** missing option '-gradfile'\n");
         return 1;
     }
@@ -135,15 +140,15 @@ int main(int argc, char * argv[])
         return 2;
     }
 
-    nifti_image *nim_maski = nifti_image_read(fmaski, 1);
-    if (!nim_maski) {
-        fprintf(stderr,"** failed to read NIfTI from '%s'\n", fmaski);
+    nifti_image *nim_gradi = nifti_image_read(fgradi, 1);
+    if (!nim_gradi) {
+        fprintf(stderr,"** failed to read NIfTI from '%s'\n", fgradi);
         return 2;
     }
 
     log_welcome("LN_GRADSMOOTH");
     log_nifti_descriptives(nim_inputfi);
-    log_nifti_descriptives(nim_maski);
+    log_nifti_descriptives(nim_gradi);
 
     if (across + within !=1) {
         cout << " Please select either -within or -across" << endl;
@@ -155,16 +160,16 @@ int main(int argc, char * argv[])
     }
 
     // Get dimensions of input
-    int size_x = nim_maski->nx;
-    int size_y = nim_maski->ny;
-    int size_z = nim_maski->nz;
+    int size_x = nim_gradi->nx;
+    int size_y = nim_gradi->ny;
+    int size_z = nim_gradi->nz;
     int size_t = nim_inputfi->nt;
-    int nx = nim_maski->nx;
-    int nxy = nim_maski->nx * nim_maski->ny;
-    int nxyz = nim_maski->nx * nim_maski->ny * nim_maski->nz;
-    float dX = nim_maski->pixdim[1];
-    float dY = nim_maski->pixdim[2];
-    float dZ = nim_maski->pixdim[3];
+    int nx = nim_gradi->nx;
+    int nxy = nim_gradi->nx * nim_gradi->ny;
+    int nxyz = nim_gradi->nx * nim_gradi->ny * nim_gradi->nz;
+    float dX = nim_gradi->pixdim[1];
+    float dY = nim_gradi->pixdim[2];
+    float dZ = nim_gradi->pixdim[3];
 
     // NOTE(Renzo): If you are running the smoothing in 2D, it will still go
     // thought he entire pipeline. The only difference is that the weights
@@ -179,31 +184,40 @@ int main(int argc, char * argv[])
     nifti_image *nim_inputf = copy_nifti_as_float32(nim_inputfi);
     float *nim_inputf_data = static_cast<float*>(nim_inputf->data);
 
-    nifti_image *nim_mask = copy_nifti_as_float32(nim_maski);
-    float *nim_mask_data = static_cast<float*>(nim_mask->data);
+    nifti_image *nim_grad = copy_nifti_as_float32(nim_gradi);
+    float *nim_grad_data = static_cast<float*>(nim_grad->data);
 
-    nifti_image *nim_roi = copy_nifti_as_float32(nim_maski);
+    nifti_image *nim_roi = copy_nifti_as_float32(nim_gradi);
     float *nim_roi_data = static_cast<float*>(nim_roi->data);
+
+    nifti_image *nim_mask = NULL;
+    float *nim_mask_data = NULL;
     // ========================================================================
 
     if ( do_masking == 1 ) {
         // Read input dataset, including data
-        nifti_image *nim_roii_input = nifti_image_read(froii, 1);
-        if( !nim_roii_input ) {
-            fprintf(stderr,"** failed to read NIfTI from '%s'\n", froii);
+        nifti_image *nim_mask_input = nifti_image_read(fmaski, 1);
+        if( !nim_mask_input ) {
+            fprintf(stderr,"** failed to read NIfTI from '%s'\n", fmaski);
             return 2;
         }
 
+        if (keep_masked_voxels) {
+            cout << "  Masked-out voxel will be untouched instead of zero." << endl;
+        } else {
+            cout << "  Masked-out voxel will be zero." << endl;
+        }
+
         // Quickfix for issue #29
-        nifti_image *nim_roii = copy_nifti_as_float32(nim_roii_input);
-        float *nim_roii_data = static_cast<float*>(nim_roii->data);
+        nim_mask = copy_nifti_as_float32(nim_mask_input);
+        nim_mask_data = static_cast<float*>(nim_mask->data);
 
         for(int t=0; t<size_t; ++t) {
             for(int z=0; z<size_z; ++z) {
                 for(int y=0; y<size_y; ++y) {
                     for(int x=0; x<size_x; ++x) {
                         int voxel_i = nxyz * t + nxy * z + nx * x + y;
-                        *(nim_roi_data + voxel_i) = (float)(*(nim_roii_data  + voxel_i));
+                        *(nim_roi_data + voxel_i) = (float)(*(nim_mask_data  + voxel_i));
                     }
                 }
             }
@@ -297,14 +311,14 @@ int main(int argc, char * argv[])
                     *(gausweight_data + nxy * iz + nx * ix + iy)  = 0;
                     *(smoothed_data + nxy * iz + nx * ix + iy)  = 0;
                     NvoxInVinc = 0;
-                    local_val = *(nim_mask_data + nxy * iz + nx * ix + iy);
+                    local_val = *(nim_grad_data + nxy * iz + nx * ix + iy);
 
                     // Examining the environment and determining what
                     // the signal intensities are and what its distribution are
                     for (int iz_i=max(0, iz-vic); iz_i<=min(iz+vic, size_z-1); ++iz_i) {
                         for (int iy_i=max(0, iy-vic); iy_i<=min(iy+vic, size_x-1); ++iy_i) {
                             for (int ix_i=max(0, ix-vic); ix_i<=min(ix+vic, size_y-1); ++ix_i) {
-                                vec1[NvoxInVinc] = (double)*(nim_mask_data + nxy * iz_i + nx * ix_i + iy_i);
+                                vec1[NvoxInVinc] = (double)*(nim_grad_data + nxy * iz_i + nx * ix_i + iy_i);
                                 NvoxInVinc++;
                             }
                         }
@@ -320,7 +334,7 @@ int main(int argc, char * argv[])
                         for(int iy_i=max(0, iy-vic); iy_i<=min(iy+vic, size_x-1); ++iy_i) {
                             for(int ix_i=max(0, ix-vic); ix_i<=min(ix+vic, size_y-1); ++ix_i) {
                                 dist_i = dist((float)ix, (float)iy, (float)iz, (float)ix_i, (float)iy_i, (float)iz_i,dX,dY,dZ);
-                                value_dist = fabs(local_val - *(nim_mask_data + nxy * iz_i + nx * ix_i + iy_i));
+                                value_dist = fabs(local_val - *(nim_grad_data + nxy * iz_i + nx * ix_i + iy_i));
 
                                 temp_wight_factor = gaus(dist_i,FWHM_val ) * gaus(value_dist, grad_stdev * selectivity) / gaus(0, grad_stdev * selectivity);
 
@@ -346,21 +360,27 @@ int main(int argc, char * argv[])
             }
         }
     }
-
     cout << endl;
 
-    smoothed->scl_slope = nim_inputfi->scl_slope;
-
-    if (nim_inputfi->scl_inter != 0 ) {
-        cout << " #############################################" << endl;
-        cout << " #######   WARNING   WANRING   WANRING  ######" << endl;
-        cout << " ##   the NIFTI scale factor is asymmetric  ##" << endl;
-        cout << " ##   Why would you do such a thing????     ##" << endl;
-        cout << " #######   WARNING   WANRING   WANRING  ######" << endl;
-        cout << " #############################################" << endl;
+    // Fill in masked-out voxel with original input values
+    if (keep_masked_voxels) {
+        for(int t=0; t<size_t; ++t) {
+            for(int z=0; z<size_z; ++z) {
+                for(int y=0; y<size_y; ++y) {
+                    for(int x=0; x<size_x; ++x) {
+                        int voxel_i = nxyz * t + nxy * z + nx * x + y;
+                        if (*(nim_roi_data + voxel_i) == 0) {
+                            *(smoothed_data + voxel_i) = *(nim_inputf_data + voxel_i);
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    if (!use_outpath) fout = finfi;
+    if (!use_outpath) {
+        fout = finfi;
+    }
     save_output_nifti(fout, "smoothed", smoothed, true, use_outpath);
 
     return 0;
