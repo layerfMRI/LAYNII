@@ -1,26 +1,26 @@
-# LAYNII
+# LayNii
 
 <img src="https://layerfmri.files.wordpress.com/2018/01/sensory_motor_grid.png" width=350 align="right" />
 
 This is a package of standalone layer functional magnetic resonance imaging (layer-fMRI) C++ programs that depends only on a C++ compiler. The purpose of this package is to provide layer-analysis software that are not (yet) included in the other major MRI analysis software.
 
 Most used programs (so far) are:
--  `LN2_LAYERS`: To generate equi-distant or equi-volume layers from gray matter segmentation. (Alternative to `LN_GROW_LAYERS` in older versions of LAYNII).
+-  `LN2_LAYERS`: To generate equi-distant or equi-volume layers from gray matter segmentation. (Alternative to `LN_GROW_LAYERS` in older versions of LayNii).
 - `LN_LAYER_SMOOTH` : For layer-specific spatial smoothing.
 - `LN_BOCO` : for BOLD correction in VASO.
 
 ## Citation
 
-If you use LAYNII in your research please cite the following article:
+If you use LayNii in your research please cite the following article:
 
-- Huber, L., Poser, B. A., Bandettini, P. A., Arora, K., Wagstyl, K., Cho, S., Goense, J., Nothnagel, N., Morgan, A. T., van den Hurk, J., Reynolds, R. C., Glen, D. R., Goebel, R. W., Gulban, O. F. (2020). LAYNII: A software suite for layer-fMRI. BioRxiv. <https://doi.org/10.1101/2020.06.12.148080>
+- Huber, L., Poser, B. A., Bandettini, P. A., Arora, K., Wagstyl, K., Cho, S., Goense, J., Nothnagel, N., Morgan, A. T., van den Hurk, J., Reynolds, R. C., Glen, D. R., Goebel, R. W., Gulban, O. F. (2020). LayNii: A software suite for layer-fMRI. BioRxiv. <https://doi.org/10.1101/2020.06.12.148080>
 
-In addition, please cite the used software version of LAYNII by using our Zenodo integration:
+In addition, please cite the used software version of LayNii by using our Zenodo integration:
 - [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3514297.svg)](https://doi.org/10.5281/zenodo.3514297)
 
 
 ## Installation
-A detailed descriptions of how to set up LAYNII is provided here: [https://layerfmri.com/laynii-setup/](https://layerfmri.com/laynii-setup/)
+A detailed descriptions of how to set up LayNii is provided here: [https://layerfmri.com/laynii-setup/](https://layerfmri.com/laynii-setup/)
 A brief instruction is also given below.
 
 1. Download the latest release and unzip it or clone the repository with the command:
@@ -40,7 +40,7 @@ make all
 
 ## Tutorials & use cases
 
-Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri blog](https://layerfmri.com/category/code/). Various pipeline script in the context of LAYNII see the [LAYNII_extras](https://github.com/ofgulban/LAYNII_extras) Links to instruction of the specific programs are included in the help output of the respective programs and below"
+Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri blog](https://layerfmri.com/category/code/). Various pipeline script in the context of LayNii see the [LayNii_extras](https://github.com/ofgulban/LayNii_extras) Links to instruction of the specific programs are included in the help output of the respective programs and below"
 
 - [LN2_LAYERS algorithm](https://thingsonthings.org/ln2_layers/)
 - [LN2_LAYERS example application](https://layerfmri.com/2020/04/24/equivol/)
@@ -65,8 +65,8 @@ Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri
 - [LN_LOITUMA](https://layerfmri.com/2020/04/24/equivol/)
 ---
 ## Comment on cross-platform compatibility
-Since May 2020, LAYNII is also distributed as pre-compiled binaries for Linux, macOS, and Windows (x32 and x64).
-Since January 2020, all remaining dependencies have been removed. This should allow the user to use pre-compiled binaries of LAYNII for the respective operating system. Altenatively LAYNII should also be compilable on Linux, macOS, and Windows. All you need is a terminal and a C++ compiler.
+Since May 2020, LayNii is also distributed as pre-compiled binaries for Linux, macOS, and Windows (x32 and x64).
+Since January 2020, all remaining dependencies have been removed. This should allow the user to use pre-compiled binaries of LayNii for the respective operating system. Altenatively LayNii should also be compilable on Linux, macOS, and Windows. All you need is a terminal and a C++ compiler.
 
 1. On Linux `g++` is included by default.
 
@@ -76,7 +76,7 @@ Since January 2020, all remaining dependencies have been removed. This should al
 
 ## Comment on makefile and compiler
 Some users seemed to have a compiler installed that does not match the actual CPU architecture of the computer. In those cases it can be easier to compile the programs with another compiler one by one with g++ (instead of c++).
-Some users seemed to have a compiler installed but do not have make installed. Thus, instead of executing 'make all', just copy-paste the following into your terminal in the LAYNII folder.
+Some users seemed to have a compiler installed but do not have make installed. Thus, instead of executing 'make all', just copy-paste the following into your terminal in the LayNii folder.
 
 ```
 c++ -std=c++11 -DHAVE_ZLIB  -o LN_BOCO src/LN_BOCO.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
@@ -115,10 +115,10 @@ c++ -std=c++11 -DHAVE_ZLIB  -o LN_CONLAY src/LN_CONLAY.cpp dep/nifti2_io.cpp dep
 ```
 ---
 ## How to contribute?
-If you have any issues when using LAYNII, or want to request a new feature, we are happy to see them posted on our [issues page](https://github.com/layerfMRI/LAYNII/issues). Please employ this as your preferred method (instead of sending individual emails to the authors), since fellow researchers might have similar issues and suggestions.
+If you have any issues when using LayNii, or want to request a new feature, we are happy to see them posted on our [issues page](https://github.com/layerfMRI/LayNii/issues). Please employ this as your preferred method (instead of sending individual emails to the authors), since fellow researchers might have similar issues and suggestions.
 
 ## License
-LAYNII is licensed under [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause).
+LayNii is licensed under [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause).
 
 ## Acknowledgments
 In order to read and write Nifti (.nii, .nii.gz) data, we have adapted code that was originally developed by the Neuroimaging Informatics Technology Initiative. We thank Bob Cox, Daniel Glen and Rick Reynolds. Since early 2020, development and maintenance of this project is being actively supported by [Brain Innovation](https://www.brainvoyager.com/) as one of the developers ([Omer Faruk Gulban](https://github.com/ofgulban)) works there.
