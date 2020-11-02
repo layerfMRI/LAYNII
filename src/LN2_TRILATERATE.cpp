@@ -1047,18 +1047,14 @@ int main(int argc, char*  argv[]) {
     // --------------------------------------------------------------------
     // Initialize grow volume
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(perimeter_data + i) == 2) {
-            *(voronoi_data + i) = *(perimeter_data + i);
+        if (*(perimeter_data + i) == 1) {
+            *(voronoi_data + i) = 1;
             *(flood_step_data + i) = 1.;
             *(flood_dist_data + i) = 1.;
-
-        } else if (*(perimeter_data + i) == 1) {
-            // NOTE(Faruk): This little trick here stagnates the growth of
-            // inner perimeter voxels. This is crucial to prevent leakage over
-            // perimeter border.
-            *(voronoi_data + i) = *(perimeter_data + i);
-            *(flood_step_data + i) = 2.;
-            *(flood_dist_data + i) = 2.;
+        } else if (*(nii_midgm_data + i) == 1) {
+            *(voronoi_data + i) = 2;
+            *(flood_step_data + i) = 1.;
+            *(flood_dist_data + i) = 1.;
         } else {
             *(voronoi_data + i) = 0;
             *(flood_step_data + i) = 0.;
@@ -1076,11 +1072,7 @@ int main(int argc, char*  argv[]) {
                 tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
                 voxel_counter += 1;
 
-
                 bool jump_lock = false;
-                if (grow_step == 1) {
-                    jump_lock = true;  // For padding
-                }
                 // ------------------------------------------------------------
                 // 1-jump neighbours
                 // ------------------------------------------------------------
