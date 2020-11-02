@@ -161,6 +161,12 @@ int main(int argc, char*  argv[]) {
         *(perimeter_data + i) = 0;
     }
 
+    // Final voronoi volume to output midgm distances for whole rim
+    nifti_image* final_voronoi = copy_nifti_as_float32(nii_rim);
+    float* final_voronoi_data = static_cast<float*>(final_voronoi->data);
+    nifti_image* smooth = copy_nifti_as_float32(final_voronoi);
+    float* smooth_data = static_cast<float*>(smooth->data);
+
     // ------------------------------------------------------------------------
     // NOTE(Faruk): This section is written to constrain the big iterative
     // flooding distance loop to the subset of voxels. Required for substantial
@@ -185,8 +191,31 @@ int main(int argc, char*  argv[]) {
         }
     }
 
+    // --------------------------------------------------------------------
+    // NOTE(Faruk) This part is for speeding up the final Voronoi propagation
+    // --------------------------------------------------------------------
+    // Reduce number of looped-through voxels for the second stage (Voronoi)
+    uint32_t nr_voi2 = 0;  // Voxels of interest
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) == 3){
+            nr_voi2 += 1;
+        }
+    }
+    // Allocate memory to only the voxel of interest
+    int32_t* voi_id2;
+    voi_id2 = (int32_t*) malloc(nr_voi2*sizeof(int32_t));
+
+    // Fill in indices to be able to remap from subset to full set of voxels
+    uint32_t iii = 0;
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) == 3){
+            *(voi_id2 + iii) = i;
+            iii += 1;
+        }
+    }
+
     // ========================================================================
-    // Find column centers through farthest flood distance
+    // Initial flood from centroid
     // ========================================================================
     cout << "  Start trilaterating..." << endl;
     // Find the initial voxel
@@ -556,16 +585,26 @@ int main(int argc, char*  argv[]) {
         i = *(voi_id + ii);
         *(flood_dist_data + i) -= thr_perimeter;
     }
-    // save_output_nifti(fout, "flood_dist", flood_dist, false);
+
+    if (mode_debug) {
+        save_output_nifti(fout, "centroid_dist", flood_dist, false);
+    }
 
     // ========================================================================
     // Find perimeter
     // ========================================================================
     cout << "\n  Start finding perimeter..." << endl;
 
+    // Mark voxels inside perimeter
+    for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+        i = *(voi_id + ii);
+        if (*(flood_dist_data + i) < 0) {
+            *(perimeter_data + i) = 2;
+        }
+    }
+
     // TODO(Faruk): Once the proof of concept is working, I need to reduce code
     // repetition here through functions. Signbit checks are easy reductions.
-
     for (uint32_t ii = 0; ii != nr_voi; ++ii) {
         i = *(voi_id + ii);  // Map subset to full set
         // Check sign changes to find zero crossings
@@ -1400,7 +1439,7 @@ int main(int argc, char*  argv[]) {
     *(triplet_data + idx_point2) = 2;
 
     // ========================================================================
-    // From point 1 & 2, find point 3 as the fastest away voxel from both
+    // From point 1 & 2, find point 3 as the farthest voxel from both
     // ========================================================================
     // Initialize grow volume
     for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -1757,7 +1796,9 @@ int main(int argc, char*  argv[]) {
     }
     *(triplet_data + idx_point3) = 3;
 
-    save_output_nifti(fout, "triplet", triplet, false);
+    if (mode_debug) {
+        save_output_nifti(fout, "triplet", triplet, false);
+    }
 
     // ========================================================================
     // Flooding distance from each triplet as output
@@ -1772,10 +1813,13 @@ int main(int argc, char*  argv[]) {
         // NOTE(Faruk): Might handle this with vectors in the future.
         if (p == 1) {
             *(flood_step_data + idx_point1) = 1.;
+            *(flood_dist_data + idx_point1) = 1.;
         } else if (p == 2) {
             *(flood_step_data + idx_point2) = 1.;
+            *(flood_dist_data + idx_point2) = 1.;
         } else if (p == 3) {
             *(flood_step_data + idx_point3) = 1.;
+            *(flood_dist_data + idx_point3) = 1.;
         }
 
         // Reset some parameters
@@ -2112,7 +2156,481 @@ int main(int argc, char*  argv[]) {
             }
             grow_step += 1;
         }
-    save_output_nifti(fout, "point" + std::to_string(p) + "_dist", flood_dist, true);
+
+        if (mode_debug) {
+            save_output_nifti(fout, "point" + std::to_string(p) + "_midgm_dist", flood_dist, false);
+        }
+
+        // --------------------------------------------------------------------
+        // Final Voronoi for propagating distances to all gray matter
+        // --------------------------------------------------------------------
+        cout << "\n  Start final Voronoi propagation..." << endl;
+        // Initialize grow volume
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(nii_midgm_data + i) != 0) {
+                *(final_voronoi_data + i) = *(flood_dist_data + i);
+                *(flood_step_data + i) = 1.;
+                *(flood_dist_data + i) = 1.;
+            } else {
+                *(final_voronoi_data + i) = 0;
+                *(flood_step_data + i) = 0.;
+                *(flood_dist_data + i) = 0.;
+            }
+        }
+
+        grow_step = 1;
+        voxel_counter = nr_voxels;
+        while (voxel_counter != 0) {
+            voxel_counter = 0;
+            for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
+                i = *(voi_id2 + iii);
+                if (*(flood_step_data + i) == grow_step) {
+                    tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+                    voxel_counter += 1;
+
+                    bool jump_lock = false;
+                    // ------------------------------------------------------------
+                    // 1-jump neighbours
+                    // ------------------------------------------------------------
+                    if (ix > 0) {
+                        j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dX;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                            }
+                        } else if (*(nii_rim_data + j) != 0) {
+                            jump_lock = true;
+                        }
+                    }
+                    if (ix < end_x) {
+                        j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dX;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                            }
+                        } else if (*(nii_rim_data + j) != 0) {
+                            jump_lock = true;
+                        }
+                    }
+                    if (iy > 0) {
+                        j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dY;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                            }
+                        } else if (*(nii_rim_data + j) != 0) {
+                            jump_lock = true;
+                        }
+                    }
+                    if (iy < end_y) {
+                        j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dY;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                            }
+                        } else if (*(nii_rim_data + j) != 0) {
+                            jump_lock = true;
+                        }
+                    }
+                    if (iz > 0) {
+                        j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dZ;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                            }
+                        } else if (*(nii_rim_data + j) != 0) {
+                            jump_lock = true;
+                        }
+                    }
+                    if (iz < end_z) {
+                        j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dZ;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                            }
+                        } else if (*(nii_rim_data + j) != 0) {
+                            jump_lock = true;
+                        }
+                    }
+
+                    // ------------------------------------------------------------
+                    // 2-jump neighbours
+                    // ------------------------------------------------------------
+                    if (jump_lock == false) {
+
+                        if (ix > 0 && iy > 0) {
+                            j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_xy;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                        if (ix > 0 && iy < end_y) {
+                            j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_xy;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                        if (ix < end_x && iy > 0) {
+                            j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_xy;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                        if (ix < end_x && iy < end_y) {
+                            j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_xy;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                        if (iy > 0 && iz > 0) {
+                            j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_yz;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                        if (iy > 0 && iz < end_z) {
+                            j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_yz;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                        if (iy < end_y && iz > 0) {
+                            j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_yz;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                        if (iy < end_y && iz < end_z) {
+                            j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_yz;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                        if (ix > 0 && iz > 0) {
+                            j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_xz;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                        if (ix < end_x && iz > 0) {
+                            j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_xz;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                        if (ix > 0 && iz < end_z) {
+                            j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_xz;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                        if (ix < end_x && iz < end_z) {
+                            j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_xz;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+
+                        // ------------------------------------------------------------
+                        // 3-jump neighbours
+                        // ------------------------------------------------------------
+                        if (ix > 0 && iy > 0 && iz > 0) {
+                            j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_xyz;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                        if (ix > 0 && iy > 0 && iz < end_z) {
+                            j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_xyz;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                        if (ix > 0 && iy < end_y && iz > 0) {
+                            j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_xyz;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                        if (ix < end_x && iy > 0 && iz > 0) {
+                            j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_xyz;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                        if (ix > 0 && iy < end_y && iz < end_z) {
+                            j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_xyz;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                        if (ix < end_x && iy > 0 && iz < end_z) {
+                            j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_xyz;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                        if (ix < end_x && iy < end_y && iz > 0) {
+                            j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_xyz;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                        if (ix < end_x && iy < end_y && iz < end_z) {
+                            j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
+
+                            if (*(nii_rim_data + j) == 3) {
+                                d = *(flood_dist_data + i) + dia_xyz;
+                                if (d < *(flood_dist_data + j)
+                                    || *(flood_dist_data + j) == 0) {
+                                    *(flood_dist_data + j) = d;
+                                    *(flood_step_data + j) = grow_step + 1;
+                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            grow_step += 1;
+        }
+        // ----------------------------------------------------------------
+        // Smooth distances
+        // ----------------------------------------------------------------
+        cout << "\n    Smoothing transitions..." << endl;
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            *(smooth_data + i) = 0;
+        }
+
+        // Pre-compute weights
+        float FWHM_val = 1;  // TODO(Faruk): Might tweak this one
+        float w_0 = gaus(0, FWHM_val);
+        float w_dX = gaus(dX, FWHM_val);
+        float w_dY = gaus(dY, FWHM_val);
+        float w_dZ = gaus(dZ, FWHM_val);
+
+        for (uint16_t n = 0; n != 3; ++n) {
+            for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
+                i = *(voi_id2 + iii);
+                tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+                float new_val = 0, total_weight = 0;
+
+                // Start with the voxel itself
+                new_val += *(final_voronoi_data + i) * w_0;
+                total_weight += w_0;
+
+                // --------------------------------------------------------
+                // 1-jump neighbours
+                // --------------------------------------------------------
+                if (ix > 0) {
+                    j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        new_val += *(final_voronoi_data + j) * w_dX;
+                        total_weight += w_dX;
+                    }
+                }
+                if (ix < end_x) {
+                    j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        new_val += *(final_voronoi_data + j) * w_dX;
+                        total_weight += w_dX;
+                    }
+                }
+                if (iy > 0) {
+                    j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        new_val += *(final_voronoi_data + j) * w_dY;
+                        total_weight += w_dY;
+                    }
+                }
+                if (iy < end_y) {
+                    j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        new_val += *(final_voronoi_data + j) * w_dY;
+                        total_weight += w_dY;
+                    }
+                }
+                if (iz > 0) {
+                    j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        new_val += *(final_voronoi_data + j) * w_dZ;
+                        total_weight += w_dZ;
+                    }
+                }
+                if (iz < end_z) {
+                    j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        new_val += *(final_voronoi_data + j) * w_dZ;
+                        total_weight += w_dZ;
+                    }
+                }
+                *(smooth_data + i) = new_val / total_weight;
+            }
+            // Swap image data
+            for (uint32_t i = 0; i != nr_voxels; ++i) {
+                *(final_voronoi_data + i) = *(smooth_data + i);
+            }
+        }
+
+    save_output_nifti(fout, "point" + std::to_string(p) + "_dist", final_voronoi, true);
     }
     cout << "\n  Finished." << endl;
     return 0;
