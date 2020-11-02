@@ -162,9 +162,9 @@ int main(int argc, char*  argv[]) {
     }
 
     // Final voronoi volume to output midgm distances for whole rim
-    nifti_image* final_voronoi = copy_nifti_as_float32(nii_rim);
-    float* final_voronoi_data = static_cast<float*>(final_voronoi->data);
-    nifti_image* smooth = copy_nifti_as_float32(final_voronoi);
+    nifti_image* voronoi = copy_nifti_as_float32(nii_rim);
+    float* voronoi_data = static_cast<float*>(voronoi->data);
+    nifti_image* smooth = copy_nifti_as_float32(voronoi);
     float* smooth_data = static_cast<float*>(smooth->data);
 
     // ------------------------------------------------------------------------
@@ -599,7 +599,7 @@ int main(int argc, char*  argv[]) {
     for (uint32_t ii = 0; ii != nr_voi; ++ii) {
         i = *(voi_id + ii);
         if (*(flood_dist_data + i) < 0) {
-            *(perimeter_data + i) = 2;
+            *(perimeter_data + i) = 1;
         }
     }
 
@@ -609,7 +609,7 @@ int main(int argc, char*  argv[]) {
         i = *(voi_id + ii);  // Map subset to full set
         // Check sign changes to find zero crossings
         if (*(flood_dist_data + i) == 0) {
-            *(perimeter_data + i) = 1;
+            *(perimeter_data + i) = 2;
         } else {
             float m = *(flood_dist_data + i);
             float n;
@@ -624,12 +624,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -640,12 +640,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -656,12 +656,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -672,12 +672,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -688,12 +688,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -704,12 +704,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -723,12 +723,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -739,12 +739,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -755,12 +755,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -771,12 +771,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -787,12 +787,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -803,12 +803,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -819,12 +819,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -835,12 +835,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -851,12 +851,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -867,12 +867,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -883,12 +883,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -899,12 +899,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -918,12 +918,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -934,12 +934,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -950,12 +950,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -966,12 +966,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -982,12 +982,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -998,12 +998,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -1014,12 +1014,12 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
@@ -1030,19 +1030,431 @@ int main(int argc, char*  argv[]) {
                     n = *(flood_dist_data + j);
                     if (signbit(m) - signbit(n) != 0) {
                         if (m*m < n*n) {
-                            *(perimeter_data + i) = 1;
+                            *(perimeter_data + i) = 2;
                         } else if (m*m > n*n) {  // Closer to prev. step
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + j) = 2;
                         } else {  // Equal +/- normalized distance
-                            *(perimeter_data + i) = 1;
-                            *(perimeter_data + j) = 1;
+                            *(perimeter_data + i) = 2;
+                            *(perimeter_data + j) = 2;
                         }
                     }
                 }
             }
         }
     }
-    save_output_nifti(fout, "perimeter", perimeter, true);
+    save_output_nifti(fout, "perimeter", perimeter, false);
+
+    // --------------------------------------------------------------------
+    // Grow perimeter within rim to generate vertically grown mask
+    // --------------------------------------------------------------------
+    // Initialize grow volume
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(perimeter_data + i) == 2) {
+            *(voronoi_data + i) = *(perimeter_data + i);
+            *(flood_step_data + i) = 1.;
+            *(flood_dist_data + i) = 1.;
+
+        } else if (*(perimeter_data + i) == 1) {
+            // NOTE(Faruk): This little trick here stagnates the growth of
+            // inner perimeter voxels. This is crucial to prevent leakage over
+            // perimeter border.
+            *(voronoi_data + i) = *(perimeter_data + i);
+            *(flood_step_data + i) = 2.;
+            *(flood_dist_data + i) = 2.;
+        } else {
+            *(voronoi_data + i) = 0;
+            *(flood_step_data + i) = 0.;
+            *(flood_dist_data + i) = 0.;
+        }
+    }
+
+    grow_step = 1;
+    voxel_counter = nr_voxels;
+    while (voxel_counter != 0) {
+        voxel_counter = 0;
+        for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
+            i = *(voi_id2 + iii);
+            if (*(flood_step_data + i) == grow_step) {
+                tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+                voxel_counter += 1;
+
+
+                bool jump_lock = false;
+                if (grow_step == 1) {
+                    jump_lock = true;  // For padding
+                }
+                // ------------------------------------------------------------
+                // 1-jump neighbours
+                // ------------------------------------------------------------
+                if (ix > 0) {
+                    j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(flood_dist_data + i) + dX;
+                        if (d < *(flood_dist_data + j)
+                            || *(flood_dist_data + j) == 0) {
+                            *(flood_dist_data + j) = d;
+                            *(flood_step_data + j) = grow_step + 1;
+                            *(voronoi_data + j) = *(voronoi_data + i);
+                        }
+                    } else if (*(nii_rim_data + j) != 0) {
+                        jump_lock = true;
+                    }
+                }
+                if (ix < end_x) {
+                    j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(flood_dist_data + i) + dX;
+                        if (d < *(flood_dist_data + j)
+                            || *(flood_dist_data + j) == 0) {
+                            *(flood_dist_data + j) = d;
+                            *(flood_step_data + j) = grow_step + 1;
+                            *(voronoi_data + j) = *(voronoi_data + i);
+                        }
+                    } else if (*(nii_rim_data + j) != 0) {
+                        jump_lock = true;
+                    }
+                }
+                if (iy > 0) {
+                    j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(flood_dist_data + i) + dY;
+                        if (d < *(flood_dist_data + j)
+                            || *(flood_dist_data + j) == 0) {
+                            *(flood_dist_data + j) = d;
+                            *(flood_step_data + j) = grow_step + 1;
+                            *(voronoi_data + j) = *(voronoi_data + i);
+                        }
+                    } else if (*(nii_rim_data + j) != 0) {
+                        jump_lock = true;
+                    }
+                }
+                if (iy < end_y) {
+                    j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(flood_dist_data + i) + dY;
+                        if (d < *(flood_dist_data + j)
+                            || *(flood_dist_data + j) == 0) {
+                            *(flood_dist_data + j) = d;
+                            *(flood_step_data + j) = grow_step + 1;
+                            *(voronoi_data + j) = *(voronoi_data + i);
+                        }
+                    } else if (*(nii_rim_data + j) != 0) {
+                        jump_lock = true;
+                    }
+                }
+                if (iz > 0) {
+                    j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(flood_dist_data + i) + dZ;
+                        if (d < *(flood_dist_data + j)
+                            || *(flood_dist_data + j) == 0) {
+                            *(flood_dist_data + j) = d;
+                            *(flood_step_data + j) = grow_step + 1;
+                            *(voronoi_data + j) = *(voronoi_data + i);
+                        }
+                    } else if (*(nii_rim_data + j) != 0) {
+                        jump_lock = true;
+                    }
+                }
+                if (iz < end_z) {
+                    j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+
+                    if (*(nii_rim_data + j) == 3) {
+                        d = *(flood_dist_data + i) + dZ;
+                        if (d < *(flood_dist_data + j)
+                            || *(flood_dist_data + j) == 0) {
+                            *(flood_dist_data + j) = d;
+                            *(flood_step_data + j) = grow_step + 1;
+                            *(voronoi_data + j) = *(voronoi_data + i);
+                        }
+                    } else if (*(nii_rim_data + j) != 0) {
+                        jump_lock = true;
+                    }
+                }
+
+                // ------------------------------------------------------------
+                // 2-jump neighbours
+                // ------------------------------------------------------------
+                if (jump_lock == false) {
+
+                    if (ix > 0 && iy > 0) {
+                        j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_xy;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                    if (ix > 0 && iy < end_y) {
+                        j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_xy;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                    if (ix < end_x && iy > 0) {
+                        j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_xy;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                    if (ix < end_x && iy < end_y) {
+                        j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_xy;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                    if (iy > 0 && iz > 0) {
+                        j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_yz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                    if (iy > 0 && iz < end_z) {
+                        j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_yz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                    if (iy < end_y && iz > 0) {
+                        j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_yz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                    if (iy < end_y && iz < end_z) {
+                        j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_yz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                    if (ix > 0 && iz > 0) {
+                        j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_xz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                    if (ix < end_x && iz > 0) {
+                        j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_xz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                    if (ix > 0 && iz < end_z) {
+                        j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_xz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                    if (ix < end_x && iz < end_z) {
+                        j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_xz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+
+                    // ------------------------------------------------------------
+                    // 3-jump neighbours
+                    // ------------------------------------------------------------
+                    if (ix > 0 && iy > 0 && iz > 0) {
+                        j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_xyz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                    if (ix > 0 && iy > 0 && iz < end_z) {
+                        j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_xyz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                    if (ix > 0 && iy < end_y && iz > 0) {
+                        j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_xyz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                    if (ix < end_x && iy > 0 && iz > 0) {
+                        j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_xyz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                    if (ix > 0 && iy < end_y && iz < end_z) {
+                        j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_xyz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                    if (ix < end_x && iy > 0 && iz < end_z) {
+                        j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_xyz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                    if (ix < end_x && iy < end_y && iz > 0) {
+                        j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_xyz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                    if (ix < end_x && iy < end_y && iz < end_z) {
+                        j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
+
+                        if (*(nii_rim_data + j) == 3) {
+                            d = *(flood_dist_data + i) + dia_xyz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(voronoi_data + j) = *(voronoi_data + i);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        grow_step += 1;
+    }
+
+    // This is useful as a vertically grown rim mask
+    for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
+        i = *(voi_id2 + iii);
+        if (*(voronoi_data + i) == 2) {
+            *(voronoi_data + i) = 0;
+        }
+    }
+    save_output_nifti(fout, "perimeter_chunk", voronoi, false);
 
     // ========================================================================
     // Find triplets and compute distances on midgm domain
@@ -2168,11 +2580,11 @@ int main(int argc, char*  argv[]) {
         // Initialize grow volume
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             if (*(nii_midgm_data + i) != 0) {
-                *(final_voronoi_data + i) = *(flood_dist_data + i);
+                *(voronoi_data + i) = *(flood_dist_data + i);
                 *(flood_step_data + i) = 1.;
                 *(flood_dist_data + i) = 1.;
             } else {
-                *(final_voronoi_data + i) = 0;
+                *(voronoi_data + i) = 0;
                 *(flood_step_data + i) = 0.;
                 *(flood_dist_data + i) = 0.;
             }
@@ -2200,7 +2612,7 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                *(voronoi_data + j) = *(voronoi_data + i);
                             }
                         } else if (*(nii_rim_data + j) != 0) {
                             jump_lock = true;
@@ -2214,7 +2626,7 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                *(voronoi_data + j) = *(voronoi_data + i);
                             }
                         } else if (*(nii_rim_data + j) != 0) {
                             jump_lock = true;
@@ -2228,7 +2640,7 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                *(voronoi_data + j) = *(voronoi_data + i);
                             }
                         } else if (*(nii_rim_data + j) != 0) {
                             jump_lock = true;
@@ -2242,7 +2654,7 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                *(voronoi_data + j) = *(voronoi_data + i);
                             }
                         } else if (*(nii_rim_data + j) != 0) {
                             jump_lock = true;
@@ -2256,7 +2668,7 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                *(voronoi_data + j) = *(voronoi_data + i);
                             }
                         } else if (*(nii_rim_data + j) != 0) {
                             jump_lock = true;
@@ -2271,7 +2683,7 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                *(voronoi_data + j) = *(voronoi_data + i);
                             }
                         } else if (*(nii_rim_data + j) != 0) {
                             jump_lock = true;
@@ -2292,7 +2704,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2305,7 +2717,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2318,7 +2730,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2331,7 +2743,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2344,7 +2756,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2357,7 +2769,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2370,7 +2782,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2383,7 +2795,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2396,7 +2808,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2409,7 +2821,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2422,7 +2834,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2435,7 +2847,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2452,7 +2864,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2465,7 +2877,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2478,7 +2890,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2491,7 +2903,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2504,7 +2916,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2517,7 +2929,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2530,7 +2942,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2543,7 +2955,7 @@ int main(int argc, char*  argv[]) {
                                     || *(flood_dist_data + j) == 0) {
                                     *(flood_dist_data + j) = d;
                                     *(flood_step_data + j) = grow_step + 1;
-                                    *(final_voronoi_data + j) = *(final_voronoi_data + i);
+                                    *(voronoi_data + j) = *(voronoi_data + i);
                                 }
                             }
                         }
@@ -2574,7 +2986,7 @@ int main(int argc, char*  argv[]) {
                 float new_val = 0, total_weight = 0;
 
                 // Start with the voxel itself
-                new_val += *(final_voronoi_data + i) * w_0;
+                new_val += *(voronoi_data + i) * w_0;
                 total_weight += w_0;
 
                 // --------------------------------------------------------
@@ -2583,42 +2995,42 @@ int main(int argc, char*  argv[]) {
                 if (ix > 0) {
                     j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
                     if (*(nii_rim_data + j) == 3) {
-                        new_val += *(final_voronoi_data + j) * w_dX;
+                        new_val += *(voronoi_data + j) * w_dX;
                         total_weight += w_dX;
                     }
                 }
                 if (ix < end_x) {
                     j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
                     if (*(nii_rim_data + j) == 3) {
-                        new_val += *(final_voronoi_data + j) * w_dX;
+                        new_val += *(voronoi_data + j) * w_dX;
                         total_weight += w_dX;
                     }
                 }
                 if (iy > 0) {
                     j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
                     if (*(nii_rim_data + j) == 3) {
-                        new_val += *(final_voronoi_data + j) * w_dY;
+                        new_val += *(voronoi_data + j) * w_dY;
                         total_weight += w_dY;
                     }
                 }
                 if (iy < end_y) {
                     j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
                     if (*(nii_rim_data + j) == 3) {
-                        new_val += *(final_voronoi_data + j) * w_dY;
+                        new_val += *(voronoi_data + j) * w_dY;
                         total_weight += w_dY;
                     }
                 }
                 if (iz > 0) {
                     j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
                     if (*(nii_rim_data + j) == 3) {
-                        new_val += *(final_voronoi_data + j) * w_dZ;
+                        new_val += *(voronoi_data + j) * w_dZ;
                         total_weight += w_dZ;
                     }
                 }
                 if (iz < end_z) {
                     j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
                     if (*(nii_rim_data + j) == 3) {
-                        new_val += *(final_voronoi_data + j) * w_dZ;
+                        new_val += *(voronoi_data + j) * w_dZ;
                         total_weight += w_dZ;
                     }
                 }
@@ -2626,11 +3038,11 @@ int main(int argc, char*  argv[]) {
             }
             // Swap image data
             for (uint32_t i = 0; i != nr_voxels; ++i) {
-                *(final_voronoi_data + i) = *(smooth_data + i);
+                *(voronoi_data + i) = *(smooth_data + i);
             }
         }
 
-    save_output_nifti(fout, "point" + std::to_string(p) + "_dist", final_voronoi, true);
+    save_output_nifti(fout, "point" + std::to_string(p) + "_dist", voronoi, true);
     }
     cout << "\n  Finished." << endl;
     return 0;
