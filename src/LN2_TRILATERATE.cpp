@@ -1809,7 +1809,9 @@ int main(int argc, char*  argv[]) {
         grow_step += 1;
     }
 
-    // save_output_nifti(fout, "point1_distance", flood_dist, false);
+    if (mode_debug) {
+        save_output_nifti(fout, "point1_flood_dist", flood_dist, false);
+    }
 
     // Find 2/3 of the max distance
     float max_distance = 0;
@@ -1821,8 +1823,7 @@ int main(int argc, char*  argv[]) {
             }
         }
     }
-    max_distance *= 2;
-    max_distance /= 3;
+    max_distance *= 2/3;
 
     // Translate perimeter distances to find the next zero crossing point
     for (uint32_t ii = 0; ii != nr_voi; ++ii) {
@@ -1832,6 +1833,10 @@ int main(int argc, char*  argv[]) {
             d -= max_distance;
             *(flood_dist_data + i) = abs(d);
         }
+    }
+
+    if (mode_debug) {
+        save_output_nifti(fout, "point2_flood_dist", flood_dist, false);
     }
 
     // NOTE(Faruk): Other 2 points are the ones closest to the 2/3 of the max
@@ -2201,9 +2206,11 @@ int main(int argc, char*  argv[]) {
     int idx_point3;
     for (uint32_t ii = 0; ii != nr_voi; ++ii) {
         i = *(voi_id + ii);
-        if (*(flood_dist_data + i) > max_distance) {
-            max_distance = *(flood_dist_data + i);
-            idx_point3 = i;
+        if (*(perimeter_data + i) == 2) {
+            if (*(flood_dist_data + i) > max_distance) {
+                max_distance = *(flood_dist_data + i);
+                idx_point3 = i;
+            }
         }
     }
     *(triplet_data + idx_point3) = 3;
