@@ -16,7 +16,8 @@ int show_help(void) {
     "                  voxels. This program only generates columns in the \n"
     "                  voxels coded with 3.\n"
     "    -midgm      : Middle gray matter file (from LN2_LAYERS output).\n"
-    "    -centroid   : (Optional) One voxel for centroid (use 1).\n"
+    "    -centroid   : One voxel for centroid (use 1).\n"
+    "    -perimeter  : Distance threshold from centroid.\n"
     "    -debug      : (Optional) Save extra intermediate outputs.\n"
     "    -output     : (Optional) Output basename for all outputs.\n"
     "\n");
@@ -27,6 +28,7 @@ int main(int argc, char*  argv[]) {
 
     nifti_image *nii1 = NULL, *nii2 = NULL, *nii3 = NULL;
     char *fin1 = NULL, *fout = NULL, *fin2=NULL, *fin3=NULL;
+    float thr_perimeter = 2;
     int ac;
     bool mode_debug = false;
 
@@ -54,6 +56,12 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             fin3 = argv[ac];
+        } else if (!strcmp(argv[ac], "-perimeter")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -perimeter\n");
+                return 1;
+            }
+            thr_perimeter = atof(argv[ac]);
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -544,10 +552,9 @@ int main(int argc, char*  argv[]) {
     }
 
     // Translate 0 crossing
-    float RADIUS = 2;
     for (uint32_t ii = 0; ii != nr_voi; ++ii) {
         i = *(voi_id + ii);
-        *(flood_dist_data + i) -= RADIUS;
+        *(flood_dist_data + i) -= thr_perimeter;
     }
     // save_output_nifti(fout, "flood_dist", flood_dist, false);
 
