@@ -7,8 +7,11 @@
 // data overall.
 // TODO(Faruk): Memory usage is a bit sloppy for now. Low priority but might
 // need to have a look at it in the future if we start hitting ram limits.
-// TODO(Faruk): Put neighbour visits into a function.
-// TODO(Faruk): Might replace the smoothing code with a faster method later.
+// NOTE(Faruk): Might put neighbour visits into a function.
+// NOTE(Faruk): Might replace the smoothing code with a faster method later.
+// NOTE(Faruk): Might use bspline weights to smooth curvature maps a bit.
+// NOTE(Faruk): Might be better to use step 1 id's to define columns.
+
 
 #include "../dep/laynii_lib.h"
 
@@ -1527,8 +1530,6 @@ bool use_outpath = false;
     }
     save_output_nifti(fout, "thickness", innerGM_dist, true);
     // ========================================================================
-    // TODO(Faruk): Might use bspline weights to smooth curvature maps a bit.
-    // TODO(Faruk): Might be better to use step 1 id's to define columns.
 
     cout << "\n  Finished." << endl;
     return 0;
