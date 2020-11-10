@@ -1,25 +1,42 @@
-
 #include "../dep/laynii_lib.h"
 #include <limits>
 #include <sstream>
 
 int show_help(void) {
     printf(
-    "LN2_TRILATERATE: TODO\n"
+    "LN2_MULTILATERATE: Injects a coordinate system upon a region of the rim file.\n"
+    "                   These coordinates can be used to flatten chunks of the brain.\n"
+    "                   Or, to generate bins/cells (subsets of voxels).\n"
+    "\n"
+    "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+    "!!!!    WORK IN PROGRESS    !!!!\n"
+    "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
     "\n"
     "Usage:\n"
-    "    LN2_TRILATERATE -rim rim.nii -midgm rim_midgm_equidist.nii -centroid rim_midgm_centroid.nii\n"
+    "    LN2_MULTILATERATE -rim rim.nii -midgm rim_midgm.nii -centroid rim_midgm_centroid.nii -radius 10\n"
+    "    LN2_MULTILATERATE -rim rim.nii -midgm rim_midgm.nii -centroid rim_midgm_extrema.nii\n"
     "\n"
     "Options:\n"
-    "    -help       : Show this help.\n"
-    "    -rim        : Segmentation input. Use 3 to code pure gray matter \n"
-    "                  voxels. This program only generates columns in the \n"
-    "                  voxels coded with 3.\n"
-    "    -midgm      : Middle gray matter file (from LN2_LAYERS output).\n"
-    "    -centroid   : One voxel for centroid (use 1).\n"
-    "    -radius  : Distance threshold from centroid.\n"
-    "    -debug      : (Optional) Save extra intermediate outputs.\n"
-    "    -output     : (Optional) Output basename for all outputs.\n"
+    "    -help     : Show this help.\n"
+    "    -rim      : Segmentation input. Use 3 to code gray matter voxels\n"
+    "                This program only injects coordinates to the voxels\n"
+    "                labeled with 3.\n"
+    "    -midgm    : Middle gray matter file (from LN2_LAYERS output).\n"
+    "    -centroid : A nifti file that contains either of the following:\n"
+    "                (I) One voxel labeled with value '1' for indicating the\n"
+    "                centroid of the region of interest; or (II) four voxels\n"
+    "                each labeled with values 1, 2, 3, 4. In case (I), you\n"
+    "                need to use '-radius' parameter. In case (II), voxels\n"
+    "                labeled with 1 & 2 determine the first axis of the\n"
+    "                coordinate system and the voxels labeled with 3 & 4\n"
+    "                determine the second axis."
+    "    -radius   : Distance threshold from centroid.\n"
+    "    -debug    : (Optional) Save extra intermediate outputs.\n"
+    "    -output   : (Optional) Output basename for all outputs.\n"
+    "\n"
+    "Notes:\n"
+    "    - This program is written for 3D images. We might add 2D image support\n"
+    "      in the future."
     "\n");
     return 0;
 }
@@ -28,7 +45,7 @@ int main(int argc, char*  argv[]) {
 
     nifti_image *nii1 = NULL, *nii2 = NULL, *nii3 = NULL;
     char *fin1 = NULL, *fout = NULL, *fin2=NULL, *fin3=NULL;
-    float thr_radius = 2;
+    float thr_radius = 10;
     int ac;
     bool mode_debug = false;
 
@@ -106,7 +123,7 @@ int main(int argc, char*  argv[]) {
         return 2;
     }
 
-    log_welcome("LN2_TRILATERATE");
+    log_welcome("LN2_MULTILATERATE");
     log_nifti_descriptives(nii1);
     log_nifti_descriptives(nii2);
     log_nifti_descriptives(nii3);
