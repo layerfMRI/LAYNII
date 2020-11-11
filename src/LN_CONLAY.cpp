@@ -19,7 +19,7 @@ int show_help(void) {
     "\n"
     "Usage: \n"
     "    LN_CONLAY -layers highres_layers.nii -ref funct.nii -output lowres_layers.nii\n"
-    "    ../LN_CONLAY -layers lo_sc_layers.nii -ref lo_T1EPI.nii -subsample -output lo_layers_out.nii.gz \n" 
+    "    ../LN_CONLAY -layers lo_sc_layers.nii -ref lo_T1EPI.nii -subsample -output lo_layers_out.nii.gz \n"
     "\n"
     "Options:\n"
     "\n"
@@ -29,20 +29,20 @@ int show_help(void) {
     "    -ref        : Nifti (.nii) file that determines the region of interest\n"
     "                     (e.g. the layer mask with one time point).\n"
     "    -output     : (Optional) Output filename, including .nii or\n"
-    "                     .nii.gz, and path if needed. Overwrites existing files.\n"    
+    "                  .nii.gz, and path if needed. Overwrites existing files.\n"    
     "    -subsample  : This option is regridds the layer values based on the voxels centroid\n"
-    "                     If this option is not used (default, the program \n"
-    "                     takes the local average instead \n"
-    "                     I would only recommend this for odd scale factors \n"
-    "                     otherwiese your results will be dependent on the \n"
-    "                     specific convention of upscaling tools e.g. AFNI!=BV \n"
+    "                  If this option is not used (default, the program \n"
+    "                  takes the local average instead \n"
+    "                  I would only recommend this for odd scale factors \n"
+    "                  otherwiese your results will be dependent on the \n"
+    "                  specific convention of upscaling tools e.g. AFNI!=BV \n"
     "\n");
     return 0;
 }
 
 int main(int argc, char*  argv[]) {
     bool use_outpath = false ;
-    bool subsample = false ; 
+    bool subsample = false ;
     char *fout = NULL ;
     char *fin_1 = NULL, *fin_2 = NULL;
     int ac;
@@ -52,7 +52,7 @@ int main(int argc, char*  argv[]) {
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
-        } else if (!strcmp(argv[ac], "-layers")) { 
+        } else if (!strcmp(argv[ac], "-layers")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -input\n");
                 return 1;
@@ -117,18 +117,18 @@ int main(int argc, char*  argv[]) {
     // get high res layers
     nifti_image* nim_file_1 = copy_nifti_as_int16(nii1);
     short* nii1_data = static_cast<short*>(nim_file_1->data);
-    
+
     // ========================================================================
     // Get grid size for low res layers
 
     //nifti_image* nii_outlay = copy_nifti_as_float32(nii2);
     //float* nii_outlay_data = static_cast<float*>(nii_outlay->data);
-    
+
     nifti_image* nii_outlay = nifti_copy_nim_info(nii2);
     nii_outlay->datatype = NIFTI_TYPE_FLOAT32;
     nii_outlay->nbyper = sizeof(float);
-    nii_outlay->nvox =  nii_outlay->nvox/nii_outlay->nt ; 
-    nii_outlay->nt = 1;  // layers only have one time point 
+    nii_outlay->nvox =  nii_outlay->nvox/nii_outlay->nt ;
+    nii_outlay->nt = 1;  // layers only have one time point
     nii_outlay->data = calloc(nii_outlay->nvox, nii_outlay->nbyper);
     float* nii_outlay_data = static_cast<float*>(nii_outlay->data);
     int nrout_voxels = nii_outlay->nvox;
@@ -140,83 +140,83 @@ int main(int argc, char*  argv[]) {
     const int nxo = nii_outlay->nx;
     const int nxyo = nii_outlay->nx * nii_outlay->ny;
     const int nxyzo = nii_outlay->nx * nii_outlay->ny * nii_outlay->nz;
-    nii_outlay->scl_slope = nii1->scl_slope ; // To make sure that the layers are in the same units 
+    nii_outlay->scl_slope = nii1->scl_slope ; // To make sure that the layers are in the same units
 
-  
+
     // ========================================================================
-    // Get ratios of resolutions and matrix sizes 
-    double sratio_x = (double)size_x/(double)size_xout ; 
+    // Get ratios of resolutions and matrix sizes
+    double sratio_x = (double)size_x/(double)size_xout ;
     double sratio_y = (double)size_y/(double)size_yout ;
     double sratio_z = (double)size_z/(double)size_zout ;
     cout << "    Matrix size reduction  =  |" << sratio_x << "X|  x  |" << sratio_y   << "Y| x |" << sratio_z << "Z| " <<  endl;
-    
-    double rratio_x = (double)(nii_outlay->pixdim[1])/(double)(nii1->pixdim[1]) ; 
+
+    double rratio_x = (double)(nii_outlay->pixdim[1])/(double)(nii1->pixdim[1]) ;
     double rratio_y = (float)(nii_outlay->pixdim[2])/(double)(nii1->pixdim[2]) ;
     double rratio_z = (float)(nii_outlay->pixdim[3])/(double)(nii1->pixdim[3]) ;
-    
+
     cout << "    Voxel size reduction   =  |" << rratio_x << "X|  x  |" << rratio_y   << "Y| x |" << rratio_z << "Z| " << endl;
-    
+
     // ========================================================================
-    // complaining if something is weird. 
+    // complaining if something is weird.
     if ((fmod(sratio_x,1)>4.76838e-06 && fmod(sratio_x,1)<1.-4.76838e-06)|| (fmod(sratio_y,1)>4.76838e-06 && fmod(sratio_y,1)<1.-4.76838e-06 ) || (fmod(sratio_z,1)>4.76838e-06 && fmod(sratio_z,1)<1.-4.76838e-06)) { //4.76838e-07is precision of float
-        cout << " ******************************************* " << endl; 
-        cout << " *** there is a non intager ratio of the *** " << endl; 
-        cout << " *** matrix size. This is not recommended ** " << endl; 
-        cout << " *** I hope you know what you are doing. *** " << endl; 
-        cout << " ******************************************* " << endl; 
+        cout << " ******************************************* " << endl;
+        cout << " *** there is a non intager ratio of the *** " << endl;
+        cout << " *** matrix size. This is not recommended ** " << endl;
+        cout << " *** I hope you know what you are doing. *** " << endl;
+        cout << " ******************************************* " << endl;
     }
     if ((fmod(rratio_x,1)>4.76838e-06 && fmod(rratio_x,1)<1.-4.76838e-06)|| (fmod(rratio_y,1)>4.76838e-06 && fmod(rratio_y,1)<1.-4.76838e-06 ) || (fmod(rratio_z,1)>4.76838e-06 && fmod(rratio_z,1)<1.-4.76838e-06)) {
-        cout << " ******************************************* " << endl; 
-        cout << " *** there is a non intager ratio of the *** " << endl; 
-        cout << " *** voxel size. This is not recommended *** " << endl; 
-        cout << " *** I hope you know what you are doing. *** " << endl; 
-        cout << " ******************************************* " << endl; 
+        cout << " ******************************************* " << endl;
+        cout << " *** there is a non intager ratio of the *** " << endl;
+        cout << " *** voxel size. This is not recommended *** " << endl;
+        cout << " *** I hope you know what you are doing. *** " << endl;
+        cout << " ******************************************* " << endl;
     }
-    
+
     if ( (rratio_x - sratio_x)>4.76838e-06 || (rratio_y - sratio_y)>4.76838e-06 || (rratio_z - sratio_z)>4.76838e-06 || (rratio_x - sratio_x)<-4.76838e-06 || (rratio_y - sratio_y)<-4.76838e-06 || (rratio_z - sratio_z)<-4.76838e-06 ) {
-        cout << " ******************************************* " << endl; 
-        cout << " *** The matrix size and the voxel side  *** " << endl; 
-        cout << " *** do not match across datasets.       *** " << endl; 
-        cout << " *** If your headers are right, these    *** " << endl; 
-        cout << " *** cannot be used here.                *** " << endl; 
-        cout << " *** If your headers are not correct     *** " << endl; 
-        cout << " *** Please fix them first.              *** " << endl; 
-        cout << " ******************************************* " << endl; 
+        cout << " ******************************************* " << endl;
+        cout << " *** The matrix size and the voxel side  *** " << endl;
+        cout << " *** do not match across datasets.       *** " << endl;
+        cout << " *** If your headers are right, these    *** " << endl;
+        cout << " *** cannot be used here.                *** " << endl;
+        cout << " *** If your headers are not correct     *** " << endl;
+        cout << " *** Please fix them first.              *** " << endl;
+        cout << " ******************************************* " << endl;
     }
 
 
 
     // ========================================================================
-    // Copy voxel from the bigger input nifti image by averaging 
+    // Copy voxel from the bigger input nifti image by averaging
     if (!subsample) {
         cout << "    I am averaging not subsampling" << endl;
-        int lo_z, lo_y, lo_x ; 
-        float mean_val = 0.; 
-        float nr_vox = 0; 
-        
-        
+        int lo_z, lo_y, lo_x ;
+        float mean_val = 0.;
+        float nr_vox = 0;
+
+
         for (int it = 0; it < size_timeout; ++it) {
             for (int iz = 0; iz <size_z ; iz=iz+sratio_z) {
                 for (int iy = 0 ; iy < size_y; iy=iy+sratio_y) {
                     for (int ix = 0; ix < size_x; ix=ix+sratio_x) {
-                        mean_val = 0.; 
+                        mean_val = 0.;
                         nr_vox = 0;
                         for (int jz = iz; jz < iz+sratio_z ; ++jz) {
                             for (int jy = iy ; jy < iy+sratio_y; ++jy) {
                                 for (int jx = ix; jx < ix+sratio_x; ++jx) {
                                     if ( *(nii1_data + nxyz * it + nxy * jz + nx * jy + jx) > 0 ){
                                         mean_val = mean_val + (float)(*(nii1_data + nxyz * it + nxy * jz + nx * jy + jx)) ;
-                                        nr_vox++; 
+                                        nr_vox++;
                                     }
                                 }
                             }
                         }
-                        
-                        lo_x = ix/sratio_x ; 
-                        lo_y = iy/sratio_y ; 
-                        lo_z = iz/sratio_z ; 
-                        if (nr_vox != 0 ) mean_val = mean_val/nr_vox ; 
-                        *(nii_outlay_data + nxyzo * it + nxyo * lo_z + nxo * lo_y + lo_x) =  mean_val; 
+
+                        lo_x = ix/sratio_x ;
+                        lo_y = iy/sratio_y ;
+                        lo_z = iz/sratio_z ;
+                        if (nr_vox != 0 ) mean_val = mean_val/nr_vox ;
+                        *(nii_outlay_data + nxyzo * it + nxyo * lo_z + nxo * lo_y + lo_x) =  mean_val;
                     }
                 }
             }
@@ -225,26 +225,26 @@ int main(int argc, char*  argv[]) {
 
 
     // ========================================================================
-    // Copy voxel from the bigger input nifti image by subsampling 
-    
+    // Copy voxel from the bigger input nifti image by subsampling
+
     if (subsample) {
         cout << "I am subsampling not averaging " << endl;
-        int up_z, up_y, up_x ; 
-    
+        int up_z, up_y, up_x ;
+
         for (int it = 0; it < size_timeout; ++it) {
             for (int iz = 0; iz <size_zout ; ++iz) {
                 for (int iy = 0 ; iy < size_yout; ++iy) {
                     for (int ix = 0; ix < size_xout; ++ix) {
-                        up_x = ix*sratio_x + (int)(sratio_x)/2 ; // The division with two is to calculate based on voxel centroits rather than voxel edges 
-                        up_y = iy*sratio_y + (int)(sratio_y)/2 ; 
-                        up_z = iz*sratio_z + (int)(sratio_z)/2 ; 
-                        *(nii_outlay_data + nxyzo * it + nxyo * iz + nxo * iy + ix) =  (float)(*(nii1_data + nxyz * it + nxy * up_z + nx * up_y + up_x)) ; 
+                        up_x = ix*sratio_x + (int)(sratio_x)/2 ; // The division with two is to calculate based on voxel centroits rather than voxel edges
+                        up_y = iy*sratio_y + (int)(sratio_y)/2 ;
+                        up_z = iz*sratio_z + (int)(sratio_z)/2 ;
+                        *(nii_outlay_data + nxyzo * it + nxyo * iz + nxo * iy + ix) =  (float)(*(nii1_data + nxyz * it + nxy * up_z + nx * up_y + up_x)) ;
                     }
                 }
             }
         }
     }
-    
+
     if (!use_outpath) fout = fin_2;
     save_output_nifti(fout, "sub_layers", nii_outlay, true, use_outpath);
 
