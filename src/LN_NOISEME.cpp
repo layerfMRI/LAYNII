@@ -19,7 +19,7 @@ int show_help(void) {
     "\n"
     "Usage:\n"
     "    LN_NOISEME -input input_example.nii -std 0.5 \n"
-    "    ../LN_NOISEME -input lo_VASO_act.nii -std 1 \n" 
+    "    ../LN_NOISEME -input lo_VASO_act.nii -std 1 \n"
     "\n"
     "Options:\n"
     "    -help   : Show this help.\n"
@@ -27,11 +27,10 @@ int show_help(void) {
     "    -std    : Noise standard deviance.\n"
     "    -output : (Optional) Output filename, including .nii or\n"
     "              .nii.gz, and path if needed. Overwrites existing files.\n"
-    "              If not given, the prefix 'noised' is added \n"
-//    "              gray scale test :::: ░▒▓::::\n" 
+    "              If not given, the prefix 'noised' is added.\n"
     "\n"
     "\n");
-    cout << endl ; 
+    cout << endl ;
     return 0;
 }
 
@@ -41,8 +40,8 @@ int main(int argc, char * argv[]) {
     char *fin = NULL;
     int ac;
     float std_val;
-    
-    
+
+
 
     // Process user options
     if (argc < 2) return show_help();

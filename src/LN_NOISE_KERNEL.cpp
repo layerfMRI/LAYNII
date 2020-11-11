@@ -18,7 +18,7 @@ int show_help(void) {
     "    -kernel_size : (Optional) Use an odd positive integer (default 11).\n"
     "    -output      : (Optional) Output filename, including .nii or\n"
     "                   .nii.gz, and path if needed. Overwrites existing files.\n"
-    "                   If not given, the prefix 'fPSF' is added \n"
+    "                   If not given, the prefix 'fPSF' is added.\n"
     "\n"
     "Notes:\n"
     "    Some applications of this program are mentioned in this blog post: \n"

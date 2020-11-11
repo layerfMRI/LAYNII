@@ -15,10 +15,10 @@ int show_help(void) {
         "    LN2_LAYERS -rim rim.nii -init rim_initial_spots.nii\n"
         "\n"
         "Options:\n"
-        "    -help         : Show this help. \n"
-        "    -rim          : Specify input dataset.\n"
-        "    -init         : Labels for initializing centroids.\n"
-        "    -nr_iter      : Number of iterations for centroid updates.\n"
+        "    -help       : Show this help. \n"
+        "    -rim        : Specify input dataset.\n"
+        "    -init       : Labels for initializing centroids.\n"
+        "    -nr_iter    : Number of iterations for centroid updates.\n"
         "\n");
     return 0;
 }

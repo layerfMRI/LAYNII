@@ -25,8 +25,8 @@ int show_help(void){
     "                  it will make things things slower \n"
     "                  Note, that this is best done with not too manny layers,  \n"
     "                  otherwise a single layer has wholes and is not connected.  \n"
-    "    -output       : (Optional) Output filename, including .nii or\n"
-    "                    .nii.gz, and path if needed. Overwrites existing files.\n"
+    "    -output     : (Optional) Output filename, including .nii or\n"
+    "                  .nii.gz, and path if needed. Overwrites existing files.\n"
     "\n"
     "Notes:\n"
     "    An application of this program is mentioned on these blog posts:\n"
@@ -303,7 +303,7 @@ cout << " There are  " <<  layernumber<< " layers/masks to smooth within  " << e
 //	for(int iz=0; iz<sizeSlice; ++iz){
  // 		for(int iy=0; iy<sizePhase; ++iy){
  //      		for(int ix=0; ix<sizeRead; ++ix){
-//	 		 *(smoothed_data  +  nxyz *time_i    + nxy*iz + nx*ix  + iy  ) = *(nim_inputf_data  + nxy*iz_i + nx*ix_i  + iy_i  ) ; 
+//	 		 *(smoothed_data  +  nxyz *time_i    + nxy*iz + nx*ix  + iy  ) = *(nim_inputf_data  + nxy*iz_i + nx*ix_i  + iy_i  ) ;
  //     		}
  //  		}
  //  	}
@@ -335,7 +335,7 @@ if (sulctouch == 0 ){
 		  			    //cout << "debug  5 " <<  dist_i  <<   endl;
 						//if ( *(nim_input_data   +  nxy*iz + nx*ix  + iy  )  == 3 ) cout << "debug  4b " << endl;
 							//dummy = *(layer_data  + nxy*iz_i + nx*ix_i  + iy_i  );
-		  					
+
                             for (int time_i = 0 ; time_i < nrep ; ++time_i){
                                 *(smoothed_data + nxyz *time_i    + nxy*iz + nx*ix  + iy  ) = *(smoothed_data  +  nxyz *time_i    + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data +  nxyz *time_i  + nxy*iz_i + nx*ix_i  + iy_i  ) * gaus(dist_i ,FWHM_val ) ;
                             }
@@ -352,7 +352,7 @@ if (sulctouch == 0 ){
 	     }
 
 	     if (*(nim_mask_data   +  nxy*iz + nx*ix  + iy  )  <= 0 )	 {
-             
+
                 for (int time_i = 0 ; time_i < nrep ; ++time_i){
                  	*(smoothed_data +  nxyz *time_i   + nxy*iz + nx*ix  + iy  ) =  *(nim_inputf_data  +  nxyz *time_i + nxy*iz + nx*ix  + iy  ) ;
                 }

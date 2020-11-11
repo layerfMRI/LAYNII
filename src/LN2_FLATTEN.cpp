@@ -12,14 +12,14 @@ int show_help(void) {
     "    LN2_FLATTEN -rim rim.nii -midgm rim_midgm_equidist.nii\n"
     "\n"
     "Options:\n"
-    "    -help         : Show this help.\n"
-    "    -rim          : Segmentation input. Use 3 to code pure gray matter \n"
-    "                    voxels. This program only generates columns in the \n"
-    "                    voxels coded with 3.\n"
-    "    -midgm        : Middle gray matter file (from LN2_LAYERS output).\n"
-    "    -intensity    : Intensity image that will be flattened.\n"
-    "    -debug        : (Optional) Save extra intermediate outputs.\n"
-    "    -output       : (Optional) Output basename for all outputs.\n"
+    "    -help      : Show this help.\n"
+    "    -rim       : Segmentation input. Use 3 to code pure gray matter \n"
+    "                 voxels. This program only generates columns in the \n"
+    "                 voxels coded with 3.\n"
+    "    -midgm     : Middle gray matter file (from LN2_LAYERS output).\n"
+    "    -intensity : Intensity image that will be flattened.\n"
+    "    -debug     : (Optional) Save extra intermediate outputs.\n"
+    "    -output    : (Optional) Output basename for all outputs.\n"
     "\n");
     return 0;
 }

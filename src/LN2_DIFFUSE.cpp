@@ -10,11 +10,11 @@ int shoq_help(void) {
     "    LN2_DIFFUSE -input data.nii -nr_steps 5\n"
     "\n"
     "Options:\n"
-    "    -help         : Show this help.\n"
-    "    -input        : Input image.\n"
-    "    -nr_steps   : Number of diffusion steps.\n"
-    "    -debug        : (Optional) Save extra intermediate outputs.\n"
-    "    -output       : (Optional) Output basename for all outputs.\n"
+    "    -help     : Show this help.\n"
+    "    -input    : Input image.\n"
+    "    -nr_steps : Number of diffusion steps.\n"
+    "    -debug    : (Optional) Save extra intermediate outputs.\n"
+    "    -output   : (Optional) Output basename for all outputs.\n"
     "\n");
     return 0;
 }
