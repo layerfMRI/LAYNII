@@ -251,7 +251,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Initial flood from centroid
     // ========================================================================
-    cout << "  Checking control points..." << endl;
+    cout << "\n  Checking control points..." << endl;
     // Find the initial voxel
     uint32_t control_point0;  // Origin
     uint32_t control_point1 = 0, control_point2 = 0;  // First extrema pair
@@ -283,7 +283,8 @@ int main(int argc, char*  argv[]) {
         cout << "    Only origin voxel is found." << endl;
     } else {
         cout << "    Origin and extrema quartet voxels are NOT found!" << endl;
-        cout << "Exiting program." << endl;
+        cout << "    Check your '-control_points' input file." << endl;
+        cout << "    Stopping program." << endl;
         return 2;
     }
 
