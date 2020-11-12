@@ -139,15 +139,6 @@ int main(int argc, char*  argv[]) {
     nifti_image* nii_points = copy_nifti_as_int32(nii3);
     int32_t* nii_points_data = static_cast<int32_t*>(nii_points->data);
 
-    // // Prepare middle gray matter from control points input
-    // nifti_image* nii_midgm = copy_nifti_as_int32(nii_points);
-    // int32_t* nii_midgm_data = static_cast<int32_t*>(nii_midgm->data);
-    // for (uint32_t i = 0; i != nr_voxels; ++i) {
-    //     if (*(nii_points_data + i) > 0) {
-    //         *(nii_midgm_data + i) = 1;
-    //     }
-    // }
-
     // Prepare flood fill related nifti images
     nifti_image* flood_step = copy_nifti_as_int32(nii_rim);
     int32_t* flood_step_data = static_cast<int32_t*>(flood_step->data);
@@ -255,7 +246,7 @@ int main(int argc, char*  argv[]) {
     uint32_t control_point1 = 0, control_point2 = 0;  // First extrema pair
     uint32_t control_point3 = 0, control_point4 = 0;  // Second extrema pair
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_points_data + i) == 2) {
+        if (*(nii_points_data + i) == 2) {  // Centroid/origin
             control_point0 = i;
         } else if (*(nii_points_data + i) == 3) {
             control_point1 = i;
@@ -286,7 +277,7 @@ int main(int argc, char*  argv[]) {
         return 2;
     }
 
-    cout << "  Start multilaterating..." << endl;
+    cout << "\n  Computing centroid distances..." << endl;
     // Find distances from input centroid
     int32_t grow_step = 1;
     uint32_t voxel_counter = nr_voxels;
@@ -1502,10 +1493,11 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Find quartets and compute distances on midgm domain
     // ========================================================================
+    cout << "  Computing control points..." << endl;
     if (mode_custom_extrema) {
-        cout << "    Using custom extrema points." << endl;
+        cout << "    Using custom extrema control points." << endl;
     } else {
-        cout << "    Finding extrema points on perimeter." << endl;
+        cout << "    Finding extrema control points on perimeter." << endl;
         // Find first point on perimeter
         for (uint32_t ii = 0; ii != nr_voi; ++ii) {
             i = *(voi_id + ii);  // Map subset to full set
@@ -1888,6 +1880,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Flooding distance from each quartet as output
     // ========================================================================
+    cout << "\n  Computing extrema control points distances..." << endl;
     for (int p = 3; p < 7; ++p) {
         // Initialize grow volume
         for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -2241,7 +2234,7 @@ int main(int argc, char*  argv[]) {
         // --------------------------------------------------------------------
         // Final Voronoi for propagating distances to all gray matter
         // --------------------------------------------------------------------
-        cout << "\n  Start Voronoi propagation " + std::to_string(p-2) + "/4..." << endl;
+        cout << "    Start Voronoi propagation " + std::to_string(p-2) + "/4..." << endl;
         // Initialize grow volume
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             if (*(nii_points_data + i) > 0) {
@@ -2632,7 +2625,7 @@ int main(int argc, char*  argv[]) {
         // --------------------------------------------------------------------
         // Smooth distances
         // --------------------------------------------------------------------
-        cout << "    Smoothing transitions..." << endl;
+        cout << "      Smoothing transitions..." << endl;
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             *(smooth_data + i) = 0;
         }
@@ -2754,6 +2747,11 @@ int main(int argc, char*  argv[]) {
     }
     save_output_nifti(fout, "UV_radians", flood_dist, true);
     save_output_nifti(fout, "UV_quadrants", flood_step, true);
+
+    // ========================================================================
+    // Compute flat images
+    // ========================================================================
+
 
     cout << "\n  Finished." << endl;
     return 0;
