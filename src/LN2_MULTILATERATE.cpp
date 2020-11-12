@@ -156,12 +156,10 @@ int main(int argc, char*  argv[]) {
     int32_t* nii_rim_data = static_cast<int32_t*>(nii_rim->data);
     nifti_image* nii_midgm = copy_nifti_as_int32(nii2);
     int32_t* nii_midgm_data = static_cast<int32_t*>(nii_midgm->data);
-    nifti_image* nii_centroid = copy_nifti_as_int32(nii3);
-    int32_t* nii_centroid_data = static_cast<int32_t*>(nii_centroid->data);
+    nifti_image* nii_points = copy_nifti_as_int32(nii3);
+    int32_t* nii_points_data = static_cast<int32_t*>(nii_points->data);
 
     // Prepare required nifti images
-    nifti_image* quartet = copy_nifti_as_int32(nii_rim);
-    int32_t* quartet_data = static_cast<int32_t*>(quartet->data);
     nifti_image* flood_step = copy_nifti_as_int32(nii_rim);
     int32_t* flood_step_data = static_cast<int32_t*>(flood_step->data);
     nifti_image* flood_dist = copy_nifti_as_float32(nii_rim);
@@ -172,7 +170,6 @@ int main(int argc, char*  argv[]) {
 
     // Setting zero
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        *(quartet_data + i) = 0;
         *(flood_step_data + i) = 0;
         *(flood_dist_data + i) = 0;
         *(perimeter_data + i) = 0;
@@ -183,6 +180,32 @@ int main(int argc, char*  argv[]) {
     float* voronoi_data = static_cast<float*>(voronoi->data);
     nifti_image* smooth = copy_nifti_as_float32(voronoi);
     float* smooth_data = static_cast<float*>(smooth->data);
+
+    // Create a 4D nifti image for point distances
+    nifti_image* nii_dist = nifti_copy_nim_info(flood_dist);
+    nii_dist->dim[0] = 4;  // For proper 4D nifti
+    nii_dist->dim[1] = size_x;
+    nii_dist->dim[2] = size_y;
+    nii_dist->dim[3] = size_z;
+    nii_dist->dim[4] = 4;
+    nifti_update_dims_from_array(nii_dist);
+    nii_dist->nvox = nr_voxels * 4;
+    nii_dist->nbyper = sizeof(float);
+    nii_dist->data = calloc(nii_dist->nvox, nii_dist->nbyper);
+    float* nii_dist_data = static_cast<float*>(nii_dist->data);
+
+    // Create a 4D nifti image for coordinates
+    nifti_image* nii_coords = nifti_copy_nim_info(flood_dist);
+    nii_coords->dim[0] = 4;  // For proper 4D nifti
+    nii_coords->dim[1] = size_x;
+    nii_coords->dim[2] = size_y;
+    nii_coords->dim[3] = size_z;
+    nii_coords->dim[4] = 2;
+    nifti_update_dims_from_array(nii_coords);
+    nii_coords->nvox = nr_voxels * 2;
+    nii_coords->nbyper = sizeof(float);
+    nii_coords->data = calloc(nii_coords->nvox, nii_coords->nbyper);
+    float* nii_coords_data = static_cast<float*>(nii_coords->data);
 
     // ------------------------------------------------------------------------
     // NOTE(Faruk): This section is written to constrain the big iterative
@@ -234,12 +257,13 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Initial flood from centroid
     // ========================================================================
-    cout << "  Start trilaterating..." << endl;
+    cout << "  Start multilaterating..." << endl;
     // Find the initial voxel
     uint32_t start_voxel;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_centroid_data + i) == 1) {
+        if (*(nii_points_data + i) == 1) {
             start_voxel = i;
+            *(nii_points_data + i) = 0;  // Cleanup for quartets
         }
     }
     *(nii_midgm_data + start_voxel) = 2;
@@ -597,7 +621,9 @@ int main(int argc, char*  argv[]) {
         grow_step += 1;
     }
 
-    save_output_nifti(fout, "centroid_dist", flood_dist, true);
+    if (mode_debug) {
+        save_output_nifti(fout, "centroid_dist", flood_dist, true);
+    }
 
     // Translate 0 crossing
     for (uint32_t ii = 0; ii != nr_voi; ++ii) {
@@ -1474,7 +1500,7 @@ int main(int argc, char*  argv[]) {
             idx_point1 = i;
         }
     }
-    *(quartet_data + idx_point1) = 1;
+    *(nii_points_data + idx_point1) = 1;
 
     // Loop until desired number of points reached
     for (int32_t n = 2; n < 5; ++n) {
@@ -1485,7 +1511,7 @@ int main(int argc, char*  argv[]) {
 
         // Initialize grow volume
         for (uint32_t i = 0; i != nr_voxels; ++i) {
-            if (*(quartet_data + i) != 0) {
+            if (*(nii_points_data + i) != 0) {
                 *(flood_step_data + i) = 1.;
                 *(flood_dist_data + i) = 0.;
             } else {
@@ -1839,11 +1865,11 @@ int main(int argc, char*  argv[]) {
                 }
             }
         }
-        *(quartet_data + idx_new_point) = n;
+        *(nii_points_data + idx_new_point) = n;
     }
 
     if (mode_debug) {
-        save_output_nifti(fout, "quartet", quartet, false);
+        save_output_nifti(fout, "quartet", nii_points, false);
     }
 
     // ========================================================================
@@ -1852,7 +1878,7 @@ int main(int argc, char*  argv[]) {
     for (int p = 1; p < 5; ++p) {
         // Initialize grow volume
         for (uint32_t i = 0; i != nr_voxels; ++i) {
-            if (*(quartet_data + i) == p) {
+            if (*(nii_points_data + i) == p) {
                 *(flood_step_data + idx_point1) = 1.;
                 *(flood_dist_data + idx_point1) = 1.;
             } else {
@@ -2203,7 +2229,7 @@ int main(int argc, char*  argv[]) {
         // --------------------------------------------------------------------
         // Final Voronoi for propagating distances to all gray matter
         // --------------------------------------------------------------------
-        cout << "\n  Start final Voronoi propagation..." << endl;
+        cout << "\n  Start Voronoi propagation " + std::to_string(p) + "/4..." << endl;
         // Initialize grow volume
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             if (*(nii_midgm_data + i) != 0) {
@@ -2594,7 +2620,7 @@ int main(int argc, char*  argv[]) {
         // ----------------------------------------------------------------
         // Smooth distances
         // ----------------------------------------------------------------
-        cout << "\n    Smoothing transitions..." << endl;
+        cout << "    Smoothing transitions..." << endl;
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             *(smooth_data + i) = 0;
         }
@@ -2664,13 +2690,59 @@ int main(int argc, char*  argv[]) {
                 *(smooth_data + i) = new_val / total_weight;
             }
             // Swap image data
-            for (uint32_t i = 0; i != nr_voxels; ++i) {
+            for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
+                i = *(voi_id2 + iii);
                 *(voronoi_data + i) = *(smooth_data + i);
             }
         }
 
-    save_output_nifti(fout, "point" + std::to_string(p) + "_dist", voronoi, true);
+        // Save each point distance separately
+        if (mode_debug) {
+            save_output_nifti(fout, "point" + std::to_string(p) + "_dist", voronoi, true);
+        }
+        // Save distances into 4D nifti
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            *(nii_dist_data + nr_voxels*(p-1) + i) = *(voronoi_data + i);
+        }
     }
+    save_output_nifti(fout, "point_distances", nii_dist, true);
+
+    // ========================================================================
+    // Derive UV coordinates from distances (UV for 2D coordinates like XY)
+    // ========================================================================
+    cout << "\n  Computing UV coordinates..." << endl;
+    // Subtract distances pair-wise to get axis coordinates
+    for (uint32_t t = 0; t != 2; ++t) {
+        for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
+            i = *(voi_id2 + iii);
+            float dist1 = *(nii_dist_data + nr_voxels*(2 * t) + i);
+            float dist2 = *(nii_dist_data + nr_voxels*(2 * t + 1) + i);
+            *(nii_coords_data + nr_voxels*t + i) = dist1 - dist2;
+        }
+    }
+    free(nii_dist_data);
+    save_output_nifti(fout, "UV_coordinates", nii_coords, true);
+
+    // ========================================================================
+    // Compute angles & quadrants
+    // ========================================================================
+    cout << "\n  Computing angles and quadrants..." << endl;
+    for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
+        i = *(voi_id2 + iii);
+        float coord1 = *(nii_coords_data + nr_voxels*0 + i);
+        float coord2 = *(nii_coords_data + nr_voxels*1 + i);
+
+        // Angles in radians (0 to 2*pi)
+        float angle = std::atan2(coord1, coord2) + PI;
+        *(flood_dist_data + i) = angle;  // Repurposing nifti object
+        // Derive quadrants from angles
+        angle *= 2 / PI;
+        float quadrant = std::floor(angle + 1);
+        *(flood_step_data + i) = static_cast<int32_t>(quadrant);
+    }
+    save_output_nifti(fout, "UV_angles", flood_dist, true);
+    save_output_nifti(fout, "UV_quadrants", flood_step, true);
+
     cout << "\n  Finished." << endl;
     return 0;
 }
