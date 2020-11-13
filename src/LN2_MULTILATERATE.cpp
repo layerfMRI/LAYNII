@@ -259,11 +259,12 @@ int main(int argc, char*  argv[]) {
         }
     }
 
-    bool mode_custom_extrema = false;
+    bool mode_custom_extrema = false, mode_custom_origin = false;
     if (control_point0 != 0 && control_point1 !=0 && control_point2 !=1
         && control_point3 !=0 && control_point4 !=0) {
         cout << "    Origin and extrema quartet voxels are found." << endl;
         mode_custom_extrema = true;
+        mode_custom_origin = true;
     } else if (control_point1 !=0 and control_point2 !=1
                && control_point3 !=0 && control_point4 !=0) {
         cout << "    Only extrema quartet voxels are found." << endl;
@@ -2737,6 +2738,18 @@ int main(int argc, char*  argv[]) {
     free(nii_dist_data);
     save_output_nifti(fout, "UV_coordinates", nii_coords, true);
 
+    // Adjust origin
+    if (mode_custom_origin) {
+        float origin_U = *(nii_coords_data + nr_voxels*0 + control_point0);
+        float origin_V = *(nii_coords_data + nr_voxels*1 + control_point0);
+        for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
+            i = *(voi_id2 + iii);
+            *(nii_coords_data + nr_voxels*0 + i) -= origin_U;
+            *(nii_coords_data + nr_voxels*1 + i) -= origin_V;
+        }
+        save_output_nifti(fout, "UV_coordinates_adj", nii_coords, true);
+    }
+
     // ========================================================================
     // Compute angles & quadrants
     // ========================================================================
@@ -2766,7 +2779,6 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Compute flat images
     // ========================================================================
-
 
     cout << "\n  Finished." << endl;
     return 0;
