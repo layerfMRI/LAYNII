@@ -2749,7 +2749,7 @@ int main(int argc, char*  argv[]) {
 
     // Mask out coordinates beyond periphery radius
     if (mode_mask) {
-        cout << "Masking output" << endl;
+        cout << "\n  Masking output" << endl;
         for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
             i = *(voi_id2 + iii);
             if (*(perimeter_data + i) == 0) {
