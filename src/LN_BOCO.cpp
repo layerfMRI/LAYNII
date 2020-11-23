@@ -23,7 +23,7 @@ int show_help(void) {
     "                 for temporal shifts.\n"
     "    -trialBOCO : First average trials and then do the BOLD correction. \n"
     "                 The parameter is the trial duration in TRs.\n"
-    "    -output    : (Optional) Output filename, including .nii or\n"
+    "    -output    : (Optional) Output basename, including .nii or\n"
     "                 .nii.gz, and path if needed. Overwrites existing files.\n"
     "\n"
     "Notes:\n"
@@ -293,8 +293,8 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    if (!use_outpath) fout = fin_1;
-    save_output_nifti(fout, "VASO_LN", nii_boco_vaso, true, use_outpath);
+  // if (!use_outpath) fout = fin_1;
+    save_output_nifti(fout, "VASO_LN", nii_boco_vaso, true);
 
     cout << "  Finished." << endl;
     return 0;
