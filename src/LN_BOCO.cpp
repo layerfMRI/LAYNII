@@ -11,7 +11,7 @@ int show_help(void) {
     "    LN_BOCO -Nulled Nulled_intemp.nii -BOLD BOLD_intemp.nii -shift \n"
     "    LN_BOCO -Nulled Nulled_intemp.nii -BOLD BOLD_intemp.nii -trialBOCO 24 \n"
     "    \n"
-    "    test application in the test_data folder would be:\n"
+    "Test application in the test_data folder would be:\n"
     "    ../LN_BOCO -Nulled lo_Nulled_intemp.nii -BOLD lo_BOLD_intemp.nii -trialBOCO 40 -shift\n"
     "\n"
     "Options:\n"
@@ -36,8 +36,8 @@ int show_help(void) {
 }
 
 int main(int argc, char * argv[]) {
-    bool use_outpath = false;
-    char *fin_1 = NULL, *fin_2 = NULL, *fout = NULL;
+    char *fin_1 = NULL, *fin_2 = NULL, *fout = (char*)"";
+    bool use_outpath = true;
     int ac, shift = 0;
     int trialdur = 0;
     if (argc < 2) return show_help();
@@ -52,7 +52,6 @@ int main(int argc, char * argv[]) {
                 return 1;
             }
             fin_1 = argv[ac];
-            fout = fin_1;
         } else if (!strcmp(argv[ac], "-BOLD")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -BOLD\n");
@@ -73,7 +72,7 @@ int main(int argc, char * argv[]) {
                 fprintf(stderr, "** missing argument for -output\n");
                 return 1;
             }
-            use_outpath = true;
+            use_outpath = false;
             fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
@@ -281,8 +280,13 @@ int main(int argc, char * argv[]) {
                 }
             }
         }
-        save_output_nifti(fout, "VASO_trialAV_LN", nii_avg1, true);
-        save_output_nifti(fout, "BOLD_trialAV_LN", nii_avg2, true);
+        if (use_outpath) {
+            save_output_nifti("VASO_trialAV_LN", "", nii_avg1, true, true);
+            save_output_nifti("BOLD_trialAV_LN", "", nii_avg2, true, true);
+        } else {
+            save_output_nifti(fout, "VASO_trialAV_LN", nii_avg1, true);
+            save_output_nifti(fout, "BOLD_trialAV_LN", nii_avg2, true);
+        }
     }
 
 
@@ -293,8 +297,11 @@ int main(int argc, char * argv[]) {
         }
     }
 
-  // if (!use_outpath) fout = fin_1;
-    save_output_nifti(fout, "VASO_LN", nii_boco_vaso, true);
+    if (use_outpath) {
+        save_output_nifti("VASO_LN", "", nii_boco_vaso, true, true);
+    } else {
+        save_output_nifti(fout, "VASO_LN", nii_boco_vaso, true);
+    }
 
     cout << "  Finished." << endl;
     return 0;
