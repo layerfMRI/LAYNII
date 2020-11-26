@@ -1,11 +1,11 @@
 # LayNii
 
-<img src="https://layerfmri.files.wordpress.com/2018/01/sensory_motor_grid.png" width=350 align="right" />
+<img src="https://layerfmri.files.wordpress.com/2020/11/laynii_anim_logo.gif" width=350 align="right" />
 
-This is a package of standalone layer functional magnetic resonance imaging (layer-fMRI) C++ programs that depends only on a C++ compiler. The purpose of this package is to provide layer-analysis software that are not (yet) included in the other major MRI analysis software.
+This is a package of standalone layer (functional) magnetic resonance imaging (layer-fMRI) C++ programs that depends only on a C++ compiler. The purpose of this package is to provide layer-analysis software that are not (yet) included in the other major MRI analysis software.
 
-Most used programs (so far) are:
--  `LN2_LAYERS`: To generate equi-distant or equi-volume layers from gray matter segmentation. (Alternative to `LN_GROW_LAYERS` in older versions of LayNii).
+Most essential programs (so far) are:
+- `LN2_LAYERS`: To generate equi-distant or equi-volume layers from gray matter segmentation. (Alternative to `LN_GROW_LAYERS` in older versions of LayNii).
 - `LN_LAYER_SMOOTH` : For layer-specific spatial smoothing.
 - `LN_BOCO` : for BOLD correction in VASO.
 
@@ -13,7 +13,7 @@ Most used programs (so far) are:
 
 If you use LayNii in your research please cite the following article:
 
-- Huber, L., Poser, B. A., Bandettini, P. A., Arora, K., Wagstyl, K., Cho, S., Goense, J., Nothnagel, N., Morgan, A. T., van den Hurk, J., Reynolds, R. C., Glen, D. R., Goebel, R. W., Gulban, O. F. (2020). LayNii: A software suite for layer-fMRI. BioRxiv. <https://doi.org/10.1101/2020.06.12.148080>
+- Huber, L., Poser, B. A., Bandettini, P. A., Arora, K., Wagstyl, K., Cho, S., Goense, J., Nothnagel, N., Morgan, A. T., Mueller A. K., van den Hurk, J., Reynolds, R. C., Glen, D. R., Goebel, R. W., Gulban, O. F. (2020). LayNii: A software suite for layer-fMRI. BioRxiv. <https://doi.org/10.1101/2020.06.12.148080>
 
 In addition, please cite the used software version of LayNii by using our Zenodo integration:
 - [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3514297.svg)](https://doi.org/10.5281/zenodo.3514297)
