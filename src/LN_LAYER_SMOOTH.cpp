@@ -537,18 +537,19 @@ cout << "  smoothing done  " <<  endl;
 ///////////////////////////////////
 
 if ( do_masking == 1 ) {
-  	for(int it=0; it<nrep; ++it){
 	  for(int islice=0; islice<sizeSlice; ++islice){
-	      for(int iy=0; iy<sizePhase; ++iy){
-	        for(int ix=0; ix<sizeRead; ++ix){
-	          if (*(nim_mask_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) == 0 ) {
-        		 *(smoothed_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = 0 ;
+	      for(int iy=0;   iy<sizePhase; ++iy){
+	        for(int ix=0;    ix<sizeRead; ++ix){
+	          if (*(nim_mask_data  + nxyz *0 +  nxy*islice + nx*ix  + iy  ) == 0 ) {
+                    for(int it=0; it<nrep; ++it){
+                        *(smoothed_data  + nxyz *it +  nxy*islice + nx*ix  + iy  )  = 0 ;
+                     }
         	  }
            }
 	    }
 	  }
 	}
-}
+
 
 //cout << " runing also until here  5.... " << endl;
 //cout << " slope " << smoothed->scl_slope << " " << nim_inputfi->scl_slope  << endl;
