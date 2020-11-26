@@ -1,6 +1,8 @@
 # LayNii
 
-![LayNii Logo](https://layerfmri.files.wordpress.com/2020/11/laynii_logo_anim.gif)
+<img src="https://layerfmri.files.wordpress.com/2020/11/laynii_logo_anim.gif"  width="350" align="right" />
+
+
 
 This is a package of standalone layer (functional) magnetic resonance imaging (layer-fMRI) C++ programs that depends only on a C++ compiler. The purpose of this package is to provide layer-analysis software that are not (yet) included in the other major MRI analysis software.
 
