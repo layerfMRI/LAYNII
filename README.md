@@ -1,6 +1,6 @@
 # LayNii
 
-<img src="https://layerfmri.files.wordpress.com/2020/11/laynii_logo_anim.gif"  width="350" align="right" />
+<img src="https://layerfmri.files.wordpress.com/2020/11/laynii_logo_anim.gif"  width="450" align="right" />
 
 
 
