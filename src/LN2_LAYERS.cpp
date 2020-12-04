@@ -1055,15 +1055,27 @@ bool use_outpath = false;
                 *(nii_layers_data + i) = 1;
             }
 
-            // NOTE: compute error for debugging purposes
-            // float dist3 = dist(wm_x, wm_y, wm_z, gm_x, gm_y, gm_z, dX, dY, dZ);
-            // *(err_dist_data + i) = (dist1 + dist2) - dist3;
-
             // Count inner and outer GM anchor voxels
             j = *(innerGM_id_data + i);
             *(hotspots_data + j) += 1;
             j = *(outerGM_id_data + i);
             *(hotspots_data + j) -= 1;
+
+            // ----------------------------------------------------------------
+            // TODO: Work in progress
+            // Compute angles (used in e.g. B0 angular difference)
+            float ref_x = 0, ref_y = 0, ref_z = 1;
+            float vec_x = wm_x - gm_x;
+            float vec_y = wm_y - gm_y;
+            float vec_z = wm_z - gm_z;
+
+            float temp_dot = ref_x * vec_x + ref_y * vec_y + ref_z * vec_z;
+            float term1 = ref_x * ref_x + ref_y * ref_y + ref_z * ref_z;
+            float term2 = vec_x * vec_x + vec_y * vec_y + vec_z * vec_z;
+            float temp_angle = std::acos(temp_dot / std::sqrt(term1 * term2));
+            *(curvature_data + i) = temp_angle * 180 / PI;
+            // ----------------------------------------------------------------
+
         }
     }
     save_output_nifti(fout, "metric_equidist", normdist);
@@ -1071,8 +1083,8 @@ bool use_outpath = false;
 
     if (mode_debug) {
         save_output_nifti(fout, "hotspots", hotspots, false);
-        // save_output_nifti(fout, "disterror", err_dist, false);
         save_output_nifti(fout, "normdistdiff_equidist", normdistdiff, false);
+        save_output_nifti(fout, "angular_dif", curvature, false);
     }
 
     // ========================================================================
