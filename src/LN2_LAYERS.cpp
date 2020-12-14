@@ -1524,8 +1524,9 @@ bool use_outpath = false;
         *(innerGM_dist_data + i) += *(outerGM_dist_data + i);
     }
     save_output_nifti(fout, "thickness", innerGM_dist, true);
+
     // ========================================================================
-    // Streamline angles
+    // Streamline vectors
     // ========================================================================
     // NOTE(Faruk): I have implemented this quickly for B0 related before
     // ISMRM2021 abstract submission.
