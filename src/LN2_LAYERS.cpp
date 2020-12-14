@@ -1060,22 +1060,6 @@ bool use_outpath = false;
             *(hotspots_data + j) += 1;
             j = *(outerGM_id_data + i);
             *(hotspots_data + j) -= 1;
-
-            // ----------------------------------------------------------------
-            // TODO: Work in progress
-            // Compute angles (used in e.g. B0 angular difference)
-            float ref_x = 0, ref_y = 0, ref_z = 1;
-            float vec_x = wm_x - gm_x;
-            float vec_y = wm_y - gm_y;
-            float vec_z = wm_z - gm_z;
-
-            float temp_dot = ref_x * vec_x + ref_y * vec_y + ref_z * vec_z;
-            float term1 = ref_x * ref_x + ref_y * ref_y + ref_z * ref_z;
-            float term2 = vec_x * vec_x + vec_y * vec_y + vec_z * vec_z;
-            float temp_angle = std::acos(temp_dot / std::sqrt(term1 * term2));
-            *(curvature_data + i) = temp_angle * 180 / PI;
-            // ----------------------------------------------------------------
-
         }
     }
     save_output_nifti(fout, "metric_equidist", normdist);
@@ -1084,7 +1068,6 @@ bool use_outpath = false;
     if (mode_debug) {
         save_output_nifti(fout, "hotspots", hotspots, false);
         save_output_nifti(fout, "normdistdiff_equidist", normdistdiff, false);
-        save_output_nifti(fout, "angular_dif", curvature, false);
     }
 
     // ========================================================================
@@ -1542,6 +1525,54 @@ bool use_outpath = false;
     }
     save_output_nifti(fout, "thickness", innerGM_dist, true);
     // ========================================================================
+    // Streamline angles
+    // ========================================================================
+    // NOTE(Faruk): I have implemented this quickly for B0 related before
+    // ISMRM2021 abstract submission.
+
+    // Prepare a 4D nifti for streamline vectors
+    nifti_image* svec = nifti_copy_nim_info(normdist);
+    svec->dim[0] = 4;  // For proper 4D nifti
+    svec->dim[1] = size_x;
+    svec->dim[2] = size_y;
+    svec->dim[3] = size_z;
+    svec->dim[4] = 3;
+    nifti_update_dims_from_array(svec);
+    svec->nvox = normdist->nvox * 3;
+    svec->nbyper = sizeof(float);
+    svec->data = calloc(svec->nvox, svec->nbyper);
+    svec->scl_slope = 1;
+    float* svec_data = static_cast<float*>(svec->data);
+
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) == 3) {
+            tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
+            tie(wm_x, wm_y, wm_z) = ind2sub_3D(*(innerGM_id_data + i),
+                                               size_x, size_y);
+            tie(gm_x, gm_y, gm_z) = ind2sub_3D(*(outerGM_id_data + i),
+                                               size_x, size_y);
+
+            // Compute approx. surface angles from streamline start-end points
+            float vec_x = wm_x - gm_x;
+            float vec_y = wm_y - gm_y;
+            float vec_z = wm_z - gm_z;
+            float vec_norm = std::sqrt(vec_x * vec_x + vec_y * vec_y + vec_z * vec_z);
+
+            *(svec_data + nr_voxels*0 + i) = vec_x / vec_norm;
+            *(svec_data + nr_voxels*1 + i) = vec_y / vec_norm;
+            *(svec_data + nr_voxels*2 + i) = vec_z / vec_norm;
+
+            // Angular difference
+            // float ref_x = 0, ref_y = 0, ref_z = 1;
+            // float temp_dot = ref_x * vec_x + ref_y * vec_y + ref_z * vec_z;
+            // float term1 = ref_x * ref_x + ref_y * ref_y + ref_z * ref_z;
+            // float term2 = vec_x * vec_x + vec_y * vec_y + vec_z * vec_z;
+            // float temp_angle = std::acos(temp_dot / std::sqrt(term1 * term2));
+            // *(curvature_data + i) = temp_angle * 180 / PI;
+            // ----------------------------------------------------------------
+        }
+    }
+    save_output_nifti(fout, "streamline_vectors", svec, true);
 
     cout << "\n  Finished." << endl;
     return 0;
