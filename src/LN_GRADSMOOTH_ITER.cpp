@@ -9,7 +9,7 @@ int show_help(void) {
     "    In order to avoid smoothing across masks a crawler smoothed only across connected voxels ,\n"
     "\n"
     "Usage:\n"
-    "    LN_GRADSMOOTH_ITER -input activity_map.nii -gradfile gradfile.nii -FWHM 1 -within  -selectivity 0.1 \n"
+    "    LN_GRADSMOOTH_ITER -input lo_VASO_act.nii -gradfile lo_gradT1.nii -FWHM 1 -within  -selectivity 0.1 \n"
     "    ../LN_GRADSMOOTH_ITER -input lo_VASO_act.nii -gradfile lo_gradT1.nii -FWHM 1 -within -selectivity 0.1 \n"
     "\n"
     "Options:\n"
