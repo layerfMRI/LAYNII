@@ -1557,7 +1557,7 @@ bool use_outpath = false;
             float vec_x = wm_x - gm_x;
             float vec_y = wm_y - gm_y;
             float vec_z = wm_z - gm_z;
-            float vec_norm = std::sqrt(vec_x * vec_x + vec_y * vec_y + vec_z * vec_z);
+            float vec_norm = sqrt(vec_x * vec_x + vec_y * vec_y + vec_z * vec_z);
 
             *(svec_data + nr_voxels*0 + i) = vec_x / vec_norm;
             *(svec_data + nr_voxels*1 + i) = vec_y / vec_norm;
