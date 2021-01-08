@@ -6,7 +6,7 @@ int show_help(void){
     "LN_GRADSMOOTH : Local gradient based smoothing.\n"
     "\n"
     "Usage:\n"
-    "    LN_GRADSMOOTH -input activity_map.nii -gradfile gradfile.nii -FWHM 1 -within -selectivity 0.1 \n"
+    "    LN_GRADSMOOTH -input lo_VASO_act.nii -gradfile lo_gradT1.nii -FWHM 1 -within -selectivity 0.1 \n"
     "    ../LN_GRADSMOOTH -input lo_VASO_act.nii -gradfile lo_gradT1.nii -FWHM 1 -within -selectivity 0.1 \n"
     "\n"
     "Options:\n"
