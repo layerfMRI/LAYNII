@@ -440,7 +440,9 @@ int main(int argc, char*  argv[]) {
             }
         }
     }
-    save_output_nifti(fout, "midgm_clusters", nii_midgm, false);
+    if (mode_debug) {
+        save_output_nifti(fout, "connected_clusters", nii_midgm, false);
+    }
 
     // ========================================================================
     // Find column centers through farthest flood distance
@@ -458,8 +460,6 @@ int main(int argc, char*  argv[]) {
         }
         *(nii_midgm_data + start_voxel) = 2;  // Reduce to single initial voxel
     }
-
-    save_output_nifti(fout, "midgm_clusters2", nii_midgm, false);
 
     // Initialize new voxel
     uint32_t new_voxel_id;
