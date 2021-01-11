@@ -4,13 +4,13 @@
 
 int show_help(void) {
     printf(
-    "LN2_MULTILATERATE: Injects a coordinate system upon a region of the rim file.\n"
+    "LN2_PATCH_FLATTEN: Injects a coordinate system upon a region of the rim file.\n"
     "                   These coordinates can be used to flatten chunks of the brain.\n"
     "                   Or, to generate bins/cells (subsets of voxels).\n"
     "\n"
     "Usage:\n"
-    "    LN2_MULTILATERATE -rim rim.nii -control_points rim_midgm_centroid.nii -radius 10\n"
-    "    LN2_MULTILATERATE -rim rim.nii -control_points rim_midgm_custom_extrema.nii\n"
+    "    LN2_PATCH_FLATTEN -rim rim.nii -control_points rim_midgm_centroid.nii -radius 10\n"
+    "    LN2_PATCH_FLATTEN -rim rim.nii -control_points rim_midgm_custom_extrema.nii\n"
     "\n"
     "Options:\n"
     "    -help           : Show this help.\n"
@@ -35,7 +35,7 @@ int show_help(void) {
     "\n"
     "Notes:\n"
     "    - This program is written for 3D images. We might add 2D image support\n"
-    "      in the future."
+    "      in the future depending on requests."
     "\n");
     return 0;
 }
@@ -109,7 +109,7 @@ int main(int argc, char*  argv[]) {
         return 2;
     }
 
-    log_welcome("LN2_MULTILATERATE");
+    log_welcome("LN2_PATCH_FLATTEN");
     log_nifti_descriptives(nii1);
     log_nifti_descriptives(nii3);
 
