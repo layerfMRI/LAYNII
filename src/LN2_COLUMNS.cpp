@@ -449,7 +449,6 @@ int main(int argc, char*  argv[]) {
     // Find the initial voxel
     uint32_t start_voxel;
     for (int32_t n = 2; n <= init_voxel_id; ++n) {
-        cout << n << endl;
         for (uint32_t ii = 0; ii != nr_voi; ++ii) {
             uint32_t i = *(voi_id + ii);  // Map subset to full set
             if (*(nii_midgm_data + i) == n) {
