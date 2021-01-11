@@ -174,8 +174,8 @@ int main(int argc, char* argv[]) {
     // Fix datatype issues
     nifti_image* nii_input = copy_nifti_as_float32(nii);
     float *nii_input_data = static_cast<float*>(nii_input->data);
-    nifti_image* nii_layer = copy_nifti_as_int32(nii_layeri);
-    int32_t *nii_layer_data = static_cast<int32_t*>(nii_layer->data);
+    nifti_image* nii_layer = copy_nifti_as_float32(nii_layeri);
+    float *nii_layer_data = static_cast<float*>(nii_layer->data);
 
     // Allocate new niftis
     nifti_image *nii_output = copy_nifti_as_float32(nii_input);
@@ -183,17 +183,6 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < nr_voxels * size_t; ++i) {
         *(nii_output_data + i) = 0;
     }
-
-    // ------------------------------------------------------------------------
-    // Find number of layers
-    // ------------------------------------------------------------------------
-    int nr_layers = 0;
-    for (int i = 0; i < nr_voxels; ++i) {
-        if (*(nii_layer_data + i) > nr_layers) {
-            nr_layers = *(nii_layer_data + i);
-        }
-    }
-    cout << "  Number of layers = " << nr_layers << endl;
 
     // ------------------------------------------------------------------------
     // Find input value ranges
@@ -218,9 +207,27 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-    cout << "    Min. layer value = " << layer_min << endl;
-    cout << "    Max. layer value = " << layer_max << endl;
+
+    // ------------------------------------------------------------------------
+    // Find number of layers
+    // ------------------------------------------------------------------------
+    int nr_layers = 0;
+    if (layer_max <= 1.0) {
+        cout << "  !!! Normalized cortical depth metric is used." << endl;
+        cout << "    Min. normalized cortical depth = " << layer_min << endl;
+        cout << "    Max. normalized cortical depth = " << layer_max << endl;
+    } else {
+        for (int i = 0; i < nr_voxels; ++i) {
+            if (*(nii_layer_data + i) > nr_layers) {
+                nr_layers = *(nii_layer_data + i);
+            }
+        }
+        cout << "  Number of discete layers = " << nr_layers << endl;
+        cout << "    Min. layer value = " << layer_min << endl;
+        cout << "    Max. layer value = " << layer_max << endl;
+    }
     cout << endl;
+
     cout << "  Before devein:" << endl;
     cout << "    Min. value = " << input_min << endl;
     cout << "    Max. value = " << input_max << endl;
@@ -234,9 +241,14 @@ int main(int argc, char* argv[]) {
             for (int i=0; i<nr_voxels; ++i) {
                 int j = t * nr_voxels + i;
                 if (*(nii_layer_data + i) > 0) {
-                    float l = *(nii_layer_data + i);
-                    *(nii_output_data + j) = *(nii_input_data + j) / l;
-                    *(nii_output_data + j) *= (float)nr_layers;
+                    float l;
+                    if (layer_max <= 1.0) {  // Indicates metric file is used
+                        l = 1 - *(nii_layer_data + i);
+                    } else {
+                        l = 1 - *(nii_layer_data + i) * layer_max;
+                    }
+
+                    *(nii_output_data + j) = *(nii_input_data + j) * l;
                 }
             }
         }
