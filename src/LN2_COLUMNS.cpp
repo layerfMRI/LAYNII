@@ -224,17 +224,243 @@ int main(int argc, char*  argv[]) {
     }
 
     // ========================================================================
+    // Find connected clusters to initialize one voxel in each
+    // ========================================================================
+    cout << "  Start finding connected clusters..." << endl;
+
+    // Loop until all clusters have one initial voxel
+    uint32_t voxel_counter = 0, prev_voxel_counter = 0;
+    int32_t init_voxel_id = 1;
+    bool terminate_switch1 = true;
+    while (terminate_switch1) {
+        uint32_t ix, iy, iz, i, j;
+
+        if (voxel_counter == nr_voi) {
+            // Indicates all clusters are reached. Terminate condition.
+            terminate_switch1 = false;
+            cout << "    Nr. of connected clusters within midgm input: "
+                << init_voxel_id - 1 << endl;
+        } else if (voxel_counter == prev_voxel_counter) {
+            // Find the initial voxel for each disconnected cluster
+            uint32_t start_voxel;
+            for (uint32_t i = 0; i != nr_voxels; ++i) {
+                if (*(nii_midgm_data + i) == 1) {
+                    start_voxel = i;
+                }
+            }
+            voxel_counter += 1;
+            init_voxel_id += 1;
+            *(nii_midgm_data + start_voxel) = init_voxel_id;
+        }
+
+        while (prev_voxel_counter != voxel_counter) {
+            prev_voxel_counter = voxel_counter;
+            for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+                // Map subset to full set
+                i = *(voi_id + ii);
+                if (*(nii_midgm_data + i) == init_voxel_id) {
+                    tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+
+                    // --------------------------------------------------------
+                    // 1-jump neighbours
+                    // --------------------------------------------------------
+                    if (ix > 0) {
+                        j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (ix < end_x) {
+                        j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (iy > 0) {
+                        j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (iy < end_y) {
+                        j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (iz > 0) {
+                        j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (iz < end_z) {
+                        j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    // --------------------------------------------------------
+                    // 2-jump neighbours
+                    // --------------------------------------------------------
+                    if (ix > 0 && iy > 0) {
+                        j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (ix > 0 && iy < end_y) {
+                        j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (ix < end_x && iy > 0) {
+                        j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (ix < end_x && iy < end_y) {
+                        j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (iy > 0 && iz > 0) {
+                        j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (iy > 0 && iz < end_z) {
+                        j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (iy < end_y && iz > 0) {
+                        j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (iy < end_y && iz < end_z) {
+                        j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (ix > 0 && iz > 0) {
+                        j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (ix < end_x && iz > 0) {
+                        j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (ix > 0 && iz < end_z) {
+                        j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (ix < end_x && iz < end_z) {
+                        j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+
+                    // --------------------------------------------------------
+                    // 3-jump neighbours
+                    // --------------------------------------------------------
+                    if (ix > 0 && iy > 0 && iz > 0) {
+                        j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (ix > 0 && iy > 0 && iz < end_z) {
+                        j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (ix > 0 && iy < end_y && iz > 0) {
+                        j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (ix < end_x && iy > 0 && iz > 0) {
+                        j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (ix > 0 && iy < end_y && iz < end_z) {
+                        j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (ix < end_x && iy > 0 && iz < end_z) {
+                        j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (ix < end_x && iy < end_y && iz > 0) {
+                        j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                    if (ix < end_x && iy < end_y && iz < end_z) {
+                        j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
+                        if (*(nii_midgm_data + j) == 1) {
+                            *(nii_midgm_data + j) = init_voxel_id;
+                        }
+                    }
+                }
+            }
+
+            // Count cluster assigned voxels
+            voxel_counter = 0;
+            for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+                i = *(voi_id + ii);  // Map subset to full set
+                if (*(nii_midgm_data + i) > 1) {
+                    voxel_counter += 1;
+                }
+            }
+        }
+    }
+    save_output_nifti(fout, "midgm_clusters", nii_midgm, false);
+
+    // ========================================================================
     // Find column centers through farthest flood distance
     // ========================================================================
     cout << "  Start generating columns..." << endl;
     // Find the initial voxel
     uint32_t start_voxel;
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_midgm_data + i) == 1) {
-            start_voxel = i;
+    for (int32_t n = 2; n <= init_voxel_id; ++n) {
+        cout << n << endl;
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);  // Map subset to full set
+            if (*(nii_midgm_data + i) == n) {
+                start_voxel = i;
+                *(nii_midgm_data + i) = 1;  // Reset midgm
+            }
         }
+        *(nii_midgm_data + start_voxel) = 2;  // Reduce to single initial voxel
     }
-    *(nii_midgm_data + start_voxel) = 2;
+
+    save_output_nifti(fout, "midgm_clusters2", nii_midgm, false);
 
     // Initialize new voxel
     uint32_t new_voxel_id;
@@ -245,7 +471,7 @@ int main(int argc, char*  argv[]) {
         cout << "\r    Column [" << n+1 << "/" << nr_columns << "]" << flush;
 
         int32_t grow_step = 1;
-        uint32_t voxel_counter = nr_voxels;
+        voxel_counter = 1;
         uint32_t ix, iy, iz, i, j;
         float d;
 
@@ -628,14 +854,14 @@ int main(int argc, char*  argv[]) {
         // Remove the initial voxel (reduces arbitrariness of the 1st point)
         // NOTE(Faruk): This step guarantees to start from extrememums. The
         // initial point is only used to determine an extremum distance.
-        if (n == 0) {
-            *(nii_midgm_data + start_voxel) = 1;
-            // Also reset distances
-            for (uint32_t i = 0; i != nr_voxels; ++i) {
-                *(flood_step_data + i) = 0.;
-                *(flood_dist_data + i) = 0.;
-            }
-        }
+        // if (n == 0) {
+        //     *(nii_midgm_data + start_voxel) = 1;
+        //     // Also reset distances
+        //     for (uint32_t i = 0; i != nr_voxels; ++i) {
+        //         *(flood_step_data + i) = 0.;
+        //         *(flood_dist_data + i) = 0.;
+        //     }
+        // }
     }
     cout << endl;
 
@@ -688,7 +914,7 @@ int main(int argc, char*  argv[]) {
     }
 
     int32_t grow_step = 1;
-    uint32_t voxel_counter = nr_voxels;
+    voxel_counter = 1;
     uint32_t ix, iy, iz, i, j;
     float d;
     voxel_counter = nr_voxels;
