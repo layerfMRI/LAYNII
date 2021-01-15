@@ -45,6 +45,9 @@ int show_help(void) {
     "    -iter_smooth  : (Optional) Number of smoothing iterations. Default\n"
     "                    is 100. Only used together with '-equivol' flag. Use\n"
     "                    larger values when equi-volume layers are jagged.\n"
+    "    -incl_borders : (Optional) include the borders of the rim-file \n"
+    "                     into the layering. This teats the borders as \n"
+    "                     as beeing part of GM. Default is off\n"
     "    -debug        : (Optional) Save extra intermediate outputs.\n"
     "    -output       : (Optional) Output basename for all outputs.\n"
     "\n"
@@ -64,7 +67,7 @@ bool use_outpath = false;
     char *fin = NULL, *fout = NULL;
     uint16_t ac, nr_layers = 3;
     uint16_t iter_smooth = 100;
-    bool mode_equivol = false, mode_debug = false;
+    bool mode_equivol = false, mode_debug = false, mode_incl_borders = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -99,6 +102,8 @@ bool use_outpath = false;
             }
             use_outpath = true;
             fout = argv[ac];
+        } else if (!strcmp(argv[ac], "-incl_borders")) {
+            mode_incl_borders = true;
         } else if (!strcmp(argv[ac], "-debug")) {
             mode_debug = true;
         } else {
@@ -1061,7 +1066,24 @@ bool use_outpath = false;
             j = *(outerGM_id_data + i);
             *(hotspots_data + j) -= 1;
         }
+        
+    // ========================================================================
+    // adding prder voxels 
+    // ========================================================================
+        if (mode_incl_borders) {
+            if (*(nii_rim_data + i) == 1 ) {
+                *(normdist_data + i) = 1.; 
+                *(nii_layers_data + i) = nr_layers ; 
+            }
+            if (*(nii_rim_data + i) == 2 ) {
+                *(normdist_data + i) = 2.93874e-39;
+                *(nii_layers_data + i) = 1 ; 
+            }
+        }
+        
     }
+    
+    
     save_output_nifti(fout, "metric_equidist", normdist);
     save_output_nifti(fout, "layers_equidist", nii_layers, true);
 
@@ -1430,6 +1452,18 @@ bool use_outpath = false;
                     *(nii_layers_data + i) = 1;
                 }
             }
+        
+            // ========================================================================
+            // adding border voxels 
+            // ========================================================================
+            if (mode_incl_borders) {
+                if (*(nii_rim_data + i) == 1 ) {
+                    *(nii_layers_data + i) = nr_layers ; 
+                }
+                if (*(nii_rim_data + i) == 2 ) {
+                    *(nii_layers_data + i) = 1 ; 
+                }
+            }
         }
 
         save_output_nifti(fout, "layers_equivol", nii_layers, true);
@@ -1440,6 +1474,18 @@ bool use_outpath = false;
                 *(normdistdiff_data + i) /= 2;
                 *(normdistdiff_data + i) += 0.5;
             }
+            // ========================================================================
+            // adding border voxels 
+            // ========================================================================
+            if (mode_incl_borders) {
+                if (*(nii_rim_data + i) == 1 ) {
+                    *(normdistdiff_data + i) = 1.; 
+                }
+                if (*(nii_rim_data + i) == 2 ) {
+                    *(normdistdiff_data + i) = 2.93874e-39;
+                }
+            }
+            
         }
         save_output_nifti(fout, "metric_equivol", normdistdiff);
 
