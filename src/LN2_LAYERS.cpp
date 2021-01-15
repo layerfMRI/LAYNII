@@ -1485,7 +1485,7 @@ bool use_outpath = false;
                     *(normdistdiff_data + i) = 2.93874e-39;
                 }
             }
-            
+             
         }
         save_output_nifti(fout, "metric_equivol", normdistdiff);
 
