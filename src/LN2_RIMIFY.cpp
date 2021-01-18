@@ -11,8 +11,8 @@ int show_help(void) {
     "    LN2_RIMIFY -input data_file.nii -innergm 2 -outergm 3 -gm 1\n"
     "    LN2_RIMIFY -input data_file.nii -innergm 150 -outergm 0 -gm 100\n"
     "    LN2_RIMIFY -input data_file.nii -innergm 240 -outergm 0 -gm 243\n"
-    "    ../LN2_RIMIFY -input sc_rim.nii -innergm 2 -outergm 1 -gm 3 -output rimified_tim.nii \n"
-    "    TODO: Add freesurfer example"
+    "    ../LN2_RIMIFY -input sc_rim.nii -innergm 2 -outergm 1 -gm 3 -output rimified_rim.nii \n"
+    "    TODO: Add freesurfer example\n"
     "\n"
     "Options:\n"
     "    -help    : Show this help.\n"
@@ -23,11 +23,11 @@ int show_help(void) {
     "               boundary (2). CSF tissue label can be used here.\n"
     "    -gm      : Integer that will be regarded as pure gray matter (3).\n"
     "    -output  : (Optional) Output filename, including .nii or\n"
-    "               .nii.gz, and path if needed. Overwrites existing files.\n"    
+    "               .nii.gz, and path if needed. Overwrites existing files.\n"
     "\n"
     "Notes:\n"
     "    - Values not indicated as innergm, outergm or gm will be 0 in\n"
-    "      the output image."
+    "      the output image.\n"
     "    - If you do not have a specific outer gray matter tissue, you might\n"
     "      consider '0' to use all non-brain voxels as outer gray matter.\n"
     "\n");
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "** missing argument for -output\n");
                 return 2;
             }
-            use_outpath = true ; 
+            use_outpath = true ;
             fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
@@ -115,9 +115,9 @@ int main(int argc, char *argv[]) {
     // Swap input tissue labels with LAYII rim file standards
     for (int i = 0; i != nr_voxels; ++i) {
         if (*(nii_in_data + i) == innergm){
-            *(nii_rim_data + i) = 2;   // Renzo touched this on June 12th 
+            *(nii_rim_data + i) = 2;   // Renzo touched this on June 12th
         } else if (*(nii_in_data + i) == outergm){
-            *(nii_rim_data + i) = 1;  // Renzo touched this on June 12th 
+            *(nii_rim_data + i) = 1;  // Renzo touched this on June 12th
         } else if (*(nii_in_data + i) == gm){
             *(nii_rim_data + i) = 3;
         } else {
