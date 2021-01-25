@@ -12,17 +12,23 @@ int show_help(void) {
     "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
     "\n"
     "Usage:\n"
-    "    LN2_PATCH_FLATTEN -input input.nii -coord_uv uv.nii -coord_d depth.nii -bins_u 10 -bins_v 10 -bins_d 3\n"
+    "    LN2_PATCH_FLATTEN -input activation.nii -coord_uv uv_coord.nii -coord_d layers_equidist.nii -bins_u 50 -bins_v 50\n"
+    "    LN2_PATCH_FLATTEN -input activation.nii -coord_uv uv_coord.nii -coord_d metric_equidist.nii -bins_u 50 -bins_v 50 -bins_d 21\n"
     "\n"
     "Options:\n"
     "    -help     : Show this help.\n"
-    "    -input    : TODO.\n"
-    "    -domain   : TODO.\n"
-    "    -coord_uv : TODO.\n"
-    "    -coord_d  : TODO.\n"
-    "    -bins_u   : TODO.\n"
-    "    -bins_v   : TODO.\n"
-    "    -bins_d   : (Optional) Only use if -coord_d input is a metric file.\n"
+    "    -input    : Nifti image with values that will be projected on a flat image.\n"
+    "                For example an activation map or another measurement like curvature.\n"
+    "    -coord_uv : A 4D nifti file that contains 2D (UV) coordinates.\n"
+    "                For example LN2_MULTILATERATE output named 'UV_coords'.\n"
+    "    -coord_d  : A 3D nifti file that contains cortical depth measurements or layers.\n"
+    "                For example either LN2_LAYERS output named 'layers' or 'metric'.\n"
+    "    -domain   : A 3D binary nifti file to limit the flattened voxels.\n"
+    "                For example LN2_MULTILATERATE output named 'perimeter_chunk.'\n"
+    "    -bins_u   : Number of bins for the flat image U coordinate.\n"
+    "    -bins_v   : Number of bins for the flat image V coordinate.\n"
+    "    -bins_d   : (Optional) Number of bins for the flat image D coordinate.\n"
+    "                Only use if '-coord_d' input is a metric file.\n"
     "    -debug    : (Optional) Save extra intermediate outputs.\n"
     "    -output   : (Optional) Output basename for all outputs.\n"
     "\n"
@@ -288,7 +294,6 @@ int main(int argc, char*  argv[]) {
     }
     cout << "  U coordinate min & max: " << min_u << " | " << max_u << endl;
     cout << "  V coordinate min & max: " << min_v << " | " << max_v << endl;
-    cout << "  D coordinate min & max: " << min_d << " | " << max_d << endl;
 
     // ========================================================================
     // Visit each voxel to check their coordinate
