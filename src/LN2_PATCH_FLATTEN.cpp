@@ -177,6 +177,33 @@ int main(int argc, char*  argv[]) {
     }
 
     // ------------------------------------------------------------------------
+    // Allocating new nifti for flat images
+    nifti_image* flat_cells = nifti_copy_nim_info(nii1);
+    flat_cells->datatype = NIFTI_TYPE_INT32;
+    flat_cells->dim[0] = 4;  // For proper 4D nifti
+    flat_cells->dim[1] = grid_u;
+    flat_cells->dim[2] = grid_v;
+    flat_cells->dim[3] = grid_d;
+    flat_cells->dim[4] = 1;
+    nifti_update_dims_from_array(flat_cells);
+    flat_cells->nvox = nr_cells;
+    flat_cells->nbyper = sizeof(int32_t);
+    flat_cells->data = calloc(flat_cells->nvox, flat_cells->nbyper);
+    flat_cells->scl_slope = 1;
+    int32_t* flat_cells_data = static_cast<int32_t*>(flat_cells->data);
+
+    for (int i = 0; i != nr_cells; ++i) {
+        *(flat_cells_data + i) = 0;
+    }
+
+    // Flat input projection
+    nifti_image* flat_input = copy_nifti_as_float32(flat_cells);
+    float* flat_input_data = static_cast<float*>(flat_input->data);
+    // Flat projection density map
+    nifti_image* flat_density = copy_nifti_as_float32(flat_cells);
+    float* flat_density_data = static_cast<float*>(flat_density->data);
+
+    // ------------------------------------------------------------------------
     // NOTE(Faruk): This section is written to constrain the big iterative
     // flooding distance loop to the subset of voxels. Required for substantial
     // speed boost.
@@ -241,17 +268,36 @@ int main(int argc, char*  argv[]) {
         u = (u - min_u) / (max_u - min_u);
         v = (v - min_v) / (max_v - min_v);
         // Scale with grid size
-        u *= static_cast<float>(grid_u);
-        v *= static_cast<float>(grid_v);
+        u *= static_cast<float>(grid_u - 1);
+        v *= static_cast<float>(grid_v - 1);
         // Cast to integer (floor & cast)
         int cell_idx_u = static_cast<int>(u);
         int cell_idx_v = static_cast<int>(v);
 
-        // Write cell idx to output
-        *(out_cells_data + i) = nr_cells * cell_idx_v + cell_idx_u;
+        // Write cell index to output
+        int j = grid_u * cell_idx_v + cell_idx_u;  // Cell index
+        *(out_cells_data + i) = j;
+
+        // Write visited voxel value to flat cell
+        *(flat_input_data + j) += *(nii_input_data + i);
+        *(flat_density_data + j) += 1;
     }
 
     save_output_nifti(fout, "UV_cells", out_cells, true);
+
+    // Take the mean of each projected cell value
+    for (int i = 0; i != nr_cells; ++i) {
+        if (*(flat_density_data + i) > 1) {
+            *(flat_input_data + i) /= *(flat_density_data + i);
+        }
+    }
+
+    save_output_nifti(fout, "flat_values", flat_input, true);
+    save_output_nifti(fout, "flat_density", flat_density, true);
+
+    // ========================================================================
+    // Visit each voxel to check their coordinate
+
 
     cout << "\n  Finished." << endl;
     return 0;
