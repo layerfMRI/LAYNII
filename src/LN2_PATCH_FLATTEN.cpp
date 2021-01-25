@@ -4,7 +4,7 @@
 
 int show_help(void) {
     printf(
-    "LN2_PATCH_FLATTEN: FLatten a patch of cortex using 2D flat coordinate\n"
+    "LN2_PATCH_FLATTEN: Flatten a patch of cortex using 2D flat coordinate\n"
     "                   and cortical a depth measurement.\n"
     "\n"
     "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
@@ -12,19 +12,19 @@ int show_help(void) {
     "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
     "\n"
     "Usage:\n"
-    "    LN2_PATCH_FLATTEN -input input.nii -coord_uv uv.nii -coord_d depth.nii -out_grid 50\n"
+    "    LN2_PATCH_FLATTEN -input input.nii -coord_uv uv.nii -coord_d depth.nii -bins_u 10 -bins_v 10 -bins_d 3\n"
     "\n"
     "Options:\n"
-    "    -help       : Show this help.\n"
-    "    -input      : TODO.\n"
-    "    -domain     : TODO.\n"
-    "    -coord_uv   : TODO.\n"
-    "    -coord_d    : TODO.\n"
-    "    -out_grid_u : TODO.\n"
-    "    -out_grid_v : TODO.\n"
-    "    -out_grid_d : TODO.\n"
-    "    -debug      : (Optional) Save extra intermediate outputs.\n"
-    "    -output     : (Optional) Output basename for all outputs.\n"
+    "    -help     : Show this help.\n"
+    "    -input    : TODO.\n"
+    "    -domain   : TODO.\n"
+    "    -coord_uv : TODO.\n"
+    "    -coord_d  : TODO.\n"
+    "    -bins_u   : TODO.\n"
+    "    -bins_v   : TODO.\n"
+    "    -bins_d   : (Optional) Only use if -coord_d input is a metric file.\n"
+    "    -debug    : (Optional) Save extra intermediate outputs.\n"
+    "    -output   : (Optional) Output basename for all outputs.\n"
     "\n"
     "Notes:\n"
     "    - This program is written for 3D images. We might add 2D image support\n"
@@ -38,7 +38,7 @@ int main(int argc, char*  argv[]) {
     nifti_image *nii1 = NULL, *nii2 = NULL, *nii3 = NULL, *nii4 = NULL;
     char *fin1 = NULL, *fout = NULL, *fin2=NULL, *fin3=NULL, *fin4=NULL;
     int ac;
-    int grid_u = 10, grid_v = 10, grid_d = 3;
+    int bins_u = 10, bins_v = 10, bins_d = 1;
     bool mode_debug = false;
 
     // Process user options
@@ -65,30 +65,30 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             fin3 = argv[ac];
-        } else if (!strcmp(argv[ac], "-out_grid_u")) {
-            if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -out_grid_u\n");
-                return 1;
-            }
-            grid_u = atof(argv[ac]);
         } else if (!strcmp(argv[ac], "-domain")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -domain\n");
                 return 1;
             }
             fin4 = argv[ac];
-        } else if (!strcmp(argv[ac], "-out_grid_v")) {
+        } else if (!strcmp(argv[ac], "-bins_u")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -out_grid_v\n");
+                fprintf(stderr, "** missing argument for -bins_u\n");
                 return 1;
             }
-            grid_v = atof(argv[ac]);
-        } else if (!strcmp(argv[ac], "-out_grid_d")) {
+            bins_u = atof(argv[ac]);
+        } else if (!strcmp(argv[ac], "-bins_v")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -out_grid_d\n");
+                fprintf(stderr, "** missing argument for -bins_v\n");
                 return 1;
             }
-            grid_d = atof(argv[ac]);
+            bins_v = atof(argv[ac]);
+        } else if (!strcmp(argv[ac], "-bins_d")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -bins_d\n");
+                return 1;
+            }
+            bins_d = atof(argv[ac]);
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -152,9 +152,7 @@ int main(int argc, char*  argv[]) {
     const int size_x = nii1->nx;
     const int size_y = nii1->ny;
     const int size_z = nii1->nz;
-
     const int nr_voxels = size_z * size_y * size_x;
-    const int nr_cells = grid_u * grid_v;
 
     // ========================================================================
     // Fix input datatype issues
@@ -167,7 +165,37 @@ int main(int argc, char*  argv[]) {
     nifti_image* domain = copy_nifti_as_int32(nii4);
     int32_t* domain_data = static_cast<int32_t*>(domain->data);
 
-    // ------------------------------------------------------------------------
+    // ========================================================================
+    // Determine the type of depth file
+    float min_d = std::numeric_limits<float>::max();
+    float max_d = std::numeric_limits<float>::min();
+
+    // Check D coordinate min & max
+    for (int i = 0; i != nr_voxels; ++i) {
+        if (*(coords_d_data + i) != 0) {
+            if (*(coords_d_data + i) < min_d) {
+                min_d = *(coords_d_data + i);
+            }
+            if (*(coords_d_data + i) > max_d) {
+                max_d = *(coords_d_data + i);
+            }
+        }
+    }
+
+    // Determine whether depth input is a metric file or a layer file
+    bool mode_depth_metric = NULL;
+    if (min_d >= 0 && max_d <= 1) {
+        cout << "  Depth input is a metric file (values are in between 0-1)." << endl;
+        mode_depth_metric = true;
+    } else if (min_d >= 0) {
+        cout << "  Depth input is a layer file (values are positive integers)." << endl;
+        mode_depth_metric = false;
+    } else {
+        cout << "  ERROR! Depth input contains negative values!" << endl;
+        return 1;
+    }
+
+    // ========================================================================
     // Prepare outputs
     nifti_image* out_cells = copy_nifti_as_int32(nii_input);
     int32_t* out_cells_data = static_cast<int32_t*>(out_cells->data);
@@ -177,22 +205,29 @@ int main(int argc, char*  argv[]) {
     }
 
     // ------------------------------------------------------------------------
+    // Determine flat image dimensions
+    int nr_cells = bins_u * bins_v;
+    if (mode_depth_metric == false) {  // Layer file
+        bins_d = max_d;
+    }
+    int nr_bins = nr_cells * bins_d;
+
     // Allocating new nifti for flat images
     nifti_image* flat_cells = nifti_copy_nim_info(nii1);
     flat_cells->datatype = NIFTI_TYPE_INT32;
     flat_cells->dim[0] = 4;  // For proper 4D nifti
-    flat_cells->dim[1] = grid_u;
-    flat_cells->dim[2] = grid_v;
-    flat_cells->dim[3] = grid_d;
+    flat_cells->dim[1] = bins_u;
+    flat_cells->dim[2] = bins_v;
+    flat_cells->dim[3] = bins_d;
     flat_cells->dim[4] = 1;
     nifti_update_dims_from_array(flat_cells);
-    flat_cells->nvox = nr_cells;
+    flat_cells->nvox = nr_bins;
     flat_cells->nbyper = sizeof(int32_t);
     flat_cells->data = calloc(flat_cells->nvox, flat_cells->nbyper);
     flat_cells->scl_slope = 1;
     int32_t* flat_cells_data = static_cast<int32_t*>(flat_cells->data);
 
-    for (int i = 0; i != nr_cells; ++i) {
+    for (int i = 0; i != nr_bins; ++i) {
         *(flat_cells_data + i) = 0;
     }
 
@@ -236,7 +271,6 @@ int main(int argc, char*  argv[]) {
 
     for (int ii = 0; ii != nr_voi; ++ii) {
         int i = *(voi_id + ii);
-
         // Check U coordinate min & max
         if (*(coords_uv_data + nr_voxels*0 + i) < min_u) {
             min_u = *(coords_uv_data + nr_voxels*0 + i);
@@ -244,7 +278,6 @@ int main(int argc, char*  argv[]) {
         if (*(coords_uv_data + nr_voxels*0 + i) > max_u) {
             max_u = *(coords_uv_data + nr_voxels*0 + i);
         }
-
         // Check V coordinate min & max
         if (*(coords_uv_data + nr_voxels*1 + i) < min_v) {
             min_v = *(coords_uv_data + nr_voxels*1 + i);
@@ -253,8 +286,9 @@ int main(int argc, char*  argv[]) {
             max_v = *(coords_uv_data + nr_voxels*1 + i);
         }
     }
-    cout << "\n  U coordinate min & max: " << min_u << " | " << max_u << endl;
-    cout << "\n  V coordinate min & max: " << min_v << " | " << max_v << endl;
+    cout << "  U coordinate min & max: " << min_u << " | " << max_u << endl;
+    cout << "  V coordinate min & max: " << min_v << " | " << max_v << endl;
+    cout << "  D coordinate min & max: " << min_d << " | " << max_d << endl;
 
     // ========================================================================
     // Visit each voxel to check their coordinate
@@ -265,28 +299,45 @@ int main(int argc, char*  argv[]) {
         float v = *(coords_uv_data + nr_voxels*1 + i);
 
         // Normalize coordinates to 0-1 range
-        u = (u - min_u) / (max_u - min_u);
-        v = (v - min_v) / (max_v - min_v);
+        u = (u - min_u) / (max_u + std::numeric_limits<float>::min() - min_u);
+        v = (v - min_v) / (max_v + std::numeric_limits<float>::min() - min_v);
         // Scale with grid size
-        u *= static_cast<float>(grid_u - 1);
-        v *= static_cast<float>(grid_v - 1);
+        u *= static_cast<float>(bins_u);
+        v *= static_cast<float>(bins_v);
         // Cast to integer (floor & cast)
         int cell_idx_u = static_cast<int>(u);
         int cell_idx_v = static_cast<int>(v);
 
+        // Handle depth separately
+        float d = static_cast<float>(*(coords_d_data + i));
+        int cell_idx_d = 0;
+        if (mode_depth_metric) {  // Metric file
+            if (d >= 1) {  // Include 1 in the max index
+                cell_idx_d = bins_d;
+            } else {  // Scale up and floor
+                d *= bins_d;
+                cell_idx_d = static_cast<int>(d);
+            }
+        } else {  // Layer file
+            cell_idx_d = static_cast<int>(d - 1);
+        }
+
+        // Flat image cell index
+        int j = bins_u * cell_idx_v + cell_idx_u;
+        int k = cell_idx_d * nr_cells + j;
+
         // Write cell index to output
-        int j = grid_u * cell_idx_v + cell_idx_u;  // Cell index
         *(out_cells_data + i) = j;
 
         // Write visited voxel value to flat cell
-        *(flat_input_data + j) += *(nii_input_data + i);
-        *(flat_density_data + j) += 1;
+        *(flat_input_data + k) += *(nii_input_data + i);
+        *(flat_density_data + k) += 1;
     }
 
     save_output_nifti(fout, "UV_cells", out_cells, true);
 
     // Take the mean of each projected cell value
-    for (int i = 0; i != nr_cells; ++i) {
+    for (int i = 0; i != nr_bins; ++i) {
         if (*(flat_density_data + i) > 1) {
             *(flat_input_data + i) /= *(flat_density_data + i);
         }
@@ -294,10 +345,6 @@ int main(int argc, char*  argv[]) {
 
     save_output_nifti(fout, "flat_values", flat_input, true);
     save_output_nifti(fout, "flat_density", flat_density, true);
-
-    // ========================================================================
-    // Visit each voxel to check their coordinate
-
 
     cout << "\n  Finished." << endl;
     return 0;
