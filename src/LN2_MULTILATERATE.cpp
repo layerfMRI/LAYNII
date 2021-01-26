@@ -2773,7 +2773,7 @@ int main(int argc, char*  argv[]) {
             i = *(voi_id2 + iii);
             float coord_U = *(nii_coords_data + nr_voxels*0 + i);
             float coord_V = *(nii_coords_data + nr_voxels*1 + i);
-            float norm = std::sqrt(coord_U * coord_U + coord_V * coord_V);
+            float norm = sqrt(coord_U * coord_U + coord_V * coord_V);
             *(flood_dist_data + i) = norm;
         }
         save_output_nifti(fout, "UV_norm_L2", flood_dist, true);
@@ -2801,11 +2801,11 @@ int main(int argc, char*  argv[]) {
             float coord1 = *(nii_coords_data + nr_voxels*0 + i);
             float coord2 = *(nii_coords_data + nr_voxels*1 + i);
             // Angles in radians (0 to 2*pi)
-            float angle = std::atan2(coord1, coord2) + PI;
+            float angle = atan2(coord1, coord2) + PI;
             *(flood_dist_data + i) = angle;  // Repurposing nifti object
             // Derive quadrants from angles
             angle *= 2 / PI;
-            float quadrant = std::floor(angle + 1);
+            float quadrant = floor(angle + 1);
             *(flood_step_data + i) = static_cast<int32_t>(quadrant);
         } else {
             *(flood_dist_data + i) = 0;
