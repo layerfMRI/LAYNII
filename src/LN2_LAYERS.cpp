@@ -204,6 +204,28 @@ int main(int argc, char*  argv[]) {
     nifti_image* curvature = copy_nifti_as_float32(nii_layers);
     float* curvature_data = static_cast<float*>(curvature->data);
 
+    // ------------------------------------------------------------------------
+    // NOTE(Faruk): This section is written to constrain voxel visits
+    // Find the subset voxels that will be used many times
+    uint32_t nr_voi = 0;  // Voxels of interest
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) != 0){
+            nr_voi += 1;
+        }
+    }
+    // Allocate memory to only the voxel of interest
+    int32_t* voi_id;
+    voi_id = (int32_t*) malloc(nr_voi*sizeof(int32_t));
+
+    // Fill in indices to be able to remap from subset to full set of voxels
+    uint32_t ii = 0;
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) != 0){
+            *(voi_id + ii) = i;
+            ii += 1;
+        }
+    }
+
     // ========================================================================
     // Grow from WM
     // ========================================================================
@@ -227,7 +249,9 @@ int main(int argc, char*  argv[]) {
     float d;
     while (voxel_counter != 0) {
         voxel_counter = 0;
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);
+
             if (*(innerGM_step_data + i) == grow_step) {
                 tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
                 voxel_counter += 1;
@@ -631,7 +655,9 @@ int main(int argc, char*  argv[]) {
     grow_step = 1, voxel_counter = nr_voxels;
     while (voxel_counter != 0) {
         voxel_counter = 0;
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);
+
             if (*(outerGM_step_data + i) == grow_step) {
                 tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
                 voxel_counter += 1;
@@ -1027,7 +1053,9 @@ int main(int argc, char*  argv[]) {
     cout << "\n  Start layering (equi-distant)..." << endl;
     float x, y, z, wm_x, wm_y, wm_z, gm_x, gm_y, gm_z;
 
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
+    for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+        uint32_t i = *(voi_id + ii);
+
         if (*(nii_rim_data + i) == 3) {
             tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
             tie(wm_x, wm_y, wm_z) = ind2sub_3D(*(innerGM_id_data + i),
@@ -1065,9 +1093,9 @@ int main(int argc, char*  argv[]) {
             *(hotspots_data + j) -= 1;
         }
 
-    // ========================================================================
-    // Add border voxels
-    // ========================================================================
+        // ====================================================================
+        // Add border voxels
+        // ====================================================================
         if (mode_incl_borders) {
             if (*(nii_rim_data + i) == 1) {
                 *(normdist_data + i) = 1.;
@@ -1093,7 +1121,9 @@ int main(int argc, char*  argv[]) {
     // Middle gray matter
     // ========================================================================
     cout << "\n  Start finding middle gray matter (equi-distant)..." << endl;
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
+    for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+        uint32_t i = *(voi_id + ii);
+
         if (*(nii_rim_data + i) == 3) {
             // Check sign changes in normalized distance differences between
             // neighbouring voxels on a column path (a.k.a. streamline)
@@ -1151,7 +1181,9 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Columns
     // ========================================================================
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
+    for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+        uint32_t i = *(voi_id + ii);
+
         if (*(nii_rim_data + i) == 3) {
             // Approximate curvature measurement per column/streamline
             j = *(innerGM_id_data + i);
@@ -1195,7 +1227,9 @@ int main(int argc, char*  argv[]) {
     nifti_image* midGM_centroid_id = copy_nifti_as_int32(nii_columns);
     int32_t* midGM_centroid_id_data = static_cast<int32_t*>(midGM_centroid_id->data);
 
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
+    for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+        uint32_t i = *(voi_id + ii);
+
         *(coords_x_data + i) = 0;
         *(coords_y_data + i) = 0;
         *(coords_z_data + i) = 0;
@@ -1204,7 +1238,9 @@ int main(int argc, char*  argv[]) {
     }
 
     // Sum x, y, z coordinates of same-column middle GM voxels
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
+    for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+        uint32_t i = *(voi_id + ii);
+
         if (*(midGM_data + i) == 1) {
             tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
             j = *(midGM_id_data + i);  // used to determine storage voxel
@@ -1215,7 +1251,9 @@ int main(int argc, char*  argv[]) {
         }
     }
     // Divide summed coordinates to find centroid
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
+    for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+        uint32_t i = *(voi_id + ii);
+
         if (*(coords_count_data + i) != 0) {
             // Assign centroid id in place of inner/outer border voxel id
             x = floor(*(coords_x_data + i) / *(coords_count_data + i));
@@ -1226,7 +1264,9 @@ int main(int argc, char*  argv[]) {
         }
     }
     // Map new centroid IDs to columns/streamlines
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
+    for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+        uint32_t i = *(voi_id + ii);
+
         if (*(nii_rim_data + i) == 3) {
             j = *(nii_columns_data + i);
             *(midGM_centroid_id_data + i) = *(centroid_data + j);
@@ -1242,19 +1282,6 @@ int main(int argc, char*  argv[]) {
     }
 
     // ========================================================================
-    // Update curvature along column/streamline based on midGM curvature
-    // ========================================================================
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_rim_data + i) == 3) {
-            j = *(midGM_centroid_id_data + i);
-            *(curvature_data + i) = *(curvature_data + j);
-        }
-    }
-    if (mode_debug) {
-        save_output_nifti(fout, "curvature", curvature, true);
-    }
-
-    // ========================================================================
     // Equi-volume layers
     // ========================================================================
     if (mode_equivol) {
@@ -1265,12 +1292,16 @@ int main(int argc, char*  argv[]) {
         nifti_image* hotspots_o = copy_nifti_as_float32(nii_rim);
         float* hotspots_o_data = static_cast<float*>(hotspots_o->data);
 
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);
+
             *(hotspots_i_data + i) = 0;
             *(hotspots_o_data + i) = 0;
         }
 
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);
+
             if (*(nii_rim_data + i) == 3) {
                 // Find inner/outer anchors
                 j = *(innerGM_id_data + i);
@@ -1311,7 +1342,9 @@ int main(int argc, char*  argv[]) {
         }
 
         float w;
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);
+
             if (*(nii_rim_data + i) == 3) {
                 // Find mass at each end of the given column
                 j = *(innerGM_id_data + i);
@@ -1352,7 +1385,9 @@ int main(int argc, char*  argv[]) {
 
         for (uint16_t n = 0; n != iter_smooth; ++n) {
             cout << "\r    Iteration: " << n+1 << "/" << iter_smooth << flush;
-            for (uint32_t i = 0; i != nr_voxels; ++i) {
+            for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+                uint32_t i = *(voi_id + ii);
+
                 if (*(nii_rim_data + i) == 3) {
                     tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
                     float new_val = 0, total_weight = 0;
@@ -1424,7 +1459,9 @@ int main(int argc, char*  argv[]) {
         // --------------------------------------------------------------------
         cout << "\n  Start final layering..." << endl;
         float d1_new, d2_new, a, b;
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);
+
             if (*(nii_rim_data + i) == 3) {
                 // Find normalized distances from a given point on a column
                 float dist1 = *(innerGM_dist_data + i);
@@ -1466,7 +1503,9 @@ int main(int argc, char*  argv[]) {
         save_output_nifti(fout, "layers_equivol", nii_layers, true);
 
         // Save equi-volume metric in a simple 0-1 range form.
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);
+
             if (*(nii_rim_data + i) == 3) {
                 *(normdistdiff_data + i) /= 2;
                 *(normdistdiff_data + i) += 0.5;
@@ -1494,7 +1533,9 @@ int main(int argc, char*  argv[]) {
         // Middle gray matter for equi-volume
         // ====================================================================
         cout << "\n  Start finding middle gray matter (equi-volume)..." << endl;
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);
+
             *(midGM_data + i) = 0;
             *(midGM_id_data + i) = 0;
             // Change back normalized dist. differences after saves above
@@ -1504,7 +1545,9 @@ int main(int argc, char*  argv[]) {
             }
         }
 
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);
+
             if (*(nii_rim_data + i) == 3) {
                 // Check sign changes in normalized distance differences between
                 // neighbouring voxels on a column path (a.k.a. streamline)
@@ -1588,7 +1631,9 @@ int main(int argc, char*  argv[]) {
     svec->scl_slope = 1;
     float* svec_data = static_cast<float*>(svec->data);
 
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
+    for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+        uint32_t i = *(voi_id + ii);
+
         if (*(nii_rim_data + i) == 3) {
             tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
             tie(wm_x, wm_y, wm_z) = ind2sub_3D(*(innerGM_id_data + i),
@@ -1617,6 +1662,106 @@ int main(int argc, char*  argv[]) {
         }
     }
     save_output_nifti(fout, "streamline_vectors", svec, true);
+
+
+    // ========================================================================
+    // Update curvature along column/streamline based on midGM curvature
+    // ========================================================================
+    // for (uint32_t i = 0; i != nr_voxels; ++i) {
+    //     if (*(nii_rim_data + i) == 3) {
+    //         j = *(midGM_centroid_id_data + i);
+    //         *(curvature_data + i) = *(curvature_data + j);
+    //     }
+    // }
+    // if (mode_debug) {
+    //     save_output_nifti(fout, "curvature", curvature, true);
+    // }
+
+    // --------------------------------------------------------------------
+    // Smooth curvature
+    // --------------------------------------------------------------------
+    cout << "      Smoothing curvature..." << endl;
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        *(normdistdiff_data + i) = 0;  // Repurpose float32 array
+    }
+
+    // Pre-compute weights
+    float FWHM_val = 1;  // TODO(Faruk): Might tweak this one
+    float w_0 = gaus(0, FWHM_val);
+    float w_dX = gaus(dX, FWHM_val);
+    float w_dY = gaus(dY, FWHM_val);
+    float w_dZ = gaus(dZ, FWHM_val);
+
+    for (uint16_t n = 0; n != 9; ++n) {
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);
+
+            if (*(nii_rim_data + i) == 3) {
+                tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+                float new_val = 0, total_weight = 0;
+
+                // Start with the voxel itself
+                new_val += *(curvature_data + i) * w_0;
+                total_weight += w_0;
+
+                // --------------------------------------------------------
+                // 1-jump neighbours
+                // --------------------------------------------------------
+                if (ix > 0) {
+                    j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        new_val += *(curvature_data + j) * w_dX;
+                        total_weight += w_dX;
+                    }
+                }
+                if (ix < end_x) {
+                    j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        new_val += *(curvature_data + j) * w_dX;
+                        total_weight += w_dX;
+                    }
+                }
+                if (iy > 0) {
+                    j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        new_val += *(curvature_data + j) * w_dY;
+                        total_weight += w_dY;
+                    }
+                }
+                if (iy < end_y) {
+                    j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        new_val += *(curvature_data + j) * w_dY;
+                        total_weight += w_dY;
+                    }
+                }
+                if (iz > 0) {
+                    j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        new_val += *(curvature_data + j) * w_dZ;
+                        total_weight += w_dZ;
+                    }
+                }
+                if (iz < end_z) {
+                    j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                    if (*(nii_rim_data + j) == 3) {
+                        new_val += *(curvature_data + j) * w_dZ;
+                        total_weight += w_dZ;
+                    }
+                }
+                *(normdistdiff_data + i) = new_val / total_weight;
+            }
+        }
+        // Swap image data
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);
+
+            *(curvature_data + i) = *(normdistdiff_data + i);
+        }
+    }
+
+    save_output_nifti(fout, "curvature", normdistdiff, true);
+
 
     cout << "\n  Finished." << endl;
     return 0;
