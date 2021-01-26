@@ -12,12 +12,12 @@ int show_help(void) {
     "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
     "\n"
     "Usage:\n"
-    "    LN2_PATCH_FLATTEN -input activation.nii -coord_uv uv_coord.nii -coord_d layers_equidist.nii -bins_u 50 -bins_v 50\n"
-    "    LN2_PATCH_FLATTEN -input activation.nii -coord_uv uv_coord.nii -coord_d metric_equidist.nii -bins_u 50 -bins_v 50 -bins_d 21\n"
+    "    LN2_PATCH_FLATTEN -values activation.nii -coord_uv uv_coord.nii -coord_d layers_equidist.nii -bins_u 50 -bins_v 50\n"
+    "    LN2_PATCH_FLATTEN -values activation.nii -coord_uv uv_coord.nii -coord_d metric_equidist.nii -bins_u 50 -bins_v 50 -bins_d 21\n"
     "\n"
     "Options:\n"
     "    -help     : Show this help.\n"
-    "    -input    : Nifti image with values that will be projected on a flat image.\n"
+    "    -values   : Nifti image with values that will be projected onto flat image.\n"
     "                For example an activation map or another measurement like curvature.\n"
     "    -coord_uv : A 4D nifti file that contains 2D (UV) coordinates.\n"
     "                For example LN2_MULTILATERATE output named 'UV_coords'.\n"
@@ -52,9 +52,9 @@ int main(int argc, char*  argv[]) {
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
-        } else if (!strcmp(argv[ac], "-input")) {
+        } else if (!strcmp(argv[ac], "-values")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -input\n");
+                fprintf(stderr, "** missing argument for -values\n");
                 return 1;
             }
             fin1 = argv[ac];
@@ -110,7 +110,7 @@ int main(int argc, char*  argv[]) {
     }
 
     if (!fin1) {
-        fprintf(stderr, "** missing option '-input'\n");
+        fprintf(stderr, "** missing option '-values'\n");
         return 1;
     }
     if (!fin2) {

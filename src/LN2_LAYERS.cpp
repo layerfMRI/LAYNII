@@ -134,7 +134,7 @@ int main(int argc, char*  argv[]) {
     log_welcome("LN2_LAYERS");
     log_nifti_descriptives(nii1);
 
-    cout << "\n  Nr. layers: " << nr_layers << endl;
+    cout << "  Nr. layers: " << nr_layers << endl;
 
     // Get dimensions of input
     const uint32_t size_x = nii1->nx;
@@ -1378,7 +1378,7 @@ int main(int argc, char*  argv[]) {
         // --------------------------------------------------------------------
         // Smooth equi-volume factors for seamless transitions
         // --------------------------------------------------------------------
-        cout << "\n  Start smoothing transitions..." << endl;
+        cout << "\n  Start smoothing equi-volume transitions..." << endl;
         nifti_image* smooth = copy_nifti_as_float32(curvature);
         float* smooth_data = static_cast<float*>(smooth->data);
         for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -1624,6 +1624,8 @@ int main(int argc, char*  argv[]) {
     // Streamline vectors
     // ========================================================================
     if (mode_streamlines) {
+        cout << "\n  Start saving streamline vectors..." << endl;
+
         // Prepare a 4D nifti for streamline vectors
         nifti_image* svec = nifti_copy_nim_info(normdist);
         svec->dim[0] = 4;  // For proper 4D nifti
@@ -1688,7 +1690,8 @@ int main(int argc, char*  argv[]) {
     // Smooth curvature
     // --------------------------------------------------------------------
     if (mode_curvature) {
-        cout << "      Smoothing curvature..." << endl;
+        cout << "\n  Start smoothing curvature..." << endl;
+
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             *(normdistdiff_data + i) = 0;  // Repurpose float32 array
             *(nii_columns_data + i) = 0;  // Repurpose integer array
@@ -1702,6 +1705,8 @@ int main(int argc, char*  argv[]) {
         float w_dZ = gaus(dZ, FWHM_val);
 
         for (uint16_t n = 0; n != iter_smooth; ++n) {
+            cout << "\r    Iteration: " << n+1 << "/" << iter_smooth << flush;
+
             for (uint32_t ii = 0; ii != nr_voi; ++ii) {
                 uint32_t i = *(voi_id + ii);
 
@@ -1767,6 +1772,7 @@ int main(int argc, char*  argv[]) {
                 *(curvature_data + i) = *(normdistdiff_data + i);
             }
         }
+        cout << endl;
 
         save_output_nifti(fout, "curvature", curvature, true);
 

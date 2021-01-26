@@ -32,7 +32,7 @@ int show_help(void) {
     "    -radius         : (Conditional) Distance from centroid to determine \n"
     "                      the other control points. Required to be used together\n"
     "                      with 'control_points' case (I).\n"
-    "    -masked         : (Conditional) Outputs are masked to fall within radius.\n"
+    "    -nomask         : (Conditional) Outputs are not masked to fall within radius.\n"
     "                      Can only be used together with 'control_points' case (I).\n"
     "    -debug          : (Optional) Save extra intermediate outputs.\n"
     "    -output         : (Optional) Output basename for all outputs.\n"
@@ -50,7 +50,7 @@ int main(int argc, char*  argv[]) {
     char *fin1 = NULL, *fout = NULL, *fin3=NULL;
     float thr_radius = 10;
     int ac;
-    bool mode_debug = false, mode_mask=false;
+    bool mode_debug = false, mode_mask=true;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -76,8 +76,8 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             thr_radius = atof(argv[ac]);
-        } else if (!strcmp(argv[ac], "-masked")) {
-            mode_mask = true;
+        } else if (!strcmp(argv[ac], "-nomask")) {
+            mode_mask = false;
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -2722,7 +2722,10 @@ int main(int argc, char*  argv[]) {
             *(nii_dist_data + nr_voxels*(p-3) + i) = *(voronoi_data + i);
         }
     }
-    save_output_nifti(fout, "point_distances", nii_dist, true);
+
+    if (mode_debug) {
+        save_output_nifti(fout, "point_distances", nii_dist, true);
+    }
 
     // ========================================================================
     // Derive UV coordinates from distances (UV for 2D coordinates like XY)
@@ -2764,25 +2767,27 @@ int main(int argc, char*  argv[]) {
     }
     save_output_nifti(fout, "UV_coordinates", nii_coords, true);
 
-    // Compute L2 norm
-    for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
-        i = *(voi_id2 + iii);
-        float coord_U = *(nii_coords_data + nr_voxels*0 + i);
-        float coord_V = *(nii_coords_data + nr_voxels*1 + i);
-        float norm = std::sqrt(coord_U * coord_U + coord_V * coord_V);
-        *(flood_dist_data + i) = norm;
-    }
-    save_output_nifti(fout, "UV_norm_L2", flood_dist, true);
+    if (mode_debug) {
+        // Compute L2 norm
+        for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
+            i = *(voi_id2 + iii);
+            float coord_U = *(nii_coords_data + nr_voxels*0 + i);
+            float coord_V = *(nii_coords_data + nr_voxels*1 + i);
+            float norm = std::sqrt(coord_U * coord_U + coord_V * coord_V);
+            *(flood_dist_data + i) = norm;
+        }
+        save_output_nifti(fout, "UV_norm_L2", flood_dist, true);
 
-    // Compute Linfinity norm
-    for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
-        i = *(voi_id2 + iii);
-        float coord_U = *(nii_coords_data + nr_voxels*0 + i);
-        float coord_V = *(nii_coords_data + nr_voxels*1 + i);
-        float norm = std::max(std::abs(coord_U), std::abs(coord_V));
-        *(flood_dist_data + i) = norm;
+        // Compute Linfinity norm
+        for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
+            i = *(voi_id2 + iii);
+            float coord_U = *(nii_coords_data + nr_voxels*0 + i);
+            float coord_V = *(nii_coords_data + nr_voxels*1 + i);
+            float norm = std::max(std::abs(coord_U), std::abs(coord_V));
+            *(flood_dist_data + i) = norm;
+        }
+        save_output_nifti(fout, "UV_norm_Linf", flood_dist, true);
     }
-    save_output_nifti(fout, "UV_norm_Linf", flood_dist, true);
 
     // ========================================================================
     // Compute angles & quadrants
@@ -2807,8 +2812,11 @@ int main(int argc, char*  argv[]) {
             *(flood_step_data + i) = 0;
         }
     }
-    save_output_nifti(fout, "UV_radians", flood_dist, true);
+
     save_output_nifti(fout, "UV_quadrants", flood_step, true);
+    if (mode_debug) {
+        save_output_nifti(fout, "UV_radians", flood_dist, true);
+    }
 
     cout << "\n  Finished." << endl;
     return 0;
