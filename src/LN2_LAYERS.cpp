@@ -45,6 +45,10 @@ int show_help(void) {
     "    -iter_smooth  : (Optional) Number of smoothing iterations. Default\n"
     "                    is 100. Only used together with '-equivol' flag. Use\n"
     "                    larger values when equi-volume layers are jagged.\n"
+    "    -curvature    : (Optional) Compute curvature. Uses -iter_smooth value\n"
+    "                    for smoothing the curvature estimates. Off by default.\n"
+    "    -streamlines  : (Optional) Export streamline vectors. Useful for e.g.\n"
+    "                    computing B0 angular differences. Off by default.\n"
     "    -incl_borders : (Optional) Include inner and outer gray matter borders\n"
     "                    into the layering. This treats the borders as \n"
     "                    a part of gray matter. Off by default.\n"
@@ -67,6 +71,7 @@ int main(int argc, char*  argv[]) {
     uint16_t ac, nr_layers = 3;
     uint16_t iter_smooth = 100;
     bool mode_equivol = false, mode_debug = false, mode_incl_borders = false;
+    bool mode_curvature =false, mode_streamlines = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -100,6 +105,10 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             fout = argv[ac];
+        } else if (!strcmp(argv[ac], "-curvature")) {
+            mode_curvature = true;
+        } else if (!strcmp(argv[ac], "-streamlines")) {
+            mode_streamlines = true;
         } else if (!strcmp(argv[ac], "-incl_borders")) {
             mode_incl_borders = true;
         } else if (!strcmp(argv[ac], "-debug")) {
@@ -1614,55 +1623,53 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Streamline vectors
     // ========================================================================
-    // NOTE(Faruk): I have implemented this quickly for B0 related before
-    // ISMRM2021 abstract submission.
+    if (mode_streamlines) {
+        // Prepare a 4D nifti for streamline vectors
+        nifti_image* svec = nifti_copy_nim_info(normdist);
+        svec->dim[0] = 4;  // For proper 4D nifti
+        svec->dim[1] = size_x;
+        svec->dim[2] = size_y;
+        svec->dim[3] = size_z;
+        svec->dim[4] = 3;
+        nifti_update_dims_from_array(svec);
+        svec->nvox = normdist->nvox * 3;
+        svec->nbyper = sizeof(float);
+        svec->data = calloc(svec->nvox, svec->nbyper);
+        svec->scl_slope = 1;
+        float* svec_data = static_cast<float*>(svec->data);
 
-    // Prepare a 4D nifti for streamline vectors
-    nifti_image* svec = nifti_copy_nim_info(normdist);
-    svec->dim[0] = 4;  // For proper 4D nifti
-    svec->dim[1] = size_x;
-    svec->dim[2] = size_y;
-    svec->dim[3] = size_z;
-    svec->dim[4] = 3;
-    nifti_update_dims_from_array(svec);
-    svec->nvox = normdist->nvox * 3;
-    svec->nbyper = sizeof(float);
-    svec->data = calloc(svec->nvox, svec->nbyper);
-    svec->scl_slope = 1;
-    float* svec_data = static_cast<float*>(svec->data);
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);
 
-    for (uint32_t ii = 0; ii != nr_voi; ++ii) {
-        uint32_t i = *(voi_id + ii);
+            if (*(nii_rim_data + i) == 3) {
+                tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
+                tie(wm_x, wm_y, wm_z) = ind2sub_3D(*(innerGM_id_data + i),
+                                                   size_x, size_y);
+                tie(gm_x, gm_y, gm_z) = ind2sub_3D(*(outerGM_id_data + i),
+                                                   size_x, size_y);
 
-        if (*(nii_rim_data + i) == 3) {
-            tie(x, y, z) = ind2sub_3D(i, size_x, size_y);
-            tie(wm_x, wm_y, wm_z) = ind2sub_3D(*(innerGM_id_data + i),
-                                               size_x, size_y);
-            tie(gm_x, gm_y, gm_z) = ind2sub_3D(*(outerGM_id_data + i),
-                                               size_x, size_y);
+                // Compute approx. surface angles from streamline start-end points
+                float vec_x = wm_x - gm_x;
+                float vec_y = wm_y - gm_y;
+                float vec_z = wm_z - gm_z;
+                float vec_norm = sqrt(vec_x * vec_x + vec_y * vec_y + vec_z * vec_z);
 
-            // Compute approx. surface angles from streamline start-end points
-            float vec_x = wm_x - gm_x;
-            float vec_y = wm_y - gm_y;
-            float vec_z = wm_z - gm_z;
-            float vec_norm = sqrt(vec_x * vec_x + vec_y * vec_y + vec_z * vec_z);
+                *(svec_data + nr_voxels*0 + i) = vec_x / vec_norm;
+                *(svec_data + nr_voxels*1 + i) = vec_y / vec_norm;
+                *(svec_data + nr_voxels*2 + i) = vec_z / vec_norm;
 
-            *(svec_data + nr_voxels*0 + i) = vec_x / vec_norm;
-            *(svec_data + nr_voxels*1 + i) = vec_y / vec_norm;
-            *(svec_data + nr_voxels*2 + i) = vec_z / vec_norm;
-
-            // Angular difference
-            // float ref_x = 0, ref_y = 0, ref_z = 1;
-            // float temp_dot = ref_x * vec_x + ref_y * vec_y + ref_z * vec_z;
-            // float term1 = ref_x * ref_x + ref_y * ref_y + ref_z * ref_z;
-            // float term2 = vec_x * vec_x + vec_y * vec_y + vec_z * vec_z;
-            // float temp_angle = std::acos(temp_dot / std::sqrt(term1 * term2));
-            // *(curvature_data + i) = temp_angle * 180 / PI;
-            // ----------------------------------------------------------------
+                // Angular difference
+                // float ref_x = 0, ref_y = 0, ref_z = 1;
+                // float temp_dot = ref_x * vec_x + ref_y * vec_y + ref_z * vec_z;
+                // float term1 = ref_x * ref_x + ref_y * ref_y + ref_z * ref_z;
+                // float term2 = vec_x * vec_x + vec_y * vec_y + vec_z * vec_z;
+                // float temp_angle = std::acos(temp_dot / std::sqrt(term1 * term2));
+                // *(curvature_data + i) = temp_angle * 180 / PI;
+                // ----------------------------------------------------------------
+            }
         }
+        save_output_nifti(fout, "streamline_vectors", svec, true);
     }
-    save_output_nifti(fout, "streamline_vectors", svec, true);
-
 
     // ========================================================================
     // Update curvature along column/streamline based on midGM curvature
@@ -1680,88 +1687,114 @@ int main(int argc, char*  argv[]) {
     // --------------------------------------------------------------------
     // Smooth curvature
     // --------------------------------------------------------------------
-    cout << "      Smoothing curvature..." << endl;
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        *(normdistdiff_data + i) = 0;  // Repurpose float32 array
-    }
+    if (mode_curvature) {
+        cout << "      Smoothing curvature..." << endl;
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            *(normdistdiff_data + i) = 0;  // Repurpose float32 array
+            *(nii_columns_data + i) = 0;  // Repurpose integer array
+        }
 
-    // Pre-compute weights
-    float FWHM_val = 1;  // TODO(Faruk): Might tweak this one
-    float w_0 = gaus(0, FWHM_val);
-    float w_dX = gaus(dX, FWHM_val);
-    float w_dY = gaus(dY, FWHM_val);
-    float w_dZ = gaus(dZ, FWHM_val);
+        // Pre-compute weights
+        float FWHM_val = 1;  // TODO(Faruk): Might tweak this one
+        float w_0 = gaus(0, FWHM_val);
+        float w_dX = gaus(dX, FWHM_val);
+        float w_dY = gaus(dY, FWHM_val);
+        float w_dZ = gaus(dZ, FWHM_val);
 
-    for (uint16_t n = 0; n != 9; ++n) {
+        for (uint16_t n = 0; n != iter_smooth; ++n) {
+            for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+                uint32_t i = *(voi_id + ii);
+
+                if (*(nii_rim_data + i) == 3) {
+                    tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+                    float new_val = 0, total_weight = 0;
+
+                    // Start with the voxel itself
+                    new_val += *(curvature_data + i) * w_0;
+                    total_weight += w_0;
+
+                    // --------------------------------------------------------
+                    // 1-jump neighbours
+                    // --------------------------------------------------------
+                    if (ix > 0) {
+                        j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                        if (*(nii_rim_data + j) == 3) {
+                            new_val += *(curvature_data + j) * w_dX;
+                            total_weight += w_dX;
+                        }
+                    }
+                    if (ix < end_x) {
+                        j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                        if (*(nii_rim_data + j) == 3) {
+                            new_val += *(curvature_data + j) * w_dX;
+                            total_weight += w_dX;
+                        }
+                    }
+                    if (iy > 0) {
+                        j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                        if (*(nii_rim_data + j) == 3) {
+                            new_val += *(curvature_data + j) * w_dY;
+                            total_weight += w_dY;
+                        }
+                    }
+                    if (iy < end_y) {
+                        j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                        if (*(nii_rim_data + j) == 3) {
+                            new_val += *(curvature_data + j) * w_dY;
+                            total_weight += w_dY;
+                        }
+                    }
+                    if (iz > 0) {
+                        j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                        if (*(nii_rim_data + j) == 3) {
+                            new_val += *(curvature_data + j) * w_dZ;
+                            total_weight += w_dZ;
+                        }
+                    }
+                    if (iz < end_z) {
+                        j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                        if (*(nii_rim_data + j) == 3) {
+                            new_val += *(curvature_data + j) * w_dZ;
+                            total_weight += w_dZ;
+                        }
+                    }
+                    *(normdistdiff_data + i) = new_val / total_weight;
+                }
+            }
+            // Swap image data
+            for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+                uint32_t i = *(voi_id + ii);
+                *(curvature_data + i) = *(normdistdiff_data + i);
+            }
+        }
+
+        save_output_nifti(fout, "curvature", curvature, true);
+
+        // Quantize curvature
         for (uint32_t ii = 0; ii != nr_voi; ++ii) {
             uint32_t i = *(voi_id + ii);
 
             if (*(nii_rim_data + i) == 3) {
-                tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
-                float new_val = 0, total_weight = 0;
 
-                // Start with the voxel itself
-                new_val += *(curvature_data + i) * w_0;
-                total_weight += w_0;
+                // 2 class binning
+                if (*(curvature_data + i) < 0) {  // Sulcus
+                    *(nii_columns_data + i) = 1;
+                } else {  // Gyrus
+                    *(nii_columns_data + i) = 2;
+                }
 
-                // --------------------------------------------------------
-                // 1-jump neighbours
-                // --------------------------------------------------------
-                if (ix > 0) {
-                    j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                    if (*(nii_rim_data + j) == 3) {
-                        new_val += *(curvature_data + j) * w_dX;
-                        total_weight += w_dX;
-                    }
-                }
-                if (ix < end_x) {
-                    j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-                    if (*(nii_rim_data + j) == 3) {
-                        new_val += *(curvature_data + j) * w_dX;
-                        total_weight += w_dX;
-                    }
-                }
-                if (iy > 0) {
-                    j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                    if (*(nii_rim_data + j) == 3) {
-                        new_val += *(curvature_data + j) * w_dY;
-                        total_weight += w_dY;
-                    }
-                }
-                if (iy < end_y) {
-                    j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-                    if (*(nii_rim_data + j) == 3) {
-                        new_val += *(curvature_data + j) * w_dY;
-                        total_weight += w_dY;
-                    }
-                }
-                if (iz > 0) {
-                    j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                    if (*(nii_rim_data + j) == 3) {
-                        new_val += *(curvature_data + j) * w_dZ;
-                        total_weight += w_dZ;
-                    }
-                }
-                if (iz < end_z) {
-                    j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-                    if (*(nii_rim_data + j) == 3) {
-                        new_val += *(curvature_data + j) * w_dZ;
-                        total_weight += w_dZ;
-                    }
-                }
-                *(normdistdiff_data + i) = new_val / total_weight;
+                // // 3 class binning
+                // if (*(curvature_data + i) < -1./3.) {  // Sulcal fundi
+                //     *(nii_columns_data + i) = 1;
+                // } else if (*(curvature_data + i) > 1./3.) {  // Gyral crown
+                //     *(nii_columns_data + i) = 3;
+                // } else {  // Walls
+                //     *(nii_columns_data + i) = 2;
+                // }
             }
         }
-        // Swap image data
-        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
-            uint32_t i = *(voi_id + ii);
-
-            *(curvature_data + i) = *(normdistdiff_data + i);
-        }
+        save_output_nifti(fout, "curvature_binned", nii_columns, true);
     }
-
-    save_output_nifti(fout, "curvature", normdistdiff, true);
-
 
     cout << "\n  Finished." << endl;
     return 0;
