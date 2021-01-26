@@ -45,9 +45,9 @@ int show_help(void) {
     "    -iter_smooth  : (Optional) Number of smoothing iterations. Default\n"
     "                    is 100. Only used together with '-equivol' flag. Use\n"
     "                    larger values when equi-volume layers are jagged.\n"
-    "    -incl_borders : (Optional) include the borders of the rim-file \n"
-    "                     into the layering. This teats the borders as \n"
-    "                     as beeing part of GM. Default is off\n"
+    "    -incl_borders : (Optional) Include inner and outer gray matter borders\n"
+    "                    into the layering. This treats the borders as \n"
+    "                    a part of gray matter. Off by default.\n"
     "    -debug        : (Optional) Save extra intermediate outputs.\n"
     "    -output       : (Optional) Output basename for all outputs.\n"
     "\n"
@@ -62,7 +62,6 @@ int show_help(void) {
 
 int main(int argc, char*  argv[]) {
 
-bool use_outpath = false;
     nifti_image *nii1 = NULL;
     char *fin = NULL, *fout = NULL;
     uint16_t ac, nr_layers = 3;
@@ -100,7 +99,6 @@ bool use_outpath = false;
                 fprintf(stderr, "** missing argument for -output\n");
                 return 1;
             }
-            use_outpath = true;
             fout = argv[ac];
         } else if (!strcmp(argv[ac], "-incl_borders")) {
             mode_incl_borders = true;
@@ -1066,24 +1064,23 @@ bool use_outpath = false;
             j = *(outerGM_id_data + i);
             *(hotspots_data + j) -= 1;
         }
-        
+
     // ========================================================================
-    // adding prder voxels 
+    // Add border voxels
     // ========================================================================
         if (mode_incl_borders) {
-            if (*(nii_rim_data + i) == 1 ) {
-                *(normdist_data + i) = 1.; 
-                *(nii_layers_data + i) = nr_layers ; 
+            if (*(nii_rim_data + i) == 1) {
+                *(normdist_data + i) = 1.;
+                *(nii_layers_data + i) = nr_layers;
             }
-            if (*(nii_rim_data + i) == 2 ) {
+            if (*(nii_rim_data + i) == 2) {
                 *(normdist_data + i) = 2.93874e-39;
-                *(nii_layers_data + i) = 1 ; 
+                *(nii_layers_data + i) = 1;
             }
         }
-        
     }
-    
-    
+
+
     save_output_nifti(fout, "metric_equidist", normdist);
     save_output_nifti(fout, "layers_equidist", nii_layers, true);
 
@@ -1452,16 +1449,16 @@ bool use_outpath = false;
                     *(nii_layers_data + i) = 1;
                 }
             }
-        
-            // ========================================================================
-            // adding border voxels 
-            // ========================================================================
+
+            // ================================================================
+            // Add border voxels
+            // ================================================================
             if (mode_incl_borders) {
-                if (*(nii_rim_data + i) == 1 ) {
-                    *(nii_layers_data + i) = nr_layers ; 
+                if (*(nii_rim_data + i) == 1) {
+                    *(nii_layers_data + i) = nr_layers;
                 }
-                if (*(nii_rim_data + i) == 2 ) {
-                    *(nii_layers_data + i) = 1 ; 
+                if (*(nii_rim_data + i) == 2) {
+                    *(nii_layers_data + i) = 1;
                 }
             }
         }
@@ -1474,18 +1471,18 @@ bool use_outpath = false;
                 *(normdistdiff_data + i) /= 2;
                 *(normdistdiff_data + i) += 0.5;
             }
-            // ========================================================================
-            // adding border voxels 
-            // ========================================================================
+            // ================================================================
+            // Add border voxels
+            // ================================================================
             if (mode_incl_borders) {
-                if (*(nii_rim_data + i) == 1 ) {
-                    *(normdistdiff_data + i) = 1.; 
+                if (*(nii_rim_data + i) == 1) {
+                    *(normdistdiff_data + i) = 1.;
                 }
-                if (*(nii_rim_data + i) == 2 ) {
+                if (*(nii_rim_data + i) == 2) {
                     *(normdistdiff_data + i) = 2.93874e-39;
                 }
             }
-             
+
         }
         save_output_nifti(fout, "metric_equivol", normdistdiff);
 
