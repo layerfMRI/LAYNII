@@ -45,6 +45,10 @@ int show_help(void) {
     "        Therefore only change this parameter if it is absolutely needed.\n"
     "    - This program is described in more depth in this blog post:\n"
     "    <https://layerfmri.com/devein> \n"
+    "    - the leakage model is desceidbed in (Markuerkiaga et al. 2016) \n"
+    "                            https://doi.org/10.1016/j.neuroimage.2016.02.073 \n"
+    "        in Havlicek and Uludag 2019 https://doi.org/10.1016/j.neuroimage.2019.116209 \n"
+    "        and in Heinzle et al. 2016 http://dx.doi.org/10.1016/j.neuroimage.2015.10.025 \n"
     "\n");
     return 0;
 }
