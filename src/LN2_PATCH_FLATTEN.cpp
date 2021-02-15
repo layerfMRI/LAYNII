@@ -186,7 +186,7 @@ int main(int argc, char*  argv[]) {
     }
 
     // Determine whether depth input is a metric file or a layer file
-    bool mode_depth_metric = NULL;
+    bool mode_depth_metric = false;
     if (min_d >= 0 && max_d <= 1) {
         cout << "  Depth input is a metric file (values are in between 0-1)." << endl;
         mode_depth_metric = true;
