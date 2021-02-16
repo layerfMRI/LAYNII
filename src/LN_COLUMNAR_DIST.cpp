@@ -33,6 +33,9 @@ int show_help(void) {
     "      same dimensions.\n"
     "    - Algorithm of this program is explained in:\n"
     "      <https://layerfmri.com/columns/> \n"
+    "    - This program is aimed for slice wise column estimation \n"
+    "     - For isotropic columns, consider using LN2_COLUMNS (e.g. for subsequent deveining) .\n"
+    "     - For 3D flattening, consider using LN2_MULTILATERATE columns generation .\n"
     "\n");
     return 0;
 }

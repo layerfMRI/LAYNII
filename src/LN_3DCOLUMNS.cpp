@@ -27,6 +27,9 @@ int show_help(void) {
     "Notes:\n"
     "     - Layer nifti and landmarks nifti should have the same dimensions.\n"
     "     - This program is designed to work for axial slices (consider fslswapdim).\n"
+    "     - This program for 3D data, the columns will look like stripes.\n"
+    "     - For isotropic columns, consider using LN2_COLUMNS (e.g. for subsequent deveining) .\n"
+    "     - For 3D flattening, consider using LN2_MULTILATERATE columns generation .\n"
     "\n");
     return 0;
 }
