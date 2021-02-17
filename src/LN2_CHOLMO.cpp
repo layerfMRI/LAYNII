@@ -1,5 +1,4 @@
 
-// WORKS in PROGRES
 
 
 #include "../dep/laynii_lib.h"

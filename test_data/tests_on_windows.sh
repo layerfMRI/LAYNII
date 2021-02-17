@@ -38,3 +38,4 @@
 ..\LN_CONLAY -layers lo_sc_layers.nii -ref lo_T1EPI.nii -subsample -output lo_layers_out.nii
 ..\LN2_COLUMNS -rim sc_rim.nii -midgm sc_midGM.nii -nr_columns 300
 ..\LN2_CHOLMO -layers sc_layers.nii -outer -nr_layers 3 -layer_thickness 0.4 -output padded_layers.nii
+..\LN2_PROFILE -input sc_VASO_act.nii -layers sc_layers.nii -plot
