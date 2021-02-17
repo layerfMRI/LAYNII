@@ -157,7 +157,7 @@ LN2_RIMIFY:
 	$(CC) $(CFLAGS) -o LN2_RIMIFY src/LN2_RIMIFY.cpp $(LIBRARIES) $(LFLAGS)
 
 LN_INFO:
-	$(CC) $(CFLAGS) -o LN_INFO src/LN_INFO.cpp dep/nifti2_io.cpp dep/znzlib.cpp  -I  -lm -lz
+	$(CC) $(CFLAGS) -o LN_INFO src/LN_INFO.cpp $(LIBRARIES) $(LFLAGS)
 
 LN_CONLAY:
 	$(CC) $(CFLAGS) -o LN_CONLAY src/LN_CONLAY.cpp $(LIBRARIES) $(LFLAGS)
