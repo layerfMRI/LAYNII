@@ -49,6 +49,8 @@ int show_help(void) {
     "    This program takes SIEMENS physio files (ECGlog_*.ecg, \n"
     "    EXTlog_*.ext, Pulslog_*.puls, Resplog_*.resp) and parses them into \n"
     "    txt files that can be used in RETROICOR.\n"
+    "    Note, the sampling frequency of resp = 50 \n"
+    "    Note, the sampling frequency of card = 50 \n" 
     "\n"
     "Usage:\n"
     "    LN_PHYSIO_PARS input.puls output.txt \n"
