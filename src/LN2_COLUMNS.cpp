@@ -13,19 +13,22 @@ int show_help(void) {
     "    ../LN2_COLUMNS -rim sc_rim.nii -midgm sc_midGM.nii -nr_columns 300\n"
     "\n"
     "Options:\n"
-    "    -help       : Show this help.\n"
-    "    -rim        : Segmentation input. Use 3 to code pure gray matter \n"
-    "                  voxels. This program only generates columns in the \n"
-    "                  voxels coded with 3.\n"
-    "    -midgm      : Middle gray matter file (from LN2_LAYERS output).\n"
-    "    -nr_columns : Number of columns.\n"
-    "    -centroids  : (Optional) Output of LN2_COLUMNS. Can be given as an\n"
-    "                  input to speed up generation of new columns or reduce\n"
-    "                  the desired number of columns. Acts as a checkpoint.\n"
-    "                  Especially useful for large images that takes long\n"
-    "                  time to process.\n"
-    "    -debug      : (Optional) Save extra intermediate outputs.\n"
-    "    -output     : (Optional) Output basename for all outputs.\n"
+    "    -help         : Show this help.\n"
+    "    -rim          : Segmentation input. Use 3 to code pure gray matter \n"
+    "                    voxels. This program only generates columns in the \n"
+    "                    voxels coded with 3.\n"
+    "    -midgm        : Middle gray matter file (from LN2_LAYERS output).\n"
+    "    -nr_columns   : Number of columns.\n"
+    "    -centroids    : (Optional) Output of LN2_COLUMNS. Can be given as an\n"
+    "                    input to speed up generation of new columns or reduce\n"
+    "                    the desired number of columns. Acts as a checkpoint.\n"
+    "                    Especially useful for large images that takes long\n"
+    "                    time to process.\n"
+    "    -debug        : (Optional) Save extra intermediate outputs.\n"
+    "    -incl_borders : (Optional) Include inner and outer gray matter borders\n"
+    "                    into the layering. This treats the borders as \n"
+    "                    a part of gray matter. Off by default.\n"
+    "    -output       : (Optional) Output basename for all outputs.\n"
     "\n");
     return 0;
 }
@@ -36,7 +39,7 @@ int main(int argc, char*  argv[]) {
     char *fin1 = NULL, *fout = NULL, *fin2=NULL, *fin3=NULL;
     int ac;
     int32_t nr_columns = 5;
-    bool mode_debug = false, mode_initialize_with_centroids = false;
+    bool mode_debug = false, mode_initialize_with_centroids = false, mode_incl_borders = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -75,6 +78,8 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             fout = argv[ac];
+        } else if (!strcmp(argv[ac], "-incl_borders")) {
+            mode_incl_borders = true;
         } else if (!strcmp(argv[ac], "-debug")) {
             mode_debug = true;
         } else {
@@ -874,7 +879,8 @@ int main(int argc, char*  argv[]) {
     save_output_nifti(fout, "centroids" + tag.str(), nii_columns, true);
 
     // ========================================================================
-    // Voronoi cell from MidGM cells to rest of the GM (gray matter)
+    // Voronoi cell from MidGM cells to rest of the GM (gray matter) 
+    // but not borders, to avoid leakage across kissing gyri.
     // ========================================================================
     cout << "\n  Start Voronoi..." << endl;
 
@@ -1289,6 +1295,75 @@ int main(int argc, char*  argv[]) {
         }
         grow_step += 1;
     }
+
+
+    // ========================================================================
+    // Voronoi cell flood into borders of Rim file, if -inlucde borders option is used.
+    // ========================================================================
+    
+  if (mode_incl_borders) {
+  // one-two iteration should be enough. I wouldn't know why the border should be thicker than one voxel.
+  // I am only using direct neighbors to avoid over overwriting values of closer neigbors.
+  for (int index = 0; index < 2; index++)  { // growing twize
+      
+      // I am hijacking flood_step_data, because it is no longer needed and I do not want ot waste memory
+       for (int i = 0; i != nr_voxels; ++i)  *(flood_step_data + i ) = 0 ;
+      
+        for (int i = 0; i != nr_voxels; ++i) {
+            if ( (*(nii_rim_data + i) == 1 || *(nii_rim_data + i) == 2) && (*(nii_columns_data + i)==0) ){
+                    tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+                    // one-two iteration should be enough. I wouldn't know why the border should be thicker than one voxel.
+                    // I am only using direct neighbors to avoid over overwriting values of closer neigbors.
+                    // --------------------------------------------------------
+                    // 1-jump neighbours
+                    // --------------------------------------------------------
+                    if (ix > 0) {
+                        j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                        if (*(nii_columns_data + j) != 0 ) {
+                            *(flood_step_data + i) = *(nii_columns_data + j);
+                        }
+                    }
+                    if (ix < end_x) {
+                        j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                        if (*(nii_columns_data + j) != 0 ) {
+                            *(flood_step_data + i) = *(nii_columns_data + j);
+                        }
+                    }
+                    if (iy > 0) {
+                        j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                        if (*(nii_columns_data + j) != 0 ) {
+                            *(flood_step_data + i) = *(nii_columns_data + j);
+                        }
+                    }
+                    if (iy < end_y) {
+                        j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                        if (*(nii_columns_data + j) != 0 ) {
+                            *(flood_step_data + i) = *(nii_columns_data + j);
+                        }
+                    }
+                    if (iz > 0) {
+                        j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                        if (*(nii_columns_data + j) != 0 ) {
+                            *(flood_step_data + i) = *(nii_columns_data + j);
+                        }
+                    }
+                    if (iz < end_z) {
+                        j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                        if (*(nii_columns_data + j) != 0 ) {
+                            *(flood_step_data + i) = *(nii_columns_data + j);
+                        }
+                    }               
+            } // if loop across all border voxels closed
+        }// loop across voxels closed
+        
+     for (int i = 0; i != nr_voxels; ++i) {
+         *(nii_columns_data + i) = *(nii_columns_data + i) + *(flood_step_data + i )  ;
+     }
+    }// doing it twice closed
+    
+
+     
+  }//flooding borders closed
 
     // ========================================================================
     save_output_nifti(fout, "columns" + tag.str(), nii_columns, true);
