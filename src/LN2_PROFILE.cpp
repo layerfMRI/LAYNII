@@ -178,7 +178,7 @@ int main(int argc, char*  argv[]) {
         mean_layers[i] = 0.; 
         std_layers[i] = 0.; 
         numb_voxels[i] = 0.; 
-}
+    }
 
 
     // ========================================================================
