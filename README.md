@@ -27,7 +27,7 @@ A brief instruction is also given below.
 
 1. Download the latest release and unzip it or clone the repository with the command:
 ```
-git clone https://github.com/layerfMRI/laynii
+git clone --depth 1 https://github.com/layerfMRI/laynii
 ```
 
 2. Change directory to laynii folder:
