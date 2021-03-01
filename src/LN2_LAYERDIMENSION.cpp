@@ -27,7 +27,6 @@ int show_help(void) {
     "                .nii.gz, and path if needed. Overwrites existing files.\n"
     "    -singleTR : flag to only look as the first time point of the value file.\n"
     "                default is ON.\n"
-    "    -output   : (Optional) Output basename for all outputs.\n"
     "\n"
     "Notes:\n"
     "    - This does not refer to Dr. Stranges' layer dimentions\n"

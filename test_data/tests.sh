@@ -40,3 +40,4 @@
 ../LN2_CHOLMO -layers sc_layers.nii -outer -nr_layers 3 -layer_thickness 0.4 -output padded_layers.nii
 ../LN2_PROFILE -input sc_VASO_act.nii -layers sc_layers.nii -plot
 ../LN2_LAYERDIMENSION -values lo_BOLD_act.nii -layers lo_layers.nii -columns lo_columns.nii
+../LN2_MASK -scores lo_BOLD_act.nii -columns lo_columns.nii -mean_thresh 1 -output mask.nii -abs
