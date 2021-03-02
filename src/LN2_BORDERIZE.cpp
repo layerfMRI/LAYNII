@@ -98,7 +98,6 @@ int main(int argc, char*  argv[]) {
             nr_voi += 1;
         }
     }
-    cout << "  Nr. midgm voxels = " << nr_voi << endl;
 
     // Allocate memory to only the voxel of interest
     int32_t* voi_id;
@@ -300,7 +299,7 @@ int main(int argc, char*  argv[]) {
         switch_border = false;
     }
 
-    save_output_nifti(fout, "borderized", nii_borders, true);
+    save_output_nifti(fout, "borderized", nii_borders, true, true);
 
     cout << "\n  Finished." << endl;
     return 0;
