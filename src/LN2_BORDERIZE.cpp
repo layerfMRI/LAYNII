@@ -115,7 +115,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Borders
     // ========================================================================
-    cout << "\n  Finding nii_borders..." << endl;
+    cout << "\n  Finding border voxels..." << endl;
 
     uint32_t i, j, ix, iy, iz;
     bool switch_border = false;
@@ -300,7 +300,7 @@ int main(int argc, char*  argv[]) {
         switch_border = false;
     }
 
-    save_output_nifti(fout, "borders", nii_borders, true);
+    save_output_nifti(fout, "borderized", nii_borders, true);
 
     cout << "\n  Finished." << endl;
     return 0;
