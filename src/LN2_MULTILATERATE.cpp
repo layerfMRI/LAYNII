@@ -30,6 +30,7 @@ int show_help(void) {
     "                      with 'control_points' case (I).\n"
     "    -nomask         : (Conditional) Outputs are not masked to fall within radius.\n"
     "                      Can only be used together with 'control_points' case (I).\n"
+    "    -incl_borders   : (Conditional) Include borders as if they are labeled with 3.\n"
     "    -debug          : (Optional) Save extra intermediate outputs.\n"
     "    -output         : (Optional) Output basename for all outputs.\n"
     "\n"
@@ -46,7 +47,7 @@ int main(int argc, char*  argv[]) {
     char *fin1 = NULL, *fout = NULL, *fin3=NULL;
     float thr_radius = 10;
     int ac;
-    bool mode_debug = false, mode_mask=true;
+    bool mode_debug = false, mode_mask=true, mode_incl_borders = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -74,6 +75,8 @@ int main(int argc, char*  argv[]) {
             thr_radius = atof(argv[ac]);
         } else if (!strcmp(argv[ac], "-nomask")) {
             mode_mask = false;
+        } else if (!strcmp(argv[ac], "-incl_borders")) {
+            mode_incl_borders = true;
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -139,6 +142,17 @@ int main(int argc, char*  argv[]) {
     // Fix input datatype issues
     nifti_image* nii_rim = copy_nifti_as_int32(nii1);
     int32_t* nii_rim_data = static_cast<int32_t*>(nii_rim->data);
+    // ------------------------------------------------------------------------
+    // Include borders
+    if (mode_incl_borders) {
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(nii_rim_data + i) != 0){
+                *(nii_rim_data + i) = 3;
+            }
+        }
+    }
+    // ------------------------------------------------------------------------
+
     nifti_image* nii_points = copy_nifti_as_int32(nii3);
     int32_t* nii_points_data = static_cast<int32_t*>(nii_points->data);
 
