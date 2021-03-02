@@ -299,7 +299,7 @@ int main(int argc, char*  argv[]) {
         switch_border = false;
     }
 
-    save_output_nifti(fout, "borderized", nii_borders, true, true);
+    save_output_nifti(fout, "borders", nii_borders, true, true);
 
     cout << "\n  Finished." << endl;
     return 0;
