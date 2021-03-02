@@ -14,6 +14,7 @@
 
 
 #include "../dep/laynii_lib.h"
+#include <limits>
 
 int show_help(void) {
     printf(
@@ -1111,7 +1112,7 @@ int main(int argc, char*  argv[]) {
                 *(nii_layers_data + i) = nr_layers;
             }
             if (*(nii_rim_data + i) == 2) {
-                *(normdist_data + i) = 2.93874e-39;
+                *(normdist_data + i) = std::numeric_limits<float>::min();
                 *(nii_layers_data + i) = 1;
             }
         }
