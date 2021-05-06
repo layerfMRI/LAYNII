@@ -46,10 +46,6 @@ Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri
 
 - [LN2_LAYERS algorithm](https://thingsonthings.org/ln2_layers/)
 - [LN2_LAYERS example application](https://layerfmri.com/2020/04/24/equivol/)
-- [LN_GROW_LAYERS usage](https://layerfmri.com/2018/03/11/quick-layering/)
-- [LN_GROW_LAYERS example application](https://layerfmri.com/2020/04/24/equivol/)
-- [LN_GROW_LAYERS example application](https://layerfmri.com/2018/07/19/how-to-convert-any-paper-figure-into-a-layer-profile/)
-- [LN_GROW_LAYERS example application](https://layerfmri.com/2018/09/26/columns/)
 - [LN_BOCO](https://layerfmri.com/2019/03/22/analysispipeline/)
 - [LN_COLUMNAR_DIST](https://layerfmri.com/2018/09/26/columns/)
 - [LN_IMAGIRO](https://layerfmri.com/2018/09/26/columns/)
@@ -65,6 +61,13 @@ Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri
 - [LN_NOISE_KERNEL](https://layerfmri.com/2020/04/06/qa/)
 - [LN_LEAKY_LAYERS](https://layerfmri.com/2020/04/24/equivol/)
 - [LN_LOITUMA](https://layerfmri.com/2020/04/24/equivol/)
+
+### Legacy tutorials (superseded by newer programs)
+- [LN_GROW_LAYERS usage](https://layerfmri.com/2018/03/11/quick-layering/)
+- [LN_GROW_LAYERS example application](https://layerfmri.com/2020/04/24/equivol/)
+- [LN_GROW_LAYERS example application](https://layerfmri.com/2018/07/19/how-to-convert-any-paper-figure-into-a-layer-profile/)
+- [LN_GROW_LAYERS example application](https://layerfmri.com/2018/09/26/columns/)
+
 ---
 ## Comment on cross-platform compatibility
 Since May 2020, LayNii is also distributed as pre-compiled binaries for Linux, macOS, and Windows (x32 and x64).
