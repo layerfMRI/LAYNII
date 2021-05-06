@@ -146,8 +146,7 @@ int main(int argc, char * argv[]) {
     // ========================================================================
     // AVERAGE across Trials
     for (int i = 0; i != nr_voxels; ++i) {
-        *(nii_boco_vaso_data + i) = *(nii_nulled_data + i)
-                                    / (*(nii_bold_data + i));
+        *(nii_boco_vaso_data + i) = *(nii_nulled_data + i) / (*(nii_bold_data + i));
     }
 
     // Clean VASO values that are unrealistic
@@ -178,18 +177,17 @@ int main(int argc, char * argv[]) {
             cout << "  Calculating shift = " << shift << endl;
             for (int j = 0; j != size_z * size_y * size_x; ++j) {
                 for (int t = 3; t < size_time-3; ++t) {
-                    *(nii_boco_vaso_data + nxyz * t + j) =
-                        *(nii_nulled_data + nxyz * t + j)
-                        / *(nii_bold_data + nxyz * (t + shift) + j);
+                    *(nii_boco_vaso_data + nxyz * t + j)  =      *(nii_nulled_data + nxyz * t + j)  / *(nii_bold_data + nxyz * (t + shift) + j);
                 }
                 for (int t = 0; t < size_time; ++t) {
                     vec_file1[t] = *(nii_boco_vaso_data + nxyz * t + j);
                     vec_file2[t] = *(nii_bold_data + nxyz * t + j);
                 }
-                *(correl_file_data + nxyz * (shift + 3) + j) =
-                    ren_correl(vec_file1, vec_file2, size_time);
+                *(correl_file_data + nxyz * (shift + 3) + j) =  ren_correl(vec_file1, vec_file2, size_time);
             }
         }
+
+
 
         // Get back to default
         for (int i = 0; i != nr_voxels; ++i) {
@@ -206,7 +204,15 @@ int main(int argc, char * argv[]) {
                 *(nii_boco_vaso_data + i) = 2;
             }
         }
-        save_output_nifti(fout, "correlated", correl_file, false);
+        
+            // Replace nans with zeros
+        for (int i = 0; i < nr_voxels; ++i) {
+            if (*(correl_file_data + i)!= *(correl_file_data + i)) {
+               *(correl_file_data + i) = 0;
+            }
+        }
+        
+        save_output_nifti(fout, "shift_correlated", correl_file, false);
     }
 
     // ========================================================================
