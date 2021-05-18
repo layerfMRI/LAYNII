@@ -62,7 +62,7 @@ Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri
 - [LN_LEAKY_LAYERS](https://layerfmri.com/2020/04/24/equivol/)
 - [LN_LOITUMA](https://layerfmri.com/2020/04/24/equivol/)
 
-### Legacy tutorials (superseded by newer programs)
+### Legacy tutorials (historic programs that have been extensively tested and used in a number of publications but are less general as the set of newer programns)
 - [LN_GROW_LAYERS usage](https://layerfmri.com/2018/03/11/quick-layering/)
 - [LN_GROW_LAYERS example application](https://layerfmri.com/2020/04/24/equivol/)
 - [LN_GROW_LAYERS example application](https://layerfmri.com/2018/07/19/how-to-convert-any-paper-figure-into-a-layer-profile/)
