@@ -15,7 +15,7 @@ Most essential programs (so far) are:
 
 If you use LayNii in your research please cite the following article:
 
-- Huber, L., Poser, B. A., Bandettini, P. A., Arora, K., Wagstyl, K., Cho, S., Goense, J., Nothnagel, N., Morgan, A. T., Mueller A. K., van den Hurk, J., Reynolds, R. C., Glen, D. R., Goebel, R. W., Gulban, O. F. (2020). LayNii: A software suite for layer-fMRI. BioRxiv. <https://doi.org/10.1101/2020.06.12.148080>
+- Huber, L., Poser, B. A., Bandettini, P. A., Arora, K., Wagstyl, K., Cho, S., Goense, J., Nothnagel, N., Morgan, A. T., van den Hurk, J., Mueller A. K., Reynolds, R. C., Glen, D. R., Goebel, R. W., Gulban, O. F. (2021). LayNii: A software suite for layer-fMRI. NeuroImage, 118091. https://doi.org/10.1016/j.neuroimage.2021.118091
 
 In addition, please cite the used software version of LayNii by using our Zenodo integration:
 - [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3514297.svg)](https://doi.org/10.5281/zenodo.3514297)
