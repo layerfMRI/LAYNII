@@ -4,7 +4,7 @@
 // on the command line
 //
 // Note: This is larely taken from the idea discussion boards. Thus, I belive
-// the fist version is from Peter Kochunov.
+// the fist version is from Peter Kochunov. See the site https://www.magnetom.net/t/a-c-code-to-parse-physio-log-file/1535 for more info
 
 #include <iostream>
 #include <sstream>
@@ -51,6 +51,7 @@ int show_help(void) {
     "    txt files that can be used in RETROICOR.\n"
     "    Note, the sampling frequency of resp = 50 \n"
     "    Note, the sampling frequency of card = 50 \n" 
+    "    See source code comments for credits to Peter Kochunov \n"
     "\n"
     "Usage:\n"
     "    LN_PHYSIO_PARS input.puls output.txt \n"
