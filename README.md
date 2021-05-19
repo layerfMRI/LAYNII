@@ -46,6 +46,7 @@ Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri
 
 - [LN2_LAYERS algorithm](https://thingsonthings.org/ln2_layers/)
 - [LN2_LAYERS example application](https://layerfmri.com/2020/04/24/equivol/)
+- [LN2_DEVEIN](https://layerfmri.com/2020/04/02/devein/)
 - [LN_BOCO](https://layerfmri.com/2019/03/22/analysispipeline/)
 - [LN_COLUMNAR_DIST](https://layerfmri.com/2018/09/26/columns/)
 - [LN_IMAGIRO](https://layerfmri.com/2018/09/26/columns/)
@@ -56,13 +57,10 @@ Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri
 - [LN_TEMPSMOOTH](https://layerfmri.com/2018/11/03/anatomically-informed-spatial-smoothing/)
 - [LN_INTPRO](https://layerfmri.com/2019/02/05/intensity-projections-in-laynii/)
 - [LN_MP2RAGE_DNOISE](https://layerfmri.com/2019/06/22/mp2rage/)
-- [LN2_DEVEIN](https://layerfmri.com/2020/04/02/devein/)
 - [LN_SKEW](https://layerfmri.com/2020/04/06/qa/)
 - [LN_NOISE_KERNEL](https://layerfmri.com/2020/04/06/qa/)
 - [LN_LEAKY_LAYERS](https://layerfmri.com/2020/04/24/equivol/)
 - [LN_LOITUMA](https://layerfmri.com/2020/04/24/equivol/)
-
-### Legacy tutorials (historic programs that have been extensively tested and used in a number of publications but are less general as the set of newer programns)
 - [LN_GROW_LAYERS usage](https://layerfmri.com/2018/03/11/quick-layering/)
 - [LN_GROW_LAYERS example application](https://layerfmri.com/2020/04/24/equivol/)
 - [LN_GROW_LAYERS example application](https://layerfmri.com/2018/07/19/how-to-convert-any-paper-figure-into-a-layer-profile/)
