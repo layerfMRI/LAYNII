@@ -8,10 +8,10 @@ int show_help(void) {
     "    LN2_GEODISTANCE -init rim.nii \n"
     "\n"
     "Options:\n"
-    "    -help           : Show this help.\n"
-    "    -init           : Initial voxels that denote 0 distance.\n"
-    "    -domain         : Set of voxels in which the distance will be measured.\n"
-    "    -output         : (Optional) Output basename for all outputs.\n"
+    "    -help   : Show this help.\n"
+    "    -init   : Initial voxels that denote 0 distance.\n"
+    "    -domain : Set of voxels in which the distance will be measured.\n"
+    "    -output : (Optional) Output basename for all outputs.\n"
     "\n"
     "\n");
     return 0;
