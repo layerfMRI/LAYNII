@@ -1,11 +1,9 @@
 
-
-
 #include "../dep/laynii_lib.h"
 
 int show_help(void) {
     printf(
-    "LN2_CHOLMO: adds additional layers onto already existing layers with\n"
+    "LN2_CHOLMO: Add additional layers onto already existing layers with\n"
     "            like the name suggests is is padding layers \n"
     "            this can be helpfull to extend profiles into CSF or into WM \n"
     "\n"
@@ -16,22 +14,17 @@ int show_help(void) {
     "    ../LN2_CHOLMO -layers sc_layers.nii -outer -nr_layers 3 -layer_thickness 0.4 -output padded_layers.nii \n"
     "\n"
     "Options:\n"
-    "    -help             : Show this help.\n"
-    "    -layers           : Specify input dataset of layers\n"
-    "                        It is assumed that it conists of intager numbers of layers\n"
-    "                        It is assumed that deeper layers have small values \n"
-    "                        It is assumes that superficial layers have large values.\n"
+    "    -help            : Show this help.\n"
+    "    -layers          : Specify input dataset of layers\n"
+    "                       It is assumed that it conists of intager numbers of layers\n"
+    "                       It is assumed that deeper layers have small values \n"
+    "                       It is assumes that superficial layers have large values.\n"
     "    -nr_layers       : Number of layers to add ontop of the already existing ones.\n"
-    "                        Default is 3.\n"
-    "    -layer_thickness : Thickness of the added layers in mm \n"
-    "                        Default is 0.8 \n"
-    "                        This should not be smaller than the voxel dimention \n"
+    "                       Default is 3.\n"
+    "    -layer_thickness : Thickness of the added layers in mm. Default is 0.8.\n"
+    "                       This should not be smaller than the voxel dimension.\n"
     "    -debug           : (Optional) Save extra intermediate outputs.\n"
-    "    -output          : (Optional) Output basename.\n"
-    "                        Default is adding '_padded' as suffix \n"
-    "\n"
-    "Notes:\n"
-    "    - no notes"
+    "    -output          : (Optional) Output basename. Default is '_padded' as suffix.\n"
     "\n");
     return 0;
 }
@@ -44,8 +37,8 @@ int main(int argc, char*  argv[]) {
     double_t layer_thickness = 0.8;
     bool  mode_debug = false,  mode_inner = false,  mode_outer = true;
     bool  use_outpath = false;
-    
-    
+
+
     // Process user options
     if (argc < 2) return show_help();
     for (ac = 1; ac < argc; ac++) {
@@ -75,7 +68,7 @@ int main(int argc, char*  argv[]) {
                 fprintf(stderr, "** missing argument for -output\n");
                 return 1;
             }
-            use_outpath = true; 
+            use_outpath = true;
             fout = argv[ac];
         } else if (!strcmp(argv[ac], "-inner")) {
             mode_inner = true;
@@ -146,13 +139,13 @@ int main(int argc, char*  argv[]) {
 
     nifti_image* step = copy_nifti_as_int16(nii_layers);
     int16_t* step_data = static_cast<int16_t*>(step->data);
-    
+
     nifti_image* dist = copy_nifti_as_float32(nii_layers);
     float* dist_data = static_cast<float*>(dist->data);
 
-   
+
     // ========================================================================
-    // Looking what is already there in input 
+    // Looking what is already there in input
     // ========================================================================
     int max_layers = 0;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -161,40 +154,38 @@ int main(int argc, char*  argv[]) {
         }
     }
     cout << "  There are " << max_layers<< " layers already. I will add another  " << nr_layers << endl;
-    
-    
 
     // ========================================================================
     // Grow outwards
     // ========================================================================
     cout << "\n  Start growing ....." << endl;
 
-if (mode_outer) {
-    // Initialize grow volume for outwards growign
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_layers_data + i) == max_layers) {  // starting point to grow at the outer most layer with the largest number
-            *(step_data + i) = 1;
-            *(dist_data + i) = 0.;
-        } else {
-            *(step_data + i) = 0.;
-            *(dist_data + i) = 0.;
+    if (mode_outer) {
+        // Initialize grow volume for outwards growign
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(nii_layers_data + i) == max_layers) {  // starting point to grow at the outer most layer with the largest number
+                *(step_data + i) = 1;
+                *(dist_data + i) = 0.;
+            } else {
+                *(step_data + i) = 0.;
+                *(dist_data + i) = 0.;
+            }
         }
     }
-}
 
 
-if (mode_inner) {
-    // Initialize grow volume for outwards growign
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_layers_data + i) == 1) {  // starting point to grow at the inner most layer with value 1
-            *(step_data + i) = 1;
-            *(dist_data + i) = 0.;
-        } else {
-            *(step_data + i) = 0.;
-            *(dist_data + i) = 0.;
+    if (mode_inner) {
+        // Initialize grow volume for outwards growign
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(nii_layers_data + i) == 1) {  // starting point to grow at the inner most layer with value 1
+                *(step_data + i) = 1;
+                *(dist_data + i) = 0.;
+            } else {
+                *(step_data + i) = 0.;
+                *(dist_data + i) = 0.;
+            }
         }
     }
-}
 
     uint16_t grow_step = 1;
     uint32_t voxel_counter = nr_voxels;
@@ -505,13 +496,11 @@ if (mode_inner) {
         }
         grow_step += 1;
     }
-    
 
     if (mode_debug) {
         save_output_nifti(fout, "step", step, false);
         save_output_nifti(fout, "dist", dist, false);
     }
-
 
     // ========================================================================
     // Quantizing the grown distances into layers of desired thickness
@@ -525,9 +514,7 @@ if (mode_inner) {
     // ========================================================================
     // Giving some feedback to the user that might help with interpretation.
     // ========================================================================
-
-    
-    int max_layers_padded = 0; 
+    int max_layers_padded = 0;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(dist_data + i) >= max_layers_padded){
             max_layers_padded = *(dist_data + i);
@@ -554,74 +541,55 @@ if (mode_inner) {
         cout << "           https://github.com/ofgulban/LAYNII_extras/blob/master/Upsamp_2rimify/Up_sample_2d.sh " << endl;
    }
 
-
-
     // ========================================================================
-    // trunkcting the layers that are not desired
+    // Truncate the layers that are not desired
     // ========================================================================
     //Writing out un-trunkated layers
     if (mode_debug) {
         save_output_nifti(fout, "dist_quantized", dist, false);
     }
-    
+
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(dist_data + i) >  nr_layers) {
-            *(dist_data + i) = 0.0 ; 
+            *(dist_data + i) = 0.0 ;
         }
     }
 
-
     // ========================================================================
-    // adding the desired layers to what is already there for the case of outwards growing
+    // Add desired layers to what is already there for outwards growing
     // ========================================================================
     cout << "\n  combining already existing layers with the padded ones..." << endl << endl;
 
+    if (mode_outer) {
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(dist_data + i) != 0 ) {
+                *(dist_data + i) =  *(dist_data + i)  + max_layers;
+                } else {
+                *(dist_data + i) = *(nii_layers_data + i) ;
+                }
+        }
+    }
 
-if (mode_outer) {
+    if (mode_inner) {
+        if ( nr_layers > max_layers_padded ) {
+            cout << "\n  Since there is not enough space to add " << nr_layers << "layers (see above)," << endl;
+            cout << "  I am just using " << max_layers_padded << "layers instead" << endl << endl;
+                    nr_layers = max_layers_padded ;
+        }
 
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(dist_data + i) != 0 ) {
-            *(dist_data + i) =  *(dist_data + i)  + max_layers;
-            } else {
-            *(dist_data + i) = *(nii_layers_data + i) ;
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(dist_data + i) != 0 ) {
+                *(dist_data + i) = nr_layers - *(dist_data + i) + 1 ;
             }
-    }
-    
-}  
-
-
-if (mode_inner) {
-
-    if ( nr_layers > max_layers_padded ) {
-        cout << "\n  Since there is not enough space to add " << nr_layers << "layers (see above)," << endl;
-        cout << "  I am just using " << max_layers_padded << "layers instead" << endl << endl;
-                nr_layers = max_layers_padded ;
-    }
-    
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(dist_data + i) != 0 ) {
-            *(dist_data + i) = nr_layers - *(dist_data + i) + 1 ;
-        }
-        if (*(dist_data + i) == 0 && *(nii_layers_data + i) != 0 ) {
-            *(dist_data + i) = *(nii_layers_data + i) + nr_layers  ;
+            if (*(dist_data + i) == 0 && *(nii_layers_data + i) != 0 ) {
+                *(dist_data + i) = *(nii_layers_data + i) + nr_layers  ;
+            }
         }
     }
-    
-}  
 
-
-
-    if (!use_outpath) fout = fin;    
+    if (!use_outpath) fout = fin;
     save_output_nifti(fout, "padded", dist, true, use_outpath);
 
-
- 
-
-
-
-
-
- 
     cout << "\n  Finished." << endl;
     return 0;
 }
