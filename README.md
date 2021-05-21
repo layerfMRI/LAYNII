@@ -120,6 +120,7 @@ c++ -std=c++11 -DHAVE_ZLIB -o LN2_MULTILATERATE src/LN2_MULTILATERATE.cpp dep/ni
 c++ -std=c++11 -DHAVE_ZLIB -o LN2_PATCH_FLATTEN src/LN2_PATCH_FLATTEN.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB -o LN2_CHOLMO src/LN2_CHOLMO.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB -o LN2_PROFILE src/LN2_PROFILE.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
+c++ -std=c++11 -DHAVE_ZLIB -o LN2_MASK src/LN2_MASK.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 
 ```
 ---
