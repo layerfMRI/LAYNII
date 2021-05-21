@@ -10,32 +10,32 @@ int show_help(void) {
     "          the entire colum can be extracted \n"
     "\n"
     "Usage:\n"
-    "    LN2_MASK -scores activation.nii -columns columns.nii -max_thresh 2.3 -output column_mask.nii \n"
-    "    ../LN2_MASK -scores activation.nii -columns columns.nii -mean_thresh 1.5 -output column_mask.nii \n"
-    "    ../LN2_MASK -scores lo_BOLD_act.nii -columns lo_columns.nii -mean_thresh 1 -output mask.nii -abs \n"
+    "    LN2_MASK -scores activation.nii -columns columns.nii -min_thr 2.3 -output column_mask.nii \n"
+    "    ../LN2_MASK -scores activation.nii -columns columns.nii -mean_thr 1.5 -output column_mask.nii \n"
+    "    ../LN2_MASK -scores lo_BOLD_act.nii -columns lo_columns.nii -mean_thr 1 -output mask.nii -abs \n"
     "\n"
     "Options:\n"
-    "    -help        : Show this help.\n"
-    "    -scores      : 3D Nifti image fucntional activation scores that will \n"
-    "                   be transformed into layer dimensions.\n"
-    "                   Those can be z-score maps of beta maps.\n"
-    "                   The default is to exclusively consider at positive scores.\n"
-    "    -columns     : A 3D nifti file that contains columns as intager masks.\n"
-    "                   e.g. the output of LN2_COLUMNS or LN2_MULTILATERATE.\n"
-    "    -max_thresh  : (Optional) Threshold of activation score. If any voxel in the column \n"
-    "                   exceeds this value, the entire column in selected .\n"
-    "                   This selection is use by default with value 1.0 \n"
-    "    -mean_thresh : (Optional) Threshold of activation score. If the mean of the column  \n"
-    "                   exceeds this value, the entire column in selected.\n"
-    "                   if this parameter is used, the max_thresh option is ignored \n"
-    "    -output      : (Optional) Output filename, including .nii or\n"
-    "                   .nii.gz, and path if needed. Overwrites existing files.\n"
-    "    -abs         : (Optional) if you want to also consider negative score values\n"
-    "                   use this option.\n"
+    "    -help     : Show this help.\n"
+    "    -scores   : 3D Nifti image fucntional activation scores that will \n"
+    "                be transformed into layer dimensions. It can be z-score\n"
+    "                or beta maps. The default is to exclusively consider positive\n"
+    "                scores.\n"
+    "    -columns  : A 3D nifti file that contains columns as intager masks.\n"
+    "                R.g. output of LN2_COLUMNS or LN2_MULTILATERATE.\n"
+    "    -min_thr  : (Optional) Threshold of activation score. If any voxel in\n"
+    "                a column exceeds this value, the entire column in selected.\n"
+    "                This selection is use by default with value 1.0 \n"
+    "    -mean_thr : (Optional) Threshold of activation score. If the mean of\n"
+    "                a column exceeds this value, the entire column in selected.\n"
+    "                If this parameter is used, the min_thresh option is ignored \n"
+    "    -output   : (Optional) Output filename, including .nii or\n"
+    "                .nii.gz, and path if needed. Overwrites existing files.\n"
+    "    -abs      : (Optional) if you want to also consider negative score values\n"
+    "                use this option.\n"
     "\n"
     "Notes:\n"
     "    - This refers to layerfMRI artifact here: \n"
-    "        TODO: <add link here>"
+    "        TODO: <add link here>\n"
     "    - Note that columns and scores are expected to be positive numbers \n"
     "\n");
     return 0;
@@ -67,17 +67,17 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             fin2 = argv[ac];
-        } else if( !strcmp(argv[ac], "-mean_thresh") ) {
+        } else if( !strcmp(argv[ac], "-mean_thr") ) {
             if( ++ac >= argc ) {
-                fprintf(stderr, "** missing argument for -mean_thresh\n");
+                fprintf(stderr, "** missing argument for -mean_thr\n");
                 return 1;
             }
             thresh = atof(argv[ac]);
             mode_mean = true;
             mode_max = false;
-        } else if( !strcmp(argv[ac], "-max_thresh") ) {
+        } else if( !strcmp(argv[ac], "-min_thr") ) {
             if( ++ac >= argc ) {
-                fprintf(stderr, "** missing argument for -max_thresh\n");
+                fprintf(stderr, "** missing argument for -min_thr\n");
                 return 1;
             }
             thresh = atof(argv[ac]);
@@ -106,7 +106,6 @@ int main(int argc, char*  argv[]) {
         return 1;
     }
 
-
     // Read input dataset, including data
     nii1 = nifti_image_read(fin1, 1);
     if (!nii1) {
@@ -118,7 +117,6 @@ int main(int argc, char*  argv[]) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin2);
         return 2;
     }
-
 
     if (mode_max == mode_mean) {
         cout << "There is something wrong, you need to select either mean thresholding or max thresholding. Not both." << endl;
@@ -230,9 +228,11 @@ int main(int argc, char*  argv[]) {
     // Set all voxels in columns that have been selected
     // ========================================================================
     for (int i = 0; i < nr_voxels; ++i) {
-        if ( (thresh_exeed [*(columns_data + i)-1] == true ) && *(columns_data + i) > 0 ){
+        if ( (thresh_exeed [*(columns_data + i) - 1] == true ) && *(columns_data + i) > 0 ){
            *(mask_data + i) =  1;
-        }
+       } else {
+           *(columns_data + i) = 0;  // Also provide masked columns
+       }
     }
 
     // ========================================================================
@@ -240,6 +240,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     if (!use_outpath) fout = fin1;
     save_output_nifti(fout, "mask", mask, true, use_outpath);
+    save_output_nifti(fout, "masked", columns, true, use_outpath);
 
     cout << "\n  Finished." << endl;
     return 0;
