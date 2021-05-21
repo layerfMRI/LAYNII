@@ -4,11 +4,11 @@
 
 int show_help(void) {
     printf(
-    "LN2_LAYERDIMENSION: This program switsched the layer dimentions into nii's time dimension\n"
-    "                    This can be usefull to brows layer profiles using the time course\n"
-    "                    viewer FLSEYES, AFNI, or miview.\n"
-    "                    Furthermore is can be usefull to execute time course analyses \n"
-    "                    in the layer domain. E.g., ICA across layer profiles \n"
+    "LN2_LAYERDIMENSION: This program switches the layer dimensions into nifti time dimension.\n"
+    "                    This can be useful to browse layer profiles using the time course\n"
+    "                    viewers of FSLEYES, AFNI, or miview.\n"
+    "                    Furthermore, this is useful to execute time course analyses.\n"
+    "                    in the layer domain (e.g., ICA across layer profiles).\n"
     "\n"
     "Usage:\n"
     "    LN2_LAYERDIMENSION -values activation.nii -columns columns.nii -layers layers_equidist.nii -singleTR\n"
@@ -29,25 +29,24 @@ int show_help(void) {
     "                default is ON.\n"
     "\n"
     "Notes:\n"
-    "    - This does not refer to Dr. Stranges' layer dimentions\n"
-    "           +-----------+          \n"
-    "          /           /|          \n"
-    "         /           / |          \n"
-    "        /           /  |          \n"
-    "       +-----------+   |          \n"
-    "     L |           |   |          \n"
-    "     A |           |   +          \n"
-    "     Y |           |  / E         \n"
-    "     E |           | / M          \n"
-    "     R |           |/ I           \n"
-    "       +-----------+ T            \n"
-    "       SPACE                      \n"
+    "    - This does not refer to Dr. Strange's dimensions.\n"
+    "           +-----------+   \n"
+    "          /           /|   \n"
+    "         /           / |   \n"
+    "        /           /  |   \n"
+    "       +-----------+   |   \n"
+    "     L |           |   |   \n"
+    "     A |           |   +   \n"
+    "     Y |           |  / E  \n"
+    "     E |           | / M   \n"
+    "     R |           |/ I    \n"
+    "       +-----------+ T     \n"
+    "       SPACE               \n"
     "\n");
     return 0;
 }
 
 int main(int argc, char*  argv[]) {
-
     nifti_image *nii1 = NULL, *nii2 = NULL, *nii3 = NULL;
     char *fin1 = NULL, *fout = NULL, *fin2=NULL, *fin3=NULL;
     int ac;
@@ -123,31 +122,21 @@ int main(int argc, char*  argv[]) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin3);
         return 2;
     }
-  
 
     log_welcome("LN2_LAYERDIMENSION");
     log_nifti_descriptives(nii1); //values
     log_nifti_descriptives(nii2); //columns
     log_nifti_descriptives(nii3); //layers
-    
+
     // Get dimensions of input
     const int size_x = nii1->nx;
     const int size_y = nii1->ny;
     const int size_z = nii1->nz;
-
     const int nr_voxels = size_z * size_y * size_x;
-
-    const float dX = nii1->pixdim[1];
-    const float dY = nii1->pixdim[2];
-    const float dZ = nii1->pixdim[3];
-    
-    int nx = nii1->nx;
-    int nxy = nii1->nx * nii1->ny;
-    int nxyz = nii1->nx * nii1->ny * nii1->nz;
-
 
     // ========================================================================
     // Fix input datatype issues
+    // ========================================================================
     nifti_image* nii_input = copy_nifti_as_float32(nii1);
     float* nii_input_data = static_cast<float*>(nii_input->data);
     nifti_image* layers = copy_nifti_as_int16(nii3);
@@ -156,21 +145,20 @@ int main(int argc, char*  argv[]) {
     int16_t* columns_data = static_cast<int16_t*>(columns->data);
 
     // ========================================================================
-    // making sure that there is nothing weird with the slope ]of the nii header 
+    // Make sure there is nothing weird with the slope of the nii header
     // ========================================================================
     if(mode_debug){
        cout << "   Act  file has slope  " << nii1->scl_slope  << endl;
     }
-    
+
     if (nii_input->scl_slope == 0) {
         cout << "   It seems like the slope of the value file is ZERO" << endl;
         cout << "   I am setting it to 1 instead " << endl;
-        nii_input->scl_slope = 1; 
+        nii_input->scl_slope = 1;
     }
 
-
     // ========================================================================
-    // Looking how many layers and columns we have and allocating the arrays accordingly
+    // Look how many layers and columns we have and allocate arrays accordingly
     // ========================================================================
     int nr_layers = 0;
     int nr_columns = 0;
@@ -185,22 +173,19 @@ int main(int argc, char*  argv[]) {
     cout << "    There are " << nr_layers<< " layers. " << endl ;
     cout << "    There are " << nr_columns<< " columns. " << endl << endl;
 
-
-    double numb_voxels[nr_layers][nr_columns] ; 
-    double mean_val[nr_layers][nr_columns] ; 
+    double numb_voxels[nr_layers][nr_columns] ;
+    double mean_val[nr_layers][nr_columns] ;
     for (int i = 0; i < nr_layers; i++) {
         for (int j = 0; j < nr_columns; j++) {
-            mean_val   [i][j] = 0.; 
-            numb_voxels[i][j] = 0.; 
+            mean_val   [i][j] = 0.;
+            numb_voxels[i][j] = 0.;
         }
     }
 
-
-
     // ========================================================================
     // Prepare outputs
+    // ========================================================================
     nifti_image* layerdim = copy_nifti_as_float32(nii_input);
-
 
     // Allocating new nifti for multi-dimensional images
     layerdim->datatype = NIFTI_TYPE_FLOAT32;
@@ -211,8 +196,8 @@ int main(int argc, char*  argv[]) {
     layerdim->dim[4] = nr_layers;
     layerdim->nt = nr_layers;
     nifti_update_dims_from_array(layerdim);
-    
-    layerdim->nvox = nii_input->nvox * nr_layers ; 
+
+    layerdim->nvox = nii_input->nvox * nr_layers ;
     layerdim->nbyper = sizeof(float);
     layerdim->data = calloc(layerdim->nvox, layerdim->nbyper);
     layerdim->scl_slope = nii_input->scl_slope;
@@ -220,49 +205,46 @@ int main(int argc, char*  argv[]) {
     float* layerdim_data = static_cast<float*>(layerdim->data);
 
 
-    for (int voxi = 0; voxi < nr_voxels * nr_layers; voxi++) *(layerdim_data + voxi) = 0.0 ; 
+    for (int voxi = 0; voxi < nr_voxels * nr_layers; voxi++) *(layerdim_data + voxi) = 0.0 ;
 
     // ========================================================================
-    // average within columns and layers 
+    // Average within columns and layers
     // ========================================================================
     for (int i = 0; i != nr_voxels; ++i) {
         if ( *(columns_data + i) !=0 && *(layers_data + i) != 0 ){
             mean_val   [*(layers_data + i) -1 ][ *(columns_data + i) -1 ] += *(nii_input_data + i) ;
-            numb_voxels[*(layers_data + i) -1 ][ *(columns_data + i) -1 ] += 1; 
+            numb_voxels[*(layers_data + i) -1 ][ *(columns_data + i) -1 ] += 1;
         }
     }
-    
+
     for (int i = 0; i < nr_layers; i++) {
         for (int j = 0; j < nr_columns; j++) {
             if (numb_voxels[i][j] != 0){
-                mean_val[i][j] /= (float)numb_voxels[i][j] ; 
+                mean_val[i][j] /= (float)numb_voxels[i][j] ;
                // cout << "layer " << i+1 << " and column " << j+1 << " has value " << mean_val[i][j] << endl;
             }
         }
     }
 
     // ========================================================================
-    // filling average results into layer dimension file 
+    // Fill average results into layer dimension file
     // ========================================================================
-
     for (int voxi = 0; voxi < nr_voxels; voxi++) {
-        if ( *(columns_data + voxi) !=0 && *(layers_data + voxi) != 0){            
+        if ( *(columns_data + voxi) !=0 && *(layers_data + voxi) != 0){
             for (int l = 0; l < nr_layers; ++l) {
                 *(layerdim_data + nr_voxels * l + voxi) = mean_val[ l ][ *(columns_data + voxi) - 1 ] ;
             }
-            // *(layerdim_data + nr_voxels * 0 + voxi) = voxi;  
+            // *(layerdim_data + nr_voxels * 0 + voxi) = voxi;
         }
     }
-    
 
     // ========================================================================
-    // writing output
+    // Write output
     // ========================================================================
     layerdim->pixdim[4] = 1/nr_layers; // in units of cortical depth.
     if (!use_outpath) fout = fin1;
     save_output_nifti(fout, "layerdim", layerdim, true, use_outpath);
 
-  
     cout << "\n  Finished." << endl;
     return 0;
 }
