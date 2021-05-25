@@ -154,8 +154,8 @@ int main(int argc, char*  argv[]) {
     }
     // ------------------------------------------------------------------------
     // Control points file (modified middle gray matter)
-    nifti_image* nii_points = copy_nifti_as_int32(nii2);
-    int32_t* nii_points_data = static_cast<int32_t*>(nii_points->data);
+    nifti_image* control_points = copy_nifti_as_int32(nii2);
+    int32_t* control_points_data = static_cast<int32_t*>(control_points->data);
     free(nii2);
 
     // Prepare flood fill related nifti images
@@ -176,30 +176,38 @@ int main(int argc, char*  argv[]) {
 
     // ------------------------------------------------------------------------
     // Create a 4D nifti image for point distances
-    nifti_image* nii_dist = nifti_copy_nim_info(flood_dist);
-    nii_dist->dim[0] = 4;  // For proper 4D nifti
-    nii_dist->dim[1] = size_x;
-    nii_dist->dim[2] = size_y;
-    nii_dist->dim[3] = size_z;
-    nii_dist->dim[4] = 4;
-    nifti_update_dims_from_array(nii_dist);
-    nii_dist->nvox = nr_voxels * 4;
-    nii_dist->nbyper = sizeof(float);
-    nii_dist->data = calloc(nii_dist->nvox, nii_dist->nbyper);
-    float* nii_dist_data = static_cast<float*>(nii_dist->data);
+    nifti_image* point_dist = nifti_copy_nim_info(flood_dist);
+    point_dist->dim[0] = 4;  // For proper 4D nifti
+    point_dist->dim[1] = size_x;
+    point_dist->dim[2] = size_y;
+    point_dist->dim[3] = size_z;
+    point_dist->dim[4] = 4;
+    nifti_update_dims_from_array(point_dist);
+    point_dist->nvox = nr_voxels * 4;
+    point_dist->nbyper = sizeof(float);
+    point_dist->data = calloc(point_dist->nvox, point_dist->nbyper);
+    float* point_dist_data = static_cast<float*>(point_dist->data);
 
-    // Create a 4D nifti image for coordinates
-    nifti_image* nii_coords = nifti_copy_nim_info(flood_dist);
-    nii_coords->dim[0] = 4;  // For proper 4D nifti
-    nii_coords->dim[1] = size_x;
-    nii_coords->dim[2] = size_y;
-    nii_coords->dim[3] = size_z;
-    nii_coords->dim[4] = 2;
-    nifti_update_dims_from_array(nii_coords);
-    nii_coords->nvox = nr_voxels * 2;
-    nii_coords->nbyper = sizeof(float);
-    nii_coords->data = calloc(nii_coords->nvox, nii_coords->nbyper);
-    float* nii_coords_data = static_cast<float*>(nii_coords->data);
+    // Create a 4D nifti image for UV coordinates
+    nifti_image* point_coords = nifti_copy_nim_info(flood_dist);
+    point_coords->dim[0] = 4;  // For proper 4D nifti
+    point_coords->dim[1] = size_x;
+    point_coords->dim[2] = size_y;
+    point_coords->dim[3] = size_z;
+    point_coords->dim[4] = 2;
+    nifti_update_dims_from_array(point_coords);
+    point_coords->nvox = nr_voxels * 2;
+    point_coords->nbyper = sizeof(float);
+    point_coords->data = calloc(point_coords->nvox, point_coords->nbyper);
+    float* point_coords_data = static_cast<float*>(point_coords->data);
+
+    // Rolling pin axes
+    nifti_image* pin_axes = copy_nifti_as_int32(point_coords);
+    int32_t* pin_axes_data = static_cast<int32_t*>(pin_axes->data);
+
+    // Pin coordinates
+    nifti_image* pin_coords = copy_nifti_as_float32(point_coords);
+    float* pin_coords_data = static_cast<float*>(pin_coords->data);
 
     // ------------------------------------------------------------------------
     // Final voronoi volume to output midgm distances for whole rim
@@ -216,7 +224,7 @@ int main(int argc, char*  argv[]) {
     // Find the subset voxels that will be used many times
     uint32_t nr_voi = 0;  // Voxels of interest
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_points_data + i) > 0){
+        if (*(control_points_data + i) > 0){
             nr_voi += 1;
         }
     }
@@ -228,7 +236,7 @@ int main(int argc, char*  argv[]) {
     // Fill in indices to be able to remap from subset to full set of voxels
     uint32_t ii = 0;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_points_data + i) > 0){
+        if (*(control_points_data + i) > 0){
             *(voi_id + ii) = i;
             ii += 1;
         }
@@ -267,15 +275,15 @@ int main(int argc, char*  argv[]) {
     uint32_t control_point1 = 0, control_point2 = 0;  // First extrema pair
     uint32_t control_point3 = 0, control_point4 = 0;  // Second extrema pair
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_points_data + i) == 2) {  // Centroid/origin
+        if (*(control_points_data + i) == 2) {  // Centroid/origin
             control_point0 = i;
-        } else if (*(nii_points_data + i) == 3) {
+        } else if (*(control_points_data + i) == 3) {
             control_point1 = i;
-        } else if (*(nii_points_data + i) == 4) {
+        } else if (*(control_points_data + i) == 4) {
             control_point2 = i;
-        } else if (*(nii_points_data + i) == 5) {
+        } else if (*(control_points_data + i) == 5) {
             control_point3 = i;
-        } else if (*(nii_points_data + i) == 6) {
+        } else if (*(control_points_data + i) == 6) {
             control_point4 = i;
         }
     }
@@ -309,7 +317,7 @@ int main(int argc, char*  argv[]) {
         cout << "\n  Computing control point 0 distances..." << endl;
         // Initialize grow volume
         for (uint32_t i = 0; i != nr_voxels; ++i) {
-            if (*(nii_points_data + i) == 2) {
+            if (*(control_points_data + i) == 2) {
                 *(flood_step_data + i) = 1.;
                 *(flood_dist_data + i) = 0.;
             }
@@ -328,7 +336,7 @@ int main(int argc, char*  argv[]) {
                     // --------------------------------------------------------
                     if (ix > 0) {
                         j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dX;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -339,7 +347,7 @@ int main(int argc, char*  argv[]) {
                     }
                     if (ix < end_x) {
                         j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dX;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -350,7 +358,7 @@ int main(int argc, char*  argv[]) {
                     }
                     if (iy > 0) {
                         j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dY;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -361,7 +369,7 @@ int main(int argc, char*  argv[]) {
                     }
                     if (iy < end_y) {
                         j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dY;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -372,7 +380,7 @@ int main(int argc, char*  argv[]) {
                     }
                     if (iz > 0) {
                         j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dZ;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -384,7 +392,7 @@ int main(int argc, char*  argv[]) {
                     if (iz < end_z) {
                         j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dZ;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -399,7 +407,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy > 0) {
                         j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xy;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -411,7 +419,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy < end_y) {
                         j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xy;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -423,7 +431,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy > 0) {
                         j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xy;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -435,7 +443,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy < end_y) {
                         j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xy;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -447,7 +455,7 @@ int main(int argc, char*  argv[]) {
                     if (iy > 0 && iz > 0) {
                         j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_yz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -459,7 +467,7 @@ int main(int argc, char*  argv[]) {
                     if (iy > 0 && iz < end_z) {
                         j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_yz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -471,7 +479,7 @@ int main(int argc, char*  argv[]) {
                     if (iy < end_y && iz > 0) {
                         j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_yz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -483,7 +491,7 @@ int main(int argc, char*  argv[]) {
                     if (iy < end_y && iz < end_z) {
                         j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_yz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -495,7 +503,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iz > 0) {
                         j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -507,7 +515,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iz > 0) {
                         j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -519,7 +527,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iz < end_z) {
                         j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -531,7 +539,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iz < end_z) {
                         j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -547,7 +555,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy > 0 && iz > 0) {
                         j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -559,7 +567,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy > 0 && iz < end_z) {
                         j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -571,7 +579,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy < end_y && iz > 0) {
                         j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -583,7 +591,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy > 0 && iz > 0) {
                         j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -595,7 +603,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy < end_y && iz < end_z) {
                         j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -607,7 +615,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy > 0 && iz < end_z) {
                         j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -619,7 +627,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy < end_y && iz > 0) {
                         j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -631,7 +639,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy < end_y && iz < end_z) {
                         j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -685,7 +693,7 @@ int main(int argc, char*  argv[]) {
                 // --------------------------------------------------------
                 if (ix > 0) {
                     j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -701,7 +709,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix < end_x) {
                     j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -717,7 +725,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy > 0) {
                     j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -733,7 +741,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy < end_y) {
                     j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -749,7 +757,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iz > 0) {
                     j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -765,7 +773,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iz < end_z) {
                     j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -784,7 +792,7 @@ int main(int argc, char*  argv[]) {
                 // --------------------------------------------------------
                 if (ix > 0 && iy > 0) {
                     j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -800,7 +808,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix > 0 && iy < end_y) {
                     j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -816,7 +824,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix < end_x && iy > 0) {
                     j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -832,7 +840,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix < end_x && iy < end_y) {
                     j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -848,7 +856,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy > 0 && iz > 0) {
                     j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -864,7 +872,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy > 0 && iz < end_z) {
                     j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -880,7 +888,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy < end_y && iz > 0) {
                     j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -896,7 +904,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy < end_y && iz < end_z) {
                     j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -912,7 +920,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix > 0 && iz > 0) {
                     j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -928,7 +936,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix < end_x && iz > 0) {
                     j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -944,7 +952,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix > 0 && iz < end_z) {
                     j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -960,7 +968,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix < end_x && iz < end_z) {
                     j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -979,7 +987,7 @@ int main(int argc, char*  argv[]) {
                 // --------------------------------------------------------
                 if (ix > 0 && iy > 0 && iz > 0) {
                     j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -995,7 +1003,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix > 0 && iy > 0 && iz < end_z) {
                     j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -1011,7 +1019,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix > 0 && iy < end_y && iz > 0) {
                     j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -1027,7 +1035,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix < end_x && iy > 0 && iz > 0) {
                     j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -1043,7 +1051,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix > 0 && iy < end_y && iz < end_z) {
                     j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -1059,7 +1067,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix < end_x && iy > 0 && iz < end_z) {
                     j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -1075,7 +1083,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix < end_x && iy < end_y && iz > 0) {
                     j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -1091,7 +1099,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix < end_x && iy < end_y && iz < end_z) {
                     j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
-                    if (*(nii_points_data + j) > 0){
+                    if (*(control_points_data + j) > 0){
                         n = *(flood_dist_data + j);
                         if (signbit(m) - signbit(n) != 0) {
                             if (m*m < n*n) {
@@ -1124,7 +1132,7 @@ int main(int argc, char*  argv[]) {
                     control_point1 = i;
                 }
             }
-            *(nii_points_data + control_point1) = 3;
+            *(control_points_data + control_point1) = 3;
 
             // Loop until desired number of points reached
             for (int32_t n = 4; n < 7; ++n) {
@@ -1135,7 +1143,7 @@ int main(int argc, char*  argv[]) {
 
                 // Initialize grow volume
                 for (uint32_t i = 0; i != nr_voxels; ++i) {
-                    if (*(nii_points_data + i) > 1) {
+                    if (*(control_points_data + i) > 1) {
                         *(flood_step_data + i) = 1.;
                         *(flood_dist_data + i) = 0.;
                     } else {
@@ -1489,10 +1497,10 @@ int main(int argc, char*  argv[]) {
                         }
                     }
                 }
-                *(nii_points_data + idx_new_point) = n;
+                *(control_points_data + idx_new_point) = n;
             }
             if (mode_debug) {
-                save_output_nifti(fout, "auto_control_points", nii_points, false);
+                save_output_nifti(fout, "auto_control_points", control_points, false);
             }
         }
 
@@ -1505,7 +1513,7 @@ int main(int argc, char*  argv[]) {
                 *(voronoi_data + i) = 1;
                 *(flood_step_data + i) = 1.;
                 *(flood_dist_data + i) = 1.;
-            } else if (*(nii_points_data + i) > 0) {
+            } else if (*(control_points_data + i) > 0) {
                 *(voronoi_data + i) = 2;
                 *(flood_step_data + i) = 1.;
                 *(flood_dist_data + i) = 1.;
@@ -1906,13 +1914,13 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Compute flood distances from each extrema control points
     // ========================================================================
-    cout << "\n  Computing distances from control points (1, 2, 3, 4)..." << endl;
     for (int p = 3; p < 7; ++p) {
+        cout << "\n  Computing distances from control point" + std::to_string(p-2) + "..." << endl;
         // Initialize grow volume
         for (uint32_t i = 0; i != nr_voxels; ++i) {
-            if (*(nii_points_data + i) == p) {
-                *(flood_step_data + control_point1) = 1.;
-                *(flood_dist_data + control_point1) = 1.;
+            if (*(control_points_data + i) == p) {
+                *(flood_step_data + i) = 1.;
+                *(flood_dist_data + i) = 1.;
             } else {
                 *(flood_step_data + i) = 0.;
                 *(flood_dist_data + i) = 0.;
@@ -1936,7 +1944,7 @@ int main(int argc, char*  argv[]) {
                     // --------------------------------------------------------
                     if (ix > 0) {
                         j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dX;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -1947,7 +1955,7 @@ int main(int argc, char*  argv[]) {
                     }
                     if (ix < end_x) {
                         j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dX;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -1958,7 +1966,7 @@ int main(int argc, char*  argv[]) {
                     }
                     if (iy > 0) {
                         j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dY;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -1969,7 +1977,7 @@ int main(int argc, char*  argv[]) {
                     }
                     if (iy < end_y) {
                         j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dY;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -1980,7 +1988,7 @@ int main(int argc, char*  argv[]) {
                     }
                     if (iz > 0) {
                         j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dZ;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -1992,7 +2000,7 @@ int main(int argc, char*  argv[]) {
                     if (iz < end_z) {
                         j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dZ;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2007,7 +2015,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy > 0) {
                         j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xy;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2019,7 +2027,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy < end_y) {
                         j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xy;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2031,7 +2039,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy > 0) {
                         j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xy;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2043,7 +2051,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy < end_y) {
                         j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xy;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2055,7 +2063,7 @@ int main(int argc, char*  argv[]) {
                     if (iy > 0 && iz > 0) {
                         j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_yz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2067,7 +2075,7 @@ int main(int argc, char*  argv[]) {
                     if (iy > 0 && iz < end_z) {
                         j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_yz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2079,7 +2087,7 @@ int main(int argc, char*  argv[]) {
                     if (iy < end_y && iz > 0) {
                         j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_yz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2091,7 +2099,7 @@ int main(int argc, char*  argv[]) {
                     if (iy < end_y && iz < end_z) {
                         j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_yz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2103,7 +2111,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iz > 0) {
                         j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2115,7 +2123,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iz > 0) {
                         j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2127,7 +2135,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iz < end_z) {
                         j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2139,7 +2147,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iz < end_z) {
                         j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2155,7 +2163,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy > 0 && iz > 0) {
                         j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2167,7 +2175,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy > 0 && iz < end_z) {
                         j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2179,7 +2187,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy < end_y && iz > 0) {
                         j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2191,7 +2199,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy > 0 && iz > 0) {
                         j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2203,7 +2211,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy < end_y && iz < end_z) {
                         j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2215,7 +2223,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy > 0 && iz < end_z) {
                         j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2227,7 +2235,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy < end_y && iz > 0) {
                         j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2239,7 +2247,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy < end_y && iz < end_z) {
                         j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
 
-                        if (*(nii_points_data + j) > 0) {
+                        if (*(control_points_data + j) > 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2254,35 +2262,41 @@ int main(int argc, char*  argv[]) {
         }
 
         if (mode_debug) {
-            save_output_nifti(fout, "control_point" + std::to_string(p-2) + "_midgm_dist", flood_dist, false);
+            save_output_nifti(fout, "control_point" + std::to_string(p-2) + "_dist", flood_dist, false);
+        }
+
+        // Record distances into a 4D nifti
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            i = *(voi_id + ii);  // Map subset to full set
+            *(point_dist_data + nr_voxels*(p-3) + i) = *(flood_dist_data + i);
         }
     }
 
-    // ========================================================================
-    // Derive UV coordinates from distances (UV for 2D coordinates like XY)
-    // ========================================================================
-    cout << "\n  Computing UV coordinates..." << endl;
+    // ------------------------------------------------------------------------
+    // Derive coordinates from control point (1, 2, 3, 4) distances
+    // ------------------------------------------------------------------------
+    cout << "\n  Computing control point coordinates..." << endl;
     // Subtract distances pair-wise to get axis coordinates
     for (uint32_t t = 0; t != 2; ++t) {
-        for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
-            i = *(voi_id2 + iii);
-            float dist1 = *(nii_dist_data + nr_voxels*(2 * t) + i);
-            float dist2 = *(nii_dist_data + nr_voxels*(2 * t + 1) + i);
-            *(nii_coords_data + nr_voxels*t + i) = dist2 - dist1;
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            i = *(voi_id + ii);
+            float dist1 = *(point_dist_data + nr_voxels*(2 * t) + i);
+            float dist2 = *(point_dist_data + nr_voxels*(2 * t + 1) + i);
+            *(point_coords_data + nr_voxels*t + i) = dist2 - dist1;
         }
     }
 
-    // Adjust origin
-    if (mode_custom_origin) {
-        float origin_U = *(nii_coords_data + nr_voxels*0 + control_point0);
-        float origin_V = *(nii_coords_data + nr_voxels*1 + control_point0);
-        for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
-            i = *(voi_id2 + iii);
-            *(nii_coords_data + nr_voxels*0 + i) -= origin_U;
-            *(nii_coords_data + nr_voxels*1 + i) -= origin_V;
-        }
-        save_output_nifti(fout, "UV_coordinates_adj", nii_coords, true);
-    }
+    // // Adjust origin
+    // if (mode_custom_origin) {
+    //     float origin_U = *(point_coords_data + nr_voxels*0 + control_point0);
+    //     float origin_V = *(point_coords_data + nr_voxels*1 + control_point0);
+    //     for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
+    //         i = *(voi_id2 + iii);
+    //         *(point_coords_data + nr_voxels*0 + i) -= origin_U;
+    //         *(point_coords_data + nr_voxels*1 + i) -= origin_V;
+    //     }
+    //     save_output_nifti(fout, "control_point_coordinates_custom_origin", point_coords, true);
+    // }
 
     // Mask out coordinates beyond periphery radius
     if (mode_mask) {
@@ -2290,111 +2304,101 @@ int main(int argc, char*  argv[]) {
         for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
             i = *(voi_id2 + iii);
             if (*(perimeter_data + i) == 0) {
-                *(nii_coords_data + nr_voxels*0 + i) = 0;
-                *(nii_coords_data + nr_voxels*1 + i) = 0;
+                *(point_coords_data + nr_voxels*0 + i) = 0;
+                *(point_coords_data + nr_voxels*1 + i) = 0;
             }
         }
     }
-    save_output_nifti(fout, "UV_coordinates", nii_coords, true);
+    save_output_nifti(fout, "control_point_coordinates", point_coords, true);
 
     // ========================================================================
-    // Rolling pin Voronoi propagation
+    // Find rolling pin axes
     // ========================================================================
-    nifti_image* nii_pinaxes = copy_nifti_as_float32(nii_coords);
-    float* nii_pinaxes_data = static_cast<float*>(nii_pinaxes->data);
-
+    cout << "\n  Finding pin axes..." << endl;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        *(nii_pinaxes_data + nr_voxels * 0 + i) = 0;
-        *(nii_pinaxes_data + nr_voxels * 1 + i) = 0;
+        *(pin_axes_data + nr_voxels * 0 + i) = 0;
+        *(pin_axes_data + nr_voxels * 1 + i) = 0;
     }
 
-    cout << "\n  Finding axis lines..." << endl;
     for (uint32_t t = 0; t != 2; ++t) {
-        for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
-            uint32_t i = *(voi_id2 + iii);
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);
             tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
 
-            if (*(perimeter_data + i) == 1) {
+            // Check sign changes in normalized distance differences between
+            // neighbouring voxels
+            float m = *(point_coords_data + nr_voxels * t + i);
+            float n;
 
-                // Check sign changes in normalized distance differences between
-                // neighbouring voxels
-                float m = *(nii_coords_data + nr_voxels * t + i);
-                float n;
-
-                // ------------------------------------------------------------
-                // 1-jump neighbours
-                // ------------------------------------------------------------
-                if (ix > 0) {
-                    j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                    n = *(nii_coords_data + nr_voxels * t + j);
-                    if (*(perimeter_data + j) == 1) {
-                        if (signbit(m) - signbit(n) != 0) {
-                            *(nii_pinaxes_data + nr_voxels * t + i) = 1;
-                        }
+            // ------------------------------------------------------------
+            // 1-jump neighbours
+            // ------------------------------------------------------------
+            if (ix > 0) {
+                j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                n = *(point_coords_data + nr_voxels * t + j);
+                if (*(control_points_data + j) != 0) {
+                    if (signbit(m) - signbit(n) != 0) {
+                        *(pin_axes_data + nr_voxels * t + i) = 1;
                     }
                 }
-                if (ix < end_x) {
-                    j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-                    n = *(nii_coords_data + nr_voxels * t + j);
-                    if (*(perimeter_data + j) == 1) {
-                        if (signbit(m) - signbit(n) != 0) {
-                            *(nii_pinaxes_data + nr_voxels * t + i) = 1;
-                        }
+            }
+            if (ix < end_x) {
+                j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                n = *(point_coords_data + nr_voxels * t + j);
+                if (*(control_points_data + j) != 0) {
+                    if (signbit(m) - signbit(n) != 0) {
+                        *(pin_axes_data + nr_voxels * t + i) = 1;
                     }
                 }
-                if (iy > 0) {
-                    j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                    n = *(nii_coords_data + nr_voxels * t + j);
-                    if (*(perimeter_data + j) == 1) {
-                        if (signbit(m) - signbit(n) != 0) {
-                            *(nii_pinaxes_data + nr_voxels * t + i) = 1;
-                        }
+            }
+            if (iy > 0) {
+                j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                n = *(point_coords_data + nr_voxels * t + j);
+                if (*(control_points_data + j) != 0) {
+                    if (signbit(m) - signbit(n) != 0) {
+                        *(pin_axes_data + nr_voxels * t + i) = 1;
                     }
                 }
-                if (iy < end_y) {
-                    j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-                    n = *(nii_coords_data + nr_voxels * t + j);
-                    if (*(perimeter_data + j) == 1) {
-                        if (signbit(m) - signbit(n) != 0) {
-                            *(nii_pinaxes_data + nr_voxels * t + i) = 1;
-                        }
+            }
+            if (iy < end_y) {
+                j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                n = *(point_coords_data + nr_voxels * t + j);
+                if (*(control_points_data + j) != 0) {
+                    if (signbit(m) - signbit(n) != 0) {
+                        *(pin_axes_data + nr_voxels * t + i) = 1;
                     }
                 }
-                if (iz > 0) {
-                    j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                    n = *(nii_coords_data + nr_voxels * t + j);
-                    if (*(perimeter_data + j) == 1) {
-                        if (signbit(m) - signbit(n) != 0) {
-                            *(nii_pinaxes_data + nr_voxels * t + i) = 1;
-                        }
+            }
+            if (iz > 0) {
+                j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                n = *(point_coords_data + nr_voxels * t + j);
+                if (*(control_points_data + j) != 0) {
+                    if (signbit(m) - signbit(n) != 0) {
+                        *(pin_axes_data + nr_voxels * t + i) = 1;
                     }
                 }
-                if (iz < end_z) {
-                    j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-                    n = *(nii_coords_data + nr_voxels * t + j);
-                    if (*(perimeter_data + j) == 1) {
-                        if (signbit(m) - signbit(n) != 0) {
-                            *(nii_pinaxes_data + nr_voxels * t + i) = 1;
-                        }
+            }
+            if (iz < end_z) {
+                j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                n = *(point_coords_data + nr_voxels * t + j);
+                if (*(control_points_data + j) != 0) {
+                    if (signbit(m) - signbit(n) != 0) {
+                        *(pin_axes_data + nr_voxels * t + i) = 1;
                     }
                 }
             }
         }
     }
-    save_output_nifti(fout, "pin_axes", nii_pinaxes, true);
+    save_output_nifti(fout, "pin_axes", pin_axes, true);
 
     // ========================================================================
-    // Compute distances relative to pin axes
+    // Compute flood distances relative to pin axes
     // ========================================================================
-    cout << "\n  Computing pin axis distances..." << endl;
-
-    nifti_image* nii_pincoords = copy_nifti_as_float32(nii_pinaxes);
-    float* nii_pincoords_data = static_cast<float*>(nii_pincoords->data);
-
     for (int p = 0; p != 2; ++p) {
+        cout << "\n  Computing pin axis " + std::to_string(p+1) + " distances..." << endl;
         // Initialize grow volume
         for (uint32_t i = 0; i != nr_voxels; ++i) {
-            if (*(nii_pinaxes_data + nr_voxels * p + i) != 0) {
+            if (*(pin_axes_data + nr_voxels * p + i) != 0) {
                 *(flood_step_data + i) = 1.;
                 *(flood_dist_data + i) = 1.;
             } else {
@@ -2409,8 +2413,8 @@ int main(int argc, char*  argv[]) {
 
         while (voxel_counter != 0) {
             voxel_counter = 0;
-            for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
-                i = *(voi_id2 + iii);  // Map subset to full set
+            for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+                i = *(voi_id + ii);  // Map subset to full set
                 if (*(flood_step_data + i) == grow_step) {
                     tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
                     voxel_counter += 1;
@@ -2738,13 +2742,13 @@ int main(int argc, char*  argv[]) {
         }
 
         // if (mode_debug) {
-            save_output_nifti(fout, "pin_axis" + std::to_string(p+1) + "_dist", flood_dist, false);
+            save_output_nifti(fout, "pin_axis" + std::to_string(p+1) + "_dist", flood_dist, true);
         // }
 
         // --------------------------------------------------------------------
         // Smooth distances
         // --------------------------------------------------------------------
-        cout << "      Smoothing transitions..." << endl;
+        cout << "      Smoothing distances..." << endl;
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             *(smooth_data + i) = 0;
         }
@@ -2822,9 +2826,27 @@ int main(int argc, char*  argv[]) {
 
         // Save distances into 4D nifti
         for (uint32_t i = 0; i != nr_voxels; ++i) {
-            *(nii_coords_data + nr_voxels*p + i) = *(flood_dist_data + i);
+            // Transfer signs onto pin distances to convert them to coordinates
+            if (*(point_coords_data + nr_voxels * p + i) < 0) {
+                *(pin_coords_data + nr_voxels * p + i) = -*(flood_dist_data + i);
+            } else {
+                *(pin_coords_data + nr_voxels * p + i) = *(flood_dist_data + i);
+            }
         }
     }
+
+    // Mask out coordinates beyond periphery radius
+    if (mode_mask) {
+        cout << "\n  Masking output" << endl;
+        for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
+            i = *(voi_id2 + iii);
+            if (*(perimeter_data + i) == 0) {
+                *(pin_coords_data + nr_voxels*0 + i) = 0;
+                *(pin_coords_data + nr_voxels*1 + i) = 0;
+            }
+        }
+    }
+    save_output_nifti(fout, "pin_coordinates", pin_coords, true);
 
     // ====================================================================
     // Final Voronoi for propagating distances to all gray matter
@@ -2832,7 +2854,7 @@ int main(int argc, char*  argv[]) {
     // cout << "    Start Voronoi propagation " + std::to_string(p-2) + "/4..." << endl;
     // // Initialize grow volume
     // for (uint32_t i = 0; i != nr_voxels; ++i) {
-    //     if (*(nii_points_data + i) > 0) {
+    //     if (*(control_points_data + i) > 0) {
     //         *(voronoi_data + i) = *(flood_dist_data + i);
     //         *(flood_step_data + i) = 1.;
     //         *(flood_dist_data + i) = 1.;
@@ -3302,30 +3324,29 @@ int main(int argc, char*  argv[]) {
     // }
     // // Save distances into 4D nifti
     // for (uint32_t i = 0; i != nr_voxels; ++i) {
-    //     *(nii_dist_data + nr_voxels*(p-3) + i) = *(voronoi_data + i);
+    //     *(point_dist_data + nr_voxels*(p-3) + i) = *(voronoi_data + i);
     // }
     //
     // if (mode_debug) {
-    //     save_output_nifti(fout, "point_distances", nii_dist, true);
+    //     save_output_nifti(fout, "point_distances", point_dist, true);
     // }
 
     // ========================================================================
     // Mask rectangle
     // ========================================================================
     // for (uint32_t i = 0; i != nr_voxels; ++i) {
-    //     float coord_U = *(nii_coords_data + nr_voxels*0 + i);
-    //     float coord_V = *(nii_coords_data + nr_voxels*1 + i);
+    //     float coord_U = *(point_coords_data + nr_voxels*0 + i);
+    //     float coord_V = *(point_coords_data + nr_voxels*1 + i);
     //     if (coord_U < thr_radius && coord_V < thr_radius && *(nii_rim_data + i) == 3 && coord_U * coord_V != 0) {
     //         *(flood_dist_data + i) = 1;
     //     } else {
     //         *(flood_dist_data + i) = 0;
-    //         *(nii_coords_data + nr_voxels * 0 + i) = 0;
-    //         *(nii_coords_data + nr_voxels * 1 + i) = 0;
+    //         *(point_coords_data + nr_voxels * 0 + i) = 0;
+    //         *(point_coords_data + nr_voxels * 1 + i) = 0;
     //     }
     // }
     //
     // save_output_nifti(fout, "rectangle_test", flood_dist, true);
-    // save_output_nifti(fout, "pin_coordinates", nii_coords, true);
 
     // ========================================================================
     // Compute norms
@@ -3334,8 +3355,8 @@ int main(int argc, char*  argv[]) {
     //     // Compute L2 norm
     //     for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
     //         i = *(voi_id2 + iii);
-    //         float coord_U = *(nii_coords_data + nr_voxels*0 + i);
-    //         float coord_V = *(nii_coords_data + nr_voxels*1 + i);
+    //         float coord_U = *(point_coords_data + nr_voxels*0 + i);
+    //         float coord_V = *(point_coords_data + nr_voxels*1 + i);
     //         float norm = sqrt(coord_U * coord_U + coord_V * coord_V);
     //         *(flood_dist_data + i) = norm;
     //     }
@@ -3344,8 +3365,8 @@ int main(int argc, char*  argv[]) {
     //     // Compute Linfinity norm
     //     for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
     //         i = *(voi_id2 + iii);
-    //         float coord_U = *(nii_coords_data + nr_voxels*0 + i);
-    //         float coord_V = *(nii_coords_data + nr_voxels*1 + i);
+    //         float coord_U = *(point_coords_data + nr_voxels*0 + i);
+    //         float coord_V = *(point_coords_data + nr_voxels*1 + i);
     //         float norm = std::max(std::abs(coord_U), std::abs(coord_V));
     //         *(flood_dist_data + i) = norm;
     //     }
@@ -3360,9 +3381,9 @@ int main(int argc, char*  argv[]) {
     //     i = *(voi_id2 + iii);
     //
     //     // Only compute for within the masked region
-    //     if (*(nii_coords_data + i) != 0) {
-    //         float coord1 = *(nii_coords_data + nr_voxels*0 + i);
-    //         float coord2 = *(nii_coords_data + nr_voxels*1 + i);
+    //     if (*(point_coords_data + i) != 0) {
+    //         float coord1 = *(point_coords_data + nr_voxels*0 + i);
+    //         float coord2 = *(point_coords_data + nr_voxels*1 + i);
     //         // Angles in radians (0 to 2*pi)
     //         float angle = atan2(coord1, coord2) + PI;
     //         *(flood_dist_data + i) = angle;  // Repurposing nifti object
