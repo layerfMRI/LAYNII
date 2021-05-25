@@ -2424,7 +2424,7 @@ int main(int argc, char*  argv[]) {
                     // --------------------------------------------------------
                     if (ix > 0) {
                         j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dX;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2435,7 +2435,7 @@ int main(int argc, char*  argv[]) {
                     }
                     if (ix < end_x) {
                         j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dX;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2446,7 +2446,7 @@ int main(int argc, char*  argv[]) {
                     }
                     if (iy > 0) {
                         j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dY;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2457,7 +2457,7 @@ int main(int argc, char*  argv[]) {
                     }
                     if (iy < end_y) {
                         j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dY;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2468,7 +2468,7 @@ int main(int argc, char*  argv[]) {
                     }
                     if (iz > 0) {
                         j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dZ;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2480,7 +2480,7 @@ int main(int argc, char*  argv[]) {
                     if (iz < end_z) {
                         j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dZ;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2495,7 +2495,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy > 0) {
                         j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_xy;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2507,7 +2507,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy < end_y) {
                         j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_xy;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2519,7 +2519,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy > 0) {
                         j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_xy;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2531,7 +2531,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy < end_y) {
                         j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_xy;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2543,7 +2543,7 @@ int main(int argc, char*  argv[]) {
                     if (iy > 0 && iz > 0) {
                         j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_yz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2555,7 +2555,7 @@ int main(int argc, char*  argv[]) {
                     if (iy > 0 && iz < end_z) {
                         j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_yz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2567,7 +2567,7 @@ int main(int argc, char*  argv[]) {
                     if (iy < end_y && iz > 0) {
                         j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_yz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2579,7 +2579,7 @@ int main(int argc, char*  argv[]) {
                     if (iy < end_y && iz < end_z) {
                         j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_yz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2591,7 +2591,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iz > 0) {
                         j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_xz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2603,7 +2603,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iz > 0) {
                         j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_xz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2615,7 +2615,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iz < end_z) {
                         j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_xz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2627,7 +2627,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iz < end_z) {
                         j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_xz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2643,7 +2643,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy > 0 && iz > 0) {
                         j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2655,7 +2655,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy > 0 && iz < end_z) {
                         j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2667,7 +2667,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy < end_y && iz > 0) {
                         j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2679,7 +2679,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy > 0 && iz > 0) {
                         j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2691,7 +2691,7 @@ int main(int argc, char*  argv[]) {
                     if (ix > 0 && iy < end_y && iz < end_z) {
                         j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2703,7 +2703,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy > 0 && iz < end_z) {
                         j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2715,7 +2715,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy < end_y && iz > 0) {
                         j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2727,7 +2727,7 @@ int main(int argc, char*  argv[]) {
                     if (ix < end_x && iy < end_y && iz < end_z) {
                         j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
 
-                        if (*(nii_rim_data + j) == 3) {
+                        if (*(control_points_data + j) != 0) {
                             d = *(flood_dist_data + i) + dia_xyz;
                             if (d < *(flood_dist_data + j)
                                 || *(flood_dist_data + j) == 0) {
@@ -2741,91 +2741,13 @@ int main(int argc, char*  argv[]) {
             grow_step += 1;
         }
 
-        // if (mode_debug) {
+        if (mode_debug) {
             save_output_nifti(fout, "pin_axis" + std::to_string(p+1) + "_dist", flood_dist, true);
-        // }
-
-        // --------------------------------------------------------------------
-        // Smooth distances
-        // --------------------------------------------------------------------
-        cout << "      Smoothing distances..." << endl;
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
-            *(smooth_data + i) = 0;
-        }
-
-        // Pre-compute weights
-        float FWHM_val = 1;  // TODO(Faruk): Might tweak this one
-        float w_0 = gaus(0, FWHM_val);
-        float w_dX = gaus(dX, FWHM_val);
-        float w_dY = gaus(dY, FWHM_val);
-        float w_dZ = gaus(dZ, FWHM_val);
-
-        for (uint16_t n = 0; n != 2; ++n) {
-            for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
-                i = *(voi_id2 + iii);
-                tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
-                float new_val = 0, total_weight = 0;
-
-                // Start with the voxel itself
-                new_val += *(flood_dist_data + i) * w_0;
-                total_weight += w_0;
-
-                // ------------------------------------------------------------
-                // 1-jump neighbours
-                // ------------------------------------------------------------
-                if (ix > 0) {
-                    j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                    if (*(nii_rim_data + j) == 3) {
-                        new_val += *(flood_dist_data + j) * w_dX;
-                        total_weight += w_dX;
-                    }
-                }
-                if (ix < end_x) {
-                    j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-                    if (*(nii_rim_data + j) == 3) {
-                        new_val += *(flood_dist_data + j) * w_dX;
-                        total_weight += w_dX;
-                    }
-                }
-                if (iy > 0) {
-                    j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                    if (*(nii_rim_data + j) == 3) {
-                        new_val += *(flood_dist_data + j) * w_dY;
-                        total_weight += w_dY;
-                    }
-                }
-                if (iy < end_y) {
-                    j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-                    if (*(nii_rim_data + j) == 3) {
-                        new_val += *(flood_dist_data + j) * w_dY;
-                        total_weight += w_dY;
-                    }
-                }
-                if (iz > 0) {
-                    j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                    if (*(nii_rim_data + j) == 3) {
-                        new_val += *(flood_dist_data + j) * w_dZ;
-                        total_weight += w_dZ;
-                    }
-                }
-                if (iz < end_z) {
-                    j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-                    if (*(nii_rim_data + j) == 3) {
-                        new_val += *(flood_dist_data + j) * w_dZ;
-                        total_weight += w_dZ;
-                    }
-                }
-                *(smooth_data + i) = new_val / total_weight;
-            }
-            // Swap image data
-            for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
-                i = *(voi_id2 + iii);
-                *(flood_dist_data + i) = *(smooth_data + i);
-            }
         }
 
         // Save distances into 4D nifti
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            i = *(voi_id + ii);  // Map subset to full set
             // Transfer signs onto pin distances to convert them to coordinates
             if (*(point_coords_data + nr_voxels * p + i) < 0) {
                 *(pin_coords_data + nr_voxels * p + i) = -*(flood_dist_data + i);
