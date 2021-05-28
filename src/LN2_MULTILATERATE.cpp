@@ -36,8 +36,8 @@ int show_help(void) {
     "    -output         : (Optional) Output basename for all outputs.\n"
     "\n"
     "Notes:\n"
-    "    - This program is written for 3D images. We might add 2D image support\n"
-    "      in the future depending on requests."
+    "    - You can find further explanation of this algorithm at:\n"
+    "      <https://thingsonthings.org/ln2_multilaterate>\n"
     "\n");
     return 0;
 }
