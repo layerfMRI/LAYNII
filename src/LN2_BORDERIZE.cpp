@@ -5,12 +5,12 @@ int show_help(void) {
     "LN2_BORDERIZE: Reduce rim file to its borders.\n"
     "\n"
     "Usage:\n"
-    "    LN2_BORDERIZE -rim rim.nii\n"
-    "    LN2_BORDERIZE -rim rim.nii -jumps 3\n"
+    "    LN2_BORDERIZE -input rim.nii\n"
+    "    LN2_BORDERIZE -input rim.nii -jumps 3\n"
     "\n"
     "Options:\n"
     "    -help   : Show this help.\n"
-    "    -rim    : Any nifti file with integers. For instance segmentation results,\n"
+    "    -input  : Any nifti file with integers. For instance segmentation results,\n"
     "              parcellations, or 'winner maps'."
     "    -jumps  : (Optional) 1, 2 or 3 jump neighbourhood. Default is 1.\n"
     "              1 gives thinnest borders and 3 gives thicknest borders, because:\n"
@@ -33,9 +33,9 @@ int main(int argc, char*  argv[]) {
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
-        } else if (!strcmp(argv[ac], "-rim")) {
+        } else if (!strcmp(argv[ac], "-input")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -rim\n");
+                fprintf(stderr, "** missing argument for -input\n");
                 return 1;
             }
             fin1 = argv[ac];
@@ -59,7 +59,7 @@ int main(int argc, char*  argv[]) {
     }
 
     if (!fin1) {
-        fprintf(stderr, "** missing option '-rim'\n");
+        fprintf(stderr, "** missing option '-input'\n");
         return 1;
     }
 
