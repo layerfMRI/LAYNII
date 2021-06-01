@@ -2,16 +2,22 @@
 
 int show_help(void) {
     printf(
-    "LN2_BORDERIZE: Reduce rim file to its nii_borders.\n"
+    "LN2_BORDERIZE: Reduce rim file to its borders.\n"
     "\n"
     "Usage:\n"
-    "    LN2_BORDERIZE -rim rim.nii \n"
+    "    LN2_BORDERIZE -rim rim.nii\n"
+    "    LN2_BORDERIZE -rim rim.nii -jumps 3\n"
     "\n"
     "Options:\n"
-    "    -help           : Show this help.\n"
-    "    -rim            : Segmentation input.\n"
-    "    -output         : (Optional) Output basename for all outputs.\n"
-    "\n"
+    "    -help   : Show this help.\n"
+    "    -rim    : Any nifti file with integers. For instance segmentation results,\n"
+    "              parcellations, or 'winner maps'."
+    "    -jumps  : (Optional) 1, 2 or 3 jump neighbourhood. Default is 1.\n"
+    "              1 gives thinnest borders and 3 gives thicknest borders, because:\n"
+    "              1 jump means voxels touching all faces will be zeroed.\n"
+    "              2 jump means voxels touching all faces and edges will be zeroed.\n"
+    "              3 jump means voxels touching all faces, edges, and corners will be zeroed.\n"
+    "    -output : (Optional) Output basename for all outputs.\n"
     "\n");
     return 0;
 }
@@ -20,7 +26,7 @@ int main(int argc, char*  argv[]) {
 
     nifti_image *nii1 = NULL;
     char *fin1 = NULL, *fout = NULL;
-    int ac;
+    int ac, jumps = 1;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -34,6 +40,12 @@ int main(int argc, char*  argv[]) {
             }
             fin1 = argv[ac];
             fout = argv[ac];
+        } else if (!strcmp(argv[ac], "-jumps")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -jumps\n");
+            } else {
+                jumps = atof(argv[ac]);
+            }
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -123,172 +135,179 @@ int main(int argc, char*  argv[]) {
         i = *(voi_id + ii);  // Map subset to full set
         tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
 
-        // --------------------------------------------------------
-        // 1-jump neighbours
-        // --------------------------------------------------------
-        if (ix > 0) {
-            j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-            if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-                switch_border = true;
+        if (jumps >= 1){
+            // --------------------------------------------------------
+            // 1-jump neighbours
+            // --------------------------------------------------------
+            if (ix > 0) {
+                j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix < end_x) {
+                j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (iy > 0) {
+                j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (iy < end_y) {
+                j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (iz > 0) {
+                j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (iz < end_z) {
+                j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
             }
         }
-        if (ix < end_x) {
-            j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-            if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-                switch_border = true;
+
+        if (jumps >= 2) {
+            // --------------------------------------------------------
+            // 2-jump neighbours
+            // --------------------------------------------------------
+            if (ix > 0 && iy > 0) {
+                j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix > 0 && iy < end_y) {
+                j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix < end_x && iy > 0) {
+                j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix < end_x && iy < end_y) {
+                j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (iy > 0 && iz > 0) {
+                j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (iy > 0 && iz < end_z) {
+                j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (iy < end_y && iz > 0) {
+                j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (iy < end_y && iz < end_z) {
+                j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix > 0 && iz > 0) {
+                j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix < end_x && iz > 0) {
+                j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix > 0 && iz < end_z) {
+                j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix < end_x && iz < end_z) {
+                j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
             }
         }
-        if (iy > 0) {
-            j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-            if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-                switch_border = true;
+
+        if (jumps >= 3) {
+            // --------------------------------------------------------
+            // 3-jump neighbours
+            // --------------------------------------------------------
+            if (ix > 0 && iy > 0 && iz > 0) {
+                j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix > 0 && iy > 0 && iz < end_z) {
+                j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix > 0 && iy < end_y && iz > 0) {
+                j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix < end_x && iy > 0 && iz > 0) {
+                j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix > 0 && iy < end_y && iz < end_z) {
+                j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix < end_x && iy > 0 && iz < end_z) {
+                j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix < end_x && iy < end_y && iz > 0) {
+                j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix < end_x && iy < end_y && iz < end_z) {
+                j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
+                if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
+                    switch_border = true;
+                }
             }
         }
-        if (iy < end_y) {
-            j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-            if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-                switch_border = true;
-            }
-        }
-        if (iz > 0) {
-            j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-            if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-                switch_border = true;
-            }
-        }
-        if (iz < end_z) {
-            j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-            if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-                switch_border = true;
-            }
-        }
-        // // --------------------------------------------------------
-        // // 2-jump neighbours
-        // // --------------------------------------------------------
-        // if (ix > 0 && iy > 0) {
-        //     j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        // if (ix > 0 && iy < end_y) {
-        //     j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        // if (ix < end_x && iy > 0) {
-        //     j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        // if (ix < end_x && iy < end_y) {
-        //     j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        // if (iy > 0 && iz > 0) {
-        //     j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        // if (iy > 0 && iz < end_z) {
-        //     j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        // if (iy < end_y && iz > 0) {
-        //     j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        // if (iy < end_y && iz < end_z) {
-        //     j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        // if (ix > 0 && iz > 0) {
-        //     j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        // if (ix < end_x && iz > 0) {
-        //     j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        // if (ix > 0 && iz < end_z) {
-        //     j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        // if (ix < end_x && iz < end_z) {
-        //     j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        //
-        // // --------------------------------------------------------
-        // // 3-jump neighbours
-        // // --------------------------------------------------------
-        // if (ix > 0 && iy > 0 && iz > 0) {
-        //     j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        // if (ix > 0 && iy > 0 && iz < end_z) {
-        //     j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        // if (ix > 0 && iy < end_y && iz > 0) {
-        //     j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        // if (ix < end_x && iy > 0 && iz > 0) {
-        //     j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        // if (ix > 0 && iy < end_y && iz < end_z) {
-        //     j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        // if (ix < end_x && iy > 0 && iz < end_z) {
-        //     j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        // if (ix < end_x && iy < end_y && iz > 0) {
-        //     j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
-        // if (ix < end_x && iy < end_y && iz < end_z) {
-        //     j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
-        //     if (*(nii_rim_data + j) != *(nii_rim_data + i)) {
-        //         switch_border = true;
-        //     }
-        // }
 
         // Copy voxels that neighbor a different value than itself
         if (switch_border) {
@@ -299,7 +318,7 @@ int main(int argc, char*  argv[]) {
         switch_border = false;
     }
 
-    save_output_nifti(fout, "borders", nii_borders, true, true);
+    save_output_nifti(fout, "borders", nii_borders, true);
 
     cout << "\n  Finished." << endl;
     return 0;
