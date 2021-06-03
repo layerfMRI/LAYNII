@@ -48,6 +48,9 @@ uint32_t sub2ind_3D(const uint32_t x, const uint32_t y, const uint32_t z,
 std::tuple<float, float> simplex_closure_2D(float x, float y);
 std::tuple<float, float> simplex_perturb_2D(float x, float y, float a, float b);
 
+nifti_image* iterative_smoothing(nifti_image* nii_in, int iter_smooth,
+                                 nifti_image* nii_mask, int32_t mask_value);
+
 // ============================================================================
 // Preprocessor macros.
 // ============================================================================

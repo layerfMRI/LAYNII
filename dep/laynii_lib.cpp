@@ -648,3 +648,154 @@ std::tuple<float, float> simplex_perturb_2D(float x, float y, float a, float b) 
 //     tie(x_new, y_new) = simplex_closure_2D(x_new, y_new);
 //     return std::make_tuple(x_new, y_new);
 // }
+
+// ============================================================================
+// Smoothing
+// ============================================================================
+nifti_image* iterative_smoothing(nifti_image* nii_in, int iter_smooth,
+                                 nifti_image* nii_mask, int32_t mask_value) {
+
+    // Copy input niftis TODO[Faruk]: Understand why I have to do this
+    nifti_image* temp1 = copy_nifti_as_float32(nii_in);
+    nifti_image* temp2 = copy_nifti_as_int32(nii_mask);
+
+    float* nii_in_data = static_cast<float*>(temp1->data);
+    int32_t* nii_mask_data = static_cast<int32_t*>(temp2->data);
+
+    // Get dimensions of input
+    const uint32_t size_x = temp1->nx;
+    const uint32_t size_y = temp1->ny;
+    const uint32_t size_z = temp1->nz;
+    const uint32_t end_x = size_x - 1;
+    const uint32_t end_y = size_y - 1;
+    const uint32_t end_z = size_z - 1;
+    const float dX = temp1->pixdim[1];
+    const float dY = temp1->pixdim[2];
+    const float dZ = temp1->pixdim[3];
+
+    const uint32_t nr_voxels = size_z * size_y * size_x;
+
+    // Short diagonals
+    const float dia_xy = sqrt(dX * dX + dY * dY);
+    const float dia_xz = sqrt(dX * dX + dZ * dZ);
+    const float dia_yz = sqrt(dY * dY + dZ * dZ);
+    // Long diagonals
+    const float dia_xyz = sqrt(dX * dX + dY * dY + dZ * dZ);
+
+    // ------------------------------------------------------------------------
+    // NOTE(Faruk): This section is written to constrain voxel visits
+    // Find the subset voxels that will be used many times
+    uint32_t nr_voi = 0;  // Voxels of interest
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_mask_data + i) != 0){
+            nr_voi += 1;
+        }
+    }
+    // Allocate memory to only the voxel of interest
+    int32_t* voi_id;
+    voi_id = (int32_t*) malloc(nr_voi*sizeof(int32_t));
+
+    // Fill in indices to be able to remap from subset to full set of voxels
+    uint32_t ii = 0;
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_mask_data + i) != 0){
+            *(voi_id + ii) = i;
+            ii += 1;
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    // Prepare output nifti
+    nifti_image* nii_smooth = copy_nifti_as_float32(nii_in);
+    float* nii_smooth_data = static_cast<float*>(nii_smooth->data);
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        *(nii_smooth_data + i) = 0;
+    }
+
+    // Pre-compute weights
+    float FWHM_val = 1;  // TODO(Faruk): Might tweak this one
+    float w_0 = gaus(0, FWHM_val);
+    float w_dX = gaus(dX, FWHM_val);
+    float w_dY = gaus(dY, FWHM_val);
+    float w_dZ = gaus(dZ, FWHM_val);
+
+    uint32_t ix, iy, iz, j;
+    for (uint16_t n = 0; n != iter_smooth; ++n) {
+        cout << "\r    Iteration: " << n+1 << "/" << iter_smooth << flush;
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);
+
+            if (*(nii_mask_data + i) == mask_value) {
+                tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+                float new_val = 0, total_weight = 0;
+
+                // Start with the voxel itself
+                new_val += *(nii_in_data + i) * w_0;
+                total_weight += w_0;
+
+                // --------------------------------------------------------
+                // 1-jump neighbours
+                // --------------------------------------------------------
+                if (ix > 0) {
+                    j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                    if (*(nii_mask_data + j) == mask_value) {
+                        new_val += *(nii_in_data + j) * w_dX;
+                        total_weight += w_dX;
+                    }
+                }
+                if (ix < end_x) {
+                    j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                    if (*(nii_mask_data + j) == mask_value) {
+                        new_val += *(nii_in_data + j) * w_dX;
+                        total_weight += w_dX;
+                    }
+                }
+                if (iy > 0) {
+                    j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                    if (*(nii_mask_data + j) == mask_value) {
+                        new_val += *(nii_in_data + j) * w_dY;
+                        total_weight += w_dY;
+                    }
+                }
+                if (iy < end_y) {
+                    j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                    if (*(nii_mask_data + j) == mask_value) {
+                        new_val += *(nii_in_data + j) * w_dY;
+                        total_weight += w_dY;
+                    }
+                }
+                if (iz > 0) {
+                    j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                    if (*(nii_mask_data + j) == mask_value) {
+                        new_val += *(nii_in_data + j) * w_dZ;
+                        total_weight += w_dZ;
+                    }
+                }
+                if (iz < end_z) {
+                    j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                    if (*(nii_mask_data + j) == mask_value) {
+                        new_val += *(nii_in_data + j) * w_dZ;
+                        total_weight += w_dZ;
+                    }
+                }
+                // --------------------------------------------------------
+                // 2-jump neighbours
+                // --------------------------------------------------------
+                // TODO
+
+                // --------------------------------------------------------
+                // 3-jump neighbours
+                // --------------------------------------------------------
+                // TODO
+
+                *(nii_smooth_data + i) = new_val / total_weight;
+            }
+        }
+        // Swap image data for the next iteration
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            *(nii_in_data + i) = *(nii_smooth_data + i);
+        }
+    }
+    cout << endl;
+    return nii_smooth;
+}
