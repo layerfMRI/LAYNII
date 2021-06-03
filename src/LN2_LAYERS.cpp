@@ -1380,88 +1380,13 @@ int main(int argc, char*  argv[]) {
         // Smooth equi-volume factors for seamless transitions
         // --------------------------------------------------------------------
         cout << "\n  Start smoothing equi-volume transitions..." << endl;
-        nifti_image* smooth = copy_nifti_as_float32(curvature);
-        float* smooth_data = static_cast<float*>(smooth->data);
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
-            *(smooth_data + i) = 0;
-        }
 
-        // Pre-compute weights
-        float FWHM_val = 1;  // TODO(Faruk): Might tweak this one
-        float w_0 = gaus(0, FWHM_val);
-        float w_dX = gaus(dX, FWHM_val);
-        float w_dY = gaus(dY, FWHM_val);
-        float w_dZ = gaus(dZ, FWHM_val);
+        nifti_image* equivol_factors_smooth = iterative_smoothing(
+            equivol_factors, iter_smooth, nii_rim, 3);
+        float* equivol_factors_smooth_data = static_cast<float*>(equivol_factors_smooth->data);
 
-        for (uint16_t n = 0; n != iter_smooth; ++n) {
-            cout << "\r    Iteration: " << n+1 << "/" << iter_smooth << flush;
-            for (uint32_t ii = 0; ii != nr_voi; ++ii) {
-                uint32_t i = *(voi_id + ii);
-
-                if (*(nii_rim_data + i) == 3) {
-                    tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
-                    float new_val = 0, total_weight = 0;
-
-                    // Start with the voxel itself
-                    new_val += *(equivol_factors_data + i) * w_0;
-                    total_weight += w_0;
-
-                    // --------------------------------------------------------
-                    // 1-jump neighbours
-                    // --------------------------------------------------------
-                    if (ix > 0) {
-                        j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                        if (*(nii_rim_data + j) == 3) {
-                            new_val += *(equivol_factors_data + j) * w_dX;
-                            total_weight += w_dX;
-                        }
-                    }
-                    if (ix < end_x) {
-                        j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-                        if (*(nii_rim_data + j) == 3) {
-                            new_val += *(equivol_factors_data + j) * w_dX;
-                            total_weight += w_dX;
-                        }
-                    }
-                    if (iy > 0) {
-                        j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                        if (*(nii_rim_data + j) == 3) {
-                            new_val += *(equivol_factors_data + j) * w_dY;
-                            total_weight += w_dY;
-                        }
-                    }
-                    if (iy < end_y) {
-                        j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-                        if (*(nii_rim_data + j) == 3) {
-                            new_val += *(equivol_factors_data + j) * w_dY;
-                            total_weight += w_dY;
-                        }
-                    }
-                    if (iz > 0) {
-                        j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                        if (*(nii_rim_data + j) == 3) {
-                            new_val += *(equivol_factors_data + j) * w_dZ;
-                            total_weight += w_dZ;
-                        }
-                    }
-                    if (iz < end_z) {
-                        j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-                        if (*(nii_rim_data + j) == 3) {
-                            new_val += *(equivol_factors_data + j) * w_dZ;
-                            total_weight += w_dZ;
-                        }
-                    }
-                    *(smooth_data + i) = new_val / total_weight;
-                }
-            }
-            // Swap image data
-            for (uint32_t i = 0; i != nr_voxels; ++i) {
-                *(equivol_factors_data + i) = *(smooth_data + i);
-            }
-        }
-        cout << endl;
         if (mode_debug) {
-            save_output_nifti(fout, "equivol_factors_smooth", smooth, false);
+            save_output_nifti(fout, "equivol_factors_smooth", equivol_factors_smooth, false);
         }
 
         // --------------------------------------------------------------------
@@ -1480,7 +1405,7 @@ int main(int argc, char*  argv[]) {
                 dist1 /= total_dist;
                 dist2 /= total_dist;
 
-                a = *(equivol_factors_data + i);
+                a = *(equivol_factors_smooth_data + i);
                 b = 1 - a;
 
                 // Perturb using masses to modify distances in simplex space
@@ -1693,89 +1618,11 @@ int main(int argc, char*  argv[]) {
     if (mode_curvature) {
         cout << "\n  Start smoothing curvature..." << endl;
 
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
-            *(normdistdiff_data + i) = 0;  // Repurpose float32 array
-            *(nii_columns_data + i) = 0;  // Repurpose integer array
-        }
+        nifti_image* curvature_smooth = iterative_smoothing(
+            curvature, iter_smooth, nii_rim, 3);
+        float* curvature_smooth_data = static_cast<float*>(curvature_smooth->data);
 
-        // Pre-compute weights
-        float FWHM_val = 1;  // TODO(Faruk): Might tweak this one
-        float w_0 = gaus(0, FWHM_val);
-        float w_dX = gaus(dX, FWHM_val);
-        float w_dY = gaus(dY, FWHM_val);
-        float w_dZ = gaus(dZ, FWHM_val);
-
-        for (uint16_t n = 0; n != iter_smooth; ++n) {
-            cout << "\r    Iteration: " << n+1 << "/" << iter_smooth << flush;
-
-            for (uint32_t ii = 0; ii != nr_voi; ++ii) {
-                uint32_t i = *(voi_id + ii);
-
-                if (*(nii_rim_data + i) == 3) {
-                    tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
-                    float new_val = 0, total_weight = 0;
-
-                    // Start with the voxel itself
-                    new_val += *(curvature_data + i) * w_0;
-                    total_weight += w_0;
-
-                    // --------------------------------------------------------
-                    // 1-jump neighbours
-                    // --------------------------------------------------------
-                    if (ix > 0) {
-                        j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                        if (*(nii_rim_data + j) == 3) {
-                            new_val += *(curvature_data + j) * w_dX;
-                            total_weight += w_dX;
-                        }
-                    }
-                    if (ix < end_x) {
-                        j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-                        if (*(nii_rim_data + j) == 3) {
-                            new_val += *(curvature_data + j) * w_dX;
-                            total_weight += w_dX;
-                        }
-                    }
-                    if (iy > 0) {
-                        j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                        if (*(nii_rim_data + j) == 3) {
-                            new_val += *(curvature_data + j) * w_dY;
-                            total_weight += w_dY;
-                        }
-                    }
-                    if (iy < end_y) {
-                        j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-                        if (*(nii_rim_data + j) == 3) {
-                            new_val += *(curvature_data + j) * w_dY;
-                            total_weight += w_dY;
-                        }
-                    }
-                    if (iz > 0) {
-                        j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                        if (*(nii_rim_data + j) == 3) {
-                            new_val += *(curvature_data + j) * w_dZ;
-                            total_weight += w_dZ;
-                        }
-                    }
-                    if (iz < end_z) {
-                        j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-                        if (*(nii_rim_data + j) == 3) {
-                            new_val += *(curvature_data + j) * w_dZ;
-                            total_weight += w_dZ;
-                        }
-                    }
-                    *(normdistdiff_data + i) = new_val / total_weight;
-                }
-            }
-            // Swap image data
-            for (uint32_t ii = 0; ii != nr_voi; ++ii) {
-                uint32_t i = *(voi_id + ii);
-                *(curvature_data + i) = *(normdistdiff_data + i);
-            }
-        }
-        cout << endl;
-
-        save_output_nifti(fout, "curvature", curvature, true);
+        save_output_nifti(fout, "curvature", curvature_smooth, true);
 
         // Quantize curvature
         for (uint32_t ii = 0; ii != nr_voi; ++ii) {
@@ -1784,16 +1631,16 @@ int main(int argc, char*  argv[]) {
             if (*(nii_rim_data + i) == 3) {
 
                 // 2 class binning
-                if (*(curvature_data + i) < 0) {  // Sulcus
+                if (*(curvature_smooth_data + i) < 0) {  // Sulcus
                     *(nii_columns_data + i) = 1;
                 } else {  // Gyrus
                     *(nii_columns_data + i) = 2;
                 }
 
                 // // 3 class binning
-                // if (*(curvature_data + i) < -1./3.) {  // Sulcal fundi
+                // if (*(curvature_smooth_data + i) < -1./3.) {  // Sulcal fundi
                 //     *(nii_columns_data + i) = 1;
-                // } else if (*(curvature_data + i) > 1./3.) {  // Gyral crown
+                // } else if (*(curvature_smooth_data + i) > 1./3.) {  // Gyral crown
                 //     *(nii_columns_data + i) = 3;
                 // } else {  // Walls
                 //     *(nii_columns_data + i) = 2;
