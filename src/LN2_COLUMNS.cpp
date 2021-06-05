@@ -29,6 +29,10 @@ int show_help(void) {
     "                    into the layering. This treats the borders as \n"
     "                    a part of gray matter. Off by default.\n"
     "    -output       : (Optional) Output basename for all outputs.\n"
+    "\n"
+    "Notes:\n"
+    "    - You can find further explanation of this algorithm at:\n"
+    "      <https://thingsonthings.org/ln2_columns>\n"
     "\n");
     return 0;
 }
