@@ -2889,7 +2889,190 @@ int main(int argc, char*  argv[]) {
             *(perimeter_data + i) = 0;
         }
     }
-    save_output_nifti(fout, "perimeter_chunk", perimeter, true);
+
+    // Label perimeter borders
+    bool switch_border = false;
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+
+        if (*(perimeter_data + i) == 0) {
+            // --------------------------------------------------------
+            // 1-jump neighbours
+            // --------------------------------------------------------
+            if (ix > 0) {
+                j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix < end_x) {
+                j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (iy > 0) {
+                j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (iy < end_y) {
+                j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (iz > 0) {
+                j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (iz < end_z) {
+                j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            // --------------------------------------------------------
+            // 2-jump neighbours
+            // --------------------------------------------------------
+            if (ix > 0 && iy > 0) {
+                j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix > 0 && iy < end_y) {
+                j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix < end_x && iy > 0) {
+                j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix < end_x && iy < end_y) {
+                j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (iy > 0 && iz > 0) {
+                j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (iy > 0 && iz < end_z) {
+                j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (iy < end_y && iz > 0) {
+                j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (iy < end_y && iz < end_z) {
+                j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix > 0 && iz > 0) {
+                j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix < end_x && iz > 0) {
+                j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix > 0 && iz < end_z) {
+                j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix < end_x && iz < end_z) {
+                j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            // --------------------------------------------------------
+            // 3-jump neighbours
+            // --------------------------------------------------------
+            if (ix > 0 && iy > 0 && iz > 0) {
+                j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix > 0 && iy > 0 && iz < end_z) {
+                j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix > 0 && iy < end_y && iz > 0) {
+                j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix < end_x && iy > 0 && iz > 0) {
+                j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix > 0 && iy < end_y && iz < end_z) {
+                j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix < end_x && iy > 0 && iz < end_z) {
+                j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix < end_x && iy < end_y && iz > 0) {
+                j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+            if (ix < end_x && iy < end_y && iz < end_z) {
+                j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
+                if (*(perimeter_data + j) != *(perimeter_data + i)) {
+                    switch_border = true;
+                }
+            }
+        }
+        // Assign new value
+        if (switch_border && *(nii_rim_data + i) == 3) {
+            *(flood_step_data + i) = 2;
+        } else {
+            *(flood_step_data + i) = *(perimeter_data + i);
+        }
+        // Reset switch
+        switch_border = false;
+    }
+
+    save_output_nifti(fout, "perimeter_chunk", flood_step, true);
 
     // ========================================================================
     // Mask out coordinates beyond periphery radius
