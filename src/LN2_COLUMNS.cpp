@@ -117,7 +117,7 @@ int main(int argc, char*  argv[]) {
     if (mode_initialize_with_centroids) {
         nii3 = nifti_image_read(fin3, 1);
         if (!nii3) {
-            fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin2);
+            fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin3);
             return 2;
         }
     }
@@ -879,7 +879,7 @@ int main(int argc, char*  argv[]) {
     save_output_nifti(fout, "centroids" + tag.str(), nii_columns, true);
 
     // ========================================================================
-    // Voronoi cell from MidGM cells to rest of the GM (gray matter) 
+    // Voronoi cell from MidGM cells to rest of the GM (gray matter)
     // but not borders, to avoid leakage across kissing gyri.
     // ========================================================================
     cout << "\n  Start Voronoi..." << endl;
@@ -1298,22 +1298,22 @@ int main(int argc, char*  argv[]) {
 
 
     // ========================================================================
-    // Voronoi cell flood into borders of Rim file, if -inlucde borders option is used.
+    // Voronoi cell flood into borders of Rim file, if -include borders option is used.
     // ========================================================================
-    
-  if (mode_incl_borders) {
-  // one-two iteration should be enough. I wouldn't know why the border should be thicker than one voxel.
-  // I am only using direct neighbors to avoid over overwriting values of closer neigbors.
-  for (int index = 0; index < 2; index++)  { // growing twize
-      
-      // I am hijacking flood_step_data, because it is no longer needed and I do not want ot waste memory
-       for (int i = 0; i != nr_voxels; ++i)  *(flood_step_data + i ) = 0 ;
-      
-        for (int i = 0; i != nr_voxels; ++i) {
-            if ( (*(nii_rim_data + i) == 1 || *(nii_rim_data + i) == 2) && (*(nii_columns_data + i)==0) ){
+    if (mode_incl_borders) {
+    // NOTE(Renzo): One-two iteration should be enough. I wouldn't know why
+    // the border should be thicker than one voxel. I am only using direct
+    // neighbors to avoid over overwriting values of closer neigbors.
+        for (int index = 0; index < 2; index++) {  // growing twice
+            // NOTE(Renzo): I am hijacking flood_step_data, because it is no longer
+            // needed and I do not want ot waste memory
+            for (int i = 0; i != nr_voxels; ++i)  {
+                *(flood_step_data + i ) = 0 ;
+            }
+
+            for (int i = 0; i != nr_voxels; ++i) {
+                if ( (*(nii_rim_data + i) == 1 || *(nii_rim_data + i) == 2) && (*(nii_columns_data + i) == 0)) {
                     tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
-                    // one-two iteration should be enough. I wouldn't know why the border should be thicker than one voxel.
-                    // I am only using direct neighbors to avoid over overwriting values of closer neigbors.
                     // --------------------------------------------------------
                     // 1-jump neighbours
                     // --------------------------------------------------------
@@ -1352,19 +1352,14 @@ int main(int argc, char*  argv[]) {
                         if (*(nii_columns_data + j) != 0 ) {
                             *(flood_step_data + i) = *(nii_columns_data + j);
                         }
-                    }               
-            } // if loop across all border voxels closed
-        }// loop across voxels closed
-        
-     for (int i = 0; i != nr_voxels; ++i) {
-         *(nii_columns_data + i) = *(nii_columns_data + i) + *(flood_step_data + i )  ;
-     }
-    }// doing it twice closed
-    
-
-     
-  }//flooding borders closed
-
+                    }
+                }
+            }
+            for (int i = 0; i != nr_voxels; ++i) {
+                *(nii_columns_data + i) = *(nii_columns_data + i) + *(flood_step_data + i )  ;
+            }
+        }
+    }
     // ========================================================================
     save_output_nifti(fout, "columns" + tag.str(), nii_columns, true);
     if (mode_debug) {
