@@ -11,22 +11,24 @@ int show_help(void) {
     "Options:\n"
     "    -help   : Show this help.\n"
     "    -input  : Any nifti file with integers. For instance segmentation results,\n"
-    "              parcellations, or 'winner maps'."
+    "              parcellations, or 'winner maps'.\n"
     "    -jumps  : (Optional) 1, 2 or 3 jump neighbourhood. Default is 1.\n"
     "              1 gives thinnest borders and 3 gives thicknest borders, because:\n"
     "              1 jump means voxels touching all faces will be zeroed.\n"
     "              2 jump means voxels touching all faces and edges will be zeroed.\n"
     "              3 jump means voxels touching all faces, edges, and corners will be zeroed.\n"
+    "    -label  : (Optional) An integer. When given, output will only contain\n"
+    "              the borders of voxels labeled with this value\n"
     "    -output : (Optional) Output basename for all outputs.\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char*  argv[]) {
-
+    bool use_outpath = false, mask_label = false;
     nifti_image *nii1 = NULL;
     char *fin1 = NULL, *fout = NULL;
-    int ac, jumps = 1;
+    int ac, jumps = 1, label = 0;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -46,12 +48,20 @@ int main(int argc, char*  argv[]) {
             } else {
                 jumps = atof(argv[ac]);
             }
+        } else if (!strcmp(argv[ac], "-label")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -label\n");
+            } else {
+                mask_label = true;
+                label = atof(argv[ac]);
+            }
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
                 return 1;
             }
             fout = argv[ac];
+            use_outpath = true;
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -318,7 +328,20 @@ int main(int argc, char*  argv[]) {
         switch_border = false;
     }
 
-    save_output_nifti(fout, "borders", nii_borders, true);
+    // ------------------------------------------------------------------------
+    if (mask_label) {
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            i = *(voi_id + ii);  // Map subset to full set
+            tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+
+            if (*(nii_borders_data + i) != label) {
+                *(nii_borders_data + i) = 0;
+            }
+        }
+    }
+    // ------------------------------------------------------------------------
+
+    save_output_nifti(fout, "borders", nii_borders, true, use_outpath);
 
     cout << "\n  Finished." << endl;
     return 0;
