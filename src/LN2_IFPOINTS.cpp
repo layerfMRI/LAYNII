@@ -12,7 +12,7 @@ int show_help(void) {
     "\n"
     "Options:\n"
     "    -help         : Show this help.\n"
-    "    -domain       : Set of voxels in which the distance will be measured.\n"
+    "    -domain       : Set of voxels in which points will be generated.\n"
     "                    All non-zero voxels will be considered.\n"
     "    -nr_points    : Number of points that will be generated\n"
     "    -init         : (Optional) New points will be added based on these\n"
@@ -135,6 +135,14 @@ int main(int argc, char*  argv[]) {
     // Fix input datatype issues
     nifti_image* nii_domain = copy_nifti_as_int32(nii1);
     int32_t* nii_domain_data = static_cast<int32_t*>(nii_domain->data);
+    // Binarize
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_domain_data + i) != 0) {
+            *(nii_domain_data + i) = 1;
+        } else {
+            *(nii_domain_data + i) = 0;
+        }
+    }
 
     // Prepare required nifti images
     nifti_image* nii_points  = copy_nifti_as_int32(nii_domain);
@@ -150,7 +158,7 @@ int main(int argc, char*  argv[]) {
     float* flood_dist_data = static_cast<float*>(flood_dist->data);
 
     // ------------------------------------------------------------------------
-    // Find initial number of columns if the optional input is given
+    // Find initial number of points if the optional init input is given
     int32_t max_point_id = 0;
     if (mode_initialize_with_centroids) {
         nifti_image* nii_init_points = copy_nifti_as_int32(nii3);
@@ -188,13 +196,22 @@ int main(int argc, char*  argv[]) {
     // Find the subset voxels that will be used many times
     uint32_t nr_voi = 0;  // Voxels of interest
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_domain_data + i) != 0){
+        if (*(nii_domain_data + i) != 0) {
             nr_voi += 1;
         }
     }
     // Allocate memory to only the voxel of interest
     int32_t* voi_id;
     voi_id = (int32_t*) malloc(nr_voi*sizeof(int32_t));
+
+    // Fill in indices to be able to remap from subset to full set of voxels
+    uint32_t ii = 0;
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_domain_data + i) != 0){
+            *(voi_id + ii) = i;
+            ii += 1;
+        }
+    }
 
     // ========================================================================
     // Find connected clusters to initialize one voxel in each
@@ -237,37 +254,37 @@ int main(int argc, char*  argv[]) {
                     // --------------------------------------------------------
                     if (ix > 0) {
                         j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (ix < end_x) {
                         j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (iy > 0) {
                         j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (iy < end_y) {
                         j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (iz > 0) {
                         j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (iz < end_z) {
                         j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
@@ -276,73 +293,73 @@ int main(int argc, char*  argv[]) {
                     // --------------------------------------------------------
                     if (ix > 0 && iy > 0) {
                         j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (ix > 0 && iy < end_y) {
                         j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (ix < end_x && iy > 0) {
                         j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (ix < end_x && iy < end_y) {
                         j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (iy > 0 && iz > 0) {
                         j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (iy > 0 && iz < end_z) {
                         j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (iy < end_y && iz > 0) {
                         j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (iy < end_y && iz < end_z) {
                         j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (ix > 0 && iz > 0) {
                         j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (ix < end_x && iz > 0) {
                         j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (ix > 0 && iz < end_z) {
                         j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (ix < end_x && iz < end_z) {
                         j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
@@ -352,49 +369,49 @@ int main(int argc, char*  argv[]) {
                     // --------------------------------------------------------
                     if (ix > 0 && iy > 0 && iz > 0) {
                         j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (ix > 0 && iy > 0 && iz < end_z) {
                         j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (ix > 0 && iy < end_y && iz > 0) {
                         j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (ix < end_x && iy > 0 && iz > 0) {
                         j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (ix > 0 && iy < end_y && iz < end_z) {
                         j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (ix < end_x && iy > 0 && iz < end_z) {
                         j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (ix < end_x && iy < end_y && iz > 0) {
                         j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
                     if (ix < end_x && iy < end_y && iz < end_z) {
                         j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
-                        if (*(nii_domain_data + j) != 0) {
+                        if (*(nii_domain_data + j) == 1) {
                             *(nii_domain_data + j) = init_voxel_id;
                         }
                     }
@@ -416,9 +433,9 @@ int main(int argc, char*  argv[]) {
     }
 
     // ========================================================================
-    // Find column centers through farthest flood distance
+    // Find points through farthest flood distance
     // ========================================================================
-    cout << "  Start generating columns..." << endl;
+    cout << "  Start generating points..." << endl;
     // Find the initial voxel
     uint32_t start_voxel;
     for (int32_t n = 2; n <= init_voxel_id; ++n) {
@@ -436,9 +453,9 @@ int main(int argc, char*  argv[]) {
     uint32_t new_voxel_id;
     float flood_dist_thr = std::numeric_limits<float>::infinity();
 
-    // Loop until desired number of columns reached
+    // Loop until desired number of points reached
     for (int32_t n = max_point_id; n < nr_points; ++n) {
-        cout << "\r    Column [" << n+1 << "/" << nr_points << "]" << flush;
+        cout << "\r    Point [" << n+1 << "/" << nr_points << "]" << flush;
 
         int32_t grow_step = 1;
         voxel_counter = 1;
@@ -823,14 +840,394 @@ int main(int argc, char*  argv[]) {
     }
     cout << endl;
 
+    // Add number of points into the output tag
+    std::ostringstream tag;
+    tag << nr_points;
+    save_output_nifti(fout, "points"+tag.str(), nii_points, true, use_outpath);
+
+    // ========================================================================
+    // Grow Voronoi cells from points towards the rest of the domain
+    // ========================================================================
+    cout << "\n  Start growing Voronoi cells..." << endl;
+
+    // Reset domain
+    for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+        uint32_t i = *(voi_id + ii);
+        *(nii_domain_data + i) = 1;
+    }
+
+    // Initialize grow volume
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_points_data + i) != 0) {
+            *(flood_step_data + i) = 1;
+            *(flood_dist_data + i) = 0;
+        } else {
+            *(flood_step_data + i) = 0;
+            *(flood_dist_data + i) = 0;
+        }
+    }
+
+    int32_t grow_step = 1;
+    uint32_t ix, iy, iz, i, j;
+    float d;
+    voxel_counter = nr_voxels;
+    while (voxel_counter != 0) {
+        voxel_counter = 0;
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            i = *(voi_id + ii);
+            if (*(flood_step_data + i) == grow_step) {
+                tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+                voxel_counter += 1;
+                bool jump_lock = false;
+                // ------------------------------------------------------------
+                // 1-jump neighbours
+                // ------------------------------------------------------------
+                if (ix > 0) {
+                    j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                    if (*(nii_domain_data + j) != 0) {
+                        d = *(flood_dist_data + i) + dX;
+                        if (d < *(flood_dist_data + j)
+                            || *(flood_dist_data + j) == 0) {
+                            *(flood_dist_data + j) = d;
+                            *(flood_step_data + j) = grow_step + 1;
+                            *(nii_points_data + j) = *(nii_points_data + i);
+                        }
+                    } else {
+                        jump_lock = true;
+                    }
+                }
+                if (ix < end_x) {
+                    j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                    if (*(nii_domain_data + j) != 0) {
+                        d = *(flood_dist_data + i) + dX;
+                        if (d < *(flood_dist_data + j)
+                            || *(flood_dist_data + j) == 0) {
+                            *(flood_dist_data + j) = d;
+                            *(flood_step_data + j) = grow_step + 1;
+                            *(nii_points_data + j) = *(nii_points_data + i);
+                        }
+                    } else {
+                        jump_lock = true;
+                    }
+                }
+                if (iy > 0) {
+                    j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                    if (*(nii_domain_data + j) != 0) {
+                        d = *(flood_dist_data + i) + dY;
+                        if (d < *(flood_dist_data + j)
+                            || *(flood_dist_data + j) == 0) {
+                            *(flood_dist_data + j) = d;
+                            *(flood_step_data + j) = grow_step + 1;
+                            *(nii_points_data + j) = *(nii_points_data + i);
+                        }
+                    } else {
+                        jump_lock = true;
+                    }
+                }
+                if (iy < end_y) {
+                    j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                    if (*(nii_domain_data + j) != 0) {
+                        d = *(flood_dist_data + i) + dY;
+                        if (d < *(flood_dist_data + j)
+                            || *(flood_dist_data + j) == 0) {
+                            *(flood_dist_data + j) = d;
+                            *(flood_step_data + j) = grow_step + 1;
+                            *(nii_points_data + j) = *(nii_points_data + i);
+                        }
+                    } else {
+                        jump_lock = true;
+                    }
+                }
+                if (iz > 0) {
+                    j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                    if (*(nii_domain_data + j) != 0) {
+                        d = *(flood_dist_data + i) + dZ;
+                        if (d < *(flood_dist_data + j)
+                            || *(flood_dist_data + j) == 0) {
+                            *(flood_dist_data + j) = d;
+                            *(flood_step_data + j) = grow_step + 1;
+                            *(nii_points_data + j) = *(nii_points_data + i);
+                        }
+                    } else {
+                        jump_lock = true;
+                    }
+                }
+                if (iz < end_z) {
+                    j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                    if (*(nii_domain_data + j) != 0) {
+                        d = *(flood_dist_data + i) + dZ;
+                        if (d < *(flood_dist_data + j)
+                            || *(flood_dist_data + j) == 0) {
+                            *(flood_dist_data + j) = d;
+                            *(flood_step_data + j) = grow_step + 1;
+                            *(nii_points_data + j) = *(nii_points_data + i);
+                        }
+                    } else {
+                        jump_lock = true;
+                    }
+                }
+
+                // ------------------------------------------------------------
+                // 2-jump neighbours
+                // ------------------------------------------------------------
+                if (jump_lock == false) {
+
+                    if (ix > 0 && iy > 0) {
+                        j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_xy;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                    if (ix > 0 && iy < end_y) {
+                        j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_xy;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                    if (ix < end_x && iy > 0) {
+                        j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_xy;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                    if (ix < end_x && iy < end_y) {
+                        j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_xy;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                    if (iy > 0 && iz > 0) {
+                        j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_yz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                    if (iy > 0 && iz < end_z) {
+                        j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_yz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                    if (iy < end_y && iz > 0) {
+                        j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_yz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                    if (iy < end_y && iz < end_z) {
+                        j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_yz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                    if (ix > 0 && iz > 0) {
+                        j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_xz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                    if (ix < end_x && iz > 0) {
+                        j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_xz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                    if (ix > 0 && iz < end_z) {
+                        j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_xz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                    if (ix < end_x && iz < end_z) {
+                        j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_xz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+
+                    // ------------------------------------------------------------
+                    // 3-jump neighbours
+                    // ------------------------------------------------------------
+                    if (ix > 0 && iy > 0 && iz > 0) {
+                        j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_xyz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                    if (ix > 0 && iy > 0 && iz < end_z) {
+                        j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_xyz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                    if (ix > 0 && iy < end_y && iz > 0) {
+                        j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_xyz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                    if (ix < end_x && iy > 0 && iz > 0) {
+                        j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_xyz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                    if (ix > 0 && iy < end_y && iz < end_z) {
+                        j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_xyz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                    if (ix < end_x && iy > 0 && iz < end_z) {
+                        j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_xyz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                    if (ix < end_x && iy < end_y && iz > 0) {
+                        j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_xyz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                    if (ix < end_x && iy < end_y && iz < end_z) {
+                        j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
+                        if (*(nii_domain_data + j) != 0) {
+                            d = *(flood_dist_data + i) + dia_xyz;
+                            if (d < *(flood_dist_data + j)
+                                || *(flood_dist_data + j) == 0) {
+                                *(flood_dist_data + j) = d;
+                                *(flood_step_data + j) = grow_step + 1;
+                                *(nii_points_data + j) = *(nii_points_data + i);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        grow_step += 1;
+    }
+
     if (mode_debug) {
         save_output_nifti(fout, "flood_step", flood_step, false);
         save_output_nifti(fout, "flood_dist", flood_dist, false);
     }
-    // Add number of columns into the output tag
-    std::ostringstream tag;
-    tag << nr_points;
-    save_output_nifti(fout, "points"+tag.str(), nii_points, true, use_outpath);
+    // Add number of points into the output tag
+    save_output_nifti(fout, "cells"+tag.str(), nii_points, true, use_outpath);
 
     cout << "\n  Finished." << endl;
     return 0;
