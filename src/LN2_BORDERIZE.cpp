@@ -13,7 +13,7 @@ int show_help(void) {
     "    -input  : Any nifti file with integers. For instance segmentation results,\n"
     "              parcellations, or 'winner maps'.\n"
     "    -jumps  : (Optional) 1, 2 or 3 jump neighbourhood. Default is 1.\n"
-    "              1 gives thinnest borders and 3 gives thicknest borders, because:\n"
+    "              1 gives thinnest borders and 3 gives thickest borders, because:\n"
     "              1 jump means voxels touching all faces will be zeroed.\n"
     "              2 jump means voxels touching all faces and edges will be zeroed.\n"
     "              3 jump means voxels touching all faces, edges, and corners will be zeroed.\n"
