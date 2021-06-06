@@ -2,15 +2,16 @@
 
 int show_help(void) {
     printf(
-    "LN2_GEODISTANCE: Measure geodesic distance from a set of voxels.\n"
+    "LN2_GEODISTANCE: Measure geodesic distances from a set of voxels.\n"
     "\n"
     "Usage:\n"
-    "    LN2_GEODISTANCE -init rim.nii \n"
+    "    LN2_GEODISTANCE -domain mask.nii -init points.nii \n"
     "\n"
     "Options:\n"
     "    -help   : Show this help.\n"
     "    -init   : Initial voxels that denote 0 distance.\n"
     "    -domain : Set of voxels in which the distance will be measured.\n"
+    "              All non-zero voxels will be considered.\n"
     "    -output : (Optional) Output basename for all outputs.\n"
     "\n"
     "\n");
