@@ -1576,15 +1576,48 @@ int main(int argc, char*  argv[]) {
                 tie(gm_x, gm_y, gm_z) = ind2sub_3D(*(outerGM_id_data + i),
                                                    size_x, size_y);
 
-                // Compute approx. surface angles from streamline start-end points
-                float vec_x = wm_x - gm_x;
-                float vec_y = wm_y - gm_y;
-                float vec_z = wm_z - gm_z;
-                float vec_norm = sqrt(vec_x * vec_x + vec_y * vec_y + vec_z * vec_z);
+                // Normalized vector 1 [white matter to center]
+                float vec1_x = wm_x - x;
+                float vec1_y = wm_y - y;
+                float vec1_z = wm_z - z;
+                float vec1_norm = sqrt(vec1_x * vec1_x + vec1_y * vec1_y + vec1_z * vec1_z);
+                if (vec1_norm > 0) {
+                    vec1_x /= vec1_norm;
+                    vec1_y /= vec1_norm;
+                    vec1_z /= vec1_norm;
+                }
 
-                *(svec_data + nr_voxels*0 + i) = vec_x / vec_norm;
-                *(svec_data + nr_voxels*1 + i) = vec_y / vec_norm;
-                *(svec_data + nr_voxels*2 + i) = vec_z / vec_norm;
+                // Normalized vector 2 [center to gray matter]
+                float vec2_x = x - gm_x;
+                float vec2_y = y - gm_y;
+                float vec2_z = z - gm_z;
+                float vec2_norm = sqrt(vec2_x * vec2_x + vec2_y * vec2_y + vec2_z * vec2_z);
+                if (vec2_norm > 0) {
+                    vec2_x /= vec2_norm;
+                    vec2_y /= vec2_norm;
+                    vec2_z /= vec2_norm;
+                }
+
+                // Average both vectors (smoother curvature)
+                float svec_x, svec_y, svec_z;  // Streamline vectors
+                if (vec1_norm > 0 && vec2_norm > 0) {
+                    svec_x = (vec1_x + vec2_x) / 2;
+                    svec_y = (vec1_y + vec2_y) / 2;
+                    svec_z = (vec1_z + vec2_z) / 2;
+                } else if (vec1_norm > 0) {
+                    svec_x = vec1_x;
+                    svec_y = vec1_y;
+                    svec_z = vec1_z;
+                } else {
+                    svec_x = vec2_x;
+                    svec_y = vec2_y;
+                    svec_z = vec2_z;
+                }
+
+                // Put vector components into nifti
+                *(svec_data + nr_voxels*0 + i) = svec_x;
+                *(svec_data + nr_voxels*1 + i) = svec_y;
+                *(svec_data + nr_voxels*2 + i) = svec_z;
 
                 // Angular difference
                 // float ref_x = 0, ref_y = 0, ref_z = 1;
@@ -1596,7 +1629,13 @@ int main(int argc, char*  argv[]) {
                 // ----------------------------------------------------------------
             }
         }
-        save_output_nifti(fout, "streamline_vectors", svec, true);
+        // --------------------------------------------------------------------
+        cout << "\n  Start smoothing streamline vector components..." << endl;
+        nifti_image* svec_smooth = iterative_smoothing(
+            svec, iter_smooth, nii_rim, 3);
+        free(svec);
+        // --------------------------------------------------------------------
+        save_output_nifti(fout, "streamline_vectors", svec_smooth, true);
     }
 
     // ========================================================================

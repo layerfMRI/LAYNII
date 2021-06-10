@@ -666,6 +666,7 @@ nifti_image* iterative_smoothing(nifti_image* nii_in, int iter_smooth,
     const uint32_t size_x = temp1->nx;
     const uint32_t size_y = temp1->ny;
     const uint32_t size_z = temp1->nz;
+    const uint32_t size_t = temp1->nt;
     const uint32_t end_x = size_x - 1;
     const uint32_t end_y = size_y - 1;
     const uint32_t end_z = size_z - 1;
@@ -720,82 +721,84 @@ nifti_image* iterative_smoothing(nifti_image* nii_in, int iter_smooth,
     float w_dZ = gaus(dZ, FWHM_val);
 
     uint32_t ix, iy, iz, j;
-    for (uint16_t n = 0; n != iter_smooth; ++n) {
-        cout << "\r    Iteration: " << n+1 << "/" << iter_smooth << flush;
-        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
-            uint32_t i = *(voi_id + ii);
+    for (uint16_t t = 0; t != size_t; ++t) {  // Over 4th dim (e.g. timepoints)
+        for (uint16_t n = 0; n != iter_smooth; ++n) {
+            cout << "\r    Iteration: " << n+1 << "/" << iter_smooth << flush;
+            for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+                uint32_t i = *(voi_id + ii);
 
-            if (*(nii_mask_data + i) == mask_value) {
-                tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
-                float new_val = 0, total_weight = 0;
+                if (*(nii_mask_data + i) == mask_value) {
+                    tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+                    float new_val = 0, total_weight = 0;
 
-                // Start with the voxel itself
-                new_val += *(nii_in_data + i) * w_0;
-                total_weight += w_0;
+                    // Start with the voxel itself
+                    new_val += *(nii_in_data + nr_voxels * t + i) * w_0;
+                    total_weight += w_0;
 
-                // --------------------------------------------------------
-                // 1-jump neighbours
-                // --------------------------------------------------------
-                if (ix > 0) {
-                    j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                    if (*(nii_mask_data + j) == mask_value) {
-                        new_val += *(nii_in_data + j) * w_dX;
-                        total_weight += w_dX;
+                    // --------------------------------------------------------
+                    // 1-jump neighbours
+                    // --------------------------------------------------------
+                    if (ix > 0) {
+                        j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                        if (*(nii_mask_data + j) == mask_value) {
+                            new_val += *(nii_in_data + nr_voxels * t + j) * w_dX;
+                            total_weight += w_dX;
+                        }
                     }
-                }
-                if (ix < end_x) {
-                    j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-                    if (*(nii_mask_data + j) == mask_value) {
-                        new_val += *(nii_in_data + j) * w_dX;
-                        total_weight += w_dX;
+                    if (ix < end_x) {
+                        j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                        if (*(nii_mask_data + j) == mask_value) {
+                            new_val += *(nii_in_data + nr_voxels * t + j) * w_dX;
+                            total_weight += w_dX;
+                        }
                     }
-                }
-                if (iy > 0) {
-                    j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                    if (*(nii_mask_data + j) == mask_value) {
-                        new_val += *(nii_in_data + j) * w_dY;
-                        total_weight += w_dY;
+                    if (iy > 0) {
+                        j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                        if (*(nii_mask_data + j) == mask_value) {
+                            new_val += *(nii_in_data + nr_voxels * t + j) * w_dY;
+                            total_weight += w_dY;
+                        }
                     }
-                }
-                if (iy < end_y) {
-                    j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-                    if (*(nii_mask_data + j) == mask_value) {
-                        new_val += *(nii_in_data + j) * w_dY;
-                        total_weight += w_dY;
+                    if (iy < end_y) {
+                        j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                        if (*(nii_mask_data + j) == mask_value) {
+                            new_val += *(nii_in_data + nr_voxels * t + j) * w_dY;
+                            total_weight += w_dY;
+                        }
                     }
-                }
-                if (iz > 0) {
-                    j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                    if (*(nii_mask_data + j) == mask_value) {
-                        new_val += *(nii_in_data + j) * w_dZ;
-                        total_weight += w_dZ;
+                    if (iz > 0) {
+                        j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                        if (*(nii_mask_data + j) == mask_value) {
+                            new_val += *(nii_in_data + nr_voxels * t + j) * w_dZ;
+                            total_weight += w_dZ;
+                        }
                     }
-                }
-                if (iz < end_z) {
-                    j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-                    if (*(nii_mask_data + j) == mask_value) {
-                        new_val += *(nii_in_data + j) * w_dZ;
-                        total_weight += w_dZ;
+                    if (iz < end_z) {
+                        j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                        if (*(nii_mask_data + j) == mask_value) {
+                            new_val += *(nii_in_data + nr_voxels * t + j) * w_dZ;
+                            total_weight += w_dZ;
+                        }
                     }
-                }
-                // --------------------------------------------------------
-                // 2-jump neighbours
-                // --------------------------------------------------------
-                // TODO
+                    // --------------------------------------------------------
+                    // 2-jump neighbours
+                    // --------------------------------------------------------
+                    // TODO
 
-                // --------------------------------------------------------
-                // 3-jump neighbours
-                // --------------------------------------------------------
-                // TODO
+                    // --------------------------------------------------------
+                    // 3-jump neighbours
+                    // --------------------------------------------------------
+                    // TODO
 
-                *(nii_smooth_data + i) = new_val / total_weight;
+                    *(nii_smooth_data + nr_voxels * t + i) = new_val / total_weight;
+                }
             }
-        }
-        // Swap image data for the next iteration
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
-            *(nii_in_data + i) = *(nii_smooth_data + i);
+            // Swap image data for the next iteration
+            for (uint32_t i = 0; i != nr_voxels * size_t; ++i) {
+                *(nii_in_data + i) = *(nii_smooth_data + i);
+            }
+            cout << endl;
         }
     }
-    cout << endl;
     return nii_smooth;
 }
