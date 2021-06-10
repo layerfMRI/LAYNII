@@ -797,8 +797,8 @@ nifti_image* iterative_smoothing(nifti_image* nii_in, int iter_smooth,
             for (uint32_t i = 0; i != nr_voxels * size_t; ++i) {
                 *(nii_in_data + i) = *(nii_smooth_data + i);
             }
-            cout << endl;
         }
+        cout << endl;
     }
     return nii_smooth;
 }
