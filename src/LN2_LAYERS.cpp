@@ -1,17 +1,9 @@
-
 // TODO(Faruk): Curvature shows some artifacts in rim_circles test case. Needs
 // further investiation.
-// TODO(Faruk): First implementation of equi-volume works but it needs
-// extensive testing. I might need to smooth previous derivatives
-// (hotspots, curvature etc.) a bit to make layering smoother on empirical
-// data overall.
 // TODO(Faruk): Memory usage is a bit sloppy for now. Low priority but might
 // need to have a look at it in the future if we start hitting ram limits.
 // NOTE(Faruk): Might put neighbour visits into a function.
-// NOTE(Faruk): Might replace the smoothing code with a faster method later.
-// NOTE(Faruk): Might use bspline weights to smooth curvature maps a bit.
 // NOTE(Faruk): Might be better to use step 1 id's to define columns.
-
 
 #include "../dep/laynii_lib.h"
 #include <limits>
@@ -50,6 +42,8 @@ int show_help(void) {
     "                    for smoothing the curvature estimates. Off by default.\n"
     "    -streamlines  : (Optional) Export streamline vectors. Useful for e.g.\n"
     "                    computing B0 angular differences. Off by default.\n"
+    "    -thickness    : (Optional) Export cortical thickness. Uses -iter_smooth\n"
+    "                    value for smoothing the thickness. Off by default.\n"
     "    -incl_borders : (Optional) Include inner and outer gray matter borders\n"
     "                    into the layering. This treats the borders as \n"
     "                    a part of gray matter. Off by default.\n"
@@ -73,6 +67,7 @@ int main(int argc, char*  argv[]) {
     uint16_t iter_smooth = 100;
     bool mode_equivol = false, mode_debug = false, mode_incl_borders = false;
     bool mode_curvature =false, mode_streamlines = false;
+    bool mode_thickness = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -110,6 +105,8 @@ int main(int argc, char*  argv[]) {
             mode_curvature = true;
         } else if (!strcmp(argv[ac], "-streamlines")) {
             mode_streamlines = true;
+        } else if (!strcmp(argv[ac], "-thickness")) {
+            mode_thickness = true;
         } else if (!strcmp(argv[ac], "-incl_borders")) {
             mode_incl_borders = true;
         } else if (!strcmp(argv[ac], "-debug")) {
@@ -284,7 +281,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (ix < end_x) {
                     j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dX;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -297,7 +294,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy > 0) {
                     j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dY;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -310,7 +307,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iy < end_y) {
                     j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dY;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -323,7 +320,7 @@ int main(int argc, char*  argv[]) {
                 }
                 if (iz > 0) {
                     j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dZ;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -337,7 +334,7 @@ int main(int argc, char*  argv[]) {
                 if (iz < end_z) {
                     j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dZ;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -355,7 +352,7 @@ int main(int argc, char*  argv[]) {
                 if (ix > 0 && iy > 0) {
                     j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_xy;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -369,7 +366,7 @@ int main(int argc, char*  argv[]) {
                 if (ix > 0 && iy < end_y) {
                     j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_xy;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -383,7 +380,7 @@ int main(int argc, char*  argv[]) {
                 if (ix < end_x && iy > 0) {
                     j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_xy;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -397,7 +394,7 @@ int main(int argc, char*  argv[]) {
                 if (ix < end_x && iy < end_y) {
                     j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_xy;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -411,7 +408,7 @@ int main(int argc, char*  argv[]) {
                 if (iy > 0 && iz > 0) {
                     j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_yz;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -425,7 +422,7 @@ int main(int argc, char*  argv[]) {
                 if (iy > 0 && iz < end_z) {
                     j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_yz;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -439,7 +436,7 @@ int main(int argc, char*  argv[]) {
                 if (iy < end_y && iz > 0) {
                     j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_yz;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -453,7 +450,7 @@ int main(int argc, char*  argv[]) {
                 if (iy < end_y && iz < end_z) {
                     j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_yz;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -467,7 +464,7 @@ int main(int argc, char*  argv[]) {
                 if (ix > 0 && iz > 0) {
                     j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_xz;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -481,7 +478,7 @@ int main(int argc, char*  argv[]) {
                 if (ix < end_x && iz > 0) {
                     j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_xz;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -495,7 +492,7 @@ int main(int argc, char*  argv[]) {
                 if (ix > 0 && iz < end_z) {
                     j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_xz;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -509,7 +506,7 @@ int main(int argc, char*  argv[]) {
                 if (ix < end_x && iz < end_z) {
                     j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_xz;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -527,7 +524,7 @@ int main(int argc, char*  argv[]) {
                 if (ix > 0 && iy > 0 && iz > 0) {
                     j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_xyz;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -541,7 +538,7 @@ int main(int argc, char*  argv[]) {
                 if (ix > 0 && iy > 0 && iz < end_z) {
                     j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_xyz;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -555,7 +552,7 @@ int main(int argc, char*  argv[]) {
                 if (ix > 0 && iy < end_y && iz > 0) {
                     j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_xyz;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -569,7 +566,7 @@ int main(int argc, char*  argv[]) {
                 if (ix < end_x && iy > 0 && iz > 0) {
                     j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_xyz;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -583,7 +580,7 @@ int main(int argc, char*  argv[]) {
                 if (ix > 0 && iy < end_y && iz < end_z) {
                     j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_xyz;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -597,7 +594,7 @@ int main(int argc, char*  argv[]) {
                 if (ix < end_x && iy > 0 && iz < end_z) {
                     j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_xyz;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -611,7 +608,7 @@ int main(int argc, char*  argv[]) {
                 if (ix < end_x && iy < end_y && iz > 0) {
                     j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_xyz;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -625,7 +622,7 @@ int main(int argc, char*  argv[]) {
                 if (ix < end_x && iy < end_y && iz < end_z) {
                     j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dia_xyz;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
@@ -678,7 +675,7 @@ int main(int argc, char*  argv[]) {
                 if (ix > 0) {
                     j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dX;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -692,7 +689,7 @@ int main(int argc, char*  argv[]) {
                 if (ix < end_x) {
                     j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dX;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -706,7 +703,7 @@ int main(int argc, char*  argv[]) {
                 if (iy > 0) {
                     j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dY;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -720,7 +717,7 @@ int main(int argc, char*  argv[]) {
                 if (iy < end_y) {
                     j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dY;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -734,7 +731,7 @@ int main(int argc, char*  argv[]) {
                 if (iz > 0) {
                     j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dZ;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -748,7 +745,7 @@ int main(int argc, char*  argv[]) {
                 if (iz < end_z) {
                     j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dZ;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -766,7 +763,7 @@ int main(int argc, char*  argv[]) {
                 if (ix > 0 && iy > 0) {
                     j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_xy;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -780,7 +777,7 @@ int main(int argc, char*  argv[]) {
                 if (ix > 0 && iy < end_y) {
                     j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_xy;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -794,7 +791,7 @@ int main(int argc, char*  argv[]) {
                 if (ix < end_x && iy > 0) {
                     j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_xy;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -808,7 +805,7 @@ int main(int argc, char*  argv[]) {
                 if (ix < end_x && iy < end_y) {
                     j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_xy;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -822,7 +819,7 @@ int main(int argc, char*  argv[]) {
                 if (iy > 0 && iz > 0) {
                     j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_yz;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -836,7 +833,7 @@ int main(int argc, char*  argv[]) {
                 if (iy > 0 && iz < end_z) {
                     j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_yz;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -850,7 +847,7 @@ int main(int argc, char*  argv[]) {
                 if (iy < end_y && iz > 0) {
                     j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_yz;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -864,7 +861,7 @@ int main(int argc, char*  argv[]) {
                 if (iy < end_y && iz < end_z) {
                     j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_yz;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -878,7 +875,7 @@ int main(int argc, char*  argv[]) {
                 if (ix > 0 && iz > 0) {
                     j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_xz;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -892,7 +889,7 @@ int main(int argc, char*  argv[]) {
                 if (ix < end_x && iz > 0) {
                     j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_xz;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -906,7 +903,7 @@ int main(int argc, char*  argv[]) {
                 if (ix > 0 && iz < end_z) {
                     j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_xz;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -920,7 +917,7 @@ int main(int argc, char*  argv[]) {
                 if (ix < end_x && iz < end_z) {
                     j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_xz;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -938,7 +935,7 @@ int main(int argc, char*  argv[]) {
                 if (ix > 0 && iy > 0 && iz > 0) {
                     j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_xyz;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -952,7 +949,7 @@ int main(int argc, char*  argv[]) {
                 if (ix > 0 && iy > 0 && iz < end_z) {
                     j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_xyz;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -966,7 +963,7 @@ int main(int argc, char*  argv[]) {
                 if (ix > 0 && iy < end_y && iz > 0) {
                     j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_xyz;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -980,7 +977,7 @@ int main(int argc, char*  argv[]) {
                 if (ix < end_x && iy > 0 && iz > 0) {
                     j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_xyz;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -994,7 +991,7 @@ int main(int argc, char*  argv[]) {
                 if (ix > 0 && iy < end_y && iz < end_z) {
                     j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_xyz;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -1008,7 +1005,7 @@ int main(int argc, char*  argv[]) {
                 if (ix < end_x && iy > 0 && iz < end_z) {
                     j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_xyz;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -1022,7 +1019,7 @@ int main(int argc, char*  argv[]) {
                 if (ix < end_x && iy < end_y && iz > 0) {
                     j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_xyz;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -1036,7 +1033,7 @@ int main(int argc, char*  argv[]) {
                 if (ix < end_x && iy < end_y && iz < end_z) {
                     j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
 
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 2 ) {
                         d = *(outerGM_dist_data + i) + dia_xyz;
                         if (d < *(outerGM_dist_data + j)
                             || *(outerGM_dist_data + j) == 0) {
@@ -1614,10 +1611,42 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Cortical thickness
     // ========================================================================
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        *(innerGM_dist_data + i) += *(outerGM_dist_data + i);
+    if (mode_thickness) {
+        cout << "\n  Start saving cortical thickness..." << endl;
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            *(innerGM_dist_data + i) += *(outerGM_dist_data + i);
+        }
+
+        // Temporary binary mask for iterative smoothing
+        nifti_image* temp_mask = copy_nifti_as_int16(nii_rim);
+        int16_t* temp_mask_data = static_cast<int16_t*>(temp_mask->data);
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(nii_rim_data + i) != 0) {
+                *(temp_mask_data + i) = 1;
+            }
+        }
+
+        nifti_image* thickness = iterative_smoothing(
+            innerGM_dist, iter_smooth, temp_mask, 1);
+        float* thickness_data = static_cast<float*>(thickness->data);
+        free(temp_mask_data);
+        free(temp_mask);
+
+        // --------------------------------------------------------------------
+        // Handle include borders type
+        // --------------------------------------------------------------------
+        if (mode_incl_borders == false) {
+            for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+                uint32_t i = *(voi_id + ii);
+                if (*(nii_rim_data + i) != 3) {
+                    *(thickness_data + i) = 0;
+                }
+            }
+        }
+        save_output_nifti(fout, "thickness", thickness, true);
+        free(thickness);
+        free(thickness_data);
     }
-    save_output_nifti(fout, "thickness", innerGM_dist, true);
 
     // ========================================================================
     // Streamline vectors
