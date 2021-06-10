@@ -1103,9 +1103,9 @@ int main(int argc, char*  argv[]) {
             *(hotspots_data + j) -= 1;
         }
 
-        // ====================================================================
+        // --------------------------------------------------------------------
         // Add border voxels
-        // ====================================================================
+        // --------------------------------------------------------------------
         if (mode_incl_borders) {
             if (*(nii_rim_data + i) == 1) {
                 *(normdist_data + i) = 1.;
@@ -1118,6 +1118,39 @@ int main(int argc, char*  argv[]) {
         }
     }
 
+    // ------------------------------------------------------------------------
+    // Smooth innerGM & outerGM distances
+    // ------------------------------------------------------------------------
+    // NOTE(Faruk): Renzo wanted this for smoother metric distribution close
+    // When close to borders. Otherwise the first few voxels are constrained
+    // to voxel-dimension bound distances, due to regular rectangular grid
+    // nature of the volume data structure.
+    cout << "\n  Start mildly smoothing inner and outer GM distances..." << endl;
+
+    // Add extremum values to non GM voxels
+    // NOTE(Faruk): This is important to reduce dynamic range shrinkage in
+    // iterative smoothing (averaging pulls down extremes near borders).
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) == 1) {  // outer GM
+            *(normdist_data + i) = 1.;
+        } else if  (*(nii_rim_data + i) == 2) {  // inner GM
+            *(normdist_data + i) = 0.;
+        }
+    }
+
+    // Temporary binary mask for iterative smoothing
+    nifti_image* temp_mask = copy_nifti_as_int16(nii_rim);
+    int16_t* temp_mask_data = static_cast<int16_t*>(temp_mask->data);
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) != 0) {
+            *(temp_mask_data + i) = 1;
+        }
+    }
+    normdist = iterative_smoothing(normdist, 3, temp_mask, 1);
+    normdist_data = static_cast<float*>(normdist->data);
+    free(temp_mask_data);
+    free(temp_mask);
+    // ------------------------------------------------------------------------
 
     save_output_nifti(fout, "metric_equidist", normdist);
     save_output_nifti(fout, "layers_equidist", nii_layers, true);
@@ -1384,6 +1417,7 @@ int main(int argc, char*  argv[]) {
         nifti_image* equivol_factors_smooth = iterative_smoothing(
             equivol_factors, iter_smooth, nii_rim, 3);
         float* equivol_factors_smooth_data = static_cast<float*>(equivol_factors_smooth->data);
+        free(equivol_factors);
 
         if (mode_debug) {
             save_output_nifti(fout, "equivol_factors_smooth", equivol_factors_smooth, false);
