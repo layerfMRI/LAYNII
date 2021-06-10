@@ -1119,7 +1119,7 @@ int main(int argc, char*  argv[]) {
     }
 
     // ------------------------------------------------------------------------
-    // Smooth innerGM & outerGM distances
+    // Smooth metric file
     // ------------------------------------------------------------------------
     // NOTE(Faruk): Renzo wanted this for smoother metric distribution close
     // When close to borders. Otherwise the first few voxels are constrained
@@ -1492,6 +1492,40 @@ int main(int argc, char*  argv[]) {
             }
 
         }
+        // ------------------------------------------------------------------------
+        // Smooth metric file
+        // ------------------------------------------------------------------------
+        // NOTE(Faruk): Renzo wanted this for smoother metric distribution close
+        // When close to borders. Otherwise the first few voxels are constrained
+        // to voxel-dimension bound distances, due to regular rectangular grid
+        // nature of the volume data structure.
+        cout << "\n  Start mildly smoothing inner and outer GM distances..." << endl;
+
+        // Add extremum values to non GM voxels
+        // NOTE(Faruk): This is important to reduce dynamic range shrinkage in
+        // iterative smoothing (averaging pulls down extremes near borders).
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(nii_rim_data + i) == 1) {  // outer GM
+                *(normdistdiff_data + i) = 1.;
+            } else if  (*(nii_rim_data + i) == 2) {  // inner GM
+                *(normdistdiff_data + i) = 0.;
+            }
+        }
+
+        // Temporary binary mask for iterative smoothing
+        nifti_image* temp_mask = copy_nifti_as_int16(nii_rim);
+        int16_t* temp_mask_data = static_cast<int16_t*>(temp_mask->data);
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(nii_rim_data + i) != 0) {
+                *(temp_mask_data + i) = 1;
+            }
+        }
+        normdistdiff = iterative_smoothing(normdistdiff, 3, temp_mask, 1);
+        normdistdiff_data = static_cast<float*>(normdistdiff->data);
+        free(temp_mask_data);
+        free(temp_mask);
+        // ------------------------------------------------------------------------
+
         save_output_nifti(fout, "metric_equivol", normdistdiff);
 
         if (mode_debug) {
