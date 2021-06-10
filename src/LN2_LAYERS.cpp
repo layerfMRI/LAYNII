@@ -1089,32 +1089,11 @@ int main(int argc, char*  argv[]) {
             // Difference of normalized distances
             *(normdistdiff_data + i) = (dist1 - dist2) / total_dist;
 
-            // Cast distances to integers as number of desired layers
-            if (dist_normalized != 0) {
-                *(nii_layers_data + i) = ceil(nr_layers * dist_normalized);
-            } else {
-                *(nii_layers_data + i) = 1;
-            }
-
             // Count inner and outer GM anchor voxels
             j = *(innerGM_id_data + i);
             *(hotspots_data + j) += 1;
             j = *(outerGM_id_data + i);
             *(hotspots_data + j) -= 1;
-        }
-
-        // --------------------------------------------------------------------
-        // Add border voxels
-        // --------------------------------------------------------------------
-        if (mode_incl_borders) {
-            if (*(nii_rim_data + i) == 1) {
-                *(normdist_data + i) = 1.;
-                *(nii_layers_data + i) = nr_layers;
-            }
-            if (*(nii_rim_data + i) == 2) {
-                *(normdist_data + i) = std::numeric_limits<float>::min();
-                *(nii_layers_data + i) = 1;
-            }
         }
     }
 
@@ -1151,7 +1130,33 @@ int main(int argc, char*  argv[]) {
     free(temp_mask_data);
     free(temp_mask);
     // ------------------------------------------------------------------------
-
+    // Quantize metric file to get layers
+    // ------------------------------------------------------------------------
+    for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+        uint32_t i = *(voi_id + ii);
+        *(nii_layers_data + i) = ceil(*(normdist_data + i) * nr_layers);
+    }
+    // ------------------------------------------------------------------------
+    // Handle include borders type
+    // ------------------------------------------------------------------------
+    for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+        uint32_t i = *(voi_id + ii);
+        if (mode_incl_borders) {
+            if (*(nii_rim_data + i) == 1) {
+                *(nii_layers_data + i) = nr_layers;
+                *(normdist_data + i) = 1;
+            } else if (*(nii_rim_data + i) == 2) {
+                *(nii_layers_data + i) = 1;
+                *(normdist_data + i) = std::numeric_limits<float>::min();
+            }
+        } else {
+            if (*(nii_rim_data + i) != 3) {
+                *(nii_layers_data + i) = 0;
+                *(normdist_data + i) = 0;
+            }
+        }
+    }
+    // ------------------------------------------------------------------------
     save_output_nifti(fout, "metric_equidist", normdist);
     save_output_nifti(fout, "layers_equidist", nii_layers, true);
 
@@ -1448,24 +1453,12 @@ int main(int argc, char*  argv[]) {
                 // Difference of normalized distances (used in finding midGM)
                 *(normdistdiff_data + i) = d1_new - d2_new;
 
-                // Cast distances to integers as number of desired layers
-                if (d1_new != 0 && isfinite(d1_new)) {
-                    *(nii_layers_data + i) =  ceil(nr_layers * d1_new);
-                } else {
-                    *(nii_layers_data + i) = 1;
-                }
-            }
-
-            // ================================================================
-            // Add border voxels
-            // ================================================================
-            if (mode_incl_borders) {
-                if (*(nii_rim_data + i) == 1) {
-                    *(nii_layers_data + i) = nr_layers;
-                }
-                if (*(nii_rim_data + i) == 2) {
-                    *(nii_layers_data + i) = 1;
-                }
+                // // Cast distances to integers as number of desired layers
+                // if (d1_new != 0 && isfinite(d1_new)) {
+                //     *(nii_layers_data + i) =  ceil(nr_layers * d1_new);
+                // } else {
+                //     *(nii_layers_data + i) = 1;
+                // }
             }
         }
 
@@ -1479,22 +1472,10 @@ int main(int argc, char*  argv[]) {
                 *(normdistdiff_data + i) /= 2;
                 *(normdistdiff_data + i) += 0.5;
             }
-            // ================================================================
-            // Add border voxels
-            // ================================================================
-            if (mode_incl_borders) {
-                if (*(nii_rim_data + i) == 1) {
-                    *(normdistdiff_data + i) = 1.;
-                }
-                if (*(nii_rim_data + i) == 2) {
-                    *(normdistdiff_data + i) = 2.93874e-39;
-                }
-            }
-
         }
-        // ------------------------------------------------------------------------
+        // --------------------------------------------------------------------
         // Smooth metric file
-        // ------------------------------------------------------------------------
+        // --------------------------------------------------------------------
         // NOTE(Faruk): Renzo wanted this for smoother metric distribution close
         // When close to borders. Otherwise the first few voxels are constrained
         // to voxel-dimension bound distances, due to regular rectangular grid
@@ -1524,13 +1505,37 @@ int main(int argc, char*  argv[]) {
         normdistdiff_data = static_cast<float*>(normdistdiff->data);
         free(temp_mask_data);
         free(temp_mask);
-        // ------------------------------------------------------------------------
-
-        save_output_nifti(fout, "metric_equivol", normdistdiff);
-
-        if (mode_debug) {
-            save_output_nifti(fout, "normdistdiff_equivol", normdistdiff, false);
+        // --------------------------------------------------------------------
+        // Quantize metric file to get layers
+        // --------------------------------------------------------------------
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);
+            *(nii_layers_data + i) = ceil(*(normdistdiff_data + i) * nr_layers);
         }
+
+        // --------------------------------------------------------------------
+        // Handle include borders type
+        // --------------------------------------------------------------------
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);
+            if (mode_incl_borders) {
+                if (*(nii_rim_data + i) == 1) {
+                    *(nii_layers_data + i) = nr_layers;
+                    *(normdistdiff_data + i) = 1;
+                } else if (*(nii_rim_data + i) == 2) {
+                    *(nii_layers_data + i) = 1;
+                    *(normdistdiff_data + i) = std::numeric_limits<float>::min();
+                }
+            } else {
+                if (*(nii_rim_data + i) != 3) {
+                    *(nii_layers_data + i) = 0;
+                    *(normdistdiff_data + i) = 0;
+                }
+            }
+        }
+        // --------------------------------------------------------------------
+        save_output_nifti(fout, "metric_equivol", normdistdiff);
+        save_output_nifti(fout, "layers_equivol", nii_layers);
 
         // ====================================================================
         // Middle gray matter for equi-volume
