@@ -32,6 +32,7 @@ int show_help(void) {
     "                      Can only be used together with 'control_points' CASE I.\n"
     "    -incl_borders   : (Conditional) Include borders as if they are labeled with 3.\n"
     "    -norms          : (Optional) Save L2 and Linf norm of the UV coordinates.\n"
+    "    -angles         : (Optional) Save angles in radians and 4 quadrants.\n"
     "    -debug          : (Optional) Save extra intermediate outputs.\n"
     "    -output         : (Optional) Output basename for all outputs.\n"
     "\n"
@@ -49,7 +50,7 @@ int main(int argc, char*  argv[]) {
     float thr_radius = 10;
     int ac;
     bool mode_debug = false, mode_mask=true, mode_incl_borders = false;
-    bool mode_norms = false;
+    bool mode_norms = false, mode_angles=false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -2878,6 +2879,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Update perimeter mask using norm
     // ========================================================================
+    cout << "\n  Updating perimeter using L2 norm..." << endl;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(flood_dist_data + i) != 0) {
             if (*(flood_dist_data + i) < thr_radius) {
@@ -3071,8 +3073,33 @@ int main(int argc, char*  argv[]) {
         // Reset switch
         switch_border = false;
     }
+    // Update perimeter voxels
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        *(perimeter_data + i) = *(flood_step_data + i);
+    }
+    save_output_nifti(fout, "perimeter_chunk", perimeter, true);
 
-    save_output_nifti(fout, "perimeter_chunk", flood_step, true);
+    // ========================================================================
+    // Convert pin axes from 4D nifti into 3D
+    // ========================================================================
+    cout << "\n  Start preparing axes output (used for quality control)..." << endl;
+    for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
+        i = *(voi_id2 + iii);
+
+        if (*(pin_axes_data + nr_voxels*0 + i) != 0
+            && *(pin_axes_data + nr_voxels*1 + i) != 0) {  // Origin
+            *(perimeter_data + i) = 3;
+        } else if (*(pin_axes_data + nr_voxels*0 + i) != 0) {  // U axis
+            *(perimeter_data + i) = 4;
+        } else if (*(pin_axes_data + nr_voxels*1 + i) != 0) {  // V axis
+            *(perimeter_data + i) = 5;
+        }
+
+        // Mask out voxels that are not middle gray matter
+        if (*(control_points_data + i) == 0) {
+            *(perimeter_data + i) = 0;
+        }
+    }
 
     // ========================================================================
     // Mask out coordinates beyond periphery radius
@@ -3081,54 +3108,44 @@ int main(int argc, char*  argv[]) {
         cout << "\n  Masking outputs..." << endl;
         for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
             i = *(voi_id2 + iii);
-
-            // Convert pin axes from 4D nifti into 3D
-            if (*(pin_axes_data + nr_voxels*0 + i) != 0 && *(pin_axes_data + nr_voxels*1 + i) != 0) {
-                *(flood_step_data + i) = 3;
-            } else if (*(pin_axes_data + nr_voxels*0 + i) != 0) {
-                *(flood_step_data + i) = 1;
-            } else if (*(pin_axes_data + nr_voxels*1 + i) != 0) {
-                *(flood_step_data + i) = 2;
-            } else {
-                *(flood_step_data + i) = 0;
-            }
-
             // Zero values outside of perimeter chunk
-            if (*(perimeter_data + i) == 0) {
+            if (*(flood_step_data + i) == 0) {
                 *(pin_coords_data + nr_voxels*0 + i) = 0;
                 *(pin_coords_data + nr_voxels*1 + i) = 0;
-                *(flood_step_data + i) = 0;
+                *(perimeter_data + i) = 0;
             }
         }
     }
-    save_output_nifti(fout, "UV_axes", flood_step, true);
+
+    save_output_nifti(fout, "UV_axes", perimeter, true);
     save_output_nifti(fout, "UV_coordinates", pin_coords, true);
 
     // ========================================================================
     // Compute angles & quadrants
     // ========================================================================
-    cout << "\n  Computing angles (in radians) and quadrants..." << endl;
-    for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
-        i = *(voi_id2 + iii);
-        // Only compute for within the masked region
-        if (*(pin_coords_data + i) != 0) {
-            float coord1 = *(pin_coords_data + nr_voxels*0 + i);
-            float coord2 = *(pin_coords_data + nr_voxels*1 + i);
-            // Angles in radians (0 to 2*pi)
-            float angle = atan2(coord1, coord2) + PI;
-            *(flood_dist_data + i) = angle;  // Repurposing nifti object
-            // Derive quadrants from angles
-            angle *= 2 / PI;
-            float quadrant = floor(angle + 1);
-            *(flood_step_data + i) = static_cast<int32_t>(quadrant);
-        } else {
-            *(flood_dist_data + i) = 0;
-            *(flood_step_data + i) = 0;
+    if (mode_angles) {
+        cout << "\n  Computing angles (in radians) and quadrants..." << endl;
+        for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
+            i = *(voi_id2 + iii);
+            // Only compute for within the masked region
+            if (*(pin_coords_data + i) != 0) {
+                float coord1 = *(pin_coords_data + nr_voxels*0 + i);
+                float coord2 = *(pin_coords_data + nr_voxels*1 + i);
+                // Angles in radians (0 to 2*pi)
+                float angle = atan2(coord1, coord2) + PI;
+                *(flood_dist_data + i) = angle;  // Repurposing nifti object
+                // Derive quadrants from angles
+                angle *= 2 / PI;
+                float quadrant = floor(angle + 1);
+                *(flood_step_data + i) = static_cast<int32_t>(quadrant);
+            } else {
+                *(flood_dist_data + i) = 0;
+                *(flood_step_data + i) = 0;
+            }
         }
+        save_output_nifti(fout, "UV_radians", flood_dist, true);
+        save_output_nifti(fout, "UV_quadrants", flood_step, true);
     }
-
-    save_output_nifti(fout, "UV_radians", flood_dist, true);
-    save_output_nifti(fout, "UV_quadrants", flood_step, true);
 
     cout << "\n  Finished." << endl;
     return 0;
