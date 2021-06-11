@@ -37,6 +37,7 @@ int show_help(void) {
     "    -output         : (Optional) Output basename for all outputs.\n"
     "\n"
     "Notes:\n"
+    "    - Outputs of this program is often used with LN2_PATCH_FLATTEN.\n"
     "    - You can find further explanation of this algorithm at:\n"
     "      <https://thingsonthings.org/ln2_multilaterate>\n"
     "\n");
