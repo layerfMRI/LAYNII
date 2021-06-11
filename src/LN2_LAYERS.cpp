@@ -1101,7 +1101,7 @@ int main(int argc, char*  argv[]) {
     // When close to borders. Otherwise the first few voxels are constrained
     // to voxel-dimension bound distances, due to regular rectangular grid
     // nature of the volume data structure.
-    cout << "\n  Start mildly smoothing inner and outer GM distances..." << endl;
+    cout << "\n  Start mildly smoothing equidistant cortical depths..." << endl;
 
     // Add extremum values to non GM voxels
     // NOTE(Faruk): This is important to reduce dynamic range shrinkage in
@@ -1154,6 +1154,7 @@ int main(int argc, char*  argv[]) {
         }
     }
     // ------------------------------------------------------------------------
+    cout << "\n  Saving equidistant metric and layers files..." << endl;
     save_output_nifti(fout, "metric_equidist", normdist);
     save_output_nifti(fout, "layers_equidist", nii_layers, true);
 
@@ -1477,7 +1478,7 @@ int main(int argc, char*  argv[]) {
         // When close to borders. Otherwise the first few voxels are constrained
         // to voxel-dimension bound distances, due to regular rectangular grid
         // nature of the volume data structure.
-        cout << "\n  Start mildly smoothing inner and outer GM distances..." << endl;
+        cout << "\n  Start mildly smoothing equivolume cortical depth..." << endl;
 
         // Add extremum values to non GM voxels
         // NOTE(Faruk): This is important to reduce dynamic range shrinkage in
@@ -1531,6 +1532,7 @@ int main(int argc, char*  argv[]) {
             }
         }
         // --------------------------------------------------------------------
+        cout << "\n  Saving equivolume metric and layers files..." << endl;
         save_output_nifti(fout, "metric_equivol", normdistdiff);
         save_output_nifti(fout, "layers_equivol", nii_layers);
 
