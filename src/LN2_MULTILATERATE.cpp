@@ -23,11 +23,11 @@ int show_help(void) {
     "                      CASE I: One midgm voxel labeled with value '2' indicates\n"
     "                      the centroid/origin of the region of interest.\n"
     "                      CASE II: Four additional voxels labeled with values '3, 4, 5, 6'.\n"
-    "                      The voxels labeled with 3 & 4 determine first axis\n"
-    "                      and the voxels labeled with 5 & 6 determine second axis.\n"
-    "    -radius         : (Conditional) Distance from centroid to determine \n"
-    "                      the other control points. Required to be used together\n"
-    "                      with 'control_points' CASE I.\n"
+    "                      The voxels labeled with 3 & 4 'approximately' determine\n"
+    "                      the first axis and the voxels labeled with 5 & 6 'approximately'\n"
+    "                      determine the second axis.\n"
+    "    -radius         : Distance from 'control point 0' (a.k.a. origin of UV coordinates)\n"
+    "                      the other control points.\n"
     "    -nomask         : (Conditional) Outputs are not masked to fall within radius.\n"
     "                      Can only be used together with 'control_points' CASE I.\n"
     "    -incl_borders   : (Conditional) Include borders as if they are labeled with 3.\n"
@@ -1887,17 +1887,18 @@ int main(int argc, char*  argv[]) {
         }
     }
 
-    // // Adjust origin
-    // if (mode_custom_origin) {
-    //     float origin_U = *(point_coords_data + nr_voxels*0 + control_point0);
-    //     float origin_V = *(point_coords_data + nr_voxels*1 + control_point0);
-    //     for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
-    //         i = *(voi_id2 + iii);
-    //         *(point_coords_data + nr_voxels*0 + i) -= origin_U;
-    //         *(point_coords_data + nr_voxels*1 + i) -= origin_V;
-    //     }
-    //     save_output_nifti(fout, "control_point_coordinates_custom_origin", point_coords, true);
-    // }
+    // ------------------------------------------------------------------------
+    // Adjust origin
+    // ------------------------------------------------------------------------
+    if (mode_custom_origin) {
+        float origin_U = *(point_coords_data + nr_voxels*0 + control_point0);
+        float origin_V = *(point_coords_data + nr_voxels*1 + control_point0);
+        for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
+            i = *(voi_id2 + iii);
+            *(point_coords_data + nr_voxels*0 + i) -= origin_U;
+            *(point_coords_data + nr_voxels*1 + i) -= origin_V;
+        }
+    }
 
     if (mode_debug) {
         save_output_nifti(fout, "control_point_coordinates", point_coords, true);
@@ -2758,6 +2759,7 @@ int main(int argc, char*  argv[]) {
             *(pin_coords_data + nr_voxels * t + i) = *(voronoi_data + i);
         }
     }
+
     if (mode_debug) {
         save_output_nifti(fout, "pin_coordinates", pin_coords, true);
     }
