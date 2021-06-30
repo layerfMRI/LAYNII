@@ -163,7 +163,32 @@ int main(int argc, char*  argv[]) {
     // Fix input datatype issues
     nifti_image* nii_rim = copy_nifti_as_int16(nii1);
     int16_t* nii_rim_data = static_cast<int16_t*>(nii_rim->data);
+    free(nii1);
 
+    // ------------------------------------------------------------------------
+    // NOTE(Faruk): This section is written to constrain voxel visits
+    // Find the subset voxels that will be used many times
+    uint32_t nr_voi = 0;  // Voxels of interest
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) != 0){
+            nr_voi += 1;
+        }
+    }
+    // Allocate memory to only the voxel of interest
+    int32_t* voi_id;
+    voi_id = (int32_t*) malloc(nr_voi*sizeof(int32_t));
+
+    // Fill in indices to be able to remap from subset to full set of voxels
+    uint32_t ii = 0;
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) != 0){
+            *(voi_id + ii) = i;
+            ii += 1;
+        }
+    }
+    cout << "  Voxel sparsity " << (nr_voi / nr_voxels) * 100 << "%"<< endl;
+
+    // ------------------------------------------------------------------------
     // Prepare required nifti images
     nifti_image* nii_layers  = copy_nifti_as_int16(nii_rim);
     int16_t* nii_layers_data = static_cast<int16_t*>(nii_layers->data);
@@ -213,28 +238,6 @@ int main(int argc, char*  argv[]) {
     int32_t* hotspots_data = static_cast<int32_t*>(hotspots->data);
     nifti_image* curvature = copy_nifti_as_float32(nii_layers);
     float* curvature_data = static_cast<float*>(curvature->data);
-
-    // ------------------------------------------------------------------------
-    // NOTE(Faruk): This section is written to constrain voxel visits
-    // Find the subset voxels that will be used many times
-    uint32_t nr_voi = 0;  // Voxels of interest
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_rim_data + i) != 0){
-            nr_voi += 1;
-        }
-    }
-    // Allocate memory to only the voxel of interest
-    int32_t* voi_id;
-    voi_id = (int32_t*) malloc(nr_voi*sizeof(int32_t));
-
-    // Fill in indices to be able to remap from subset to full set of voxels
-    uint32_t ii = 0;
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_rim_data + i) != 0){
-            *(voi_id + ii) = i;
-            ii += 1;
-        }
-    }
 
     // ========================================================================
     // Grow from WM
