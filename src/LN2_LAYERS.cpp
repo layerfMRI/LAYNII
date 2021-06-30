@@ -47,6 +47,7 @@ int show_help(void) {
     "    -incl_borders : (Optional) Include inner and outer gray matter borders\n"
     "                    into the layering. This treats the borders as \n"
     "                    a part of gray matter. Off by default.\n"
+    "    -no_smooth    : (Optional) Disable smoothing on cortical depth metric.\n"
     "    -debug        : (Optional) Save extra intermediate outputs.\n"
     "    -output       : (Optional) Output basename for all outputs.\n"
     "\n"
@@ -66,7 +67,7 @@ int main(int argc, char*  argv[]) {
     uint16_t ac, nr_layers = 3;
     uint16_t iter_smooth = 100;
     bool mode_equivol = false, mode_debug = false, mode_incl_borders = false;
-    bool mode_curvature =false, mode_streamlines = false;
+    bool mode_curvature =false, mode_streamlines = false, mode_smooth = true;
     bool mode_thickness = false;
 
     // Process user options
@@ -109,6 +110,8 @@ int main(int argc, char*  argv[]) {
             mode_thickness = true;
         } else if (!strcmp(argv[ac], "-incl_borders")) {
             mode_incl_borders = true;
+        } else if (!strcmp(argv[ac], "-no_smooth")) {
+            mode_smooth = false;
         } else if (!strcmp(argv[ac], "-debug")) {
             mode_debug = true;
         } else {
@@ -1101,31 +1104,33 @@ int main(int argc, char*  argv[]) {
     // When close to borders. Otherwise the first few voxels are constrained
     // to voxel-dimension bound distances, due to regular rectangular grid
     // nature of the volume data structure.
-    cout << "\n  Start mildly smoothing equidistant cortical depths..." << endl;
+    if (mode_smooth) {
+        cout << "\n  Start mildly smoothing equidistant cortical depths..." << endl;
 
-    // Add extremum values to non GM voxels
-    // NOTE(Faruk): This is important to reduce dynamic range shrinkage in
-    // iterative smoothing (averaging pulls down extremes near borders).
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_rim_data + i) == 1) {  // outer GM
-            *(normdist_data + i) = 1.;
-        } else if  (*(nii_rim_data + i) == 2) {  // inner GM
-            *(normdist_data + i) = 0.;
+        // Add extremum values to non GM voxels
+        // NOTE(Faruk): This is important to reduce dynamic range shrinkage in
+        // iterative smoothing (averaging pulls down extremes near borders).
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(nii_rim_data + i) == 1) {  // outer GM
+                *(normdist_data + i) = 1.;
+            } else if  (*(nii_rim_data + i) == 2) {  // inner GM
+                *(normdist_data + i) = 0.;
+            }
         }
-    }
 
-    // Temporary binary mask for iterative smoothing
-    nifti_image* temp_mask = copy_nifti_as_int16(nii_rim);
-    int16_t* temp_mask_data = static_cast<int16_t*>(temp_mask->data);
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_rim_data + i) != 0) {
-            *(temp_mask_data + i) = 1;
+        // Temporary binary mask for iterative smoothing
+        nifti_image* temp_mask = copy_nifti_as_int16(nii_rim);
+        int16_t* temp_mask_data = static_cast<int16_t*>(temp_mask->data);
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(nii_rim_data + i) != 0) {
+                *(temp_mask_data + i) = 1;
+            }
         }
+        normdist = iterative_smoothing(normdist, 3, temp_mask, 1);
+        normdist_data = static_cast<float*>(normdist->data);
+        free(temp_mask_data);
+        free(temp_mask);
     }
-    normdist = iterative_smoothing(normdist, 3, temp_mask, 1);
-    normdist_data = static_cast<float*>(normdist->data);
-    free(temp_mask_data);
-    free(temp_mask);
     // ------------------------------------------------------------------------
     // Quantize metric file to get layers
     // ------------------------------------------------------------------------
@@ -1478,31 +1483,33 @@ int main(int argc, char*  argv[]) {
         // When close to borders. Otherwise the first few voxels are constrained
         // to voxel-dimension bound distances, due to regular rectangular grid
         // nature of the volume data structure.
-        cout << "\n  Start mildly smoothing equivolume cortical depth..." << endl;
+        if (mode_smooth) {
+            cout << "\n  Start mildly smoothing equivolume cortical depth..." << endl;
 
-        // Add extremum values to non GM voxels
-        // NOTE(Faruk): This is important to reduce dynamic range shrinkage in
-        // iterative smoothing (averaging pulls down extremes near borders).
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
-            if (*(nii_rim_data + i) == 1) {  // outer GM
-                *(normdistdiff_data + i) = 1.;
-            } else if  (*(nii_rim_data + i) == 2) {  // inner GM
-                *(normdistdiff_data + i) = 0.;
+            // Add extremum values to non GM voxels
+            // NOTE(Faruk): This is important to reduce dynamic range shrinkage in
+            // iterative smoothing (averaging pulls down extremes near borders).
+            for (uint32_t i = 0; i != nr_voxels; ++i) {
+                if (*(nii_rim_data + i) == 1) {  // outer GM
+                    *(normdistdiff_data + i) = 1.;
+                } else if  (*(nii_rim_data + i) == 2) {  // inner GM
+                    *(normdistdiff_data + i) = 0.;
+                }
             }
-        }
 
-        // Temporary binary mask for iterative smoothing
-        nifti_image* temp_mask = copy_nifti_as_int16(nii_rim);
-        int16_t* temp_mask_data = static_cast<int16_t*>(temp_mask->data);
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
-            if (*(nii_rim_data + i) != 0) {
-                *(temp_mask_data + i) = 1;
+            // Temporary binary mask for iterative smoothing
+            nifti_image* temp_mask = copy_nifti_as_int16(nii_rim);
+            int16_t* temp_mask_data = static_cast<int16_t*>(temp_mask->data);
+            for (uint32_t i = 0; i != nr_voxels; ++i) {
+                if (*(nii_rim_data + i) != 0) {
+                    *(temp_mask_data + i) = 1;
+                }
             }
+            normdistdiff = iterative_smoothing(normdistdiff, 3, temp_mask, 1);
+            normdistdiff_data = static_cast<float*>(normdistdiff->data);
+            free(temp_mask_data);
+            free(temp_mask);
         }
-        normdistdiff = iterative_smoothing(normdistdiff, 3, temp_mask, 1);
-        normdistdiff_data = static_cast<float*>(normdistdiff->data);
-        free(temp_mask_data);
-        free(temp_mask);
         // --------------------------------------------------------------------
         // Quantize metric file to get layers
         // --------------------------------------------------------------------
