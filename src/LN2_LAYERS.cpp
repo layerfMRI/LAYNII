@@ -44,6 +44,7 @@ int show_help(void) {
     "    -incl_borders : (Optional) Include inner and outer gray matter borders\n"
     "                    into the layering. This treats the borders as \n"
     "                    a part of gray matter. Off by default.\n"
+    "    -no_smooth    : (Optional) Disable smoothing on cortical depth metric.\n"
     "    -debug        : (Optional) Save extra intermediate outputs.\n"
     "    -output       : (Optional) Output basename for all outputs.\n"
     "\n"
@@ -63,7 +64,7 @@ int main(int argc, char*  argv[]) {
     uint16_t ac, nr_layers = 3;
     uint16_t iter_smooth = 100;
     bool mode_equivol = false, mode_debug = false, mode_incl_borders = false;
-    bool mode_curvature =false, mode_streamlines = false;
+    bool mode_curvature =false, mode_streamlines = false, mode_smooth = true;
     bool mode_thickness = false;
 
     // Process user options
@@ -106,6 +107,8 @@ int main(int argc, char*  argv[]) {
             mode_thickness = true;
         } else if (!strcmp(argv[ac], "-incl_borders")) {
             mode_incl_borders = true;
+        } else if (!strcmp(argv[ac], "-no_smooth")) {
+            mode_smooth = false;
         } else if (!strcmp(argv[ac], "-debug")) {
             mode_debug = true;
         } else {
@@ -157,7 +160,32 @@ int main(int argc, char*  argv[]) {
     // Fix input datatype issues
     nifti_image* nii_rim = copy_nifti_as_int16(nii1);
     int16_t* nii_rim_data = static_cast<int16_t*>(nii_rim->data);
+    free(nii1);
 
+    // ------------------------------------------------------------------------
+    // NOTE(Faruk): This section is written to constrain voxel visits
+    // Find the subset voxels that will be used many times
+    uint32_t nr_voi = 0;  // Voxels of interest
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) != 0){
+            nr_voi += 1;
+        }
+    }
+    // Allocate memory to only the voxel of interest
+    int32_t* voi_id;
+    voi_id = (int32_t*) malloc(nr_voi*sizeof(int32_t));
+
+    // Fill in indices to be able to remap from subset to full set of voxels
+    uint32_t ii = 0;
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (*(nii_rim_data + i) != 0){
+            *(voi_id + ii) = i;
+            ii += 1;
+        }
+    }
+    cout << "  Voxel sparsity " << (nr_voi / nr_voxels) * 100 << "%"<< endl;
+
+    // ------------------------------------------------------------------------
     // Prepare required nifti images
     nifti_image* nii_layers  = copy_nifti_as_int16(nii_rim);
     int16_t* nii_layers_data = static_cast<int16_t*>(nii_layers->data);
@@ -207,28 +235,6 @@ int main(int argc, char*  argv[]) {
     int32_t* hotspots_data = static_cast<int32_t*>(hotspots->data);
     nifti_image* curvature = copy_nifti_as_float32(nii_layers);
     float* curvature_data = static_cast<float*>(curvature->data);
-
-    // ------------------------------------------------------------------------
-    // NOTE(Faruk): This section is written to constrain voxel visits
-    // Find the subset voxels that will be used many times
-    uint32_t nr_voi = 0;  // Voxels of interest
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_rim_data + i) != 0){
-            nr_voi += 1;
-        }
-    }
-    // Allocate memory to only the voxel of interest
-    int32_t* voi_id;
-    voi_id = (int32_t*) malloc(nr_voi*sizeof(int32_t));
-
-    // Fill in indices to be able to remap from subset to full set of voxels
-    uint32_t ii = 0;
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_rim_data + i) != 0){
-            *(voi_id + ii) = i;
-            ii += 1;
-        }
-    }
 
     // ========================================================================
     // Grow from WM
@@ -1098,31 +1104,33 @@ int main(int argc, char*  argv[]) {
     // When close to borders. Otherwise the first few voxels are constrained
     // to voxel-dimension bound distances, due to regular rectangular grid
     // nature of the volume data structure.
-    cout << "\n  Start mildly smoothing equidistant cortical depths..." << endl;
+    if (mode_smooth) {
+        cout << "\n  Start mildly smoothing equidistant cortical depths..." << endl;
 
-    // Add extremum values to non GM voxels
-    // NOTE(Faruk): This is important to reduce dynamic range shrinkage in
-    // iterative smoothing (averaging pulls down extremes near borders).
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_rim_data + i) == 1) {  // outer GM
-            *(normdist_data + i) = 1.;
-        } else if  (*(nii_rim_data + i) == 2) {  // inner GM
-            *(normdist_data + i) = 0.;
+        // Add extremum values to non GM voxels
+        // NOTE(Faruk): This is important to reduce dynamic range shrinkage in
+        // iterative smoothing (averaging pulls down extremes near borders).
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(nii_rim_data + i) == 1) {  // outer GM
+                *(normdist_data + i) = 1.;
+            } else if  (*(nii_rim_data + i) == 2) {  // inner GM
+                *(normdist_data + i) = 0.;
+            }
         }
-    }
 
-    // Temporary binary mask for iterative smoothing
-    nifti_image* temp_mask = copy_nifti_as_int16(nii_rim);
-    int16_t* temp_mask_data = static_cast<int16_t*>(temp_mask->data);
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_rim_data + i) != 0) {
-            *(temp_mask_data + i) = 1;
+        // Temporary binary mask for iterative smoothing
+        nifti_image* temp_mask = copy_nifti_as_int16(nii_rim);
+        int16_t* temp_mask_data = static_cast<int16_t*>(temp_mask->data);
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(nii_rim_data + i) != 0) {
+                *(temp_mask_data + i) = 1;
+            }
         }
+        normdist = iterative_smoothing(normdist, 3, temp_mask, 1);
+        normdist_data = static_cast<float*>(normdist->data);
+        free(temp_mask_data);
+        free(temp_mask);
     }
-    normdist = iterative_smoothing(normdist, 3, temp_mask, 1);
-    normdist_data = static_cast<float*>(normdist->data);
-    free(temp_mask_data);
-    free(temp_mask);
     // ------------------------------------------------------------------------
     // Quantize metric file to get layers
     // ------------------------------------------------------------------------
@@ -1475,31 +1483,33 @@ int main(int argc, char*  argv[]) {
         // When close to borders. Otherwise the first few voxels are constrained
         // to voxel-dimension bound distances, due to regular rectangular grid
         // nature of the volume data structure.
-        cout << "\n  Start mildly smoothing equivolume cortical depth..." << endl;
+        if (mode_smooth) {
+            cout << "\n  Start mildly smoothing equivolume cortical depth..." << endl;
 
-        // Add extremum values to non GM voxels
-        // NOTE(Faruk): This is important to reduce dynamic range shrinkage in
-        // iterative smoothing (averaging pulls down extremes near borders).
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
-            if (*(nii_rim_data + i) == 1) {  // outer GM
-                *(normdistdiff_data + i) = 1.;
-            } else if  (*(nii_rim_data + i) == 2) {  // inner GM
-                *(normdistdiff_data + i) = 0.;
+            // Add extremum values to non GM voxels
+            // NOTE(Faruk): This is important to reduce dynamic range shrinkage in
+            // iterative smoothing (averaging pulls down extremes near borders).
+            for (uint32_t i = 0; i != nr_voxels; ++i) {
+                if (*(nii_rim_data + i) == 1) {  // outer GM
+                    *(normdistdiff_data + i) = 1.;
+                } else if  (*(nii_rim_data + i) == 2) {  // inner GM
+                    *(normdistdiff_data + i) = 0.;
+                }
             }
-        }
 
-        // Temporary binary mask for iterative smoothing
-        nifti_image* temp_mask = copy_nifti_as_int16(nii_rim);
-        int16_t* temp_mask_data = static_cast<int16_t*>(temp_mask->data);
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
-            if (*(nii_rim_data + i) != 0) {
-                *(temp_mask_data + i) = 1;
+            // Temporary binary mask for iterative smoothing
+            nifti_image* temp_mask = copy_nifti_as_int16(nii_rim);
+            int16_t* temp_mask_data = static_cast<int16_t*>(temp_mask->data);
+            for (uint32_t i = 0; i != nr_voxels; ++i) {
+                if (*(nii_rim_data + i) != 0) {
+                    *(temp_mask_data + i) = 1;
+                }
             }
+            normdistdiff = iterative_smoothing(normdistdiff, 3, temp_mask, 1);
+            normdistdiff_data = static_cast<float*>(normdistdiff->data);
+            free(temp_mask_data);
+            free(temp_mask);
         }
-        normdistdiff = iterative_smoothing(normdistdiff, 3, temp_mask, 1);
-        normdistdiff_data = static_cast<float*>(normdistdiff->data);
-        free(temp_mask_data);
-        free(temp_mask);
         // --------------------------------------------------------------------
         // Quantize metric file to get layers
         // --------------------------------------------------------------------
