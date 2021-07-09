@@ -23,7 +23,7 @@ int main(int argc, char*  argv[]) {
 
     nifti_image *nii1 = NULL, *nii2 = NULL;
     char *fin1 = NULL, *fin2 = NULL, *fout = NULL;
-    bool mode_smooth = true;
+    bool use_outpath = false, mode_smooth = true;
     int ac;
 
     // Process user options
@@ -50,6 +50,7 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             fout = argv[ac];
+            use_outpath = true;
         } else if (!strcmp(argv[ac], "-no_smooth")) {
             mode_smooth = false;
         } else {
@@ -503,7 +504,7 @@ int main(int argc, char*  argv[]) {
         flood_dist = iterative_smoothing(flood_dist, 3, nii_domain, 1);
     }
 
-    save_output_nifti(fout, "geodistance", flood_dist, true);
+    save_output_nifti(fout, "geodistance", flood_dist, true, use_outpath);
 
     cout << "\n  Finished." << endl;
     return 0;
