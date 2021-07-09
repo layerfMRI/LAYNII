@@ -8,11 +8,12 @@ int show_help(void) {
     "    LN2_GEODISTANCE -domain mask.nii -init points.nii \n"
     "\n"
     "Options:\n"
-    "    -help   : Show this help.\n"
-    "    -init   : Initial voxels that denote 0 distance.\n"
-    "    -domain : Set of voxels in which the distance will be measured.\n"
-    "              All non-zero voxels will be considered.\n"
-    "    -output : (Optional) Output basename for all outputs.\n"
+    "    -help      : Show this help.\n"
+    "    -init      : Initial voxels that denote 0 distance.\n"
+    "    -domain    : Set of voxels in which the distance will be measured.\n"
+    "                 All non-zero voxels will be considered.\n"
+    "    -no_smooth : (Optional) Disable smoothing on cortical depth metric.\n"
+    "    -output    : (Optional) Output basename for all outputs.\n"
     "\n"
     "\n");
     return 0;
@@ -22,6 +23,7 @@ int main(int argc, char*  argv[]) {
 
     nifti_image *nii1 = NULL, *nii2 = NULL;
     char *fin1 = NULL, *fin2 = NULL, *fout = NULL;
+    bool mode_smooth = true;
     int ac;
 
     // Process user options
@@ -48,6 +50,8 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             fout = argv[ac];
+        } else if (!strcmp(argv[ac], "-no_smooth")) {
+            mode_smooth = false;
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -492,6 +496,11 @@ int main(int argc, char*  argv[]) {
             }
         }
         grow_step += 1;
+    }
+
+    if (mode_smooth) {
+        cout << "\n  Start mildly smoothing distances..." << endl;
+        flood_dist = iterative_smoothing(flood_dist, 3, nii_domain, 1);
     }
 
     save_output_nifti(fout, "geodistance", flood_dist, true);
