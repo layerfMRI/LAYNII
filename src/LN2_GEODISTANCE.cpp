@@ -136,7 +136,7 @@ int main(int argc, char*  argv[]) {
             nr_voi += 1;
         }
     }
-    cout << "  Nr. midgm voxels = " << nr_voi << endl;
+    cout << "  Domain voxels = " << nr_voi << endl;
 
     // Allocate memory to only the voxel of interest
     int32_t* voi_id;
