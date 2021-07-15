@@ -27,10 +27,10 @@ int show_help(void) {
     "                 .nii.gz, and path if needed. Overwrites existing files.\n"
     "\n"
     "Notes:\n"
-    "    - Here it is assumed that BOLD and VASO refer to the double TR: \n"
+    "    - It is assumed that BOLD and VASO refer to the double TR: \n"
     "        3dUpsample -overwrite -datum short -prefix Nulled_intemp.nii -n 2 -input Nulled.nii \n"
     "        3dUpsample -overwrite -datum short -prefix BOLD_intemp.nii -n 2 -input BOLD.nii \n"
-    "    - Here I assume that they have the same spatiotemporal dimensions. \n"
+    "    - It is assumed that they have the same spatiotemporal dimensions. \n"
     "\n");
     return 0;
 }
@@ -204,14 +204,14 @@ int main(int argc, char * argv[]) {
                 *(nii_boco_vaso_data + i) = 2;
             }
         }
-        
+
             // Replace nans with zeros
         for (int i = 0; i < nr_voxels; ++i) {
             if (*(correl_file_data + i)!= *(correl_file_data + i)) {
                *(correl_file_data + i) = 0;
             }
         }
-        
+
         save_output_nifti(fout, "shift_correlated", correl_file, false);
     }
 
