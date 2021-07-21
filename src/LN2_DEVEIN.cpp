@@ -249,7 +249,7 @@ int main(int argc, char* argv[]) {
                     if (layer_max <= 1.0) {  // Indicates metric file is used
                         l = 1 - *(nii_layer_data + i);
                     } else {
-                        l = 1 - *(nii_layer_data + i) * layer_max;
+                        l = 1 - *(nii_layer_data + i) / layer_max; // bug fix by ppxdm4 https://github.com/layerfMRI/LAYNII/issues/31
                     }
 
                     *(nii_output_data + j) = *(nii_input_data + j) * l;
