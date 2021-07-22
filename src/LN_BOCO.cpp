@@ -3,41 +3,43 @@
 
 int show_help(void) {
     printf(
-    "LN_BOCO: This program does BOLD correction in SS-SI VASO. It does \n"
-    "         the division of nulled and not nulled imaged. \n"
+    "LN_BOCO: This program does BOLD correction in SS-SI VASO. It does\n"
+    "         the division of nulled and not nulled imaged.\n"
     "\n"
     "Usage:\n"
-    "    LN_BOCO -Nulled Nulled_intemp.nii -BOLD BOLD_intemp.nii \n"
-    "    LN_BOCO -Nulled Nulled_intemp.nii -BOLD BOLD_intemp.nii -shift \n"
-    "    LN_BOCO -Nulled Nulled_intemp.nii -BOLD BOLD_intemp.nii -trialBOCO 24 \n"
+    "    LN_BOCO -Nulled Nulled_intemp.nii -BOLD BOLD_intemp.nii\n"
+    "    LN_BOCO -Nulled Nulled_intemp.nii -BOLD BOLD_intemp.nii -shift\n"
+    "    LN_BOCO -Nulled Nulled_intemp.nii -BOLD BOLD_intemp.nii -trialBOCO 24\n"
     "    \n"
     "Test application in the test_data folder would be:\n"
     "    ../LN_BOCO -Nulled lo_Nulled_intemp.nii -BOLD lo_BOLD_intemp.nii -trialBOCO 40 -shift\n"
     "\n"
     "Options:\n"
     "    -help      : Show this help.\n"
-    "    -Nulled    : Nulled (VASO) time series that needs to be BOLD \n"
+    "    -Nulled    : Nulled (VASO) time series that needs to be BOLD\n"
     "               : corrected.\n"
     "    -BOLD      : Reference BOLD time series without a VASO contrast.\n"
-    "    -shift     : (Optional) Estimate the correlation of BOLD and VASO \n"
+    "    -shift     : (Optional) Estimate the correlation of BOLD and VASO\n"
     "                 for temporal shifts.\n"
-    "    -trialBOCO : First average trials and then do the BOLD correction. \n"
+    "    -trialBOCO : First average trials and then do the BOLD correction.\n"
     "                 The parameter is the trial duration in TRs.\n"
+    "    -alt       : (Optional, !EXPERIMENTAL!) Alternative BOLD correction.\n"
+    "                 Guaranteed to give values within 0-1 range.\n"
     "    -output    : (Optional) Output basename, including .nii or\n"
     "                 .nii.gz, and path if needed. Overwrites existing files.\n"
     "\n"
     "Notes:\n"
-    "    - It is assumed that BOLD and VASO refer to the double TR: \n"
-    "        3dUpsample -overwrite -datum short -prefix Nulled_intemp.nii -n 2 -input Nulled.nii \n"
-    "        3dUpsample -overwrite -datum short -prefix BOLD_intemp.nii -n 2 -input BOLD.nii \n"
-    "    - It is assumed that they have the same spatiotemporal dimensions. \n"
+    "    - It is assumed that BOLD and VASO refer to the double TR:\n"
+    "        3dUpsample -overwrite -datum short -prefix Nulled_intemp.nii -n 2 -input Nulled.nii\n"
+    "        3dUpsample -overwrite -datum short -prefix BOLD_intemp.nii -n 2 -input BOLD.nii\n"
+    "    - It is assumed that they have the same spatiotemporal dimensions.\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
     char *fin_1 = NULL, *fin_2 = NULL, *fout = (char*)"";
-    bool use_outpath = true;
+    bool use_outpath = true, mode_alt = false;
     int ac, shift = 0;
     int trialdur = 0;
     if (argc < 2) return show_help();
@@ -74,6 +76,8 @@ int main(int argc, char * argv[]) {
             }
             use_outpath = false;
             fout = argv[ac];
+        } else if (!strcmp(argv[ac], "-alt")) {
+            mode_alt = true;
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -128,6 +132,7 @@ int main(int argc, char * argv[]) {
 
     // ========================================================================
     // Handle scaling factor effects
+    // TODO(Faruk): I am not sure we need this part anymore. Need to check.
     float scl_slope1=nii_nulled->scl_slope, scl_slope2=nii_bold->scl_slope;
     if (scl_slope1 != 0 || scl_slope2 != 0) {
         for (int i = 0; i != nr_voxels; ++i) {
@@ -144,23 +149,64 @@ int main(int argc, char * argv[]) {
     nii_boco_vaso->scl_slope = 1.;
 
     // ========================================================================
-    // AVERAGE across Trials
-    for (int i = 0; i != nr_voxels; ++i) {
-        *(nii_boco_vaso_data + i) = *(nii_nulled_data + i) / (*(nii_bold_data + i));
-    }
+    // BOLD correction
+    // ========================================================================
+    if (mode_alt) {
+        int nr_invalid_voxels = 0, nr_zero_voxels = 0;
+        for (int i = 0; i != nr_voxels; ++i) {
+            float nc = *(nii_nulled_data + i);  // Nulled condition
+            float nn = (*(nii_bold_data + i));  // Not nulled condition (a.k.a BOLD)
 
-    // Clean VASO values that are unrealistic
-    for (int i = 0; i != nr_voxels; ++i) {
-        if (*(nii_boco_vaso_data + i) <= 0) {
-            *(nii_boco_vaso_data + i) = 0;
+            float S_ex = nc;  // Approximately extravascular signal
+            float S_in = nn - nc;  // Approximately intravascular signal
+
+            if (nc <= 0 || nn <= 0) {
+                *(nii_boco_vaso_data + i) = 0;
+                nr_zero_voxels += 1;
+            }  else {
+                if (S_in <= 0) {
+                    // VASO assumptions invalid S_in should not be negative.
+                    S_in *= -1;
+                    nr_invalid_voxels += 1;
+                }
+                // Compute relative contribution (always between -1 to 1)
+                *(nii_boco_vaso_data + i) =  S_ex / (S_ex + S_in);
+            }
         }
-        if (*(nii_boco_vaso_data + i) >= 5) {
-            *(nii_boco_vaso_data + i) = 5;
+        float term1 = static_cast<float>(nr_invalid_voxels);
+        float term2 = static_cast<float>(nr_voxels - nr_zero_voxels);
+
+        cout << "  Voxels with invalid VASO assumption:" << endl;
+        cout << "    "
+            << nr_invalid_voxels << "/" << nr_voxels - nr_zero_voxels
+            << "\n    " << (term1 / term2) * 100 << "%\n" << endl;
+    } else {
+
+        for (int i = 0; i != nr_voxels; ++i) {
+            float nc = *(nii_nulled_data + i);  // Nulled condition
+            float nn = *(nii_bold_data + i);  // Not nulled condition (a.k.a BOLD)
+
+            if (nc <= 0 || nn <= 0) {  // Skip masked-out or invalid voxels
+                *(nii_boco_vaso_data + i) = 0;
+            }  else {  // BOLD correction is happening here
+                *(nii_boco_vaso_data + i) = nc / nn;
+            }
+        }
+
+        // Clip VASO values that are unrealistic
+        for (int i = 0; i != nr_voxels; ++i) {
+            if (*(nii_boco_vaso_data + i) <= 0) {
+                *(nii_boco_vaso_data + i) = 0;
+            }
+            if (*(nii_boco_vaso_data + i) >= 5) {
+                *(nii_boco_vaso_data + i) = 5;
+            }
         }
     }
 
     // ========================================================================
     // Shift
+    // ========================================================================
     if (shift == 1) {
         nifti_image* correl_file  = nifti_copy_nim_info(nii_nulled);
         correl_file->nt = 7;
@@ -217,6 +263,7 @@ int main(int argc, char * argv[]) {
 
     // ========================================================================
     // Trial average
+    // ========================================================================
     if (trialdur != 0) {
         cout << "  Doing BOLD correction after trial average..." << endl;
         cout << "    Trial duration is " << trialdur
