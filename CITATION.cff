@@ -60,5 +60,6 @@ authors:
     orcid: https://orcid.org/0000-0001-7761-3727
 
 title: "LayNii: A software suite for layer-fMRI"
+version: 2.1.0
 doi: https://doi.org/10.1016/j.neuroimage.2021.118091
 date-released: 2021-07-16
