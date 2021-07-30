@@ -1,0 +1,66 @@
+cff-version: 1.1.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Huber
+    given-names: Laurentius (Renzo)
+    orcid: https://orcid.org/0000-0002-3291-2202
+
+  - family-names: Benedikt
+    given-names: Poser
+    orcid: https://orcid.org/0000-0001-8190-4367
+
+  - family-names: Bandettini
+    given-names: Peter
+    orcid: https://orcid.org/0000-0001-9038-4746
+
+  - family-names: Arora
+    given-names: Kabir
+    orcid: https://orcid.org/0000-0003-3978-9443
+
+  - family-names: Wagstyl
+    given-names: Konrad
+    orcid: https://orcid.org/0000-0003-3439-5808
+
+  - family-names: Cho
+    given-names: Shinho
+    orcid: https://orcid.org/0000-0002-2849-188X
+
+  - family-names: Goense
+    given-names: Jozien
+
+  - family-names: Nothnagel
+    given-names: Nils
+
+  - family-names: Morgan
+    given-names: Andrew Tyler
+    orcid: https://orcid.org/0000-0001-6017-2179
+
+  - family-names: van den Hurk
+    given-names: Job
+    orcid: https://orcid.org/0000-0002-5507-7860
+
+  - family-names: Müller
+    given-names: Anna Katharina
+    orcid: https://orcid.org/0000-0003-2176-0861
+
+  - family-names: Reynolds
+    given-names: Richard
+    orcid: https://orcid.org/0000-0002-7267-5563
+
+  - family-names: Glen
+    given-names: Daniel
+    orcid: https://orcid.org/0000-0001-8456-5647
+
+  - family-names: Goebel
+    given-names: Rainer
+    orcid: https://orcid.org/0000-0003-1780-2467
+
+  - family-names: Gulban
+    given-names: Omer Faruk
+    orcid: https://orcid.org/0000-0001-7761-3727
+
+title: "LayNii: A software suite for layer-fMRI"
+version: 2.1.0
+doi: https://doi.org/10.1016/j.neuroimage.2021.118091
+date-released: 2021-07-16
+
