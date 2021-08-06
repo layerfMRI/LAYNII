@@ -200,7 +200,7 @@ int main(int argc, char*  argv[]) {
 
     // ========================================================================
     // Prepare outputs
-    nifti_image* out_cells = copy_nifti_as_int32(nii_input);
+    nifti_image* out_cells = copy_nifti_as_int32(domain);
     int32_t* out_cells_data = static_cast<int32_t*>(out_cells->data);
 
     for (int i = 0; i != nr_voxels; ++i) {
@@ -329,14 +329,18 @@ int main(int argc, char*  argv[]) {
         int k = cell_idx_d * nr_cells + j;
 
         // Write cell index to output
-        *(out_cells_data + i) = j;
+        *(out_cells_data + i) = j + 1;
 
         // Write visited voxel value to flat cell
         *(flat_values_data + k) += *(nii_input_data + i);
         *(flat_density_data + k) += 1;
     }
 
-    save_output_nifti(fout, "UV_cells", out_cells, true);
+    // Add bin dimmensions into the output tag
+    std::ostringstream tag_u, tag_v;
+    tag_u << bins_u;
+    tag_v << bins_v;
+    save_output_nifti(fout, "UV_cells"+tag_u.str()+"x"+tag_v.str(), out_cells, true);
 
     // Take the mean of each projected cell value
     for (int i = 0; i != nr_bins; ++i) {
