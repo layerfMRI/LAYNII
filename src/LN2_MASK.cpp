@@ -35,7 +35,7 @@ int show_help(void) {
     "\n"
     "Notes:\n"
     "    - This refers to layerfMRI artifact here: \n"
-    "        TODO: <add link here>\n"
+    "        https://twitter.com/layerfMRI/status/1375067409523093513\n"
     "    - Note that columns and scores are expected to be positive numbers \n"
     "\n");
     return 0;
