@@ -345,7 +345,7 @@ int main(int argc, char*  argv[]) {
     std::ostringstream tag_u, tag_v;
     tag_u << bins_u;
     tag_v << bins_v;
-    save_output_nifti(fout, "UV_cells"+tag_u.str()+"x"+tag_v.str(), out_cells, true);
+    save_output_nifti(fout, "UV_bins"+tag_u.str()+"x"+tag_v.str(), out_cells, true);
 
     // Take the mean of each projected cell value
     for (int i = 0; i != nr_bins; ++i) {
