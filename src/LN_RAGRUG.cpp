@@ -10,6 +10,8 @@ int show_help(void) {
     "    This program is inspired by Kendrick Kay's way of visualizing \n"
     "    which position at the surface comes from which voxel. See Fig. 4 of\n"
     "    <https://www.biorxiv.org/content/early/2018/06/03/337667>.\n"
+    "    Example usage is here: https://twitter.com/layerfMRI/status/1015239308826079232 .\n"
+    "    Name origin of Ragrug comes from here: https://twitter.com/MrPrudence/status/1437529658153648128/photo/2 .\n"
     "\n"
     "Usage:\n"
     "    LN_RAGRUG -input any_file.nii \n"
