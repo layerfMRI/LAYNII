@@ -345,7 +345,7 @@ int main(int argc, char*  argv[]) {
     std::ostringstream tag_u, tag_v;
     tag_u << bins_u;
     tag_v << bins_v;
-    save_output_nifti(fout, "UV_bins"+tag_u.str()+"x"+tag_v.str(), out_cells, true);
+    save_output_nifti(fout, "UV_bins_"+tag_u.str()+"x"+tag_v.str(), out_cells, true);
 
     // Take the mean of each projected cell value
     for (int i = 0; i != nr_bins; ++i) {
@@ -354,9 +354,9 @@ int main(int argc, char*  argv[]) {
         }
     }
 
-    save_output_nifti(fout, "flat_domain", flat_domain, true);
-    save_output_nifti(fout, "flat_values", flat_values, true);
-    save_output_nifti(fout, "flat_density", flat_density, true);
+    save_output_nifti(fout, "flat_domain_"+tag_u.str()+"x"+tag_v.str(), flat_domain, true);
+    save_output_nifti(fout, "flat_values_"+tag_u.str()+"x"+tag_v.str(), flat_values, true);
+    save_output_nifti(fout, "flat_density_"+tag_u.str()+"x"+tag_v.str(), flat_density, true);
 
     // ========================================================================
     // Optional Voronoi filling for empty flat bins
@@ -722,8 +722,8 @@ int main(int argc, char*  argv[]) {
                 *(flat_values_data + i) = 0;
             }
         }
-        save_output_nifti(fout, "flat_values_voronoi", flat_values, true);
-        save_output_nifti(fout, "flat_domain_voronoi", flat_domain, true);
+        save_output_nifti(fout, "flat_values_"+tag_u.str()+"x"+tag_v.str()+"_voronoi", flat_values, true);
+        save_output_nifti(fout, "flat_domain_"+tag_u.str()+"x"+tag_v.str()+"_voronoi", flat_domain, true);
     }
 
     cout << "\n  Finished." << endl;
