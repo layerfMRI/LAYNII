@@ -26,7 +26,7 @@ int main(int argc, char*  argv[]) {
     nifti_image *nii1 = NULL;
     char *fin1 = NULL, *fout = NULL;
     int ac;
-    int radius = 10;
+    float radius = 10;
 
     // Process user options
     if (argc < 2) return show_help();
