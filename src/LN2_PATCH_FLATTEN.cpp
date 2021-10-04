@@ -27,12 +27,12 @@ int show_help(void) {
     "                Only use if '-coord_d' input is a metric file.\n"
     "    -voronoi  : (Optional) Fill empty bin in flat image using Voronoi propagation.\n"
     "                Same as nearest neighbour filling in the empty bins.\n"
+    "    -norm_mask: (Optional) Mask out flat domain voxels using L2 norm of coordinates.\n"
     "    -debug    : (Optional) Save extra intermediate outputs.\n"
     "    -output   : (Optional) Output basename for all outputs.\n"
     "\n"
     "Notes:\n"
-    "    - This program is written for 3D images. We might add 2D image support\n"
-    "      in the future depending on requests.\n"
+    "    - This program is written for 3D images.\n"
     "\n");
     return 0;
 }
@@ -43,7 +43,7 @@ int main(int argc, char*  argv[]) {
     char *fin1 = NULL, *fout = NULL, *fin2=NULL, *fin3=NULL, *fin4=NULL;
     int ac;
     int bins_u = 10, bins_v = 10, bins_d = 1;
-    bool mode_debug = false, mode_voronoi = false;
+    bool mode_debug = false, mode_voronoi = false, mode_norm_mask = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -95,6 +95,8 @@ int main(int argc, char*  argv[]) {
             bins_d = atof(argv[ac]);
         } else if (!strcmp(argv[ac], "-voronoi")) {
             mode_voronoi = true;
+        } else if (!strcmp(argv[ac], "-norm_mask")) {
+            mode_norm_mask = true;
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -197,6 +199,11 @@ int main(int argc, char*  argv[]) {
         cout << "  ERROR! Depth input contains negative values!" << endl;
         return 1;
     }
+
+    // Add bin dimmensions into the output tag
+    std::ostringstream tag_u, tag_v;
+    tag_u << bins_u;
+    tag_v << bins_v;
 
     // ========================================================================
     // Prepare outputs
@@ -341,24 +348,15 @@ int main(int argc, char*  argv[]) {
         *(flat_domain_data + k) += *(domain_data + i);
     }
 
-    // Add bin dimmensions into the output tag
-    std::ostringstream tag_u, tag_v;
-    tag_u << bins_u;
-    tag_v << bins_v;
-    if (mode_debug) {
-        save_output_nifti(fout, "UV_bins_"+tag_u.str()+"x"+tag_v.str(), out_cells, true);
-    }
-
     // Take the mean of each projected cell value
     for (int i = 0; i != nr_bins; ++i) {
         if (*(flat_density_data + i) > 1) {
             *(flat_values_data + i) /= *(flat_density_data + i);
+            *(flat_domain_data + i) /= *(flat_density_data + i);
+            // Ceil domain average to ensure the edges are prioritized
+            *(flat_domain_data + i) = std::ceil(*(flat_domain_data + i));
         }
     }
-
-    save_output_nifti(fout, "flat_domain_"+tag_u.str()+"x"+tag_v.str(), flat_domain, true);
-    save_output_nifti(fout, "flat_values_"+tag_u.str()+"x"+tag_v.str(), flat_values, true);
-    save_output_nifti(fout, "flat_density_"+tag_u.str()+"x"+tag_v.str(), flat_density, true);
 
     // ========================================================================
     // Optional Voronoi filling for empty flat bins
@@ -426,6 +424,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -437,6 +436,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -448,6 +448,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -459,6 +460,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -470,6 +472,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -481,6 +484,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -497,6 +501,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -508,6 +513,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -519,6 +525,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -530,6 +537,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -541,6 +549,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -552,6 +561,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -563,6 +573,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -574,6 +585,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -585,6 +597,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -596,6 +609,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -607,6 +621,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -618,6 +633,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -633,6 +649,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -644,6 +661,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -655,6 +673,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -666,6 +685,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -677,6 +697,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -688,6 +709,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -699,6 +721,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -710,6 +733,7 @@ int main(int argc, char*  argv[]) {
                             *(flood_dist_data + j) = d;
                             *(flood_step_data + j) = grow_step + 1;
                             *(flat_values_data + j) = *(flat_values_data + i);
+                            *(flat_density_data + j) = *(flat_density_data + i);
                             *(flat_domain_data + j) = *(flat_domain_data + i);
                         }
                     }
@@ -718,14 +742,46 @@ int main(int argc, char*  argv[]) {
             grow_step += 1;
         }
 
-        // Mask values outside of the flattened disk
+        if (mode_norm_mask) {
+            // NOTE(Option 2) Mask values based on radius
+            for (int i = 0; i != nr_bins; ++i) {
+                float coord_u = i % bins_u;
+                float coord_v = floor(i % nr_cells / bins_v);
+                coord_u /= bins_u;
+                coord_v /= bins_v;
+                coord_u -= 0.5;
+                coord_v -= 0.5;
+
+                float mag_uv = sqrt(pow(coord_u, 2) + pow(coord_v, 2));
+                if (mag_uv > 0.5) {
+                    *(flat_domain_data + i) = 2;
+                }
+            }
+        }
+
+        // NOTE(Option 1): Mask values outside of the flattened disk
         for (int i = 0; i != nr_bins; ++i) {
             if (*(flat_domain_data + i) != 1) {
                 *(flat_values_data + i) = 0;
+                *(flat_density_data + i) = 0;
             }
         }
+
         save_output_nifti(fout, "flat_values_"+tag_u.str()+"x"+tag_v.str()+"_voronoi", flat_values, true);
-        save_output_nifti(fout, "flat_domain_"+tag_u.str()+"x"+tag_v.str()+"_voronoi", flat_domain, true);
+        save_output_nifti(fout, "flat_density_"+tag_u.str()+"x"+tag_v.str()+"_voronoi", flat_density, true);
+        if (mode_debug) {
+            save_output_nifti(fout, "flat_domain_"+tag_u.str()+"x"+tag_v.str()+"_voronoi", flat_domain, true);
+        }
+    } else {
+        if (mode_debug) {
+            save_output_nifti(fout, "UV_bins_"+tag_u.str()+"x"+tag_v.str(), out_cells, true);
+        }
+        save_output_nifti(fout, "flat_values_"+tag_u.str()+"x"+tag_v.str(), flat_values, true);
+        save_output_nifti(fout, "flat_density_"+tag_u.str()+"x"+tag_v.str(), flat_density, true);
+        if (mode_debug) {
+            save_output_nifti(fout, "flat_domain_"+tag_u.str()+"x"+tag_v.str(), flat_domain, true);
+        }
+
     }
 
     cout << "\n  Finished." << endl;
