@@ -1994,11 +1994,17 @@ int main(int argc, char*  argv[]) {
     cout << "\n  Computing pin axis distances..." << endl;
     for (int p = 0; p != 2; ++p) {
         cout << "    Relative to pin axis " + std::to_string(p+1) + "/2..." << endl;
+
+        // TODO(Faruk): Guesstimate an initial distance to axis lines. Probably
+        // I can do this better by considering the local neighbourhood in the
+        // future.
+        float dist_to_axes = ((dX + dY + dZ) / 3) / 2;  // Half a voxel
+
         // Initialize grow volume
         for (uint32_t i = 0; i != nr_voxels; ++i) {
             if (*(pin_axes_data + nr_voxels * p + i) != 0) {
                 *(flood_step_data + i) = 1.;
-                *(flood_dist_data + i) = 1.;
+                *(flood_dist_data + i) = dist_to_axes;
             } else {
                 *(flood_step_data + i) = 0.;
                 *(flood_dist_data + i) = 0.;
