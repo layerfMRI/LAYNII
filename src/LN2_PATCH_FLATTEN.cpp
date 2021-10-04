@@ -768,8 +768,8 @@ int main(int argc, char*  argv[]) {
         }
 
         save_output_nifti(fout, "flat_values_"+tag_u.str()+"x"+tag_v.str()+"_voronoi", flat_values, true);
-        save_output_nifti(fout, "flat_density_"+tag_u.str()+"x"+tag_v.str()+"_voronoi", flat_density, true);
         if (mode_debug) {
+            save_output_nifti(fout, "flat_density_"+tag_u.str()+"x"+tag_v.str()+"_voronoi", flat_density, true);
             save_output_nifti(fout, "flat_domain_"+tag_u.str()+"x"+tag_v.str()+"_voronoi", flat_domain, true);
         }
     } else {
@@ -777,8 +777,8 @@ int main(int argc, char*  argv[]) {
             save_output_nifti(fout, "UV_bins_"+tag_u.str()+"x"+tag_v.str(), out_cells, true);
         }
         save_output_nifti(fout, "flat_values_"+tag_u.str()+"x"+tag_v.str(), flat_values, true);
-        save_output_nifti(fout, "flat_density_"+tag_u.str()+"x"+tag_v.str(), flat_density, true);
         if (mode_debug) {
+            save_output_nifti(fout, "flat_density_"+tag_u.str()+"x"+tag_v.str(), flat_density, true);
             save_output_nifti(fout, "flat_domain_"+tag_u.str()+"x"+tag_v.str(), flat_domain, true);
         }
 
