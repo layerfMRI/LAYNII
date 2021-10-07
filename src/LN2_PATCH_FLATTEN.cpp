@@ -12,24 +12,26 @@ int show_help(void) {
     "    LN2_PATCH_FLATTEN -values curvature.nii -coord_uv uv_coord.nii -coord_d metric_equidist.nii -domain perimeter_chunk.nii -bins_u 50 -bins_v 50 -bins_d 21\n"
     "\n"
     "Options:\n"
-    "    -help     : Show this help.\n"
-    "    -values   : Nifti image with values that will be projected onto flat image.\n"
-    "                For example an activation map or another measurement like curvature.\n"
-    "    -coord_uv : A 4D nifti file that contains 2D (UV) coordinates.\n"
-    "                For example LN2_MULTILATERATE output named 'UV_coords'.\n"
-    "    -coord_d  : A 3D nifti file that contains cortical depth measurements or layers.\n"
-    "                For example either LN2_LAYERS output named 'layers' or 'metric'.\n"
-    "    -domain   : A 3D binary nifti file to limit the flattened voxels.\n"
-    "                For example LN2_MULTILATERATE output named 'perimeter_chunk.'\n"
-    "    -bins_u   : Number of bins for the flat image U coordinate.\n"
-    "    -bins_v   : Number of bins for the flat image V coordinate.\n"
-    "    -bins_d   : (Optional) Number of bins for the flat image D coordinate.\n"
-    "                Only use if '-coord_d' input is a metric file.\n"
-    "    -voronoi  : (Optional) Fill empty bin in flat image using Voronoi propagation.\n"
-    "                Same as nearest neighbour filling in the empty bins.\n"
-    "    -norm_mask: (Optional) Mask out flat domain voxels using L2 norm of coordinates.\n"
-    "    -debug    : (Optional) Save extra intermediate outputs.\n"
-    "    -output   : (Optional) Output basename for all outputs.\n"
+    "    -help      : Show this help.\n"
+    "    -values    : Nifti image with values that will be projected onto flat image.\n"
+    "                 For example an activation map or another measurement like curvature.\n"
+    "    -coord_uv  : A 4D nifti file that contains 2D (UV) coordinates.\n"
+    "                 For example LN2_MULTILATERATE output named 'UV_coords'.\n"
+    "    -coord_d   : A 3D nifti file that contains cortical depth measurements or layers.\n"
+    "                 For example either LN2_LAYERS output named 'layers' or 'metric'.\n"
+    "    -domain    : A 3D binary nifti file to limit the flattened voxels.\n"
+    "                 For example LN2_MULTILATERATE output named 'perimeter_chunk.'\n"
+    "    -bins_u    : Number of bins for the flat image U coordinate.\n"
+    "    -bins_v    : Number of bins for the flat image V coordinate.\n"
+    "    -bins_d    : (Optional) Number of bins for the flat image D coordinate.\n"
+    "                 Only use if '-coord_d' input is a metric file.\n"
+    "    -voronoi   : (Optional) Fill empty bin in flat image using Voronoi propagation.\n"
+    "                 Same as nearest neighbour filling in the empty bins.\n"
+    "    -density   : (Optional) Additional output showing how many voxel fall into\n"
+    "                 the same flat bin.\n"
+    "    -norm_mask : (Optional) Mask out flat domain voxels using L2 norm of coordinates.\n"
+    "    -debug     : (Optional) Save extra intermediate outputs.\n"
+    "    -output    : (Optional) Output basename for all outputs.\n"
     "\n"
     "Notes:\n"
     "    - This program is written for 3D images.\n"
@@ -44,6 +46,7 @@ int main(int argc, char*  argv[]) {
     int ac;
     int bins_u = 10, bins_v = 10, bins_d = 1;
     bool mode_debug = false, mode_voronoi = false, mode_norm_mask = false;
+    bool mode_density = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -95,6 +98,8 @@ int main(int argc, char*  argv[]) {
             bins_d = atof(argv[ac]);
         } else if (!strcmp(argv[ac], "-voronoi")) {
             mode_voronoi = true;
+        } else if (!strcmp(argv[ac], "-density")) {
+            mode_density = true;
         } else if (!strcmp(argv[ac], "-norm_mask")) {
             mode_norm_mask = true;
         } else if (!strcmp(argv[ac], "-output")) {
@@ -768,8 +773,10 @@ int main(int argc, char*  argv[]) {
         }
 
         save_output_nifti(fout, "flat_"+tag_u.str()+"x"+tag_v.str()+"_voronoi", flat_values, true);
-        if (mode_debug) {
+        if (mode_density) {
             save_output_nifti(fout, "flat_density_"+tag_u.str()+"x"+tag_v.str()+"_voronoi", flat_density, true);
+        }
+        if (mode_debug) {
             save_output_nifti(fout, "flat_domain_"+tag_u.str()+"x"+tag_v.str()+"_voronoi", flat_domain, true);
         }
     } else {
@@ -777,8 +784,10 @@ int main(int argc, char*  argv[]) {
             save_output_nifti(fout, "UV_bins_"+tag_u.str()+"x"+tag_v.str(), out_cells, true);
         }
         save_output_nifti(fout, "flat_"+tag_u.str()+"x"+tag_v.str(), flat_values, true);
-        if (mode_debug) {
+        if (mode_density) {
             save_output_nifti(fout, "flat_density_"+tag_u.str()+"x"+tag_v.str(), flat_density, true);
+        }
+        if (mode_debug) {
             save_output_nifti(fout, "flat_domain_"+tag_u.str()+"x"+tag_v.str(), flat_domain, true);
         }
 
