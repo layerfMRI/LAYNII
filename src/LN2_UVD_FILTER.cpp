@@ -6,11 +6,11 @@
 
 int show_help(void) {
     printf(
-    "LN2_UVD_MEDIAN_FILTER: Median filter using flat coordinates (UV) and depth (D).\n"
+    "LN2_UVD_FILTER: Median filter using flat coordinates (UV) and depth (D).\n"
     "                       Passes a cylinder through UVD coordinates.\n"
     "\n"
     "Usage:\n"
-    "    LN2_UVD_MEDIAN_FILTER -values activation.nii -coord_uv uv_coord.nii -coord_d layers_equidist.nii -radius 3 -height 0.25\n"
+    "    LN2_UVD_FILTER -values activation.nii -coord_uv uv_coord.nii -coord_d layers_equidist.nii -radius 3 -height 0.25\n"
     "\n"
     "Options:\n"
     "    -help      : Show this help.\n"
@@ -22,25 +22,26 @@ int show_help(void) {
     "                 For example either LN2_LAYERS output named 'metric'.\n"
     "    -radius    : Radius of cylinder that will be passed over UV coordinates.\n"
     "                 In units of UV coordinates, which often are in mm.\n"
-    "    -height    : Height of cylinder that will be passed over D coordinates.\n"
-    "                 In units of normalized depth metric, which are often in\n"
+    "    -height : height/height of cylinder that will be passed over D (depth)\n"
+    "                 coordinates. In units of normalized depth metric, which are often in\n"
     "                 0-1 range.\n"
     "    -output    : (Optional) Output basename for all outputs.\n"
     "\n");
     return 0;
 }
 
-int main(int argc, char*  argv[]) {
+int main(int argc, char* argv[]) {
 
     nifti_image *nii1 = NULL, *nii2 = NULL, *nii3 = NULL;
     char *fin1 = NULL, *fout = NULL, *fin2=NULL, *fin3=NULL;
     int ac;
-    float radius = 0.2, height = 0.5;
+    float radius = 3, height = 0.25;
 
     // Process user options
     if (argc < 2) return show_help();
+
     for (ac = 1; ac < argc; ac++) {
-        if (!strncmp(argv[ac], "-h", 2)) {
+        if (!strncmp(argv[ac], "-help", 5)) {
             return show_help();
         } else if (!strcmp(argv[ac], "-values")) {
             if (++ac >= argc) {
@@ -115,7 +116,7 @@ int main(int argc, char*  argv[]) {
         return 2;
     }
 
-    log_welcome("LN2_UVD_MEDIAN_FILTER");
+    log_welcome("LN2_UVD_FILTER");
     log_nifti_descriptives(nii1);
     log_nifti_descriptives(nii2);
     log_nifti_descriptives(nii3);
@@ -142,62 +143,62 @@ int main(int argc, char*  argv[]) {
     // speed boost.
     // Find the subset voxels that will be used many times
     int nr_voi = 0;  // Voxels of interest
+    vector <int> vec_voi_id;
+    vector <float> vec_u, vec_v, vec_d, vec_val;
     for (int i = 0; i != nr_voxels; ++i) {
         if (*(coords_uv_data + i) != 0){
+            vec_voi_id.push_back(i);
+            vec_u.push_back(*(coords_uv_data + nr_voxels*0 + i));
+            vec_v.push_back(*(coords_uv_data + nr_voxels*1 + i));
+            vec_d.push_back(*(coords_d_data + i));
+            vec_val.push_back(*(nii_input_data + i));
             nr_voi += 1;
-        }
-    }
-    // Allocate memory to only the voxel of interest
-    int* voi_id;
-    voi_id = (int*) malloc(nr_voi*sizeof(int));
-
-    // Fill in indices to be able to remap from subset to full set of voxels
-    int ii = 0;
-    for (int i = 0; i != nr_voxels; ++i) {
-        if (*(coords_uv_data + i) != 0){
-            *(voi_id + ii) = i;
-            ii += 1;
         }
     }
 
     // ========================================================================
     // Visit each voxel to check their coordinate
-    for (int ii = 0; ii != nr_voi; ++ii) {
-        int i = *(voi_id + ii);
-
-        float ref_u = *(coords_uv_data + nr_voxels*0 + i);
-        float ref_v = *(coords_uv_data + nr_voxels*1 + i);
-        float ref_d = *(coords_d_data + i);
-
-        // Visit every voxel to check if they are within the cylinder
+    float half_height = height / 2;
+    float radius_sqr = radius * radius;
+    for (int i = 0; i != nr_voi; ++i) {
         vector <float> temp_vec;
-
-        for (int jj = 0; jj != nr_voi; ++jj) {
-            int j = *(voi_id + jj);
-
-            float u = *(coords_uv_data + nr_voxels*0 + j);
-            float v = *(coords_uv_data + nr_voxels*1 + j);
-            float d = *(coords_d_data + j);
-            float val = *(nii_input_data + j);
-
+        for (int j = 0; j != nr_voi; ++j) {
             // Compute distances relative to reference UVD
-            float dist_d = abs(ref_d - d);
-            if (dist_d < height) {  // first do the easy 1D check
-                float dist_uv = sqrt(pow(ref_u - u, 2) + pow(ref_v - v, 2));
-                if (dist_uv < radius) {  // second do 2D circle check
-                    temp_vec.push_back(val);
+            if (abs(vec_d[i] - vec_d[j]) < half_height) {  // First do the easy 1D check
+                float dist_uv = (vec_u[i] - vec_u[j])*(vec_u[i] - vec_u[j])
+                    + (vec_v[i] - vec_v[j])*(vec_v[i] - vec_v[j]);
+                if (dist_uv < radius_sqr) {  // Second do 2D circle check
+                    temp_vec.push_back(vec_val[j]);
                 }
             }
         }
 
+        // --------------------------------------------------------------------
         // Find median
-        auto m = temp_vec.begin() + temp_vec.size()/2;
-        std::nth_element(temp_vec.begin(), m, temp_vec.end());
-        float median = temp_vec[temp_vec.size()/2];
-        // std::cout << "The median is " << median << '\n';
+        int n = temp_vec.size();
+        float m;
+        if (n % 2 == 0) {  // even
+            std::nth_element(temp_vec.begin(),
+                             temp_vec.begin() + n / 2,
+                             temp_vec.end());
 
-        // Write inside nifti
-        *(nii_output_data + i) = median;
+            std::nth_element(temp_vec.begin(),
+                             temp_vec.begin() + (n - 1) / 2,
+                             temp_vec.end());
+
+            m = (temp_vec[n / 2] + temp_vec[(n - 1) / 2]) / 2.0;
+
+        } else {  // odd
+            std::nth_element(temp_vec.begin(),
+                             temp_vec.begin() + n / 2,
+                             temp_vec.end());
+
+            m = temp_vec[n / 2];
+        }
+        // --------------------------------------------------------------------
+
+        // Write median inside nifti
+        *(nii_output_data + vec_voi_id[i]) = m;
     }
 
     save_output_nifti(fout, "UVD_median_filter", nii_output, true);
