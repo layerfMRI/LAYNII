@@ -162,12 +162,15 @@ int main(int argc, char* argv[]) {
     float radius_sqr = radius * radius;
     for (int i = 0; i != nr_voi; ++i) {
         vector <float> temp_vec;
+
+        // --------------------------------------------------------------------
+        // Cylinder windowing in UVD space
         for (int j = 0; j != nr_voi; ++j) {
             // Compute distances relative to reference UVD
-            if (abs(vec_d[i] - vec_d[j]) < half_height) {  // First do the easy 1D check
+            if (abs(vec_d[i] - vec_d[j]) < half_height) {  // Check height
                 float dist_uv = (vec_u[i] - vec_u[j])*(vec_u[i] - vec_u[j])
                     + (vec_v[i] - vec_v[j])*(vec_v[i] - vec_v[j]);
-                if (dist_uv < radius_sqr) {  // Second do 2D circle check
+                if (dist_uv < radius_sqr) {  // Check Euclidean distance
                     temp_vec.push_back(vec_val[j]);
                 }
             }
