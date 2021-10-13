@@ -235,6 +235,9 @@ int main(int argc, char*  argv[]) {
     flat_cells->dim[2] = bins_v;
     flat_cells->dim[3] = bins_d;
     flat_cells->dim[4] = 1;
+    flat_cells->pixdim[1] = 1;
+    flat_cells->pixdim[2] = 1;
+    flat_cells->pixdim[3] = 1;
     nifti_update_dims_from_array(flat_cells);
     flat_cells->nvox = nr_bins;
     flat_cells->nbyper = sizeof(int32_t);
