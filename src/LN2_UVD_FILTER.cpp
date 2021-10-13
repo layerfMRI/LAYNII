@@ -161,6 +161,7 @@ int main(int argc, char* argv[]) {
     float half_height = height / 2;
     float radius_sqr = radius * radius;
     for (int i = 0; i != nr_voi; ++i) {
+        cout << "\r    " << i * 100 / nr_voi << " %" << flush;
         vector <float> temp_vec;
 
         // --------------------------------------------------------------------
@@ -203,6 +204,7 @@ int main(int argc, char* argv[]) {
         // Write median inside nifti
         *(nii_output_data + vec_voi_id[i]) = m;
     }
+    cout << endl;
 
     save_output_nifti(fout, "UVD_median_filter", nii_output, true);
 
