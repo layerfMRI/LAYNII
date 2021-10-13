@@ -5,6 +5,27 @@
 #include <algorithm>
 #include <numeric>
 
+// ============================================================================
+// NOTE(Faruk): From <https://stackoverflow.com/questions/1577475/c-sorting-and-keeping-track-of-indexes>
+template <typename T>
+vector<size_t> sort_indexes(const vector<T> &v) {
+
+    // initialize original index locations
+    vector<size_t> idx(v.size());
+    iota(idx.begin(), idx.end(), 0);
+
+    // sort indexes based on comparing values in v
+    // using std::stable_sort instead of std::sort
+    // to avoid unnecessary index re-orderings
+    // when v contains elements of equal values
+    stable_sort(idx.begin(), idx.end(),
+        [&v](size_t i1, size_t i2) {return v[i1] < v[i2];});
+
+    return idx;
+}
+
+// ============================================================================
+
 int show_help(void) {
     printf(
     "LN2_UVD_LSTSQR: Least squares fit within UVD cylinders.\n"
@@ -185,6 +206,8 @@ int main(int argc, char* argv[]) {
         // --------------------------------------------------------------------
         vector <float> vec_y;
         for (int j = 0; j != nr_voi; ++j) {
+            cout << "\r    " << i << "/" << nr_voi << flush;
+
             // Compute distances relative to reference UVD
             if (abs(vec_d[i] - vec_d[j]) < half_height) {  // Check height
                 float dist_uv = (vec_u[i] - vec_u[j])*(vec_u[i] - vec_u[j])
@@ -198,8 +221,14 @@ int main(int argc, char* argv[]) {
         int n = vec_y.size();
         if (n > 1) {
             // ----------------------------------------------------------------
-            // TODO: Sort vector by depth
+            // Sort vector by depth
             // ----------------------------------------------------------------
+            vector <float> vec_y_sorted(n);
+            int k = 0;
+            for (auto j: sort_indexes(vec_d)) {
+              vec_y_sorted[k] = vec_y[j];
+              k += 1;
+            }
 
             // ----------------------------------------------------------------
             // Create design matrix
@@ -245,9 +274,6 @@ int main(int argc, char* argv[]) {
             // ----------------------------------------------------------------
             // Write median inside nifti
             // ----------------------------------------------------------------
-            cout << "\r    " << i << "/" << nr_voi << " | n = " << n << " "
-            << " | y_avg = " << vec_y_avg << flush;
-
             *(nii_slope_data + vec_voi_id[i]) = slope;
             *(nii_intercept_data + vec_voi_id[i]) = intercept_y;
             *(nii_samples_data + vec_voi_id[i]) = n;
