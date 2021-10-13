@@ -1,5 +1,4 @@
 #include "../dep/laynii_lib.h"
-#include <limits>
 #include <sstream>
 #include <vector>
 #include <algorithm>
@@ -177,10 +176,11 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        // --------------------------------------------------------------------
-        // Find median
         int n = temp_vec.size();
         float m;
+
+        // --------------------------------------------------------------------
+        // Find median
         if (n % 2 == 0) {  // even
             std::nth_element(temp_vec.begin(),
                              temp_vec.begin() + n / 2,
@@ -199,7 +199,13 @@ int main(int argc, char* argv[]) {
 
             m = temp_vec[n / 2];
         }
+
         // --------------------------------------------------------------------
+        // Minimum filter
+        for (int n = 0; n != nr_voi; ++n) {
+
+        }
+
 
         // Write median inside nifti
         *(nii_output_data + vec_voi_id[i]) = m;
