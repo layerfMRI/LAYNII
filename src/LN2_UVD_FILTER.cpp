@@ -9,7 +9,7 @@ int show_help(void) {
     "                       Passes a cylinder through UVD coordinates.\n"
     "\n"
     "Usage:\n"
-    "    LN2_UVD_FILTER -values activation.nii -coord_uv uv_coord.nii -coord_d layers_equidist.nii -radius 3 -height 0.25\n"
+    "    LN2_UVD_FILTER -values activation.nii -coord_uv uv_coord.nii -coord_d layers_equidist.nii -domain mask.nii -radius 3 -height 0.25\n"
     "\n"
     "Options:\n"
     "    -help      : Show this help.\n"
