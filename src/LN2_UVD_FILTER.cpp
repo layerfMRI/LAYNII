@@ -19,6 +19,8 @@ int show_help(void) {
     "                 For example LN2_MULTILATERATE output named 'UV_coords'.\n"
     "    -coord_d   : A 3D nifti file that contains cortical depth measurements or layers.\n"
     "                 For example either LN2_LAYERS output named 'metric'.\n"
+    "    -domain    : A 3D binary nifti file to limit the flattened voxels.\n"
+    "                 For example LN2_MULTILATERATE output named 'perimeter_chunk.'\n"
     "    -radius    : Radius of cylinder that will be passed over UV coordinates.\n"
     "                 In units of UV coordinates, which often are in mm.\n"
     "    -height : height/height of cylinder that will be passed over D (depth)\n"
@@ -31,8 +33,8 @@ int show_help(void) {
 
 int main(int argc, char* argv[]) {
 
-    nifti_image *nii1 = NULL, *nii2 = NULL, *nii3 = NULL;
-    char *fin1 = NULL, *fout = NULL, *fin2=NULL, *fin3=NULL;
+    nifti_image *nii1 = NULL, *nii2 = NULL, *nii3 = NULL, *nii4 = NULL;
+    char *fin1 = NULL, *fout = NULL, *fin2=NULL, *fin3=NULL, *fin4=NULL;
     int ac;
     float radius = 3, height = 0.25;
     bool mode_median = true, mode_min = false;
@@ -62,6 +64,12 @@ int main(int argc, char* argv[]) {
                 return 1;
             }
             fin3 = argv[ac];
+        } else if (!strcmp(argv[ac], "-domain")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -domain\n");
+                return 1;
+            }
+            fin4 = argv[ac];
         } else if (!strcmp(argv[ac], "-radius")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -radius\n");
@@ -104,6 +112,10 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "** missing option '-coords_d'\n");
         return 1;
     }
+    if (!fin4) {
+        fprintf(stderr, "** missing option '-domain'\n");
+        return 1;
+    }
 
     // Read input dataset, including data
     nii1 = nifti_image_read(fin1, 1);
@@ -121,11 +133,17 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin3);
         return 2;
     }
+    nii4 = nifti_image_read(fin4, 1);
+    if (!nii3) {
+        fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin4);
+        return 2;
+    }
 
     log_welcome("LN2_UVD_FILTER");
     log_nifti_descriptives(nii1);
     log_nifti_descriptives(nii2);
     log_nifti_descriptives(nii3);
+    log_nifti_descriptives(nii4);
 
     // Get dimensions of input
     const int nr_voxels = nii1->nx * nii1->ny * nii1->nz;
@@ -138,6 +156,8 @@ int main(int argc, char* argv[]) {
     float* coords_uv_data = static_cast<float*>(coords_uv->data);
     nifti_image* coords_d = copy_nifti_as_float32(nii3);
     float* coords_d_data = static_cast<float*>(coords_d->data);
+    nifti_image* domain = copy_nifti_as_float32(nii4);
+    float* domain_data = static_cast<float*>(domain->data);
 
     // ========================================================================
     // Prepare outputs
@@ -158,7 +178,7 @@ int main(int argc, char* argv[]) {
     vector <int> vec_voi_id;
     vector <float> vec_u, vec_v, vec_d, vec_val;
     for (int i = 0; i != nr_voxels; ++i) {
-        if (*(coords_uv_data + i) != 0){
+        if (*(domain_data + i) != 0){
             vec_voi_id.push_back(i);
             vec_u.push_back(*(coords_uv_data + nr_voxels*0 + i));
             vec_v.push_back(*(coords_uv_data + nr_voxels*1 + i));
