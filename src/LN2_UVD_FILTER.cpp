@@ -35,12 +35,13 @@ int main(int argc, char* argv[]) {
     char *fin1 = NULL, *fout = NULL, *fin2=NULL, *fin3=NULL;
     int ac;
     float radius = 3, height = 0.25;
+    bool mode_median = true, mode_min = false;
 
     // Process user options
     if (argc < 2) return show_help();
 
     for (ac = 1; ac < argc; ac++) {
-        if (!strncmp(argv[ac], "-help", 5)) {
+        if (!strcmp(argv[ac], "-help")) {
             return show_help();
         } else if (!strcmp(argv[ac], "-values")) {
             if (++ac >= argc) {
@@ -73,6 +74,12 @@ int main(int argc, char* argv[]) {
                 return 1;
             }
             height = atof(argv[ac]);
+        } else if (!strcmp(argv[ac], "-median")) {
+            mode_median = true;
+            mode_min = false;
+        } else if (!strcmp(argv[ac], "-min")) {
+            mode_median = false;
+            mode_min = true;
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -137,6 +144,12 @@ int main(int argc, char* argv[]) {
     nifti_image* nii_output = copy_nifti_as_float32(nii_input);
     float* nii_output_data = static_cast<float*>(nii_output->data);
 
+    if (mode_min) {
+        for (int i = 0; i != nr_voxels; ++i) {
+            *(nii_output_data + i) = 0;
+        }
+    }
+
     // ------------------------------------------------------------------------
     // NOTE(Faruk): This section is required for substantial
     // speed boost.
@@ -157,6 +170,7 @@ int main(int argc, char* argv[]) {
 
     // ========================================================================
     // Visit each voxel to check their coordinate
+    // ========================================================================
     float half_height = height / 2;
     float radius_sqr = radius * radius;
     for (int i = 0; i != nr_voi; ++i) {
@@ -165,6 +179,7 @@ int main(int argc, char* argv[]) {
 
         // --------------------------------------------------------------------
         // Cylinder windowing in UVD space
+        // --------------------------------------------------------------------
         for (int j = 0; j != nr_voi; ++j) {
             // Compute distances relative to reference UVD
             if (abs(vec_d[i] - vec_d[j]) < half_height) {  // Check height
@@ -181,38 +196,57 @@ int main(int argc, char* argv[]) {
 
         // --------------------------------------------------------------------
         // Find median
-        if (n % 2 == 0) {  // even
-            std::nth_element(temp_vec.begin(),
-                             temp_vec.begin() + n / 2,
-                             temp_vec.end());
+        // --------------------------------------------------------------------
+        if (mode_median) {
+            if (n % 2 == 0) {  // even
+                std::nth_element(temp_vec.begin(),
+                temp_vec.begin() + n / 2,
+                temp_vec.end());
 
-            std::nth_element(temp_vec.begin(),
-                             temp_vec.begin() + (n - 1) / 2,
-                             temp_vec.end());
+                std::nth_element(temp_vec.begin(),
+                temp_vec.begin() + (n - 1) / 2,
+                temp_vec.end());
 
-            m = (temp_vec[n / 2] + temp_vec[(n - 1) / 2]) / 2.0;
+                m = (temp_vec[n / 2] + temp_vec[(n - 1) / 2]) / 2.0;
 
-        } else {  // odd
-            std::nth_element(temp_vec.begin(),
-                             temp_vec.begin() + n / 2,
-                             temp_vec.end());
+            } else {  // odd
+                std::nth_element(temp_vec.begin(),
+                temp_vec.begin() + n / 2,
+                temp_vec.end());
 
-            m = temp_vec[n / 2];
+                m = temp_vec[n / 2];
+            }
+
+            *(nii_output_data + vec_voi_id[i]) = m;
         }
 
         // --------------------------------------------------------------------
-        // Minimum filter
-        for (int n = 0; n != nr_voi; ++n) {
+        // Peak detect by minimum
+        // --------------------------------------------------------------------
+        if (mode_min) {
+            float temp_ref = vec_val[i];
+            float temp_min = vec_val[i];
+            for (int j = 0; j != n; ++j) {
+                if (temp_vec[j] < temp_min) {
+                    temp_min = temp_vec[j];
+                }
+            }
 
+            if (temp_min < temp_ref) {
+                *(nii_output_data + vec_voi_id[i]) = 0;
+            } else {
+                *(nii_output_data + vec_voi_id[i]) = 1;
+            }
         }
-
-
-        // Write median inside nifti
-        *(nii_output_data + vec_voi_id[i]) = m;
+        // --------------------------------------------------------------------
     }
     cout << endl;
 
-    save_output_nifti(fout, "UVD_median_filter", nii_output, true);
+    if (mode_median) {
+        save_output_nifti(fout, "UVD_median_filter", nii_output, true);
+    } else if (mode_min) {
+        save_output_nifti(fout, "UVD_minpeaks", nii_output, true);
+    }
 
     cout << "\n  Finished." << endl;
     return 0;
