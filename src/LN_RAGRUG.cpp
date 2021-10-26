@@ -135,7 +135,7 @@ int main(int argc, char * argv[]) {
         for (int y = 0; y < size_y; ++y) {
             for (int x = 0; x < size_x; ++x) {
                 int i = nxy * z + nx * y + x;
-                *(ragrug_data + i) = 0;
+                *(ragrug_data + i) = 1;
 
                 int xx = x / scale;
                 int yy = y / scale;
