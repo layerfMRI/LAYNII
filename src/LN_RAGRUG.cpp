@@ -24,6 +24,9 @@ int show_help(void) {
     "    -help   : Show this help.\n"
     "    -input  : Nifti (.nii) file. This program will use the dimension of \n"
     "              this file to generate a Rag Rug file accordingly.\n"
+    "    -scale  : (Optional) Resulting voxels will be scaled with this integer.\n"
+    "              For example 2 will make 2x2x2 neighboring voxel the same value.\n"
+    "              Useful for investigating flattening effects on coarser scales.\n"
     "    -output : (Optional) Output filename, including .nii or\n"
     "              .nii.gz, and path if needed. Overwrites existing files.\n"
     "\n");
@@ -31,10 +34,10 @@ int show_help(void) {
 }
 
 int main(int argc, char * argv[]) {
-    bool use_outpath = false ;
-    char  *fout = NULL ;
+    bool use_outpath = false;
+    char  *fout = NULL;
     char *fin = NULL;
-    int ac;
+    int ac, scale = 1;
     if (argc < 3) return show_help();
 
     // Process user options
@@ -47,6 +50,12 @@ int main(int argc, char * argv[]) {
                 return 1;
             }
             fin = argv[ac];
+        } else if (!strcmp(argv[ac], "-scale")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -scale\n");
+                return 1;
+            }
+            scale = atof(argv[ac]);
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -83,6 +92,11 @@ int main(int argc, char * argv[]) {
     int nxy = nii_input->nx * nii_input->ny;
     int nxyz = nii_input->nx * nii_input->ny * nii_input->nz;
 
+    // TODO(Faruk): I might bind scaling to float voxel lenghts in the future.
+    // const float dX = nii_input->pixdim[1];
+    // const float dY = nii_input->pixdim[2];
+    // const float dZ = nii_input->pixdim[3];
+
     // ========================================================================
     // Fixing potential problems with different input datatypes
     nifti_image* nii = copy_nifti_as_float32(nii_input);
@@ -117,24 +131,28 @@ int main(int argc, char * argv[]) {
     // ========================================================================
     cout << "  Filling nii with spatial values..." << endl;
 
-    for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_y; ++iy) {
-            for (int ix = 0; ix < size_x; ++ix) {
-                int voxel_i = nxy * iz + nx * iy + ix;
-                *(ragrug_data + voxel_i) = 0;
+    for (int z = 0; z < size_z; ++z) {
+        for (int y = 0; y < size_y; ++y) {
+            for (int x = 0; x < size_x; ++x) {
+                int i = nxy * z + nx * y + x;
+                *(ragrug_data + i) = 0;
 
-                *(coord_data + nxyz * 0 + voxel_i) = ix;
-                *(coord_data + nxyz * 1 + voxel_i) = iy;
-                *(coord_data + nxyz * 2 + voxel_i) = iz;
+                int xx = x / scale;
+                int yy = y / scale;
+                int zz = z / scale;
 
-                if (ix%2 == 0) {
-                    *(ragrug_data + voxel_i) += 4;
+                *(coord_data + nxyz * 0 + i) = xx;
+                *(coord_data + nxyz * 1 + i) = yy;
+                *(coord_data + nxyz * 2 + i) = zz;
+
+                if (xx%2 == 0) {
+                    *(ragrug_data + i) += 4;
                 }
-                if (iy%2 == 0) {
-                    *(ragrug_data + voxel_i) += 2;
+                if (yy%2 == 0) {
+                    *(ragrug_data + i) += 2;
                 }
-                if (iz%2 == 0) {
-                    *(ragrug_data + voxel_i) += 1;
+                if (zz%2 == 0) {
+                    *(ragrug_data + i) += 1;
                 }
             }
         }
