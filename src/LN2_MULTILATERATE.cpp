@@ -665,16 +665,17 @@ int main(int argc, char*  argv[]) {
             save_output_nifti(fout, "centroid_dist", flood_dist, false);
         }
 
-        // Translate 0 crossing
-        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
-            i = *(voi_id + ii);
-            *(flood_dist_data + i) -= thr_radius;
-        }
 
         // ========================================================================
         // Find perimeter
         // ========================================================================
         cout << "\n  Finding perimeter..." << endl;
+
+        // Translate 0 crossing
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            i = *(voi_id + ii);
+            *(flood_dist_data + i) -= thr_radius;
+        }
 
         // Mark voxels inside perimeter
         for (uint32_t ii = 0; ii != nr_voi; ++ii) {
