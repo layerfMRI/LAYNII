@@ -7,6 +7,8 @@
 
 #include "../dep/laynii_lib.h"
 #include <limits>
+#include <vector>
+
 
 int show_help(void) {
     printf(
@@ -44,6 +46,10 @@ int show_help(void) {
     "    -incl_borders : (Optional) Include inner and outer gray matter borders\n"
     "                    into the layering. This treats the borders as \n"
     "                    a part of gray matter. Off by default.\n"
+    "    -equal_bins   : (Optional) to enforce that the number of voxels \n"
+    "                    is the same across all GM layers \n"
+    "                    this option inherently inlcudes the borders \n"
+    "                    output is given with file name addition layerbins \n"
     "    -no_smooth    : (Optional) Disable smoothing on cortical depth metric.\n"
     "    -debug        : (Optional) Save extra intermediate outputs.\n"
     "    -output       : (Optional) Output basename for all outputs.\n"
@@ -66,6 +72,7 @@ int main(int argc, char*  argv[]) {
     bool mode_equivol = false, mode_debug = false, mode_incl_borders = false;
     bool mode_curvature =false, mode_streamlines = false, mode_smooth = true;
     bool mode_thickness = false;
+    bool mode_equal_bins = false; 
 
     // Process user options
     if (argc < 2) return show_help();
@@ -107,6 +114,8 @@ int main(int argc, char*  argv[]) {
             mode_thickness = true;
         } else if (!strcmp(argv[ac], "-incl_borders")) {
             mode_incl_borders = true;
+        } else if (!strcmp(argv[ac], "-equal_bins")) {
+            mode_equal_bins = true;
         } else if (!strcmp(argv[ac], "-no_smooth")) {
             mode_smooth = false;
         } else if (!strcmp(argv[ac], "-debug")) {
@@ -1138,6 +1147,44 @@ int main(int argc, char*  argv[]) {
         uint32_t i = *(voi_id + ii);
         *(nii_layers_data + i) = ceil(*(normdist_data + i) * nr_layers);
     }
+    
+    // ========================================================================
+    // enfource each intager layer to have the same number of voxels.
+    // ========================================================================
+    
+    if(mode_equal_bins){
+        nifti_image* nii_binlayers  = copy_nifti_as_int16(nii_rim);
+        int16_t* nii_binlayers_data = static_cast<int16_t*>(nii_binlayers->data);
+        // Setting zero
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            *(nii_binlayers_data + i) = 0;
+        }
+        vector <float> vec_lay;
+        float_t current_metric_val = 0; 
+        uint32_t current_layer_thresh = 0;
+                
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);
+            if ( *(normdist_data + i)  > 0){
+                vec_lay.push_back(*(normdist_data + i) );
+            }
+        }
+        int nr_layervoxels = vec_lay.size(); 
+        std::sort(vec_lay.begin(),  vec_lay.end());
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);
+            current_metric_val = *(normdist_data + i) ; 
+            
+            for (uint32_t jj = 0 ; jj < nr_layers ; jj++ ){
+            current_layer_thresh = (jj * nr_layervoxels)/nr_layers; 
+                if (current_metric_val  > 0 && current_metric_val > vec_lay[current_layer_thresh] ){
+                    *(nii_binlayers_data + i) = (int16_t)(jj+1) ;
+                }
+            }
+        }
+        save_output_nifti(fout, "layerbins_equidist", nii_binlayers);
+    }
+
     // ------------------------------------------------------------------------
     // Handle include borders type
     // ------------------------------------------------------------------------
@@ -1162,6 +1209,9 @@ int main(int argc, char*  argv[]) {
     cout << "\n  Saving equidistant metric and layers files..." << endl;
     save_output_nifti(fout, "metric_equidist", normdist);
     save_output_nifti(fout, "layers_equidist", nii_layers, true);
+    
+
+    
 
     if (mode_debug) {
         save_output_nifti(fout, "hotspots", hotspots, false);
@@ -1516,6 +1566,43 @@ int main(int argc, char*  argv[]) {
         for (uint32_t ii = 0; ii != nr_voi; ++ii) {
             uint32_t i = *(voi_id + ii);
             *(nii_layers_data + i) = ceil(*(normdistdiff_data + i) * nr_layers);
+        }
+
+    // ========================================================================
+    // enfource each intager layer to have the same number of voxels.
+    // ========================================================================
+    
+        if(mode_equal_bins){
+            nifti_image* nii_bineqlayers  = copy_nifti_as_int16(nii_rim);
+            int16_t* nii_bineqlayers_data = static_cast<int16_t*>(nii_bineqlayers->data);
+            // Setting zero
+            for (uint32_t i = 0; i != nr_voxels; ++i) {
+                *(nii_bineqlayers_data + i) = 0;
+            }
+            vector <float> vec_lay;
+            float_t current_metric_val = 0; 
+            uint32_t current_layer_thresh = 0;
+                    
+            for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+                uint32_t i = *(voi_id + ii);
+                if ( *(normdistdiff_data + i)  > 0){
+                    vec_lay.push_back(*(normdistdiff_data + i) );
+                }
+            }
+            int nr_layervoxels = vec_lay.size(); 
+            std::sort(vec_lay.begin(),  vec_lay.end());
+            for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+                uint32_t i = *(voi_id + ii);
+                current_metric_val = *(normdistdiff_data + i) ; 
+            
+                for (uint32_t jj = 0 ; jj < nr_layers ; jj++ ){
+                    current_layer_thresh = (jj * nr_layervoxels)/nr_layers; 
+                    if (current_metric_val  > 0 && current_metric_val > vec_lay[current_layer_thresh] ){
+                        *(nii_bineqlayers_data + i) = (int16_t)(jj+1) ;
+                    }
+                }
+            }
+            save_output_nifti(fout, "layerbins_equivol", nii_bineqlayers);
         }
 
         // --------------------------------------------------------------------
