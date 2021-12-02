@@ -6,11 +6,6 @@ int show_help(void) {
     printf(
     "LN2_PATCH_FLATTEN: Flatten a patch of cortex using 2D flat coordinate\n"
     "                   and cortical a depth measurement.\n"
-    "Citation:\n"
-    "    - Gulban, O. F., Bollmann, S., Huber, R., Wagstyl, K., Goebel, R., Poser,\n"
-    "      B. A., Kay, K., Ivanov, D. (2021). Mesoscopic Quantification of Cortical\n"
-    "      Architecture in the Living Human Brain. BioRxiv. \n"
-    "      <https://doi.org/10.1101/2021.11.25.470023>\n"
     "\n"
     "Usage:\n"
     "    LN2_PATCH_FLATTEN -values activation.nii -coord_uv uv_coord.nii -coord_d layers_equidist.nii -domain perimeter_chunk.nii -bins_u 50 -bins_v 50\n"
@@ -40,6 +35,11 @@ int show_help(void) {
     "\n"
     "Notes:\n"
     "    - This program is written for 3D images.\n"
+    "    - Developed for, and can be cited with:\n"
+    "        Gulban, O. F., Bollmann, S., Huber, R., Wagstyl, K., Goebel, R., Poser,\n"
+    "        B. A., Kay, K., Ivanov, D. (2021). Mesoscopic Quantification of Cortical\n"
+    "        Architecture in the Living Human Brain. BioRxiv.\n"
+    "        <https://doi.org/10.1101/2021.11.25.470023>\n"
     "\n");
     return 0;
 }

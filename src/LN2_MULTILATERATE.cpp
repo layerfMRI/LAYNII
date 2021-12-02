@@ -7,12 +7,6 @@ int show_help(void) {
     "LN2_MULTILATERATE: Injects a coordinate system upon a region of the rim file.\n"
     "                   These coordinates can be used to flatten chunks of the brain.\n"
     "                   Or, to generate bins/cells (subsets of voxels).\n"
-    "Citation:\n"
-    "    - Gulban, O. F., Bollmann, S., Huber, R., Wagstyl, K., Goebel, R., Poser,\n"
-    "      B. A., Kay, K., Ivanov, D. (2021). Mesoscopic Quantification of Cortical\n"
-    "      Architecture in the Living Human Brain. BioRxiv. \n"
-    "      <https://doi.org/10.1101/2021.11.25.470023>\n"
-    "\n"
     "Usage:\n"
     "    LN2_MULTILATERATE -rim rim.nii -control_points rim_midgm_centroid.nii -radius 10 -domain rim.nii \n"
     "    LN2_MULTILATERATE -rim rim.nii -control_points rim_midgm_custom_extrema.nii -domain rim.nii \n"
@@ -47,6 +41,11 @@ int show_help(void) {
     "    - Outputs of this program is often used with LN2_PATCH_FLATTEN.\n"
     "    - You can find further explanation of this algorithm at:\n"
     "      <https://thingsonthings.org/ln2_multilaterate>\n"
+    "    - Developed for, and can be cited with:\n"
+    "          Gulban, O. F., Bollmann, S., Huber, R., Wagstyl, K., Goebel, R., Poser,\n"
+    "          B. A., Kay, K., Ivanov, D. (2021). Mesoscopic Quantification of Cortical\n"
+    "          Architecture in the Living Human Brain. BioRxiv.\n"
+    "          <https://doi.org/10.1101/2021.11.25.470023>\n"
     "\n");
     return 0;
 }
