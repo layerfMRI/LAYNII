@@ -171,6 +171,7 @@ int main(int argc, char*  argv[]) {
 
     // ========================================================================
     // Fix input datatype issues
+    // ========================================================================
     nifti_image* nii_input = copy_nifti_as_float32(nii1);
     float* nii_input_data = static_cast<float*>(nii_input->data);
     nifti_image* coords_uv = copy_nifti_as_float32(nii2);
@@ -182,6 +183,7 @@ int main(int argc, char*  argv[]) {
 
     // ========================================================================
     // Determine the type of depth file
+    // ========================================================================
     float min_d = std::numeric_limits<float>::max();
     float max_d = std::numeric_limits<float>::min();
 
@@ -217,6 +219,7 @@ int main(int argc, char*  argv[]) {
 
     // ========================================================================
     // Prepare outputs
+    // ========================================================================
     nifti_image* out_cells = copy_nifti_as_int32(domain);
     int32_t* out_cells_data = static_cast<int32_t*>(out_cells->data);
 
@@ -226,6 +229,7 @@ int main(int argc, char*  argv[]) {
 
     // ------------------------------------------------------------------------
     // Determine flat image dimensions
+    // ------------------------------------------------------------------------
     int nr_cells = bins_u * bins_v;
     if (mode_depth_metric == false) {  // Layer file
         bins_d = max_d;
@@ -290,6 +294,7 @@ int main(int argc, char*  argv[]) {
 
     // ========================================================================
     // Find coordinate ranges
+    // ========================================================================
     float min_u = std::numeric_limits<float>::max();
     float max_u = std::numeric_limits<float>::min();
     float min_v = std::numeric_limits<float>::max();
@@ -317,6 +322,7 @@ int main(int argc, char*  argv[]) {
 
     // ========================================================================
     // Visit each voxel to check their coordinate
+    // ========================================================================
     for (int ii = 0; ii != nr_voi; ++ii) {
         int i = *(voi_id + ii);
 
@@ -374,7 +380,6 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Optional Voronoi filling for empty flat bins
     // ========================================================================
-
     if (mode_voronoi) {
         cout << "\n  Start Voronoi (nearest neighbor) filling-in..." << endl;
 
@@ -394,7 +399,7 @@ int main(int argc, char*  argv[]) {
                 *(flood_dist_data + i) = 0.;
             }
         }
-        // ------------------------------------------------------------------------
+        // --------------------------------------------------------------------
 
         int grow_step = 1, bin_counter = 1;
         int ix, iy, iz, j;
@@ -426,9 +431,9 @@ int main(int argc, char*  argv[]) {
                     tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
                     bin_counter += 1;
 
-                    // ------------------------------------------------------------
+                    // --------------------------------------------------------
                     // 1-jump neighbours
-                    // ------------------------------------------------------------
+                    // --------------------------------------------------------
                     if (ix > 0) {
                         j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
                         d = *(flood_dist_data + i) + dX;
@@ -502,9 +507,9 @@ int main(int argc, char*  argv[]) {
                         }
                     }
 
-                    // ------------------------------------------------------------
+                    // --------------------------------------------------------
                     // 2-jump neighbours
-                    // ------------------------------------------------------------
+                    // --------------------------------------------------------
 
                     if (ix > 0 && iy > 0) {
                         j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
@@ -651,9 +656,9 @@ int main(int argc, char*  argv[]) {
                         }
                     }
 
-                    // ------------------------------------------------------------
+                    // --------------------------------------------------------
                     // 3-jump neighbours
-                    // ------------------------------------------------------------
+                    // --------------------------------------------------------
                     if (ix > 0 && iy > 0 && iz > 0) {
                         j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
                         d = *(flood_dist_data + i) + dia_xyz;
