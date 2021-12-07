@@ -158,38 +158,6 @@ int main(int argc, char*  argv[]) {
     float* flood_dist_data = static_cast<float*>(flood_dist->data);
 
     // ------------------------------------------------------------------------
-    // Find initial number of points if the optional init input is given
-    int32_t max_point_id = 0;
-    if (mode_initialize_with_centroids) {
-        nifti_image* nii_init_points = copy_nifti_as_int32(nii3);
-        int32_t* nii_init_points_data = static_cast<int32_t*>(nii_init_points->data);
-
-        // Find maximum column id
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
-            if (*(nii_init_points_data + i) > max_point_id) {
-                max_point_id = *(nii_init_points_data + i);
-            }
-        }
-
-        // Remove centroids if the desired number of columns is less than
-        // initially given centroids.
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
-            if (*(nii_init_points_data + i) > nr_points) {
-                *(nii_points_data + i) = 0;
-            } else if (*(nii_init_points_data + i) < 0) {  // for signed ids error
-                *(nii_points_data + i) = 0;
-            } else {
-                *(nii_points_data + i) = *(nii_init_points_data + i);
-            }
-        }
-        if (mode_debug) {
-            save_output_nifti(fout, "initial_points", nii_points, false);
-        }
-    }
-    cout << "  Initial number of points: " << max_point_id << endl;
-    cout << "  Desired number of points: " << nr_points << endl;
-
-    // ------------------------------------------------------------------------
     // NOTE(Faruk): This section is written to constrain the big iterative
     // flooding distance loop to the subset of voxels. Required for substantial
     // speed boost.
@@ -213,268 +181,71 @@ int main(int argc, char*  argv[]) {
         }
     }
 
-    // ========================================================================
-    // Find connected clusters to initialize one voxel in each
-    // ========================================================================
-    cout << "  Start finding connected clusters..." << endl;
+    // ------------------------------------------------------------------------
+    // Find initial number of points if the optional init input is given
+    // ------------------------------------------------------------------------
+    int32_t max_point_label = 0;
+    if (mode_initialize_with_centroids) {
+        nifti_image* nii_init_points = copy_nifti_as_int32(nii3);
+        int32_t* nii_init_points_data = static_cast<int32_t*>(nii_init_points->data);
 
-    // Loop until all clusters have one initial voxel
-    uint32_t voxel_counter = 0, prev_voxel_counter = 0;
-    int32_t init_voxel_id = 1;
-    bool terminate_switch1 = true;
-    while (terminate_switch1) {
-        uint32_t ix, iy, iz, i, j;
-
-        if (voxel_counter == nr_voi) {
-            // Indicates all clusters are reached. Terminate condition.
-            terminate_switch1 = false;
-            cout << "    Nr. of connected clusters within domain: "
-                << init_voxel_id - 1 << endl;
-        } else if (voxel_counter == prev_voxel_counter) {
-            // Find the initial voxel for each disconnected cluster
-            uint32_t start_voxel;
-            for (uint32_t i = 0; i != nr_voxels; ++i) {
-                if (*(nii_domain_data + i) != 0) {
-                    start_voxel = i;
-                }
-            }
-            voxel_counter += 1;
-            init_voxel_id += 1;
-            *(nii_domain_data + start_voxel) = init_voxel_id;
-        }
-
-        while (prev_voxel_counter != voxel_counter) {
-            prev_voxel_counter = voxel_counter;
-            for (uint32_t ii = 0; ii != nr_voi; ++ii) {
-                i = *(voi_id + ii);  // Map subset to full set
-                if (*(nii_domain_data + i) == init_voxel_id) {
-                    tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
-                    // --------------------------------------------------------
-                    // 1-jump neighbours
-                    // --------------------------------------------------------
-                    if (ix > 0) {
-                        j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (ix < end_x) {
-                        j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (iy > 0) {
-                        j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (iy < end_y) {
-                        j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (iz > 0) {
-                        j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (iz < end_z) {
-                        j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    // --------------------------------------------------------
-                    // 2-jump neighbours
-                    // --------------------------------------------------------
-                    if (ix > 0 && iy > 0) {
-                        j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (ix > 0 && iy < end_y) {
-                        j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (ix < end_x && iy > 0) {
-                        j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (ix < end_x && iy < end_y) {
-                        j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (iy > 0 && iz > 0) {
-                        j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (iy > 0 && iz < end_z) {
-                        j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (iy < end_y && iz > 0) {
-                        j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (iy < end_y && iz < end_z) {
-                        j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (ix > 0 && iz > 0) {
-                        j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (ix < end_x && iz > 0) {
-                        j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (ix > 0 && iz < end_z) {
-                        j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (ix < end_x && iz < end_z) {
-                        j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-
-                    // --------------------------------------------------------
-                    // 3-jump neighbours
-                    // --------------------------------------------------------
-                    if (ix > 0 && iy > 0 && iz > 0) {
-                        j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (ix > 0 && iy > 0 && iz < end_z) {
-                        j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (ix > 0 && iy < end_y && iz > 0) {
-                        j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (ix < end_x && iy > 0 && iz > 0) {
-                        j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (ix > 0 && iy < end_y && iz < end_z) {
-                        j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (ix < end_x && iy > 0 && iz < end_z) {
-                        j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (ix < end_x && iy < end_y && iz > 0) {
-                        j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                    if (ix < end_x && iy < end_y && iz < end_z) {
-                        j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
-                        if (*(nii_domain_data + j) == 1) {
-                            *(nii_domain_data + j) = init_voxel_id;
-                        }
-                    }
-                }
-            }
-
-            // Count cluster assigned voxels
-            voxel_counter = 0;
-            for (uint32_t ii = 0; ii != nr_voi; ++ii) {
-                i = *(voi_id + ii);  // Map subset to full set
-                if (*(nii_domain_data + i) > 1) {
-                    voxel_counter += 1;
-                }
+        // Find maximum column id
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(nii_init_points_data + i) > max_point_label) {
+                max_point_label = *(nii_init_points_data + i);
             }
         }
+
+        // Remove centroids if the desired number of columns is less than
+        // initially given centroids.
+        for (uint32_t i = 0; i != nr_voxels; ++i) {
+            if (*(nii_init_points_data + i) > nr_points) {
+                *(nii_points_data + i) = 0;
+            } else if (*(nii_init_points_data + i) < 0) {  // for signed ids error
+                *(nii_points_data + i) = 0;
+            } else {
+                *(nii_points_data + i) = *(nii_init_points_data + i);
+                *(nii_domain_data + i) = 2;
+            }
+        }
+        if (mode_debug) {
+            save_output_nifti(fout, "initial_points", nii_points, false);
+        }
+    } else {
+        nii_points_data = static_cast<int32_t*>(*(voi_id + 0));
     }
-    if (mode_debug) {
-        save_output_nifti(fout, "connected_clusters", nii_domain, false);
-    }
+    cout << "  Initial number of points: " << max_point_label << endl;
+    cout << "  Desired number of points: " << nr_points << endl;
 
     // ========================================================================
     // Find points through farthest flood distance
     // ========================================================================
     cout << "  Start generating points..." << endl;
-    // Find the initial voxel
-    uint32_t start_voxel;
-    for (int32_t n = 2; n <= init_voxel_id; ++n) {
-        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
-            uint32_t i = *(voi_id + ii);  // Map subset to full set
-            if (*(nii_domain_data + i) == n) {
-                start_voxel = i;
-                *(nii_domain_data + i) = 1;  // Reset midgm
-            }
-        }
-        *(nii_domain_data + start_voxel) = 2;  // Reduce to single initial voxel
-    }
-
-    // Initialize new voxel
     uint32_t new_voxel_id;
-    float flood_dist_thr = std::numeric_limits<float>::infinity();
+    // float flood_dist_thr = std::numeric_limits<float>::infinity();
 
     // Loop until desired number of points reached
-    for (int32_t n = max_point_id; n < nr_points; ++n) {
+    for (int32_t n = max_point_label; n < nr_points; ++n) {
         cout << "\r    Point [" << n+1 << "/" << nr_points << "]" << flush;
 
         int32_t grow_step = 1;
-        voxel_counter = 1;
+        uint32_t voxel_counter = 1;
         uint32_t ix, iy, iz, i, j;
         float d;
 
         // Initialize grow volume
         for (uint32_t i = 0; i != nr_voxels; ++i) {
-            if (*(nii_domain_data + i) == 2) {
+            if (*(nii_domain_data + i) == 2) {  // Point exists
                 *(flood_step_data + i) = 1.;
                 *(flood_dist_data + i) = 0.;
-            } else if (*(flood_dist_data + i) >= flood_dist_thr
-                       && *(flood_dist_data + i) > 0) {
-                *(flood_step_data + i) = 0.;
-                *(flood_dist_data + i) = 0.;
-                *(nii_domain_data + i) = 1;
-            } else if (*(flood_dist_data + i) < flood_dist_thr
-                       && *(flood_dist_data + i) > 0) {
-                *(nii_domain_data + i) = 0;  // no need to recompute
+            // } else if (*(flood_dist_data + i) >= flood_dist_thr
+            //            && *(flood_dist_data + i) > 0) {
+            //     *(flood_step_data + i) = 0.;
+            //     *(flood_dist_data + i) = 0.;
+            //     *(nii_domain_data + i) = 1;
+            // } else if (*(flood_dist_data + i) < flood_dist_thr
+            //            && *(flood_dist_data + i) > 0) {
+            //     *(nii_domain_data + i) = 0;  // no need to recompute
             }
         }
 
@@ -834,7 +605,7 @@ int main(int argc, char*  argv[]) {
             }
             grow_step += 1;
         }
-        flood_dist_thr = *(flood_dist_data + new_voxel_id) / 2.;
+        // flood_dist_thr = *(flood_dist_data + new_voxel_id) / 2.;
         *(nii_domain_data + new_voxel_id) = 2;
         *(nii_points_data + new_voxel_id) = n + 1;
     }
@@ -870,7 +641,7 @@ int main(int argc, char*  argv[]) {
     int32_t grow_step = 1;
     uint32_t ix, iy, iz, i, j;
     float d;
-    voxel_counter = nr_voxels;
+    uint32_t voxel_counter = nr_voxels;
     while (voxel_counter != 0) {
         voxel_counter = 0;
         for (uint32_t ii = 0; ii != nr_voi; ++ii) {
