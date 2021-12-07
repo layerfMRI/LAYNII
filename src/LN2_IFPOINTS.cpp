@@ -15,8 +15,8 @@ int show_help(void) {
     "    -domain       : Set of voxels in which points will be generated.\n"
     "                    All non-zero voxels will be considered.\n"
     "    -nr_points    : Number of points that will be generated\n"
-    "    -init         : (Optional) New points will be added based on these\n"
-    "                    initial points.\n"
+    // "    -init         : (Optional) New points will be added based on these\n"
+    // "                    initial points.\n"
     "    -debug        : (Optional) Save extra intermediate outputs.\n"
     "    -output       : (Optional) Output basename for all outputs.\n"
     "\n"
@@ -49,13 +49,13 @@ int main(int argc, char*  argv[]) {
             }
             fin1 = argv[ac];
             fout = argv[ac];
-        } else if (!strcmp(argv[ac], "-init")) {
-            if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -init\n");
-                return 1;
-            }
-            fin3 = argv[ac];
-            mode_initialize_with_centroids = true;
+        // } else if (!strcmp(argv[ac], "-init")) {
+        //     if (++ac >= argc) {
+        //         fprintf(stderr, "** missing argument for -init\n");
+        //         return 1;
+        //     }
+        //     fin3 = argv[ac];
+        //     mode_initialize_with_centroids = true;
         } else if (!strcmp(argv[ac], "-nr_points")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -nr_points\n");
@@ -133,6 +133,7 @@ int main(int argc, char*  argv[]) {
 
     // ========================================================================
     // Fix input datatype issues
+    // ========================================================================
     nifti_image* nii_domain = copy_nifti_as_int32(nii1);
     int32_t* nii_domain_data = static_cast<int32_t*>(nii_domain->data);
     // Binarize
@@ -181,51 +182,19 @@ int main(int argc, char*  argv[]) {
         }
     }
 
-    // ------------------------------------------------------------------------
-    // Find initial number of points if the optional init input is given
-    // ------------------------------------------------------------------------
-    int32_t max_point_label = 0;
-    if (mode_initialize_with_centroids) {
-        nifti_image* nii_init_points = copy_nifti_as_int32(nii3);
-        int32_t* nii_init_points_data = static_cast<int32_t*>(nii_init_points->data);
-
-        // Find maximum column id
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
-            if (*(nii_init_points_data + i) > max_point_label) {
-                max_point_label = *(nii_init_points_data + i);
-            }
-        }
-
-        // Remove centroids if the desired number of columns is less than
-        // initially given centroids.
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
-            if (*(nii_init_points_data + i) > nr_points) {
-                *(nii_points_data + i) = 0;
-            } else if (*(nii_init_points_data + i) < 0) {  // for signed ids error
-                *(nii_points_data + i) = 0;
-            } else {
-                *(nii_points_data + i) = *(nii_init_points_data + i);
-                *(nii_domain_data + i) = 2;
-            }
-        }
-        if (mode_debug) {
-            save_output_nifti(fout, "initial_points", nii_points, false);
-        }
-    } else {
-        nii_points_data = static_cast<int32_t*>(*(voi_id + 0));
-    }
-    cout << "  Initial number of points: " << max_point_label << endl;
-    cout << "  Desired number of points: " << nr_points << endl;
-
     // ========================================================================
     // Find points through farthest flood distance
     // ========================================================================
     cout << "  Start generating points..." << endl;
     uint32_t new_voxel_id;
-    // float flood_dist_thr = std::numeric_limits<float>::infinity();
 
-    // Loop until desired number of points reached
-    for (int32_t n = max_point_label; n < nr_points; ++n) {
+    // Select first voxel in RAM within domain as  the initial point
+    uint32_t p = *(voi_id + 0);
+    *(nii_points_data + p) = 1;
+    *(nii_domain_data + p) = 2;
+
+    // Loop until desired number of points is reached
+    for (int32_t n = 1; n < nr_points; ++n) {
         cout << "\r    Point [" << n+1 << "/" << nr_points << "]" << flush;
 
         int32_t grow_step = 1;
@@ -238,14 +207,6 @@ int main(int argc, char*  argv[]) {
             if (*(nii_domain_data + i) == 2) {  // Point exists
                 *(flood_step_data + i) = 1.;
                 *(flood_dist_data + i) = 0.;
-            // } else if (*(flood_dist_data + i) >= flood_dist_thr
-            //            && *(flood_dist_data + i) > 0) {
-            //     *(flood_step_data + i) = 0.;
-            //     *(flood_dist_data + i) = 0.;
-            //     *(nii_domain_data + i) = 1;
-            // } else if (*(flood_dist_data + i) < flood_dist_thr
-            //            && *(flood_dist_data + i) > 0) {
-            //     *(nii_domain_data + i) = 0;  // no need to recompute
             }
         }
 
