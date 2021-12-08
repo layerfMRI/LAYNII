@@ -186,9 +186,8 @@ int main(int argc, char*  argv[]) {
     // Find points through farthest flood distance
     // ========================================================================
     cout << "  Start generating points..." << endl;
-    uint32_t new_voxel_id;
 
-    // Select first voxel in RAM within domain as  the initial point
+    // Select first voxel in RAM within domain as the initial point
     uint32_t p = *(voi_id + 0);
     *(nii_points_data + p) = 1;
     *(nii_domain_data + p) = 2;
@@ -196,25 +195,29 @@ int main(int argc, char*  argv[]) {
     // Loop until desired number of points is reached
     for (int32_t n = 1; n < nr_points; ++n) {
         cout << "\r    Point [" << n+1 << "/" << nr_points << "]" << flush;
-
         int32_t grow_step = 1;
-        uint32_t voxel_counter = 1;
+        uint32_t voxel_counter = nr_voxels;
         uint32_t ix, iy, iz, i, j;
         float d;
 
         // Initialize grow volume
         for (uint32_t i = 0; i != nr_voxels; ++i) {
-            if (*(nii_domain_data + i) == 2) {  // Point exists
+            if (*(nii_domain_data + i) == 2) {
                 *(flood_step_data + i) = 1.;
+                *(flood_dist_data + i) = 0.;
+            } else {
+                *(flood_step_data + i) = 0.;
                 *(flood_dist_data + i) = 0.;
             }
         }
 
+        // Reset some parameters
+        grow_step = 1;
+        voxel_counter = nr_voxels;
         while (voxel_counter != 0) {
             voxel_counter = 0;
             for (uint32_t ii = 0; ii != nr_voi; ++ii) {
-                // Map subset to full set
-                i = *(voi_id + ii);
+                i = *(voi_id + ii);  // Map subset to full set
                 if (*(flood_step_data + i) == grow_step) {
                     tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
                     voxel_counter += 1;
@@ -230,7 +233,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -242,7 +244,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -254,7 +255,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -266,7 +266,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -278,7 +277,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -291,7 +289,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -307,7 +304,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -320,7 +316,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -333,7 +328,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -346,7 +340,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -359,7 +352,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -372,7 +364,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -385,7 +376,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -398,7 +388,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -411,7 +400,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -424,7 +412,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -437,7 +424,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -450,7 +436,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -467,7 +452,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -480,7 +464,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -493,7 +476,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -506,7 +488,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -519,7 +500,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -532,7 +512,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -545,7 +524,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -558,7 +536,6 @@ int main(int argc, char*  argv[]) {
                                 || *(flood_dist_data + j) == 0) {
                                 *(flood_dist_data + j) = d;
                                 *(flood_step_data + j) = grow_step + 1;
-                                new_voxel_id = j;
                             }
                         }
                     }
@@ -566,9 +543,20 @@ int main(int argc, char*  argv[]) {
             }
             grow_step += 1;
         }
-        // flood_dist_thr = *(flood_dist_data + new_voxel_id) / 2.;
-        *(nii_domain_data + new_voxel_id) = 2;
-        *(nii_points_data + new_voxel_id) = n + 1;
+
+        // Find farthest point
+        float max_distance = 0;
+        int idx_new_point;
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            i = *(voi_id + ii);
+            if (*(flood_dist_data + i) > max_distance) {
+                max_distance = *(flood_dist_data + i);
+                idx_new_point = i;
+            }
+        }
+
+        *(nii_domain_data + idx_new_point) = 2;
+        *(nii_points_data + idx_new_point) = n + 1;
     }
     cout << endl;
 
