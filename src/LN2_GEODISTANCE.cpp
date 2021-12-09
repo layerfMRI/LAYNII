@@ -161,11 +161,16 @@ int main(int argc, char*  argv[]) {
     uint32_t ix, iy, iz, i, j;
     float d;
 
+    // TODO(Faruk): Guesstimate an initial distance to axis lines. Probably
+    // I can do this better by considering the local neighbourhood in the
+    // future.
+    float dist_to_axes = ((dX + dY + dZ) / 3) / 2;  // Half a voxel
+
     // Initialize grow volume
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         if (*(nii_init_data + i) != 0) {
             *(flood_step_data + i) = 1.;
-            *(flood_dist_data + i) = 0.;
+            *(flood_dist_data + i) = dist_to_axes;
         }
     }
 
