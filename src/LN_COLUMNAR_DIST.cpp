@@ -368,8 +368,7 @@ int main(int argc, char *argv[]) {
     int nvoxels_to_go_across = 0;
     int running_index = 0;
     for (int i = 0; i < nr_voxels; ++i) {
-        if (*(nim_layers_data + i) > 1
-            && *(nim_layers_data + i) < nr_layers - 1) {
+        if (*(nim_layers_data + i) > 1 && *(nim_layers_data + i) < nr_layers - 1) {
                 nvoxels_to_go_across++;
         }
     }
@@ -379,8 +378,7 @@ int main(int argc, char *argv[]) {
             for (int ix = 0; ix < size_x; ++ix) {
                 int voxel_i = nxy * iz + nx * iy + ix;
 
-                if (*(nim_layers_data + voxel_i) > 1
-                    && *(nim_layers_data + voxel_i) < nr_layers - 1) {
+                if (*(nim_layers_data + voxel_i) > 1 && *(nim_layers_data + voxel_i) < nr_layers - 1) {
                     running_index++;
                     int temp = (running_index * 100) / nvoxels_to_go_across;
                     if (temp != pref_ratio) {
@@ -400,8 +398,7 @@ int main(int argc, char *argv[]) {
                     for (int jz = jz_start; jz <= jz_stop; ++jz) {
                         for (int jy = jy_start; jy <= jy_stop; ++jy) {
                             for (int jx = jx_start; jx <= jx_stop; ++jx) {
-                                int voxel_j = nxy * jz + nx * jy + jx;
-                                *(hairy_data + voxel_j) = 0;
+                                int voxel_j = nxy * jz + nx * jy + jx;  *(hairy_data + voxel_j) = 0;
                             }
                         }
                     }
@@ -417,8 +414,8 @@ int main(int argc, char *argv[]) {
                         jy_start = max(0, iy - vinc_sm_g);
                         jx_start = max(0, ix - vinc_sm_g);
                         jz_stop = min(iz + vinc_sm_g, size_z - 1);
-                        jy_stop = min(iy + vinc_sm_g, size_x - 1);
-                        jx_stop = min(ix + vinc_sm_g, size_y - 1);
+                        jy_stop = min(iy + vinc_sm_g, size_y - 1);
+                        jx_stop = min(ix + vinc_sm_g, size_x - 1);
 
                         for (int jz = jz_start; jz <= jz_stop; ++jz) {
                             for (int jy = jy_start; jy <= jy_stop; ++jy) {
@@ -468,8 +465,8 @@ int main(int argc, char *argv[]) {
                     jy_start = max(0, iy - vinc_sm_g);
                     jx_start = max(0, ix - vinc_sm_g);
                     jz_stop = min(iz + vinc_sm_g, size_z - 1);
-                    jy_stop = min(iy + vinc_sm_g, size_x - 1);
-                    jx_stop = min(ix + vinc_sm_g, size_y - 1);
+                    jy_stop = min(iy + vinc_sm_g, size_y - 1);
+                    jx_stop = min(ix + vinc_sm_g, size_x - 1);
 
                     for (int jz = jz_start; jz <= jz_stop; ++jz) {
                         for (int jy = jy_start; jy <= jy_stop; ++jy) {
