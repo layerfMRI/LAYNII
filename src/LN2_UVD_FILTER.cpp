@@ -23,9 +23,9 @@ int show_help(void) {
     "                 For example LN2_MULTILATERATE output named 'perimeter_chunk.'\n"
     "    -radius    : Radius of cylinder that will be passed over UV coordinates.\n"
     "                 In units of UV coordinates, which often are in mm.\n"
-    "    -height : height/height of cylinder that will be passed over D (depth)\n"
-    "                 coordinates. In units of normalized depth metric, which are often in\n"
-    "                 0-1 range.\n"
+    "    -height    : height/height of cylinder that will be passed over D (depth)\n"
+    "                 coordinates. In units of normalized depth metric, which\n"
+    "                 are often in 0-1 range.\n"
     "    -output    : (Optional) Output basename for all outputs.\n"
     "\n");
     return 0;

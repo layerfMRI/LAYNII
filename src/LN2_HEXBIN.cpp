@@ -5,7 +5,7 @@
 int show_help(void) {
     printf(
     "LN2_HEXBIN: Generate hexagonal bins based on UV coordinates generated \n"
-    "            from LN2_MULTILATERATE.\n"
+    "            from e.g. LN2_MULTILATERATE.\n"
     "\n"
     "Usage:\n"
     "    LN2_HEXBIN -coord_uv coord_uv.nii -radius 10\n"
@@ -15,7 +15,7 @@ int show_help(void) {
     "    -coord_uv : A 4D nifti file that contains 2D (UV) coordinates.\n"
     "                For example LN2_MULTILATERATE output named 'UV_coords'.\n"
     "    -radius   : Radius of the circle inscribed within hexagons.\n"
-    "                In UV coordinate metric units (e.g. mm)."
+    "                In UV coordinate metric units (e.g. mm).\n"
     "    -output   : (Optional) Output basename for all outputs.\n"
     "\n");
     return 0;
