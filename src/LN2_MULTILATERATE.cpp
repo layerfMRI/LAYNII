@@ -89,6 +89,8 @@ int main(int argc, char*  argv[]) {
             mode_incl_borders = true;
         } else if (!strcmp(argv[ac], "-norms")) {
             mode_norms = true;
+        } else if (!strcmp(argv[ac], "-angles")) {
+            mode_angles = true;
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
