@@ -681,7 +681,11 @@ int main(int argc, char*  argv[]) {
         // Translate 0 crossing
         for (uint32_t ii = 0; ii != nr_voi; ++ii) {
             i = *(voi_id + ii);
-            *(flood_dist_data + i) -= thr_radius;
+            if (*(flood_dist_data + i) != 0) {
+                *(flood_dist_data + i) -= thr_radius;
+            } else {  // These voxels are disconnected to centroid cluster
+                *(flood_dist_data + i) = 666;
+            }
         }
 
         // Mark voxels inside perimeter
