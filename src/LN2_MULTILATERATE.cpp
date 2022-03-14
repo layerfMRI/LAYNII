@@ -2879,7 +2879,7 @@ int main(int argc, char*  argv[]) {
         float norm = std::max(std::abs(coord_U), std::abs(coord_V));
         *(flood_dist_data + i) = norm;
     }
-    if (mode_norms) {
+    if (mode_norms || mode_debug) {
         save_output_nifti(fout, "UV_norm_Linf", flood_dist, true);
     }
 
@@ -2891,7 +2891,7 @@ int main(int argc, char*  argv[]) {
         float norm = sqrt(coord_U * coord_U + coord_V * coord_V);
         *(flood_dist_data + i) = norm;
     }
-    if (mode_norms) {
+    if (mode_norms || mode_debug) {
         save_output_nifti(fout, "UV_norm_L2", flood_dist, true);
     }
 
@@ -2912,6 +2912,7 @@ int main(int argc, char*  argv[]) {
     }
 
     // Label perimeter borders
+    float thr_radius_with_borders = dia_xyz*2 + thr_radius;
     bool switch_border = false;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
@@ -3084,7 +3085,8 @@ int main(int argc, char*  argv[]) {
             }
         }
         // Assign new value
-        if (switch_border && *(nii_rim_data + i) == 3) {
+        if (switch_border && *(nii_rim_data + i) == 3
+            && *(flood_dist_data + i) < thr_radius_with_borders) {
             *(flood_step_data + i) = 2;
         } else {
             *(flood_step_data + i) = *(perimeter_data + i);
