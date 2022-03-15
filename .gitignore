@@ -43,3 +43,6 @@ test_data/*.nii*
 
 # Ignore compiled files at top level
 /LN*
+
+# Ignore zip files for not mistakenly uploading binaries upon release
+*.zip
