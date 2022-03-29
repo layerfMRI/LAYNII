@@ -49,3 +49,6 @@ test_data/*.nii*
 
 # Ignore zip files for not mistakenly uploading binaries upon release
 *.zip
+
+# Ignore output folder from README docker demo
+output
