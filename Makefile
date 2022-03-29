@@ -68,7 +68,7 @@ all : $(LAYNII)
 .PHONY: all $(HIGH_PRIORITY) $(LOW_PRIORITY) $(LAYNII2)
 
 # =============================================================================
-# LAYNII v2.0.0 programs
+# LAYNII programs
 LN2_LAYERS:
 	$(CC) $(CFLAGS) -o LN2_LAYERS src/LN2_LAYERS.cpp $(LIBRARIES) $(LFLAGS)
 
@@ -221,3 +221,32 @@ LN2_PEAK_DETECT:
 
 clean:
 	$(RM) obj/*.o $(LAYNII)
+
+tests:
+	cd test_data && bash ./tests.sh
+
+# =============================================================================
+# Docker related content
+
+.PHONY: Dockerfile docker_build
+
+Dockerfile:
+	VERSION=`cat CITATION.cff | grep ^version | cut -c 10-` && \
+	docker run --rm repronim/neurodocker:0.7.0 generate docker \
+		--base debian:stretch-slim \
+		--label version=$$VERSION \
+		--pkg-manager apt \
+		--install "build-essential libz-dev" \
+		--run "mkdir /input /output" \
+		--run "chmod -R 777 /output" \
+		--user laynii \
+		--copy dep /home/laynii/dep \
+		--copy src /home/laynii/src \
+		--copy Makefile /home/laynii/ \
+		--workdir /home/laynii/ \
+		--run "make all" \
+		--add-to-entrypoint 'PATH=/home/laynii/:$$PATH' > Dockerfile
+
+docker_build:
+	VERSION=`cat CITATION.cff | grep ^version | cut -c 10-` && \
+	docker build . -t laynii:$$VERSION -t laynii:latest
