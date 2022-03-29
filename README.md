@@ -26,18 +26,71 @@ A detailed descriptions of how to set up LayNii is provided here: [https://layer
 A brief instruction is also given below.
 
 1. Download the latest release and unzip it or clone the repository with the command:
-```
+   
+```bash
 git clone --depth 1 https://github.com/layerfMRI/laynii
 ```
 
-2. Change directory to laynii folder:
-```
+1. Change directory to laynii folder:
+
+```bash
 cd laynii
 ```
 
-3. Compile it with:
-```
+1. Compile it with:
+   
+```bash
 make all
+```
+
+## Docker image
+
+### Building the docker image
+
+```
+git clone --depth 1 https://github.com/layerfMRI/laynii
+cd laynii
+docker build . -t laynii:latest
+```
+
+### Running the docker image
+
+The template below would map some directories on your comptuer 
+to the `/output` and `/input` inside the container.
+
+`--user "$(id -u):$(id -g)"` would ensure that the output of this docker run 
+is not owned by the root user (which is the default in docker).
+
+```bash
+OUPUT_DIR=FIXME
+INPUT_DIR=FIXME
+
+docker run  -it --rm \
+            --user "$(id -u):$(id -g)" \
+            -v "${OUPUT_DIR}":/output \
+            -v "${INPUT_DIR}":/input \
+    laynii:latest \
+        laynii_command 
+```
+
+Example to be run from the root folder of the LAYNII repository.
+
+```bash
+INPUT_DIR=${PWD}/test_data
+
+mkdir ${PWD}/output
+OUTPUT_DIR=${PWD}/output
+
+docker run -it --rm \
+           -v "${OUTPUT_DIR}":/output \
+           -v "${INPUT_DIR}":/input \
+           --user "$(id -u):$(id -g)" \
+    laynii:latest \
+        LN_BOCO \
+        -Nulled "/input/lo_Nulled_intemp.nii" \
+        -BOLD "/input/lo_BOLD_intemp.nii" \
+        -trialBOCO 40 -shift \
+        -output /output/lo_BOLD
 ```
 
 ## Tutorials & use cases
@@ -81,7 +134,7 @@ Since January 2020, all remaining dependencies have been removed. This should al
 Some users seemed to have a compiler installed that does not match the actual CPU architecture of the computer. In those cases it can be easier to compile the programs with another compiler one by one with g++ (instead of c++).
 Some users seemed to have a compiler installed but do not have make installed. Thus, instead of executing 'make all', just copy-paste the following into your terminal in the LayNii folder.
 
-```
+```bash
 c++ -std=c++11 -DHAVE_ZLIB -o LN_BOCO src/LN_BOCO.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB -o LN_MP2RAGE_DNOISE src/LN_MP2RAGE_DNOISE.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
 c++ -std=c++11 -DHAVE_ZLIB -o LN2_LAYER_SMOOTH src/LN2_LAYER_SMOOTH.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
