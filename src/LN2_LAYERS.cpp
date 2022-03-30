@@ -50,7 +50,7 @@ int show_help(void) {
     "                    a part of gray matter. Off by default.\n"
     "    -equal_counts : (Optional) Equalize number of voxels for each layer.\n"
     "                    This option inherently includes the borders.\n"
-    "                    output is given with file name addition layerbins.\n"
+    "                    output is given with file name addition `*layers_equicount*.\n"
     "                    Useful for ~0.8 mm inputs where no upsampling is done.\n"
     "    -no_smooth    : (Optional) Disable smoothing on cortical depth metric.\n"
     "    -debug        : (Optional) Save extra intermediate outputs.\n"
@@ -1183,7 +1183,7 @@ int main(int argc, char*  argv[]) {
                 }
             }
         }
-        save_output_nifti(fout, "layerbins_equidist", nii_binlayers);
+        save_output_nifti(fout, "layers_equicount", nii_binlayers);
     }
 
     // ------------------------------------------------------------------------
