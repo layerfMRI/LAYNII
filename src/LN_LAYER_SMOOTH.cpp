@@ -25,6 +25,7 @@ int show_help(void){
     "                  it will make things things slower \n"
     "                  Note, that this is best done with not too manny layers,  \n"
     "                  otherwise a single layer has wholes and is not connected.  \n"
+    "                  This option can only smooth within layers and removes signal outside the layer mask  \n"
     "    -output     : (Optional) Output filename, including .nii or\n"
     "                  .nii.gz, and path if needed. Overwrites existing files.\n"
     "\n"
@@ -112,6 +113,10 @@ int main(int argc, char * argv[])
       return 2;
    }
 
+   if( FWHM_val == 0.0  ) {
+      fprintf(stderr,"** FWHM_val is zero. There is nothing to do here.\n");
+      return 2;
+   }
       // get dimsions of input
    int sizeSlice = nim_maski->nz ;
    int sizePhase = nim_maski->nx ;
