@@ -12,6 +12,7 @@ Most essential programs (so far) are:
 - `LN_BOCO`: Gor BOLD correction in VASO.
 - `LN2_MULTILATERATE & LN2_PATCH_FLATTEN`: For flattening cortical chunks (see [an application here](https://doi.org/10.1101/2021.11.25.470023 ))
 
+
 ## Citation
 
 If you use LayNii in your research please cite the following article:
@@ -94,9 +95,9 @@ docker run -it --rm \
         -output /output/lo_BOLD
 ```
 
-## Tutorials & use cases
+## Tutorials & Use Cases
 
-Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri blog](https://layerfmri.com/category/code/). Various pipeline script in the context of LayNii see the [LayNii_extras](https://github.com/ofgulban/LayNii_extras) Links to instruction of the specific programs are included in the help output of the respective programs and below"
+Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri blog](https://layerfmri.com/category/code/) and [here in ofgulban's youtube channel](https://youtube.com/playlist?list=PLs_umVHtShfadNm8brOweXHUSmqVDTk4q). Various pipeline script in the context of LayNii see the [LayNii_extras](https://github.com/ofgulban/LayNii_extras) Links to instruction of the specific programs are included in the help output of the respective programs and below"
 
 - [LN2_LAYERS algorithm](https://thingsonthings.org/ln2_layers/)
 - [LN2_LAYERS example application](https://layerfmri.com/2020/04/24/equivol/)
