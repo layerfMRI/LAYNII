@@ -5,8 +5,12 @@
 
 int show_help(void) {
     printf(
-    "LN2_UVD_FILTER: Filter using flat coordinates (UV) and depth (D).\n"
-    "                Passes a cylinder through UVD coordinates.\n"
+    "LN2_UVD_FILTER: Filter using flat coordinates (UV) and depth (D). This program:\n"
+    "                  1. Evaluates voxels within a cylindical window centered\n"
+    "                     at each UVD coordinate.\n"
+    "                  2. Performs the chosen operation (median, min, max, ...)\n"
+    "                     within each window.\n"
+    "                  3. Writes the result back to the center voxel of each window.\n"
     "\n"
     "Usage:\n"
     "    LN2_UVD_FILTER -values activation.nii -coord_uv uv_coord.nii -coord_d layers_equidist.nii -domain mask.nii -radius 3 -height 0.25\n"
@@ -26,10 +30,10 @@ int show_help(void) {
     "    -height    : height/height of cylinder that will be passed over D (depth)\n"
     "                 coordinates. In units of normalized depth metric, which\n"
     "                 are often in 0-1 range.\n"
-    "    -min       : Take the minimum within the window.\n"
-    "    -max       : Take the maximum within the window.\n"
-    "    -median    : Take the median within the window.\n"
-    "    -columns   : Take the mode within the window.\n"
+    "    -median    : (Default) Take the median within the window.\n"
+    "    -min       : (Optional) Take the minimum within the window.\n"
+    "    -max       : (Optional) Take the maximum within the window.\n"
+    "    -columns   : (Optional) Take the mode within the window.\n"
     "    -output    : (Optional) Output basename for all outputs.\n"
     "\n");
     return 0;
@@ -310,8 +314,9 @@ int main(int argc, char* argv[]) {
             *(temp_nii_output_extra_data + vec_voi_id[i]) = static_cast<float>(n);
         }
         // --------------------------------------------------------------------
-        // // A) Find functional columns: write back to a single voxel
-        // // --------------------------------------------------------------------
+        // A) Find functional columns: write back to a single voxel
+        // TODO[Faruk]: Code review this part.
+        // --------------------------------------------------------------------
         if (mode_cols) {
             int count1 = 0, count2 = 0,  count3 = 0, count4 = 0;
             int m, c, t;
@@ -346,7 +351,10 @@ int main(int argc, char* argv[]) {
             *(temp_nii_output_extra_data + vec_voi_id[i]) = static_cast<float>(t);
         }
         // --------------------------------------------------------------------
-        // B) Find functional columns (strict definition): write back all the window
+        // B) Find functional columns (strict definition): Write back to all
+        // window
+        // TODO[Faruk]: This section might be redundant or needs to be
+        // reimplemented.
         // --------------------------------------------------------------------
         // if (mode_cols) {
         //     float temp_ref = vec_val[i];
