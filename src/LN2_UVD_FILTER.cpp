@@ -5,8 +5,8 @@
 
 int show_help(void) {
     printf(
-    "LN2_UVD_FILTER: Median filter using flat coordinates (UV) and depth (D).\n"
-    "                       Passes a cylinder through UVD coordinates.\n"
+    "LN2_UVD_FILTER: Filter using flat coordinates (UV) and depth (D).\n"
+    "                Passes a cylinder through UVD coordinates.\n"
     "\n"
     "Usage:\n"
     "    LN2_UVD_FILTER -values activation.nii -coord_uv uv_coord.nii -coord_d layers_equidist.nii -domain mask.nii -radius 3 -height 0.25\n"
@@ -26,6 +26,10 @@ int show_help(void) {
     "    -height    : height/height of cylinder that will be passed over D (depth)\n"
     "                 coordinates. In units of normalized depth metric, which\n"
     "                 are often in 0-1 range.\n"
+    "    -min       : Take the minimum within the window.\n"
+    "    -max       : Take the maximum within the window.\n"
+    "    -median    : Take the median within the window.\n"
+    "    -columns   : Take the mode within the window.\n"
     "    -output    : (Optional) Output basename for all outputs.\n"
     "\n");
     return 0;
@@ -37,7 +41,7 @@ int main(int argc, char* argv[]) {
     char *fin1 = NULL, *fout = NULL, *fin2=NULL, *fin3=NULL, *fin4=NULL;
     int ac;
     float radius = 3, height = 0.25;
-    bool mode_median = true, mode_min = false;
+    bool mode_median = true, mode_min = false, mode_max = false, mode_cols = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -84,10 +88,24 @@ int main(int argc, char* argv[]) {
             height = atof(argv[ac]);
         } else if (!strcmp(argv[ac], "-median")) {
             mode_median = true;
+            mode_max = false;
+            mode_cols = false;
             mode_min = false;
         } else if (!strcmp(argv[ac], "-min")) {
             mode_median = false;
+            mode_max = false;
+            mode_cols = false;
             mode_min = true;
+        } else if (!strcmp(argv[ac], "-max")) {
+            mode_median = false;
+            mode_min = false;
+            mode_cols = false;
+            mode_max = true;
+        } else if (!strcmp(argv[ac], "-columns")) {
+            mode_median = false;
+            mode_min = false;
+            mode_max = false;
+            mode_cols = true;
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -164,9 +182,25 @@ int main(int argc, char* argv[]) {
     nifti_image* nii_output = copy_nifti_as_float32(nii_input);
     float* nii_output_data = static_cast<float*>(nii_output->data);
 
+    // For extra output
+    nifti_image* nii_output_extra = copy_nifti_as_float32(nii_input);
+    float* nii_output_extra_data = static_cast<float*>(nii_output_extra->data);
+
+    nifti_image* temp_nii_output_extra = copy_nifti_as_float32(nii_input);
+    float* temp_nii_output_extra_data = static_cast<float*>(temp_nii_output_extra->data);
+
     if (mode_min) {
         for (int i = 0; i != nr_voxels; ++i) {
             *(nii_output_data + i) = 0;
+        }
+    }
+
+
+    if (mode_cols || mode_max) {
+        for (int i = 0; i != nr_voxels; ++i) {
+            *(nii_output_data + i) = 0;
+            *(nii_output_extra_data + i) = 0;
+            *(temp_nii_output_extra_data + i) = 0;
         }
     }
 
@@ -196,6 +230,7 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i != nr_voi; ++i) {
         cout << "\r    " << i * 100 / nr_voi << " %" << flush;
         vector <float> temp_vec;
+        vector <int> temp_vec_id;
 
         // --------------------------------------------------------------------
         // Cylinder windowing in UVD space
@@ -207,17 +242,17 @@ int main(int argc, char* argv[]) {
                     + (vec_v[i] - vec_v[j])*(vec_v[i] - vec_v[j]);
                 if (dist_uv < radius_sqr) {  // Check Euclidean distance
                     temp_vec.push_back(vec_val[j]);
+                    temp_vec_id.push_back(vec_voi_id[j]);
                 }
             }
         }
 
         int n = temp_vec.size();
-        float m;
-
         // --------------------------------------------------------------------
         // Find median
         // --------------------------------------------------------------------
         if (mode_median) {
+            float m;
             if (n % 2 == 0) {  // even
                 std::nth_element(temp_vec.begin(),
                 temp_vec.begin() + n / 2,
@@ -241,7 +276,7 @@ int main(int argc, char* argv[]) {
         }
 
         // --------------------------------------------------------------------
-        // Peak detect by minimum
+        // Find minimum
         // --------------------------------------------------------------------
         if (mode_min) {
             float temp_ref = vec_val[i];
@@ -258,7 +293,78 @@ int main(int argc, char* argv[]) {
                 *(nii_output_data + vec_voi_id[i]) = 1;
             }
         }
+
         // --------------------------------------------------------------------
+        // Find maximum (Works with binary mask)
+        // NOTE: temp_mask = 1 or 0
+        // --------------------------------------------------------------------
+        if (mode_max) {
+            float temp_ref = vec_val[i];
+            float temp_max = vec_val[i];
+            for (int j = 0; j != n; ++j) {
+                if (temp_vec[j] > temp_max) {
+                    temp_max = temp_vec[j];
+                }
+            }
+            *(nii_output_data + vec_voi_id[i]) = temp_max;
+            *(temp_nii_output_extra_data + vec_voi_id[i]) = static_cast<float>(n);
+        }
+        // --------------------------------------------------------------------
+        // // A) Find functional columns: write back to a single voxel
+        // // --------------------------------------------------------------------
+        if (mode_cols) {
+            int count1 = 0, count2 = 0,  count3 = 0, count4 = 0;
+            int m, c, t;
+            // Count occurences
+            for (int j = 0; j != n; ++j) {
+                if (temp_vec[j] == 1) {
+                    count1 += 1;
+                } else if (temp_vec[j] == 2) {
+                    count2 += 1;
+                } else if (temp_vec[j] == 3) {
+                    count3 += 1;
+                } else if (temp_vec[j] == 4) {
+                    count4 += 1;
+                }
+            }
+
+            // Find the maximum (most common label)
+            if (count1 > count2 && count1 > count3 && count1 > count4) {
+                m = 1; c = count1;
+            } else if (count2 > count1 && count2 > count3 && count2 > count4) {
+                m = 2; c = count2;
+            } else if (count3 > count1 && count3 > count2 && count3 > count4) {
+                m = 3; c = count3;
+            } else if (count4 > count1 && count4 > count2 && count4 > count3) {
+                m = 4; c = count4;
+            }
+            t = count1 + count2 + count3 + count4;
+
+            // Write the output (voxel wise)
+            *(nii_output_data + vec_voi_id[i]) = m;
+            *(nii_output_extra_data + vec_voi_id[i]) = static_cast<float>(c)/t;
+            *(temp_nii_output_extra_data + vec_voi_id[i]) = static_cast<float>(t);
+        }
+        // --------------------------------------------------------------------
+        // B) Find functional columns (strict definition): write back all the window
+        // --------------------------------------------------------------------
+        // if (mode_cols) {
+        //     float temp_ref = vec_val[i];
+        //     bool iscolumn = true;
+        //     for (int j = 0; j != n; ++j) {
+        //         if (temp_vec[j] != temp_ref) {
+        //             iscolumn = false;
+        //             break;
+        //         }
+        //     }
+        //
+        //     if (iscolumn && temp_ref > 0) {
+        //         for (int j = 0; j != n; ++j) {
+        //             *(nii_output_data + temp_vec_id[j]) = temp_ref;
+        //             *(nii_output_extra_data + temp_vec_id[j]) = n;
+        //         }
+        //     }
+        // }
     }
     cout << endl;
 
@@ -266,6 +372,14 @@ int main(int argc, char* argv[]) {
         save_output_nifti(fout, "UVD_median_filter", nii_output, true);
     } else if (mode_min) {
         save_output_nifti(fout, "UVD_minpeaks", nii_output, true);
+    } else if (mode_max) {
+        save_output_nifti(fout, "UVD_max_filter", nii_output, true);
+        save_output_nifti(fout, "UVD_max_filter_window_count", temp_nii_output_extra, true);
+
+    } else if (mode_cols) {
+        save_output_nifti(fout, "UVD_columns_mode_filter", nii_output, true);
+        save_output_nifti(fout, "UVD_columns_mode_filter_window_count_ratio", nii_output_extra, true);
+        save_output_nifti(fout, "UVD_columns_mode_filter_window_count", temp_nii_output_extra, true);
     }
 
     cout << "\n  Finished." << endl;
