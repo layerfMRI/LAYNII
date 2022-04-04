@@ -8,8 +8,9 @@ This is a package of standalone layer (functional) magnetic resonance imaging (l
 
 Most essential programs (so far) are:
 - `LN2_LAYERS`: To generate equi-distant or equi-volume layers from gray matter segmentation. (Alternative to `LN_GROW_LAYERS` in older versions of LayNii).
-- `LN_LAYER_SMOOTH` : For layer-specific spatial smoothing.
-- `LN_BOCO` : for BOLD correction in VASO.
+- `LN_LAYER_SMOOTH`: For layer-specific spatial smoothing.
+- `LN_BOCO`: Gor BOLD correction in VASO.
+- `LN2_MULTILATERATE & LN2_PATCH_FLATTEN`: For flattening cortical chunks (see [an application here](https://doi.org/10.1101/2021.11.25.470023 ))
 
 ## Citation
 
