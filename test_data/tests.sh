@@ -1,3 +1,4 @@
+#! /bin/bash
 # For internal testing. Just to check whether programs execute.
 
 ../LN2_LAYER_SMOOTH -input sc_VASO_act.nii.gz -layer_file sc_layers.nii.gz -FWHM 1
@@ -16,12 +17,12 @@
 ../LN_FLOAT_ME -input lo_BOLD_intemp.nii.gz
 ../LN_SHORT_ME -input lo_VASO_act.nii.gz -output short.nii.gz
 ../LN_INT_ME -input LN_INT_ME -input lo_BOLD_act.nii.gz
-../LN_GFACTOR -input sc_INV2.nii.gz  -variance 1 -direction 1 -grappa 2 -cutoff 200
+../LN_GFACTOR -input sc_INV2.nii.gz -variance 1 -direction 1 -grappa 2 -cutoff 200
 ../LN_GRADSMOOTH -gradfile lo_gradT1.nii.gz -input lo_VASO_act.nii.gz -FWHM 1 -within -selectivity 0.1
 ../LN_GRADSMOOTH_ITER -gradfile lo_gradT1.nii.gz -input lo_VASO_act.nii.gz -FWHM 1 -within -selectivity 0.1
 ../LN_GROW_LAYERS -rim sc_rim.nii.gz
 ../LN_INTPRO -image sc_UNI.nii.gz -min -direction 2 -range 3
-../LN_IMAGIRO -layers sc_layers_3dcolumns.nii.gz -columns sc_columns_3dcolumns.nii.gz -data sc_BOLD_act.nii.gz 
+../LN_IMAGIRO -layers sc_layers_3dcolumns.nii.gz -columns sc_columns_3dcolumns.nii.gz -data sc_BOLD_act.nii.gz
 ../LN_LEAKY_LAYERS -rim lo_rim_LL.nii.gz
 ../LN_NOISEME -input lo_VASO_act.nii.gz -std 1
 ../LN_RAGRUG -input sc_rim.nii.gz
