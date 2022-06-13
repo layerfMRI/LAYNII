@@ -129,6 +129,7 @@ int main(int argc, char * argv[]) {
     cout << "  Calculating skew, kurtosis, and autocorrelation..." << endl;
 
     double vec1[size_time];
+    double vecl[27]; // local vector for spatial gradient (number of voxel's noigbour)
     double vec2[size_time];
     int voxel_i = 0; 
 
@@ -215,7 +216,6 @@ int main(int argc, char * argv[]) {
         }
     }
   
-  
   // normalicing to time course duration
     for (int voxel_i = 0; voxel_i < nxyz ; voxel_i++) {
                 *(nii_NOISE_data + voxel_i) = *(nii_NOISE_data + voxel_i) / sqrt((double) (size_time)/2 ) ;
@@ -237,19 +237,24 @@ int main(int argc, char * argv[]) {
             for (int ix = 0; ix <size_x; ++ix) {
                 vinc_counter = 0; 
                 
+
                 for (int iz_i=max(0, iz-vic); iz_i<=min(iz+vic, size_z-1); ++iz_i) {
                     for (int iy_i=max(0, iy-vic); iy_i<=min(iy+vic, size_y-1); ++iy_i) {
                         for (int ix_i=max(0, ix-vic); ix_i<=min(ix+vic, size_x-1); ++ix_i) {
-                                vec1[vinc_counter] = *(nii_mean_data + nxy * iz_i + nx * iy_i + ix_i) ;  
+							 // cout << "iz_i ... iy_i  ....ix_i  " << iz_i << "  " << iy_i <<"  " << ix_i  << endl;
+                                vecl[vinc_counter] = *(nii_mean_data + nxy * iz_i + nx * iy_i + ix_i) ;  
                                 vinc_counter++;
                         }
                     }
                 }
-                *(nii_GRAD_data + nxy * iz + nx * iy + ix) = ren_stdev(vec1, vinc_counter); 
+                *(nii_GRAD_data + nxy * iz + nx * iy + ix) = ren_stdev(vecl, vinc_counter); 
             }
         }
     }
     save_output_nifti(fout, "local_gradient", nii_GRAD, true);
+
+       cout << " estimateing local image SNR  ..." << endl;
+
 
     //-------------------------------------
     // estimateing local image SNR  
@@ -263,13 +268,13 @@ int main(int argc, char * argv[]) {
                 for (int iz_i=max(0, iz-vic); iz_i<=min(iz+vic, size_z-1); ++iz_i) {
                     for (int iy_i=max(0, iy-vic); iy_i<=min(iy+vic, size_y-1); ++iy_i) {
                         for (int ix_i=max(0, ix-vic); ix_i<=min(ix+vic, size_x-1); ++ix_i) {
-                                vec1[vinc_counter] = *(nii_NOISE_data + nxy * iz_i + nx * iy_i + ix_i) ;  
+                                vecl[vinc_counter] = *(nii_NOISE_data + nxy * iz_i + nx * iy_i + ix_i) ;  
                                 vinc_counter++;
                         }
                     }
                 }
                // *(nii_NOISESTDEV_data + nxy * iz + nx * iy + ix) =  ren_stdev(vec1, vinc_counter); 
-                *(nii_NOISESTDEV_data + nxy * iz + nx * iy + ix) = *(nii_mean_data + nxy * iz + nx * iy + ix) / ren_stdev(vec1, vinc_counter) ;
+                *(nii_NOISESTDEV_data + nxy * iz + nx * iy + ix) = *(nii_mean_data + nxy * iz + nx * iy + ix) / ren_stdev(vecl, vinc_counter) ;
             }
         }
     }
