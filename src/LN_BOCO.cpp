@@ -132,25 +132,35 @@ int main(int argc, char * argv[]) {
     // Allocate new nifti
     nifti_image *nii_boco_vaso = copy_nifti_as_float32(nii1);
     float *nii_boco_vaso_data = static_cast<float*>(nii_boco_vaso->data);
+    
+    
+
 
     // ========================================================================
     // Handle scaling factor effects
     // TODO(Faruk): I am not sure we need this part anymore. Need to check.
+    
     float scl_slope1=nii_nulled->scl_slope, scl_slope2=nii_bold->scl_slope;
-    if (scl_slope1 != 0 || scl_slope2 != 0) {
-        for (int i = 0; i != nr_voxels; ++i) {
-            *(nii_nulled_data + i) *= scl_slope1;
-            *(nii_bold_data + i) *= scl_slope2;
-        }
-    } else {
-        cout << "    !!!Warning!!! Input nifti header contains scl_scale=0.\n"
+    if (scl_slope2 != 0 || scl_slope1 != 0 ) { 
+        cout << "    !!!Warning!!! Input nifti header contains scl_scale !=0.\n"
              << "    Make sure to check the resulting output image.\n"<< endl;
     }
+    if (scl_slope1 != 0 ) {
+        for (int i = 0; i != nr_voxels; ++i) {
+            *(nii_nulled_data + i) *= scl_slope1;
+        }
+    } 
+    if (scl_slope2 != 0) {
+        for (int i = 0; i != nr_voxels; ++i) {
+            *(nii_bold_data + i) *= scl_slope2;
+        }
+    }
+
     // We can set scaling factor to 1 because we have accounted for them above
     nii_nulled->scl_slope = 1.;
     nii_bold->scl_slope = 1.;
     nii_boco_vaso->scl_slope = 1.;
-
+    
     // ========================================================================
     // BOLD correction
     // ========================================================================
@@ -195,7 +205,6 @@ int main(int argc, char * argv[]) {
                 *(nii_boco_vaso_data + i) = nc / nn;
             }
         }
-
         // Clip VASO values that are unrealistic
         for (int i = 0; i != nr_voxels; ++i) {
             if (*(nii_boco_vaso_data + i) <= 0) {
@@ -246,7 +255,7 @@ int main(int argc, char * argv[]) {
 
         // Clean VASO values that are unrealistic
         for (int i = 0; i != nr_voxels; ++i) {
-            if (*(nii_boco_vaso_data + i) <= 0) {
+           if (*(nii_boco_vaso_data + i) <= 0) {
                 *(nii_boco_vaso_data + i) = 0;
             }
             if (*(nii_boco_vaso_data + i) >= 2) {
