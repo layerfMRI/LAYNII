@@ -1,4 +1,4 @@
-# <img src="visuals/LayNii_logo.svg" width=256 />
+# <img src="visuals/LayNii_logo.svg" />
 
 This is a package of standalone layer (functional) magnetic resonance imaging (layer-fMRI) C++ programs that depends only on a C++ compiler. The purpose of this package is to provide layer-analysis software that are not (yet) included in the other major MRI analysis software.
 
