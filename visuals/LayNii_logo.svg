@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="1920"
+   height="407"
+   viewBox="0 0 507.99998 107.68542"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.1 (9c6d41e4, 2022-07-14)"
+   sodipodi:docname="LayNii_logo.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="0.5"
+     inkscape:cx="1041"
+     inkscape:cy="199"
+     inkscape:window-width="2560"
+     inkscape:window-height="1387"
+     inkscape:window-x="1"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <text
+       xml:space="preserve"
+       style="font-size:100.583px;font-family:Galvji;-inkscape-font-specification:Galvji;fill:#2c5aa0;stroke-width:0.0942972"
+       x="-7.9460826"
+       y="81.936089"
+       id="text2262"><tspan
+         sodipodi:role="line"
+         id="tspan2260"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:100.583px;font-family:Futura;-inkscape-font-specification:'Futura Bold';fill:#2c5aa0;stroke-width:0.0942972"
+         x="-7.9460826"
+         y="81.936089">La<tspan
+   style="fill:#2c5aa0;fill-opacity:1;stroke-width:0.0942972"
+   id="tspan11467">y</tspan>Nii</tspan></text>
+    <g
+       id="g11363"
+       transform="matrix(0.65775118,0,0,0.65775118,23.767578,142.73856)">
+      <path
+         style="opacity:1;fill:#5183cf;fill-opacity:1;stroke:none;stroke-width:0.264583;stroke-dasharray:none;stroke-opacity:1"
+         d="m 151.03914,-170.8879 32.26615,58.56833 5.04638,-9.17523 -26.60811,-49.3931 z"
+         id="path9825" />
+      <path
+         style="opacity:1;fill:#2c5aa0;fill-opacity:1;stroke:none;stroke-width:0.264583;stroke-dasharray:none;stroke-opacity:1"
+         d="m 161.74356,-170.8879 h 10.70439 l 20.95004,40.21796 -5.04632,9.17514 z"
+         id="path9890" />
+      <path
+         style="opacity:1;fill:#2c5aa0;fill-opacity:1;stroke:none;stroke-width:0.264583;stroke-dasharray:none;stroke-opacity:1"
+         d="m 140.33475,-170.8879 h 10.70439 l 32.26615,58.56833 -5.04638,9.17524 z"
+         id="path9892" />
+      <path
+         style="opacity:1;fill:#1c3a66;fill-opacity:1;stroke:none;stroke-width:0.264583;stroke-dasharray:none;stroke-opacity:1"
+         d="M 224.33868,-170.8879 161.8455,-53.292414 H 151.49791 L 213.73635,-170.8879 Z"
+         id="path10113" />
+      <path
+         style="opacity:1;fill:#1c3a66;fill-opacity:1;stroke:none;stroke-width:0.264583;stroke-dasharray:none;stroke-opacity:1"
+         d="m 234.94101,-170.8879 -62.74793,117.595486 h 10.34759 L 245.54371,-170.8879 Z"
+         id="path10115" />
+      <path
+         style="opacity:1;fill:#2c5aa0;fill-opacity:1;stroke:none;stroke-width:0.264583;stroke-dasharray:none;stroke-opacity:1"
+         d="m 224.33868,-170.8879 h 10.60233 L 172.19308,-53.292414 H 161.8455 Z"
+         id="path10117" />
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:24.4537px;font-family:Futura;-inkscape-font-specification:'Futura Bold';fill:#80b3ff;stroke-width:0.127363"
+       x="353.8439"
+       y="20.828039"
+       id="text11566"><tspan
+         sodipodi:role="line"
+         id="tspan11564"
+         style="font-size:24.4537px;fill:#80b3ff;stroke-width:0.127363"
+         x="353.8439"
+         y="20.828039">A software</tspan><tspan
+         sodipodi:role="line"
+         style="font-size:24.4537px;fill:#80b3ff;stroke-width:0.127363"
+         x="353.8439"
+         y="51.39521"
+         id="tspan11568">suite for</tspan><tspan
+         sodipodi:role="line"
+         style="font-size:24.4537px;fill:#80b3ff;stroke-width:0.127363"
+         x="353.8439"
+         y="81.962395"
+         id="tspan11570">layer (f)MRI</tspan></text>
+  </g>
+</svg>
