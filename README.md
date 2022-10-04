@@ -5,7 +5,7 @@ This is a package of standalone layer (functional) magnetic resonance imaging (l
 Most essential programs (so far) are:
 - `LN2_LAYERS`: To generate equi-distant or equi-volume layers from gray matter segmentation. (Alternative to `LN_GROW_LAYERS` in older versions of LayNii).
 - `LN_LAYER_SMOOTH`: For layer-specific spatial smoothing.
-- `LN_BOCO`: Gor BOLD correction in VASO.
+- `LN_BOCO`: BOLD correction to attain the VASO contrast with SS-SI-VASO.
 - `LN2_MULTILATERATE & LN2_PATCH_FLATTEN`: For flattening cortical chunks (see [an application here](https://doi.org/10.1101/2021.11.25.470023 ))
 
 
@@ -24,7 +24,7 @@ A detailed descriptions of how to set up LayNii is provided here: [https://layer
 A brief instruction is also given below.
 
 1. Download the latest release and unzip it or clone the repository with the command:
-   
+
 ```bash
 git clone --depth 1 https://github.com/layerfMRI/laynii
 ```
@@ -36,7 +36,7 @@ cd laynii
 ```
 
 1. Compile it with:
-   
+
 ```bash
 make all
 ```
@@ -53,10 +53,10 @@ docker build . -t laynii:latest
 
 ### Running the docker image
 
-The template below would map some directories on your comptuer 
+The template below would map some directories on your comptuer
 to the `/output` and `/input` inside the container.
 
-`--user "$(id -u):$(id -g)"` would ensure that the output of this docker run 
+`--user "$(id -u):$(id -g)"` would ensure that the output of this docker run
 is not owned by the root user (which is the default in docker).
 
 ```bash
@@ -68,7 +68,7 @@ docker run  -it --rm \
             -v "${OUPUT_DIR}":/output \
             -v "${INPUT_DIR}":/input \
     laynii:latest \
-        laynii_command 
+        laynii_command
 ```
 
 Example to be run from the root folder of the LAYNII repository.
