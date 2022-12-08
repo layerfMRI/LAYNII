@@ -44,9 +44,9 @@ int show_help(void) {
     "\n"
     "Citation:\n"
     "    - Gulban, O. F., Bollmann, S., Huber, R., Wagstyl, K., Goebel, R., Poser,\n"
-    "      B. A., Kay, K., Ivanov, D. (2021). Mesoscopic quantification of cortical\n"
-    "      architecture in the living human brain. BioRxiv.\n"
-    "      <https://doi.org/10.1101/2021.11.25.470023>\n"
+    "      B. A., Kay, K., Ivanov, D. (2022). Mesoscopic in vivo human T2* dataset\n"
+    "      acquired using quantitative MRI at 7 Tesla. Neuroimage.\n"
+    "      <https://doi.org/10.1016/j.neuroimage.2022.119733>\n"
     "\n");
     return 0;
 }
