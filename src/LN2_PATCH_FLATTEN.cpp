@@ -15,6 +15,7 @@ int show_help(void) {
     "    -help      : Show this help.\n"
     "    -values    : Nifti image with values that will be projected onto flat image.\n"
     "                 For example an activation map or another measurement like curvature.\n"
+    "                 If this file is 4D (e.g. time series), the output will also be 4D.\n"    
     "    -coord_uv  : A 4D nifti file that contains 2D (UV) coordinates.\n"
     "                 For example LN2_MULTILATERATE output named 'UV_coords'.\n"
     "    -coord_d   : A 3D nifti file that contains cortical depth measurements or layers.\n"
@@ -35,11 +36,12 @@ int show_help(void) {
     "\n"
     "Notes:\n"
     "    - This program is written for 3D images.\n"
-    "    - Developed for, and can be cited with:\n"
-    "        Gulban, O. F., Bollmann, S., Huber, R., Wagstyl, K., Goebel, R., Poser,\n"
-    "        B. A., Kay, K., Ivanov, D. (2021). Mesoscopic Quantification of Cortical\n"
-    "        Architecture in the Living Human Brain. BioRxiv.\n"
-    "        <https://doi.org/10.1101/2021.11.25.470023>\n"
+    "\n"
+    "Citation:\n"
+    "    - Gulban, O. F., Bollmann, S., Huber, R., Wagstyl, K., Goebel, R., Poser,\n"
+    "      B. A., Kay, K., Ivanov, D. (2022). Mesoscopic in vivo human T2* dataset\n"
+    "      acquired using quantitative MRI at 7 Tesla. Neuroimage.\n"
+    "      <https://doi.org/10.1016/j.neuroimage.2022.119733>\n"
     "\n");
     return 0;
 }
@@ -167,7 +169,11 @@ int main(int argc, char*  argv[]) {
     log_nifti_descriptives(nii4);
 
     // Get dimensions of input
-    const int nr_voxels = nii1->nx * nii1->ny * nii1->nz;
+    const int size_x = nii1->nx;
+    const int size_y = nii1->ny;
+    const int size_z = nii1->nz;
+    const int size_time = nii1->nt;
+    const int nr_voxels = size_z * size_y * size_x;
 
     // ========================================================================
     // Fix input datatype issues
@@ -243,12 +249,12 @@ int main(int argc, char*  argv[]) {
     flat_cells->dim[1] = bins_u;
     flat_cells->dim[2] = bins_v;
     flat_cells->dim[3] = bins_d;
-    flat_cells->dim[4] = 1;
+    flat_cells->dim[4] = size_time;
     flat_cells->pixdim[1] = 1;
     flat_cells->pixdim[2] = 1;
     flat_cells->pixdim[3] = 1;
     nifti_update_dims_from_array(flat_cells);
-    flat_cells->nvox = nr_bins;
+    flat_cells->nvox = nr_bins * size_time;
     flat_cells->nbyper = sizeof(int32_t);
     flat_cells->data = calloc(flat_cells->nvox, flat_cells->nbyper);
     flat_cells->scl_slope = 1;
@@ -323,57 +329,65 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Visit each voxel to check their coordinate
     // ========================================================================
-    for (int ii = 0; ii != nr_voi; ++ii) {
-        int i = *(voi_id + ii);
+    for (int t = 0; t != size_time; ++t) {
+        for (int ii = 0; ii != nr_voi; ++ii) {
+            int i = *(voi_id + ii);
 
-        float u = *(coords_uv_data + nr_voxels*0 + i);
-        float v = *(coords_uv_data + nr_voxels*1 + i);
+            float u = *(coords_uv_data + nr_voxels*0 + i);
+            float v = *(coords_uv_data + nr_voxels*1 + i);
 
-        // Normalize coordinates to 0-1 range
-        u = (u - min_u) / (max_u + std::numeric_limits<float>::min() - min_u);
-        v = (v - min_v) / (max_v + std::numeric_limits<float>::min() - min_v);
-        // Scale with grid size
-        u *= static_cast<float>(bins_u);
-        v *= static_cast<float>(bins_v);
-        // Cast to integer (floor & cast)
-        int cell_idx_u = static_cast<int>(u);
-        int cell_idx_v = static_cast<int>(v);
+            // Normalize coordinates to 0-1 range
+            u = (u - min_u) / (max_u + std::numeric_limits<float>::min() - min_u);
+            v = (v - min_v) / (max_v + std::numeric_limits<float>::min() - min_v);
+            // Scale with grid size
+            u *= static_cast<float>(bins_u);
+            v *= static_cast<float>(bins_v);
+            // Cast to integer (floor & cast)
+            int cell_idx_u = static_cast<int>(u);
+            int cell_idx_v = static_cast<int>(v);
 
-        // Handle depth separately
-        float d = static_cast<float>(*(coords_d_data + i));
-        int cell_idx_d = 0;
-        if (mode_depth_metric) {  // Metric file
-            if (d >= 1) {  // Include 1 in the max index
-                cell_idx_d = bins_d;
-            } else {  // Scale up and floor
-                d *= bins_d;
-                cell_idx_d = static_cast<int>(d);
+            // Handle depth separately
+            float d = static_cast<float>(*(coords_d_data + i));
+            int cell_idx_d = 0;
+            if (mode_depth_metric) {  // Metric file
+                if (d >= 1) {  // Include 1 in the max index
+                    cell_idx_d = bins_d;
+                } else {  // Scale up and floor
+                    d *= bins_d;
+                    cell_idx_d = static_cast<int>(d);
+                }
+            } else {  // Layer file
+                cell_idx_d = static_cast<int>(d - 1);
             }
-        } else {  // Layer file
-            cell_idx_d = static_cast<int>(d - 1);
+
+            // Flat image cell index
+            int j = bins_u * cell_idx_v + cell_idx_u;
+            int k = cell_idx_d * nr_cells + j;
+
+            // Write cell index to output
+            *(out_cells_data + i) = j + 1;
+
+            // Write visited voxel value to flat cell
+            *(flat_values_data + k + t*nr_bins) += *(nii_input_data + i + t*nr_voxels);
+
+            if (t==0) {  // Write 3D values once
+                *(flat_density_data + k) += 1;
+                *(flat_domain_data + k) += *(domain_data + i);
+            }
         }
-
-        // Flat image cell index
-        int j = bins_u * cell_idx_v + cell_idx_u;
-        int k = cell_idx_d * nr_cells + j;
-
-        // Write cell index to output
-        *(out_cells_data + i) = j + 1;
-
-        // Write visited voxel value to flat cell
-        *(flat_values_data + k) += *(nii_input_data + i);
-        *(flat_density_data + k) += 1;
-        // Write domain data
-        *(flat_domain_data + k) += *(domain_data + i);
     }
 
     // Take the mean of each projected cell value
-    for (int i = 0; i != nr_bins; ++i) {
-        if (*(flat_density_data + i) > 1) {
-            *(flat_values_data + i) /= *(flat_density_data + i);
-            *(flat_domain_data + i) /= *(flat_density_data + i);
-            // Ceil domain average to ensure the edges are prioritized
-            *(flat_domain_data + i) = std::ceil(*(flat_domain_data + i));
+    for (int t = 0; t != size_time; ++t) {
+        for (int i = 0; i != nr_bins; ++i) {
+            if (*(flat_density_data + i) > 1) {
+                *(flat_values_data + i + t*nr_bins) /= *(flat_density_data + i);
+                if (t==0) {  // Do once for 3D values
+                    *(flat_domain_data + i) /= *(flat_density_data + i);
+                    // Ceil domain average to ensure the edges are prioritized
+                    *(flat_domain_data + i) = std::ceil(*(flat_domain_data + i));
+                }
+            }
         }
     }
 
