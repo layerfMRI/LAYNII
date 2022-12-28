@@ -227,6 +227,16 @@ tests:
 	cd test_data && bash ./tests.sh
 
 # =============================================================================
+# Maintenance
+
+bump_version:
+	VERSION=`cat CITATION.cff | grep ^version | cut -c 10-` && \
+	echo "\nbumping to version: $$VERSION \n" && \
+	sed -i "s/    cout << \"LayNii .*/    cout << \"LayNii $$VERSION          \"<< endl;/g" dep/laynii_lib.cpp
+	make Dockerfile
+
+
+# =============================================================================
 # Docker related content
 
 .PHONY: Dockerfile docker_build
