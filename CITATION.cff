@@ -1,4 +1,4 @@
-cff-version: 1.1.0
+cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors:
   - family-names: Huber
@@ -61,5 +61,5 @@ authors:
 
 title: "LayNii: A software suite for layer-fMRI"
 version: v2.3.0
-doi: https://doi.org/10.1016/j.neuroimage.2021.118091
+doi: 10.1016/j.neuroimage.2021.118091
 date-released: 2021-07-16
