@@ -26,7 +26,7 @@ int show_help(void) {
     "    - This program ignores zeroes. Thus, sharp borders (e.g. after MOCO)\n"
     "    will stay the same.\n"
     "    - This program works in voxel space not it mm space. \n"
-    "    - An application case of this porgram is mentioned in the blog post:\n"
+    "    - An application case of this program is mentioned in the blog post:\n"
     "      <https://layerfmri.com/anatomically-informed-spatial-smoothing>\n"
     "\n");
     return 0;
@@ -215,7 +215,7 @@ int main(int argc, char* argv[]) {
 }
 
 float laur(float distance, float sigma) {
-    // Note: For consistency wth Gaus's sigma, I am using a scaled version of
+    // Note: For consistency with Gauss' sigma, I am using a scaled version of
     // the FWHM.
     // sigma = sigma / sqrt(2 * log (2));
     float result = 0;

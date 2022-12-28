@@ -5,7 +5,7 @@ int show_help(void) {
     printf(
     "LN2_CHOLMO: Add additional layers onto already existing layers with\n"
     "            like the name suggests is is padding layers \n"
-    "            this can be helpfull to extend profiles into CSF or into WM \n"
+    "            this can be helpful to extend profiles into CSF or into WM \n"
     "\n"
     "Usage:\n"
     "    LN2_CHOLMO -layers layers.nii \n"
@@ -19,7 +19,7 @@ int show_help(void) {
     "                       It is assumed that it conists of intager numbers of layers\n"
     "                       It is assumed that deeper layers have small values \n"
     "                       It is assumes that superficial layers have large values.\n"
-    "    -nr_layers       : Number of layers to add ontop of the already existing ones.\n"
+    "    -nr_layers       : Number of layers to add on top of the already existing ones.\n"
     "                       Default is 3.\n"
     "    -layer_thickness : Thickness of the added layers in mm. Default is 0.8.\n"
     "                       This should not be smaller than the voxel dimension.\n"
@@ -90,7 +90,7 @@ int main(int argc, char*  argv[]) {
     }
 
     if (mode_outer == mode_inner) {
-        fprintf(stderr, "** You selected to padd the layers both at the inner \n"
+        fprintf(stderr, "** You selected to pad the layers both at the inner \n"
                         "   and at the outer GM borders?!?!!?? \n"
                         "   Make up you mind!\n");
         return 1;
@@ -525,15 +525,15 @@ int main(int argc, char*  argv[]) {
         cout << "    -> there was not enough space to add as many layers " << endl;
         cout << "       with the desired thickness.  " << endl;
         cout << "       There was only space for " << max_layers_padded<< " additional layers, but you wanted "<<nr_layers << " additional layers" << endl;
-        cout << "       This can be due to the fact that there brain filles the entire FOV for outwards growing.  " << endl;
-        cout << "       This can be due to the fact that there brain filles the WM for inwards growing.  " << endl;
+        cout << "       This can be due to the fact that there brain fills the entire FOV for outwards growing.  " << endl;
+        cout << "       This can be due to the fact that there brain fills the WM for inwards growing.  " << endl;
         cout << "       Consider thinner layers, or less layers  " << endl;
         cout << "       Consider adding empty slces to increase the FOV: ImageMath 3 padded.nii PadImage data.nii 200 0" << endl;
     }
 
    if (layer_thickness < dX || layer_thickness < dY || layer_thickness < dZ ){
         cout << "\n  Comments about the output:" << endl;
-        cout << "    -> The layers might be too thinn for the voxel grid of the data." << endl;
+        cout << "    -> The layers might be too thin for the voxel grid of the data." << endl;
         cout << "       You chose a layer thickness of " << layer_thickness << " mm " <<endl;
         cout << "       while the voxel grid is (X,Y,Z) = (" <<  dX << "," << dY << "," << dZ<< ")" << endl;
         cout << "       Consider using thicker layers  " << endl;

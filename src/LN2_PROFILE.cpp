@@ -12,7 +12,7 @@ int show_help(void) {
     printf(
     "LN2_PROFILE: Generates layer profiles from 3D nii file based on layer masks.\n"
     "             It averages all the signal intensities of each layer and write it\n"
-    "             out as a 2d-plot. The ouput is a text file (table).\n"
+    "             out as a 2d-plot. The output is a text file (table).\n"
     "                 - Column 1 is the layer number.\n"
     "                 - Column 2 is the mean signal in this layer.\n"
     "                 - Column 3 is the STDEV of the signal variance across all voxels in this layer.\n"
@@ -34,8 +34,8 @@ int show_help(void) {
     "              This 3D nii file must have the same dimension as the layer file.\n"
     "    -plot   : (Optional)\n"
     "              this option tries to plot the profile as ASKII art in the terminal \n"
-    "              This option can be usefull if you do not have a graphical ploting profile ready\n"
-    "              E.g. on a remore server without X11 forwarding.\n"
+    "              This option can be useful if you do not have a graphical plotting profile ready\n"
+    "              E.g. on a remote server without X11 forwarding.\n"
     "    -debug  : (Optional) Save extra intermediate outputs.\n"
     "    -output : (Optional) Output basename.\n"
     "              Default is adding '_padded' as suffix \n"
@@ -216,7 +216,7 @@ int main(int argc, char*  argv[]) {
     }
 
     // ========================================================================
-    // Write layer profiles to text file with the rigth file name
+    // Write layer profiles to text file with the right file name
     // ========================================================================
     // Managing file name, path and extension
     string path_out;

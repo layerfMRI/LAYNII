@@ -283,7 +283,7 @@ int main(int argc, char*  argv[]) {
 
         // Have an array to note down columns id's that will form triangles.
         // NOTE(Faruk): I allocate 8 elements here because if the volume is
-        // over-parcellated (i.e. too many colmns), hit count can go above 3
+        // over-parcellated (i.e. too many columns), hit count can go above 3
         int32_t* trio;
         trio = (int32_t*) malloc(8*sizeof(int32_t));
 

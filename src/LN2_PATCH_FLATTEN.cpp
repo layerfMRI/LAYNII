@@ -218,7 +218,7 @@ int main(int argc, char*  argv[]) {
         return 1;
     }
 
-    // Add bin dimmensions into the output tag
+    // Add bin dimensions into the output tag
     std::ostringstream tag_u, tag_v;
     tag_u << bins_u;
     tag_v << bins_v;

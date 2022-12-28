@@ -14,10 +14,10 @@ int show_help(void) {
     "         and attempts to git a terminal view of the image \n"
     "\n"
     "Usage:\n"
-    "    compile this program withthe following comand: \n"
+    "    compile this program with the following command: \n"
     "        c++  -DHAVE_ZLIB -o LN_INFO LN_INFO.cpp nifti2_io.cpp znzlib.cpp  -I  -lm -lz \n"
     "\n"
-    "    Excecute the program with the following command: \n" 
+    "    Execute the program with the following command: \n" 
     "    LN_INFO -input input_example.nii  \n"
     "    ../LN_INFO -input sc_UNI.nii -sub 5  \n" 
     "\n"
@@ -216,7 +216,7 @@ int main(int argc, char * argv[]) {
 void plotgray(double val, double mean, double stdev, bool inv){
     double val_n = (val-mean) / (stdev) ; 
 //    if       (val_n > 0.6745                     ) cout << " " ;  
-//    // the value of 0.6745 refers to the z-score that contains 25% of the voxels fro Gausssian distributions
+//    // the value of 0.6745 refers to the z-score that contains 25% of the voxels for Gausssian distributions
 //    else if  (val_n >= 0.      && val_n < 0.6745 ) cout << "░" ; 
 //    else if  (val_n >= -0.6745 && val_n < 0.     ) cout << "▒" ;
 //    else if  (val_n                     < -0.6745) cout << "▓" ; 

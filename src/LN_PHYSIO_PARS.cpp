@@ -1,9 +1,9 @@
 
 // PhysioParse.cpp : Program to parse Siemens Physiolog files files.
-// The data is written into a tab seperated text file with a the name provided
+// The data is written into a tab separated text file with a the name provided
 // on the command line
 //
-// Note: This is larely taken from the idea discussion boards. Thus, I belive
+// Note: This is larely taken from the idea discussion boards. Thus, I believe
 // the fist version is from Peter Kochunov. See the site https://www.magnetom.net/t/a-c-code-to-parse-physio-log-file/1535 for more info
 
 #include <iostream>
@@ -62,7 +62,7 @@ int show_help(void) {
 int main(int argc, char* argv[]) {
     if (argc != 3) {
         // cerr << "No file on command line\n";
-        // cerr << "Provide the input file (Siemens log file) and the output file (Tab separted log file)\n";
+        // cerr << "Provide the input file (Siemens log file) and the output file (Tab separated log file)\n";
         show_help();
         return 1;
     }
@@ -194,7 +194,7 @@ int main(int argc, char* argv[]) {
     // Create an output file name from input file name
     string outname = argv[2];
 
-    // Write data to tab seperated file
+    // Write data to tab separated file
     ofstream tfile(outname.c_str(), ios::out);
 
     // Header

@@ -1307,10 +1307,10 @@ int main(int argc, char*  argv[]) {
     if (mode_incl_borders) {
     // NOTE(Renzo): One-two iteration should be enough. I wouldn't know why
     // the border should be thicker than one voxel. I am only using direct
-    // neighbors to avoid over overwriting values of closer neigbors.
+    // neighbors to avoid over overwriting values of closer neighbors.
         for (int index = 0; index < 2; index++) {  // growing twice
             // NOTE(Renzo): I am hijacking flood_step_data, because it is no longer
-            // needed and I do not want ot waste memory
+            // needed and I do not want to waste memory
             for (int i = 0; i != nr_voxels; ++i)  {
                 *(flood_step_data + i ) = 0 ;
             }

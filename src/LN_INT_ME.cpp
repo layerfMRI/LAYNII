@@ -18,7 +18,7 @@ int show_help(void) {
     "              .nii.gz, and path if needed. Overwrites existing files.\n"
     "\n"
     "Notes:\n"
-    "    Note that this prgram can come along with truncation!\n"
+    "    Note that this program can come along with truncation!\n"
     "    If you want to reduce the file size of floating point data,\n"
     "    consider using the program LN_SHORT_ME \n"
     "\n");

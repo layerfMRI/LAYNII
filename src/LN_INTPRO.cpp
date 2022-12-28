@@ -4,7 +4,7 @@
 
 int show_help(void) {
     printf(
-    "LN_INTPRO: Do maximun and minimum intensity projections. For example,\n"
+    "LN_INTPRO: Do maximum and minimum intensity projections. For example,\n"
     "      this is useful for visualizing vessels.\n"
     "\n"
     "Usage:\n"
@@ -16,9 +16,9 @@ int show_help(void) {
     "    -image     : Nifti (.nii) for intensity projections. \n"
     "    -max       : Maximum intensity projection. Do not combine with min.\n"
     "    -min       : Minimum intensity projection. Do not combine with max.\n"
-    "    -direction : Direction in which the dimention is collapsted. \n"
+    "    -direction : Direction in which the dimension is collapsted. \n"
     "                 1 for x, 2 for y, and 3 for z.\n"
-    "    -range     : (Optional) Range of neigbouring voxels included.\n"
+    "    -range     : (Optional) Range of neighbouring voxels included.\n"
     "                 Default is all aslices. \n"
     "    -output    : (Optional) Output filename, including .nii or\n"
     "                 .nii.gz, and path if needed. Overwrites existing files.\n"

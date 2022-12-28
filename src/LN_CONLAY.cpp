@@ -9,7 +9,7 @@
 int show_help(void) {
     printf(
     "LN_CONLAY: This program consenses the layers on a lower resolution grid \n"
-    "           This can be usefull, when the layerification has been  .\n"
+    "           This can be useful, when the layerification has been  .\n"
     "           originally done on an upscaled anatomical image and you \n"
     "           want to use it on lower resolution functional data \n"
     "           This program has been originally written for Federico \n"

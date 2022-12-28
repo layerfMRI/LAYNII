@@ -6,7 +6,7 @@
 int show_help(void) {
     printf(
     "LN2_UVD_FILTER: Filter using flat coordinates (UV) and depth (D). This program:\n"
-    "                  1. Evaluates voxels within a cylindical window centered\n"
+    "                  1. Evaluates voxels within a cylindrical window centered\n"
     "                     at each UVD coordinate.\n"
     "                  2. Performs the chosen operation (median, min, max, ...)\n"
     "                     within each window.\n"
@@ -320,7 +320,7 @@ int main(int argc, char* argv[]) {
         if (mode_cols) {
             int count1 = 0, count2 = 0,  count3 = 0, count4 = 0;
             int m, c, t;
-            // Count occurences
+            // Count occurrences
             for (int j = 0; j != n; ++j) {
                 if (temp_vec[j] == 1) {
                     count1 += 1;
