@@ -340,7 +340,7 @@ int main(int argc, char *argv[]) {
     // Extending columns across layers
     // ========================================================================
     // NOTE(Renzo): This is not perfect yet, because it has only 4 directions
-    // to grow thus ther might be orientation biases.
+    // to grow thus there might be orientation biases.
     cout << "  Extending columns across layers..." << endl;
 
     nifti_image* hairy = copy_nifti_as_int32(nii_layers);
@@ -357,7 +357,7 @@ int main(int argc, char *argv[]) {
     // This is an upper limit of the cortical thickness
     dist_min2 = 10000.;
 
-    // This is step size that neigbouring GM voxels need to be to be classified
+    // This is step size that neighbouring GM voxels need to be to be classified
     // as one side of the GM bank.
     int vinc_steps = 1;
 

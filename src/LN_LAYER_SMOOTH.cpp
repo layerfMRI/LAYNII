@@ -15,7 +15,7 @@ int show_help(void){
     "Options:\n"
     "    -help       : show this help\n"
     "    -layer_file : nii file that contains layer or column masks \n"
-    "    -input      : nii file that should be smoothed. it should have same dimentions as layer file\n"
+    "    -input      : nii file that should be smoothed. it should have same dimensions as layer file\n"
     "    -FWHM       : the amount of smoothing in mm\n"
     "    -twodim     : optional argument to do smoothing in 2 Dim only \n"
     "    -mask       : optional argument to mask activity outside of layers \n"
@@ -383,7 +383,7 @@ if (sulctouch == 0 ){
 
 if (sulctouch == 1 ){
 
-// allocating local connected vincinity file
+// allocating local connected vicinity file
     nifti_image * hairy_brain  	= nifti_copy_nim_info(nim_mask);
     hairy_brain->datatype 		= NIFTI_TYPE_INT32;
 	hairy_brain->nbyper 		= sizeof(int);
@@ -465,7 +465,7 @@ int pref_ratio = 0 ;
 	      //cout << "  here " << endl;
 	      *(hairy_brain_data  + nxy*iz + nx*ix  + iy) = 1 ;
 
-	      // growoeing into neigbouring voxels.
+	      // growoeing into neighbouring voxels.
 	      for (int K_ = 0 ; K_ < vinc ; K_++){
 	       for(int iz_ii=max(0,iz-vinc); iz_ii<=min(iz+vinc,sizeSlice-1); ++iz_ii){
 	    		for(int iy_ii=max(0,iy-vinc); iy_ii<=min(iy+vinc,sizePhase-1); ++iy_ii){
@@ -556,7 +556,7 @@ if ( do_masking == 1 ) {
 	}
 
 
-//cout << " runing also until here  5.... " << endl;
+//cout << " running also until here  5.... " << endl;
 //cout << " slope " << smoothed->scl_slope << " " << nim_inputfi->scl_slope  << endl;
 
 smoothed->scl_slope =  nim_inputfi->scl_slope  ;

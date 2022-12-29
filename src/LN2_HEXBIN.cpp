@@ -193,7 +193,7 @@ int main(int argc, char*  argv[]) {
     }
 
     // ========================================================================
-    // Evaluate each voxel agains hexbin centers to find closest center
+    // Evaluate each voxel against hexbin centers to find closest center
     // ========================================================================
     for (int ii = 0; ii != nr_voi; ++ii) {
         int i = *(voi_id + ii);

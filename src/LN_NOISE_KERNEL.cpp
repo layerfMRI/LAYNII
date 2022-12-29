@@ -180,7 +180,7 @@ for(int iy=0; iy<size_y; ++iy){
 
           }
 
-          // going trhough vincinity of every voxel
+          // going trhough vicinity of every voxel
         for(int kernely= -1*kernel_size/2; kernely<=kernel_size/2; ++kernely){
              for(int kernelx= -1*kernel_size/2; kernelx<=kernel_size/2; ++kernelx){
                  for(int kernelz= -1*kernel_size/2; kernelz<=kernel_size/2; ++kernelz){

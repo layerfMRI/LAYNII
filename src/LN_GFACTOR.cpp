@@ -28,7 +28,7 @@ int show_help(void) {
     "    -variance  : How much noise there will be.\n"
     "    -direction : Phase encoding direction [0=x, 1=y, 2=z].\n"
     "    -grappa    : GRAPPA factor."
-    "    -cutoff    : Value to seperate noise from signal.\n"
+    "    -cutoff    : Value to separate noise from signal.\n"
     "    -output    : (Optional) Output filename, including .nii or\n"
     "                 .nii.gz, and path if needed. Overwrites existing files.\n"
     "\n"
