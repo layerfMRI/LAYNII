@@ -14,7 +14,7 @@ int show_help(void) {
     "Options:\n"
     "    -help   : Show this help.\n"
     "    -rim    : Specify input dataset.\n"
-    "              values of 0 are to be ingored \n"
+    "              values of 0 are to be ignored \n"
     "              values of 1 denote GM/CSF border lines \n"
     "              values of 2 neote GM/WM border lines \n"
     "              values of 3 denote pure GM \n"
@@ -31,7 +31,7 @@ int show_help(void) {
     "              layers next to the inner most and outer most layers.\n"
     "    -threeD : Do layer calculations in 3D. Default is 2D.\n"
     "    -debug  : If you want to see the growing of the respective\n"
-    "              tissue types, it is writen out.\n"
+    "              tissue types, it is written out.\n"
     "    -output : (Optional) Output filename, including .nii or\n"
     "              .nii.gz, and path if needed. Overwrites existing files.\n"
     "\n"
@@ -542,7 +542,7 @@ int main(int argc, char * argv[]) {
         //                     }
         //                     if (isb == 1 && isCSFb == 1) *(nim_input_data + nxy * iz + nx * ix + iy) = 1;
         //                     if (isb == 1 &&  isWMb == 1) *(nim_input_data + nxy * iz + nx * ix + iy) = 2;
-        //                     if (isCSFb == 1 && isWMb == 1) *(nim_input_data + nxy * iz + nx * ix + iy) = 0;// cout << " THIS BRAIN IS WIERD " << endl ;
+        //                     if (isCSFb == 1 && isWMb == 1) *(nim_input_data + nxy * iz + nx * ix + iy) = 0;// cout << " THIS BRAIN IS WEIRD " << endl ;
         //
         //
         //                 }
@@ -661,7 +661,7 @@ int main(int argc, char * argv[]) {
         }
 
         /////////////////////////////////////////////////////
-        // Wabble accross neighbouring voxels of closest WM //
+        // Wabble across neighbouring voxels of closest WM //
         // to account for Pytagoras errors //////////////////
         /////////////////////////////////////////////////////
         cout << "  Correcting for Pytagoras error..." << endl;
@@ -712,7 +712,7 @@ int main(int argc, char * argv[]) {
         cout << "  Running until here..." << endl;
 
         ///////////////////////////////////////////////////////
-        // Wabble accross neighbouring voxeles of closest GM //
+        // Wabble across neighbouring voxeles of closest GM //
         // To account for Pytagoras errors ////////////////////
         ///////////////////////////////////////////////////////
         for (int iz = 0; iz < size_z; ++iz) {

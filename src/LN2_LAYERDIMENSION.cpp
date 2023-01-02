@@ -17,7 +17,7 @@ int show_help(void) {
     "Options:\n"
     "    -help     : Show this help.\n"
     "    -values   : Nifti image with values that will be transformed into layer dimensions.\n"
-    "                This is the contrast of interest, e.g. fucntional signal change.\n"
+    "                This is the contrast of interest, e.g. functional signal change.\n"
     "    -columns  : A 3D nifti file that contains columns as intager masks.\n"
     "                e.g. the output of LN2_COLUMNS or LN2_MULTILATERATE.\n"
     "    -layers   : A 3D nifti file that contains layers as intager masks.\n"

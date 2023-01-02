@@ -275,7 +275,7 @@ int main(int argc, char* argv[]) {
                         }
                         *(hairy_brain_data + voxel_i) = 1;
 
-                        // Grow into neigbouring voxels.
+                        // Grow into neighbouring voxels.
                         for (int K_= 0; K_< vic; K_++) {
                             int kz_start = max(0, iz - vic);
                             int kz_stop = min(iz + vic, size_z - 1);

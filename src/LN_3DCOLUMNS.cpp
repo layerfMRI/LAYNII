@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
     dY = (float)nii_input1->pixdim[2] / min_dim   ;
     dZ = (float)nii_input1->pixdim[3] / min_dim    ;
 
-    cout << " dimentions "  <<  dX << " " <<  dY << " " << dZ << endl;
+    cout << " dimensions "  <<  dX << " " <<  dY << " " << dZ << endl;
     // ========================================================================
     // Fixing potential problems with different input datatypes
     nifti_image* nii_layer = copy_nifti_as_float32(nii_input1);

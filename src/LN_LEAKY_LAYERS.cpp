@@ -15,7 +15,7 @@ int show_help(void) {
     "Options:\n"
     "    -help       : Show this help.\n"
     "    -rim        : Specify input dataset.\n"
-    "                  values of 0 are to be ingored \n"
+    "                  values of 0 are to be ignored \n"
     "                  values of 1 denote GM/CSF border lines \n"
     "                  values of 2 neote GM/WM border lines \n"
     "                  values of 3 denote pure GM \n"

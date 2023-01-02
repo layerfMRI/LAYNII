@@ -86,7 +86,7 @@ int main(int argc, char * argv[]) {
 
     log_welcome("LN_NOISEME");
     log_nifti_descriptives(nii_input);
-    cout << "  Varience chosen to " << std_val << endl;
+    cout << "  Variance chosen to " << std_val << endl;
 
     // ========================================================================
     // Allocating new nifti

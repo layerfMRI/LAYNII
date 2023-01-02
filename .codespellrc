@@ -1,0 +1,4 @@
+[codespell]
+skip = .git
+ignore-words-list = gaus,nam,siz,Alle
+builtin = clear,rare

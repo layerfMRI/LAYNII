@@ -332,7 +332,7 @@ int main(int argc, char * argv[]) {
 
     cout << " combined " << sqrt ( smoothing_iter*base_FWHM*base_FWHM + remain_FWHM* remain_FWHM ) <<  endl;
 
-    cout << " Big smoothing loop is beeing done now" << endl;
+    cout << " Big smoothing loop is being done now" << endl;
 
     cout << " combined " << sqrt ( smoothing_iter*base_FWHM*base_FWHM + remain_FWHM* remain_FWHM ) <<  endl;
 

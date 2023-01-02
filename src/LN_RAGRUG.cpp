@@ -92,7 +92,7 @@ int main(int argc, char * argv[]) {
     int nxy = nii_input->nx * nii_input->ny;
     int nxyz = nii_input->nx * nii_input->ny * nii_input->nz;
 
-    // TODO(Faruk): I might bind scaling to float voxel lenghts in the future.
+    // TODO(Faruk): I might bind scaling to float voxel lengths in the future.
     // const float dX = nii_input->pixdim[1];
     // const float dY = nii_input->pixdim[2];
     // const float dZ = nii_input->pixdim[3];
