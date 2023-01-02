@@ -7,12 +7,7 @@
 
 void log_welcome(const char* programname) {
     cout << "======================="<< endl;
-<<<<<<< HEAD
-    cout << "LAYNII v2.2.1          "<< endl;
-=======
     cout << "LayNii v2.3.0          "<< endl;
->>>>>>> devel
-//    cout << "Compiled for Mac"<< endl;
     cout << "======================="<< endl;
     cout << programname << "\n" << endl;
 }
