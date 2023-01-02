@@ -230,10 +230,10 @@ tests:
 # Maintenance
 
 bump_version:
-	VERSION=`cat CITATION.cff | grep ^version | cut -c 10-` && \
+	VERSION=`cat dep/laynii_lib.cpp | grep LayNii | cut -c 21- | rev | cut -c 20- | rev` && \
 	echo "\nbumping to version: $$VERSION \n" && \
-	sed -i "s/    cout << \"LayNii .*/    cout << \"LayNii $$VERSION          \"<< endl;/g" dep/laynii_lib.cpp
-	make Dockerfile
+	sed -i "s/version:.*/version: $$VERSION/g" CITATION.cff
+    make Dockerfile
 
 
 # =============================================================================
