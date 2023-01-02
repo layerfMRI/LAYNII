@@ -232,8 +232,8 @@ tests:
 bump_version:
 	VERSION=`cat dep/laynii_lib.cpp | grep LayNii | cut -c 21- | rev | cut -c 20- | rev` && \
 	echo "\nbumping to version: $$VERSION \n" && \
-	sed -i "s/version:.*/version: $$VERSION/g" CITATION.cff
-    make Dockerfile
+	sed -i "s/^version:.*/version: $$VERSION/g" CITATION.cff
+	make Dockerfile
 
 
 # =============================================================================
