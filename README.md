@@ -45,6 +45,9 @@ cd laynii
 make all
 ```
 
+**Note-1:** See [this comment on cross-platform compatibility](README_APPENDIX.md).
+**Note-2:** See [this comment on makefile and compilers](README_APPENDIX.md).
+
 ## Docker image
 
 ### Building the docker image
@@ -120,20 +123,6 @@ Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri
 - [LN_GROW_LAYERS example application](https://layerfmri.com/2020/04/24/equivol/)
 - [LN_GROW_LAYERS example application](https://layerfmri.com/2018/07/19/how-to-convert-any-paper-figure-into-a-layer-profile/)
 - [LN_GROW_LAYERS example application](https://layerfmri.com/2018/09/26/columns/)
-
----
-## Comment on cross-platform compatibility
-Since May 2020, LayNii is also distributed as pre-compiled binaries for Linux, macOS, and Windows (x32 and x64).
-Since January 2020, all remaining dependencies have been removed. This should allow the user to use pre-compiled binaries of LayNii for the respective operating system. Altenatively LayNii should also be compilable on Linux, macOS, and Windows. All you need is a terminal and a C++ compiler.
-
-1. On Linux `g++` is included by default.
-
-2. On Mac, it will be enabled automatically as part of the `command line developer tools` as soon as you type `g++` into the terminal. Alternatively, you can also use Xcode.
-
-3. On Windows, a C++ compiler needs to be installed manually. For example with [cygwin](https://cygwin.com/). I followed the instructions in this [video](https://www.youtube.com/watch?v=DAlS4hF_PbY).
-
-**NOTE:** See [this comment on makefile and compilers](README_APPENDIX.md) if the steps above are not working for you.
-
 ---
 ## How to contribute?
 If you have any issues when using LayNii, or want to request a new feature, we are happy to see them posted on our [issues page](https://github.com/layerfMRI/LayNii/issues). Please employ this as your preferred method (instead of sending individual emails to the authors), since fellow researchers might have similar issues and suggestions.

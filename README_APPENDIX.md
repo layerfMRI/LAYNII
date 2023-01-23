@@ -1,3 +1,13 @@
+## Comment on cross-platform compatibility
+Since May 2020, LayNii is also distributed as pre-compiled binaries for Linux, macOS, and Windows (x32 and x64).
+Since January 2020, all remaining dependencies have been removed. This should allow the user to use pre-compiled binaries of LayNii for the respective operating system. Altenatively LayNii should also be compilable on Linux, macOS, and Windows. All you need is a terminal and a C++ compiler.
+
+1. On Linux `g++` is included by default.
+
+2. On Mac, it will be enabled automatically as part of the `command line developer tools` as soon as you type `g++` into the terminal. Alternatively, you can also use Xcode.
+
+3. On Windows, a C++ compiler needs to be installed manually. For example with [cygwin](https://cygwin.com/). I followed the instructions in this [video](https://www.youtube.com/watch?v=DAlS4hF_PbY).
+
 ## Comment on makefile and compilers
 Some users seemed to have a compiler installed that does not match the actual CPU architecture of the computer. In those cases it can be easier to compile the programs with another compiler one by one with g++ (instead of c++).
 Some users seemed to have a compiler installed but do not have make installed. Thus, instead of executing 'make all', just copy-paste the following into your terminal in the LayNii folder.
