@@ -25,7 +25,7 @@ In addition, please cite the software version of LayNii by using our Zenodo inte
 
 ## Installation
 
-### [Easiest method] Download the zip file
+### Method 1: [Easiest method] Download the zip file
 1. Choose the right version for your computer from our releases page: https://github.com/layerfMRI/LAYNII/releases
 
 2. Unzip the downloaded zip file to a desired location (e.g. `/home/user1/LayNii`)
@@ -36,24 +36,21 @@ cd /home/user1/LayNii
 ./LN2_LAYERS -h
 ```
 
-### Compile yourself
+### Method 2: Compile yourself
 A detailed descriptions of how to set up LayNii is provided here: [https://layerfmri.com/laynii-setup/](https://layerfmri.com/laynii-setup/)
 A brief instruction is also given below.
 
 1. Download the latest release and unzip it or clone the repository with the command:
-
 ```bash
 git clone --depth 1 https://github.com/layerfMRI/laynii
 ```
 
 2. Change directory to laynii folder:
-
 ```bash
 cd laynii
 ```
 
 3. Compile it with:
-
 ```bash
 make all
 ```
