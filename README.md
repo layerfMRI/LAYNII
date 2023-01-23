@@ -132,52 +132,8 @@ Since January 2020, all remaining dependencies have been removed. This should al
 
 3. On Windows, a C++ compiler needs to be installed manually. For example with [cygwin](https://cygwin.com/). I followed the instructions in this [video](https://www.youtube.com/watch?v=DAlS4hF_PbY).
 
-## Comment on makefile and compiler
-Some users seemed to have a compiler installed that does not match the actual CPU architecture of the computer. In those cases it can be easier to compile the programs with another compiler one by one with g++ (instead of c++).
-Some users seemed to have a compiler installed but do not have make installed. Thus, instead of executing 'make all', just copy-paste the following into your terminal in the LayNii folder.
+**NOTE:** See [this comment on makefile and compilers](README_APPENDIX.md) if the steps above are not working for you.
 
-```bash
-c++ -std=c++11 -DHAVE_ZLIB -o LN_BOCO src/LN_BOCO.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_MP2RAGE_DNOISE src/LN_MP2RAGE_DNOISE.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN2_LAYER_SMOOTH src/LN2_LAYER_SMOOTH.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_LAYER_SMOOTH src/LN_LAYER_SMOOTH.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_3DCOLUMNS src/LN_3DCOLUMNS.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_COLUMNAR_DIST src/LN_COLUMNAR_DIST.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_CORREL2FILES src/LN_CORREL2FILES.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_DIRECT_SMOOTH src/LN_DIRECT_SMOOTH.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_GRADSMOOTH src/LN_GRADSMOOTH.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_ZOOM src/LN_ZOOM.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_FLOAT_ME src/LN_FLOAT_ME.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_SHORT_ME src/LN_SHORT_ME.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_EXTREMETR src/LN_EXTREMETR.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_GFACTOR src/LN_GFACTOR.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_GROW_LAYERS src/LN_GROW_LAYERS.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_IMAGIRO src/LN_IMAGIRO.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_INTPRO src/LN_INTPRO.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_LEAKY_LAYERS src/LN_LEAKY_LAYERS.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_NOISEME src/LN_NOISEME.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_RAGRUG src/LN_RAGRUG.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_SKEW src/LN_SKEW.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_TEMPSMOOTH src/LN_TEMPSMOOTH.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_TRIAL src/LN_TRIAL.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_PHYSIO_PARS src/LN_PHYSIO_PARS.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_INT_ME src/LN_INT_ME.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_LOITUMA src/LN_LOITUMA.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_NOISE_KERNEL src/LN_NOISE_KERNEL.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_INFO src/LN_INFO.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN_CONLAY src/LN_CONLAY.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN2_DEVEIN src/LN2_DEVEIN.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN2_RIMIFY src/LN2_RIMIFY.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN2_LAYERS src/LN2_LAYERS.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN2_COLUMNS src/LN2_COLUMNS.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN2_CONNECTED_CLUSTERS src/LN2_CONNECTED_CLUSTERS.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN2_MULTILATERATE src/LN2_MULTILATERATE.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN2_PATCH_FLATTEN src/LN2_PATCH_FLATTEN.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN2_CHOLMO src/LN2_CHOLMO.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN2_PROFILE src/LN2_PROFILE.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-c++ -std=c++11 -DHAVE_ZLIB -o LN2_MASK src/LN2_MASK.cpp dep/nifti2_io.cpp dep/znzlib.cpp dep/laynii_lib.cpp -I./dep  -lm -lz
-
-```
 ---
 ## How to contribute?
 If you have any issues when using LayNii, or want to request a new feature, we are happy to see them posted on our [issues page](https://github.com/layerfMRI/LayNii/issues). Please employ this as your preferred method (instead of sending individual emails to the authors), since fellow researchers might have similar issues and suggestions.
@@ -186,4 +142,6 @@ If you have any issues when using LayNii, or want to request a new feature, we a
 LayNii is licensed under [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause).
 
 ## Acknowledgments
-In order to read and write Nifti (.nii, .nii.gz) data, we have adapted code that was originally developed by the Neuroimaging Informatics Technology Initiative. We thank Bob Cox, Daniel Glen and Rick Reynolds. Since early 2020, development and maintenance of this project is being actively supported by [Brain Innovation](https://www.brainvoyager.com/) as one of the developers ([Omer Faruk Gulban](https://github.com/ofgulban)) works there.
+In order to read and write Nifti data, we have adapted code that was originally developed by the Neuroimaging Informatics Technology Initiative. We thank Bob Cox, Daniel Glen and Rick Reynolds. Between 2019-2022, Renzo Huber was supported by NWO Veni Grant in Maastricht University. Since early 2020, development and maintenance of this project is being actively supported by [Brain Innovation](https://www.brainvoyager.com/) as one of the developers ([Omer Faruk Gulban](https://github.com/ofgulban)) works there.
+
+<img src="visuals/supporting.svg" width=1000 />
