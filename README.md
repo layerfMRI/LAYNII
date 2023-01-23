@@ -19,11 +19,24 @@ If you use LayNii in your research please cite the following article:
 
 - Huber, L., Poser, B. A., Bandettini, P. A., Arora, K., Wagstyl, K., Cho, S., Goense, J., Nothnagel, N., Morgan, A. T., van den Hurk, J., Mueller A. K., Reynolds, R. C., Glen, D. R., Goebel, R. W., Gulban, O. F. (2021). LayNii: A software suite for layer-fMRI. NeuroImage, 118091. https://doi.org/10.1016/j.neuroimage.2021.118091
 
-In addition, please cite the used software version of LayNii by using our Zenodo integration:
+In addition, please cite the software version of LayNii by using our Zenodo integration:
 - [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3514297.svg)](https://doi.org/10.5281/zenodo.3514297)
 
 
 ## Installation
+
+### [Easiest method] Download the zip file
+1. Choose the right version for your computer from our releases page: https://github.com/layerfMRI/LAYNII/releases
+
+2. Unzip the downloaded zip file to a desired location (e.g. `/home/user1/LayNii`)
+
+3. Navigate to the unzipped folder in your terminal and execute a LayNii command:
+```bash
+cd /home/user1/LayNii
+./LN2_LAYERS -h
+```
+
+### Compile yourself
 A detailed descriptions of how to set up LayNii is provided here: [https://layerfmri.com/laynii-setup/](https://layerfmri.com/laynii-setup/)
 A brief instruction is also given below.
 
@@ -33,19 +46,20 @@ A brief instruction is also given below.
 git clone --depth 1 https://github.com/layerfMRI/laynii
 ```
 
-1. Change directory to laynii folder:
+2. Change directory to laynii folder:
 
 ```bash
 cd laynii
 ```
 
-1. Compile it with:
+3. Compile it with:
 
 ```bash
 make all
 ```
 
 **Note-1:** See [this comment on cross-platform compatibility](README_APPENDIX.md).
+
 **Note-2:** See [this comment on makefile and compilers](README_APPENDIX.md).
 
 ## Docker image
