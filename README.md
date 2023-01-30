@@ -139,10 +139,10 @@ Tutorials on layering, layer-smoothing, columnar analysis are [here in layerfmri
 If you have any issues when using LayNii, or want to request a new feature, we are happy to see them posted on our [issues page](https://github.com/layerfMRI/LayNii/issues). Please employ this as your preferred method (instead of sending individual emails to the authors), since fellow researchers might have similar issues and suggestions.
 
 ### Code Contributors
-Renzo Huber
-Omer Faruk Gulban
-Remi Gau
-Alessandra Pizzuti
+Renzo Huber  
+Omer Faruk Gulban  
+Remi Gau  
+Alessandra Pizzuti  
 
 ## License
 LayNii is licensed under [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause).
