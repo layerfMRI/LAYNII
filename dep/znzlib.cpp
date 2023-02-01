@@ -22,6 +22,8 @@ NB: seeks for writable files with compression are quite restricted
  */
 
 #include "./znzlib.h"
+#include <stdio.h>
+
 
 /*
 znzlib.c  (zipped or non-zipped library)
@@ -306,7 +308,7 @@ int znzprintf(znzFile stream, const char *format, ...)
        fprintf(stderr,"** ERROR: znzprintf failed to alloc %d bytes\n", size);
        return retval;
     }
-    vsprintf(tmpstr,format,va);
+    vsnprintf(tmpstr,256,format,va);
     retval=gzprintf(stream->zfptr,"%s",tmpstr);
     free(tmpstr);
   } else

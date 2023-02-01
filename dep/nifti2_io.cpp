@@ -2,7 +2,7 @@
 
 #include "nifti2_io.h"   /* typedefs, prototypes, macros, etc. */
 #include <math.h>
-
+#include <stdio.h>
 
 /*****===================================================================*****/
 /*****     Sample functions to deal with NIFTI-1,2 and ANALYZE files     *****/
@@ -8272,9 +8272,9 @@ char *nifti_image_to_ascii( const nifti_image *nim )
       return NULL;
    }
 
-   sprintf( buf , "<nifti_image\n" ) ;   /* XML-ish opener */
+   snprintf( buf , 16+strlen(buf),"<nifti_image\n" ) ;   /* XML-ish opener */
 
-   sprintf( buf+strlen(buf) , "  nifti_type = '%s'\n" ,
+   snprintf( buf+strlen(buf) , 16+strlen(buf),"  nifti_type = '%s'\n" ,
               (nim->nifti_type == NIFTI_FTYPE_NIFTI1_1) ? "NIFTI-1+"
              :(nim->nifti_type == NIFTI_FTYPE_NIFTI1_2) ? "NIFTI-1"
              :(nim->nifti_type == NIFTI_FTYPE_ASCII   ) ? "NIFTI-1A"
@@ -8288,121 +8288,121 @@ char *nifti_image_to_ascii( const nifti_image *nim )
        - The result is that the NIFTI ASCII-format header is XML-compliant. */
 
    ebuf = escapize_string(nim->fname) ;
-   sprintf( buf+strlen(buf) , "  header_filename = %s\n",ebuf); free(ebuf);
+   snprintf( buf+strlen(buf) , 16+strlen(buf),"  header_filename = %s\n",ebuf); free(ebuf);
 
    ebuf = escapize_string(nim->iname) ;
-   sprintf( buf+strlen(buf) , "  image_filename = %s\n", ebuf); free(ebuf);
+   snprintf( buf+strlen(buf) ,16+strlen(buf), "  image_filename = %s\n", ebuf); free(ebuf);
 
-   sprintf( buf+strlen(buf) , "  image_offset = ' '\n"  );
+   snprintf( buf+strlen(buf) , 16+strlen(buf),"  image_offset = ' '\n"  );
 
-   sprintf( buf+strlen(buf), "  ndim = ' '\n");
-   sprintf( buf+strlen(buf), "  nx = ' '\n"  );
+   snprintf( buf+strlen(buf), 16+strlen(buf),"  ndim = ' '\n");
+   snprintf( buf+strlen(buf), 16+strlen(buf),"  nx = ' '\n"  );
    if( nim->ndim > 1 )
-      sprintf( buf+strlen(buf), "  ny = ' '\n" );
+      snprintf( buf+strlen(buf), 16+strlen(buf),"  ny = ' '\n" );
    if( nim->ndim > 2 )
-      sprintf( buf+strlen(buf), "  nz = ' '\n");
+      snprintf( buf+strlen(buf), 16+strlen(buf),"  nz = ' '\n");
    if( nim->ndim > 3 )
-      sprintf( buf+strlen(buf), "  nt = ' '\n"  );
+      snprintf( buf+strlen(buf), 16+strlen(buf),"  nt = ' '\n"  );
    if( nim->ndim > 4 )
-      sprintf( buf+strlen(buf), "  nu = ' '\n" );
+      snprintf( buf+strlen(buf), 16+strlen(buf),"  nu = ' '\n" );
    if( nim->ndim > 5 )
-      sprintf( buf+strlen(buf), "  nv = ' '\n" );
+      snprintf( buf+strlen(buf), 16+strlen(buf),"  nv = ' '\n" );
    if( nim->ndim > 6 )
-      sprintf( buf+strlen(buf), "  nw = ' '\n"  );
+      snprintf( buf+strlen(buf), 16+strlen(buf),"  nw = ' '\n"  );
 
-                       sprintf( buf+strlen(buf), "  dx = '%g'\n",   nim->dx  );
-   if( nim->ndim > 1 ) sprintf( buf+strlen(buf), "  dy = '%g'\n",   nim->dy  );
-   if( nim->ndim > 2 ) sprintf( buf+strlen(buf), "  dz = '%g'\n",   nim->dz  );
-   if( nim->ndim > 3 ) sprintf( buf+strlen(buf), "  dt = '%g'\n",   nim->dt  );
-   if( nim->ndim > 4 ) sprintf( buf+strlen(buf), "  du = '%g'\n",   nim->du  );
-   if( nim->ndim > 5 ) sprintf( buf+strlen(buf), "  dv = '%g'\n",   nim->dv  );
-   if( nim->ndim > 6 ) sprintf( buf+strlen(buf), "  dw = '%g'\n",   nim->dw  );
+                       snprintf( buf+strlen(buf), 16+strlen(buf),"  dx = '%g'\n",   nim->dx  );
+   if( nim->ndim > 1 ) snprintf( buf+strlen(buf), 16+strlen(buf),"  dy = '%g'\n",   nim->dy  );
+   if( nim->ndim > 2 ) snprintf( buf+strlen(buf), 16+strlen(buf),"  dz = '%g'\n",   nim->dz  );
+   if( nim->ndim > 3 ) snprintf( buf+strlen(buf), 16+strlen(buf),"  dt = '%g'\n",   nim->dt  );
+   if( nim->ndim > 4 ) snprintf( buf+strlen(buf),  16+strlen(buf),"  du = '%g'\n",   nim->du  );
+   if( nim->ndim > 5 ) snprintf( buf+strlen(buf), 16+strlen(buf),"  dv = '%g'\n",   nim->dv  );
+   if( nim->ndim > 6 ) snprintf( buf+strlen(buf), 16+strlen(buf),"  dw = '%g'\n",   nim->dw  );
 
-   sprintf( buf+strlen(buf) , "  datatype = '%d'\n" , nim->datatype ) ;
-   sprintf( buf+strlen(buf) , "  datatype_name = '%s'\n" ,
+   snprintf( buf+strlen(buf) , 16+strlen(buf),"  datatype = '%d'\n" , nim->datatype ) ;
+   snprintf( buf+strlen(buf) , 16+strlen(buf),"  datatype_name = '%s'\n" ,
                               nifti_datatype_string(nim->datatype) ) ;
 
-   sprintf( buf+strlen(buf) , "  nvox = ' '\n" ) ;
-   sprintf( buf+strlen(buf) , "  nbyper = '%d'\n" , nim->nbyper ) ;
+   snprintf( buf+strlen(buf) , 16+strlen(buf),"  nvox = ' '\n" ) ;
+   snprintf( buf+strlen(buf) , 16+strlen(buf),"  nbyper = '%d'\n" , nim->nbyper ) ;
 
-   sprintf( buf+strlen(buf) , "  byteorder = '%s'\n" ,
+   snprintf( buf+strlen(buf) , 16+strlen(buf),"  byteorder = '%s'\n" ,
             (nim->byteorder==MSB_FIRST) ? "MSB_FIRST" : "LSB_FIRST" ) ;
 
    if( nim->cal_min < nim->cal_max ){
-     sprintf( buf+strlen(buf) , "  cal_min = '%g'\n", nim->cal_min ) ;
-     sprintf( buf+strlen(buf) , "  cal_max = '%g'\n", nim->cal_max ) ;
+     snprintf( buf+strlen(buf) , 16+strlen(buf),"  cal_min = '%g'\n", nim->cal_min ) ;
+     snprintf( buf+strlen(buf) , 16+strlen(buf),"  cal_max = '%g'\n", nim->cal_max ) ;
    }
 
    if( nim->scl_slope != 0.0 ){
-     sprintf( buf+strlen(buf) , "  scl_slope = '%g'\n" , nim->scl_slope ) ;
-     sprintf( buf+strlen(buf) , "  scl_inter = '%g'\n" , nim->scl_inter ) ;
+     snprintf( buf+strlen(buf) , 16+strlen(buf),"  scl_slope = '%g'\n" , nim->scl_slope ) ;
+     snprintf( buf+strlen(buf) , 16+strlen(buf),"  scl_inter = '%g'\n" , nim->scl_inter ) ;
    }
 
    if( nim->intent_code > 0 ){
-     sprintf( buf+strlen(buf) , "  intent_code = '%d'\n", nim->intent_code ) ;
-     sprintf( buf+strlen(buf) , "  intent_code_name = '%s'\n" ,
+     snprintf( buf+strlen(buf) , 16+strlen(buf),"  intent_code = '%d'\n", nim->intent_code ) ;
+     snprintf( buf+strlen(buf) , 16+strlen(buf),"  intent_code_name = '%s'\n" ,
                                 nifti_intent_string(nim->intent_code) ) ;
-     sprintf( buf+strlen(buf) , "  intent_p1 = '%g'\n" , nim->intent_p1 ) ;
-     sprintf( buf+strlen(buf) , "  intent_p2 = '%g'\n" , nim->intent_p2 ) ;
-     sprintf( buf+strlen(buf) , "  intent_p3 = '%g'\n" , nim->intent_p3 ) ;
+     snprintf( buf+strlen(buf) , 16+strlen(buf),"  intent_p1 = '%g'\n" , nim->intent_p1 ) ;
+     snprintf( buf+strlen(buf) , 16+strlen(buf),"  intent_p2 = '%g'\n" , nim->intent_p2 ) ;
+     snprintf( buf+strlen(buf) ,  16+strlen(buf),"  intent_p3 = '%g'\n" , nim->intent_p3 ) ;
 
      if( nim->intent_name[0] != '\0' ){
        ebuf = escapize_string(nim->intent_name) ;
-       sprintf( buf+strlen(buf) , "  intent_name = %s\n",ebuf) ;
+       snprintf( buf+strlen(buf) , 16+strlen(buf), "  intent_name = %s\n",ebuf) ;
        free(ebuf) ;
      }
    }
 
    if( nim->toffset != 0.0 )
-     sprintf( buf+strlen(buf) , "  toffset = '%g'\n",nim->toffset ) ;
+     snprintf( buf+strlen(buf) , 16+strlen(buf),"  toffset = '%g'\n",nim->toffset ) ;
 
    if( nim->xyz_units > 0 )
-     sprintf( buf+strlen(buf) ,
+     snprintf( buf+strlen(buf) ,16+strlen(buf),
               "  xyz_units = '%d'\n"
               "  xyz_units_name = '%s'\n" ,
               nim->xyz_units , nifti_units_string(nim->xyz_units) ) ;
 
    if( nim->time_units > 0 )
-     sprintf( buf+strlen(buf) ,
+     snprintf( buf+strlen(buf) ,16+strlen(buf),
               "  time_units = '%d'\n"
               "  time_units_name = '%s'\n" ,
               nim->time_units , nifti_units_string(nim->time_units) ) ;
 
    if( nim->freq_dim > 0 )
-     sprintf( buf+strlen(buf) , "  freq_dim = '%d'\n",nim->freq_dim ) ;
+     snprintf( buf+strlen(buf) , 16+strlen(buf),"  freq_dim = '%d'\n",nim->freq_dim ) ;
    if( nim->phase_dim > 0 )
-     sprintf( buf+strlen(buf) , "  phase_dim = '%d'\n",nim->phase_dim ) ;
+     snprintf( buf+strlen(buf) , 16+strlen(buf),"  phase_dim = '%d'\n",nim->phase_dim ) ;
    if( nim->slice_dim > 0 )
-     sprintf( buf+strlen(buf) , "  slice_dim = '%d'\n",nim->slice_dim ) ;
+     snprintf( buf+strlen(buf) , 16+strlen(buf),"  slice_dim = '%d'\n",nim->slice_dim ) ;
    if( nim->slice_code > 0 )
-     sprintf( buf+strlen(buf) ,
+     snprintf( buf+strlen(buf) ,16+strlen(buf),
               "  slice_code = '%d'\n"
               "  slice_code_name = '%s'\n" ,
               nim->slice_code , nifti_slice_string(nim->slice_code) ) ;
    if( nim->slice_start >= 0 && nim->slice_end > nim->slice_start )
-     sprintf( buf+strlen(buf) ,
+     snprintf( buf+strlen(buf) ,16+strlen(buf),
               "  slice_start = ' '\n"
               "  slice_end = ' '\n") ;
    if( nim->slice_duration != 0.0 )
-     sprintf( buf+strlen(buf) , "  slice_duration = '%g'\n",
+     snprintf( buf+strlen(buf) ,16+strlen(buf), "  slice_duration = '%g'\n",
               nim->slice_duration ) ;
 
    if( nim->descrip[0] != '\0' ){
      ebuf = escapize_string(nim->descrip) ;
-     sprintf( buf+strlen(buf) , "  descrip = %s\n",ebuf) ;
+     snprintf( buf+strlen(buf) ,16+strlen(buf), "  descrip = %s\n",ebuf) ;
      free(ebuf) ;
    }
 
    if( nim->aux_file[0] != '\0' ){
      ebuf = escapize_string(nim->aux_file) ;
-     sprintf( buf+strlen(buf) , "  aux_file = %s\n",ebuf) ;
+     snprintf( buf+strlen(buf) ,  16+strlen(buf), "  aux_file = %s\n",ebuf) ;
      free(ebuf) ;
    }
 
    if( nim->qform_code > 0 ){
      int i,j,k ;
 
-     sprintf( buf+strlen(buf) ,
+     snprintf( buf+strlen(buf) , 16+strlen(buf),
               "  qform_code = '%d'\n"
               "  qform_code_name = '%s'\n"
      "  qto_xyz_matrix = '%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g'\n" ,
@@ -8416,7 +8416,7 @@ char *nifti_image_to_ascii( const nifti_image *nim )
          nim->qto_xyz.m[3][0] , nim->qto_xyz.m[3][1] ,
          nim->qto_xyz.m[3][2] , nim->qto_xyz.m[3][3]  ) ;
 
-     sprintf( buf+strlen(buf) ,
+     snprintf( buf+strlen(buf) , 16+strlen(buf),
      "  qto_ijk_matrix = '%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g'\n" ,
          nim->qto_ijk.m[0][0] , nim->qto_ijk.m[0][1] ,
          nim->qto_ijk.m[0][2] , nim->qto_ijk.m[0][3] ,
@@ -8427,7 +8427,7 @@ char *nifti_image_to_ascii( const nifti_image *nim )
          nim->qto_ijk.m[3][0] , nim->qto_ijk.m[3][1] ,
          nim->qto_ijk.m[3][2] , nim->qto_ijk.m[3][3]  ) ;
 
-     sprintf( buf+strlen(buf) ,
+     snprintf( buf+strlen(buf) , 16+strlen(buf),
               "  quatern_b = '%g'\n"
               "  quatern_c = '%g'\n"
               "  quatern_d = '%g'\n"
@@ -8440,7 +8440,7 @@ char *nifti_image_to_ascii( const nifti_image *nim )
 
      nifti_dmat44_to_orientation( nim->qto_xyz , &i,&j,&k ) ;
      if( i > 0 && j > 0 && k > 0 )
-       sprintf( buf+strlen(buf) ,
+       snprintf( buf+strlen(buf) , 16+strlen(buf),
                 "  qform_i_orientation = '%s'\n"
                 "  qform_j_orientation = '%s'\n"
                 "  qform_k_orientation = '%s'\n" ,
@@ -8452,7 +8452,7 @@ char *nifti_image_to_ascii( const nifti_image *nim )
    if( nim->sform_code > 0 ){
      int i,j,k ;
 
-     sprintf( buf+strlen(buf) ,
+     snprintf( buf+strlen(buf) , 16+strlen(buf),
               "  sform_code = '%d'\n"
               "  sform_code_name = '%s'\n"
      "  sto_xyz_matrix = '%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g'\n" ,
@@ -8466,7 +8466,7 @@ char *nifti_image_to_ascii( const nifti_image *nim )
          nim->sto_xyz.m[3][0] , nim->sto_xyz.m[3][1] ,
          nim->sto_xyz.m[3][2] , nim->sto_xyz.m[3][3]  ) ;
 
-     sprintf( buf+strlen(buf) ,
+     snprintf( buf+strlen(buf) , 16+strlen(buf),
      "  sto_ijk matrix = '%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g'\n" ,
          nim->sto_ijk.m[0][0] , nim->sto_ijk.m[0][1] ,
          nim->sto_ijk.m[0][2] , nim->sto_ijk.m[0][3] ,
@@ -8479,7 +8479,7 @@ char *nifti_image_to_ascii( const nifti_image *nim )
 
      nifti_dmat44_to_orientation( nim->sto_xyz , &i,&j,&k ) ;
      if( i > 0 && j > 0 && k > 0 )
-       sprintf( buf+strlen(buf) ,
+       snprintf( buf+strlen(buf) , 16+strlen(buf),
                 "  sform_i_orientation = '%s'\n"
                 "  sform_j_orientation = '%s'\n"
                 "  sform_k_orientation = '%s'\n" ,
@@ -8488,9 +8488,9 @@ char *nifti_image_to_ascii( const nifti_image *nim )
                 nifti_orientation_string(k)  ) ;
    }
 
-   sprintf( buf+strlen(buf) , "  num_ext = '%d'\n", nim->num_ext ) ;
+   snprintf( buf+strlen(buf) , 16+strlen(buf), "  num_ext = '%d'\n", nim->num_ext ) ;
 
-   sprintf( buf+strlen(buf) , "/>\n" ) ;   /* XML-ish closer */
+   snprintf( buf+strlen(buf) , 16+strlen(buf),  "/>\n" ) ;   /* XML-ish closer */
 
    nbuf = (int)strlen(buf) ;
    buf  = (char *)realloc((void *)buf, nbuf+1); /* cut back to proper length */
