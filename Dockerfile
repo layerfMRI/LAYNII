@@ -64,6 +64,9 @@ COPY ["src", "/home/laynii/src"]
 
 COPY ["Makefile", "/home/laynii/"]
 
+COPY ["test_data", "/home/laynii/"]
+
+
 WORKDIR /home/laynii/
 
 RUN make all
@@ -119,6 +122,13 @@ RUN echo '{ \
     \n      "copy", \
     \n      [ \
     \n        "Makefile", \
+    \n        "/home/laynii/" \
+    \n      ] \
+    \n    ], \
+    \n    [ \
+    \n      "copy", \
+    \n      [ \
+    \n        "test_data", \
     \n        "/home/laynii/" \
     \n      ] \
     \n    ], \
