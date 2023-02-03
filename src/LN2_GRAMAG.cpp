@@ -103,8 +103,9 @@ int main(int argc, char*  argv[]) {
     for (uint32_t i = 0; i != nr_voxels; ++i) {
         tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
         float gra_x = 0, gra_y = 0, gra_z = 0;
-        // float g21 = 0, g22 = 0, g23 = 0, g24 = 0, g25 = 0, g26 = 0;
-        // float g31 = 0, g32 = 0, g33 = 0, g34 = 0;
+        float g21 = 0, g22 = 0, g23 = 0, g24 = 0, g25 = 0, g26 = 0;
+        float g31 = 0, g32 = 0, g33 = 0, g34 = 0;
+        float count_1 = 0, count_2 = 0, count_3 = 0;
 
         // --------------------------------------------------------------------
         // 1-jump neighbours
@@ -112,82 +113,103 @@ int main(int argc, char*  argv[]) {
         if (ix > 0 && ix < end_x) {
             j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
             k = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-            gra_x += (*(nii_input_data + j) - *(nii_input_data + k)) / 2;
+            gra_x += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
+            count_1 += 1;
         }
         if (iy > 0 && iy < end_y) {
             j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
             k = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-            gra_y += (*(nii_input_data + j) - *(nii_input_data + k)) / 2;
+            gra_y += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
+            count_1 += 1;
         }
         if (iz > 0 && iz < end_z) {
             j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
             k = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-            gra_z += (*(nii_input_data + j) - *(nii_input_data + k)) / 2;
+            gra_z += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
+            count_1 += 1;
         }
 
-        // // --------------------------------------------------------------------
-        // // 2-jump neighbours
-        // // --------------------------------------------------------------------
-        // if (ix > 0 && iy > 0 && ix < end_x && iy < end_y) {
-        //     j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
-        //     k = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
-        //     g21 += (*(nii_input_data + j) - *(nii_input_data + k)) / (2 * 1.4142136);
-        // }
-        // if (ix > 0 && iy < end_y && ix < end_x && iy > 0) {
-        //     j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
-        //     k = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
-        //     g22 += (*(nii_input_data + j) - *(nii_input_data + k)) / (2 * 1.4142136);
-        // }
-        // if (iy > 0 && iz > 0 && iy < end_y && iz < end_z) {
-        //     j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
-        //     k = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
-        //     g23 += (*(nii_input_data + j) - *(nii_input_data + k)) / (2 * 1.4142136);
-        // }
-        // if (iy > 0 && iz < end_z && iy < end_y && iz > 0) {
-        //     j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
-        //     k = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
-        //     g24 += (*(nii_input_data + j) - *(nii_input_data + k)) / (2 * 1.4142136);
-        // }
-        // if (ix > 0 && iz > 0 && ix < end_x && iz < end_z) {
-        //     j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
-        //     k = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
-        //     g25 += (*(nii_input_data + j) - *(nii_input_data + k)) / (2 * 1.4142136);
-        // }
-        // if (ix < end_x && iz > 0 && ix > 0 && iz < end_z) {
-        //     j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
-        //     k = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
-        //     g26 += (*(nii_input_data + j) - *(nii_input_data + k)) / (2 * 1.4142136);
-        // }
-        //
-        // // --------------------------------------------------------------------
-        // // 3-jump neighbours
-        // // --------------------------------------------------------------------
-        // if (ix > 0 && iy > 0 && iz > 0 && ix < end_x && iy < end_y && iz < end_z) {
-        //     j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
-        //     k = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
-        //     g31 += (*(nii_input_data + j) - *(nii_input_data + k)) / (2 * 1.7320508);
-        // }
-        // if (ix > 0 && iy > 0 && iz < end_z && ix < end_x && iy < end_y && iz > 0) {
-        //     j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
-        //     k = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
-        //     g32 += (*(nii_input_data + j) - *(nii_input_data + k)) / (2 * 1.7320508);
-        // }
-        // if (ix > 0 && iy < end_y && iz > 0 && ix < end_x && iy > 0 && iz < end_z) {
-        //     j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
-        //     k = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
-        //     g33 += (*(nii_input_data + j) - *(nii_input_data + k)) / (2 * 1.7320508);
-        // }
-        // if (ix < end_x && iy > 0 && iz > 0 && ix > 0 && iy < end_y && iz < end_z) {
-        //     j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
-        //     k = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
-        //     g34 += (*(nii_input_data + j) - *(nii_input_data + k)) / (2 * 1.7320508);
-        // }
+        // --------------------------------------------------------------------
+        // 2-jump neighbours
+        // --------------------------------------------------------------------
+        if (ix > 0 && iy > 0 && ix < end_x && iy < end_y) {
+            j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
+            k = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
+            g21 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
+            count_2 += 1;
+        }
+        if (ix > 0 && iy < end_y && ix < end_x && iy > 0) {
+            j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
+            k = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
+            g22 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
+            count_2 += 1;
+        }
+        if (iy > 0 && iz > 0 && iy < end_y && iz < end_z) {
+            j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
+            k = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
+            g23 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
+            count_2 += 1;
+        }
+        if (iy > 0 && iz < end_z && iy < end_y && iz > 0) {
+            j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
+            k = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
+            g24 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
+            count_2 += 1;
+        }
+        if (ix > 0 && iz > 0 && ix < end_x && iz < end_z) {
+            j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
+            k = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
+            g25 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
+            count_2 += 1;
+        }
+        if (ix < end_x && iz > 0 && ix > 0 && iz < end_z) {
+            j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
+            k = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
+            g26 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
+            count_2 += 1;
+        }
+
+        // --------------------------------------------------------------------
+        // 3-jump neighbours
+        // --------------------------------------------------------------------
+        if (ix > 0 && iy > 0 && iz > 0 && ix < end_x && iy < end_y && iz < end_z) {
+            j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
+            k = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
+            g31 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
+            count_3 += 1;
+        }
+        if (ix > 0 && iy > 0 && iz < end_z && ix < end_x && iy < end_y && iz > 0) {
+            j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
+            k = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
+            g32 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
+            count_3 += 1;
+        }
+        if (ix > 0 && iy < end_y && iz > 0 && ix < end_x && iy > 0 && iz < end_z) {
+            j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
+            k = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
+            g33 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
+            count_3 += 1;
+        }
+        if (ix < end_x && iy > 0 && iz > 0 && ix > 0 && iy < end_y && iz < end_z) {
+            j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
+            k = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
+            g34 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
+            count_3 += 1;
+        }
 
         // --------------------------------------------------------------------
         // Compute magnitude
-        *(nii_gramag_data + i) = sqrt(gra_x*gra_x + gra_y*gra_y + gra_z*gra_z);
+        // *(nii_gramag_data + i) = sqrt(gra_x*gra_x + gra_y*gra_y + gra_z*gra_z);
         // *(nii_gramag_data + i) = sqrt(g21*g21 + g22*g22 + g23*g23 + g24*g24 + g25*g25 + g26*g26);
         // *(nii_gramag_data + i) = sqrt(g31*g31 + g32*g32 + g33*g33 + g34*g34);
+
+        // Average rate of change across spheres (shells)
+        // NOTE[Faruk]: This is a bit of experimental thinking... Need to think
+        // if thinking neighbors as separate spherical shells has some benefits...
+        *(nii_gramag_data + i) += (gra_x + gra_y + gra_z) / count_1;
+        *(nii_gramag_data + i) += (g21 + g22 + g23 + g24 + g25 + g26) / count_2;
+        *(nii_gramag_data + i) += (g31 + g32 + g33 + g34) / count_3;
+        *(nii_gramag_data + i) /= (count_1 / 3) + (count_2 / 6) + (count_3 / 4);
     }
 
     cout << "  Saving output..." << endl;
