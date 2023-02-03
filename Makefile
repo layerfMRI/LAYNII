@@ -1,4 +1,4 @@
-# LAYNII makefile
+# LayNii makefile
 
 CC		= c++
 CFLAGS	= -std=c++11 -DHAVE_ZLIB
@@ -215,11 +215,18 @@ LN2_HEXBIN:
 LN2_UVD_FILTER:
 	$(CC) $(CFLAGS) -o LN2_UVD_FILTER src/LN2_UVD_FILTER.cpp $(LIBRARIES) $(LFLAGS)
 
+# =============================================================================
+# Work in progress programs
+LN2_GRAMAG:
+	$(CC) $(CFLAGS) -o LN2_GRAMAG src/LN2_GRAMAG.cpp $(LIBRARIES) $(LFLAGS)
+
 LN2_UVD_LSTSQR:
 	$(CC) $(CFLAGS) -o LN2_UVD_LSTSQR src/LN2_UVD_LSTSQR.cpp $(LIBRARIES) $(LFLAGS)
 
 LN2_PEAK_DETECT:
 	$(CC) $(CFLAGS) -o LN2_PEAK_DETECT src/LN2_PEAK_DETECT.cpp $(LIBRARIES) $(LFLAGS)
+
+# =============================================================================
 
 clean:
 	$(RM) obj/*.o $(LAYNII)
