@@ -61,6 +61,8 @@ make all
 
 ## Docker image
 
+See https://hub.docker.com/repositories/layerfmri .
+
 ### Building the docker image
 
 ```
