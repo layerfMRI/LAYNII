@@ -40,9 +40,9 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="1"
-     inkscape:cx="357.60684"
-     inkscape:cy="-49.895133"
+     inkscape:zoom="2"
+     inkscape:cx="447.64436"
+     inkscape:cy="167.48873"
      inkscape:window-width="2560"
      inkscape:window-height="1380"
      inkscape:window-x="0"
@@ -99,19 +99,20 @@
      id="layer2"
      inkscape:label="BASE">
     <rect
-       y="0.66145831"
-       x="0.66146344"
-       height="51.59375"
+       style="opacity:1;fill:#fefefe;fill-opacity:1;stroke:#58c5ff;stroke-width:1.32291663;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect880"
        width="263.26041"
-       id="rect73"
-       style="opacity:1;fill:#ffffff;fill-opacity:0.98823529;stroke:#58a6ff;stroke-width:1.32291663;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+       height="51.59375"
+       x="0.66146344"
+       y="0.66145831" />
   </g>
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(0,-55.5625)"
-     sodipodi:insensitive="true">
+     sodipodi:insensitive="true"
+     style="display:inline">
     <g
        id="g26"
        transform="matrix(0.09003997,0,0,0.09003997,189.37355,56.533852)"
