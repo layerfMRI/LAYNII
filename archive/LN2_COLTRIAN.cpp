@@ -208,8 +208,8 @@ int main(int argc, char*  argv[]) {
         // Keep neighbouring column ID's in an array
         int32_t* neighbours;
         neighbours = (int32_t*) malloc(8*sizeof(int32_t));
-        for (int j=0; j<8; ++j) {
-            *(neighbours + j) = 0;
+        for (int jj=0; jj<8; ++jj) {
+            *(neighbours + jj) = 0;
         }
         *(neighbours + 0) = *(nii_columns_data + i);
 

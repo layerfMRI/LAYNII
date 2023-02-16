@@ -111,6 +111,39 @@ double ren_autocor(double arr[], int size) {
     return sum1/sum2;
 }
 
+
+//int ren_add_if_new(int arr[], int size){
+//	bool is_new = false :
+//	for (i = 1; i < size; ++i) {
+//        sum1 += (arr[i]-mean)*(arr[i-1]-mean);
+//    }
+//}
+
+int ren_most_occurred_number(int nums[], int size){
+		int returnvalue = 0;
+		int max_count = 0;
+		//cout << "\nMost occurred number: ";
+		for (int i=0; i<size; i++){
+			int count=1;
+			for (int j=i+1;j<size;j++)
+			if (nums[i]==nums[j])
+				count++;
+			if (count>max_count)
+				max_count = count;
+		}
+
+	for (int i=0;i<size;i++){
+		int count=1;
+			for (int j=i+1;j<size;j++)
+				if (nums[i]==nums[j])
+					count++;
+				if (count==max_count)
+					//cout << nums[i] << endl;
+					returnvalue =  nums[i]; 
+		}
+     return returnvalue ; 
+}
+
 float dist(float x1, float y1, float z1, float x2, float y2, float z2,
            float dX, float dY, float dZ) {
     return sqrt(pow((x1 - x2) * dX, 2) + pow((y1 - y2) * dY, 2)
