@@ -367,7 +367,7 @@ int main(int argc, char*  argv[]) {
         *(nii_gramag_data + i) /= (count_1 / 3) + (count_2 / 6) + (count_3 / 4);
         }
         cout << "  Saving output..." << endl;
-        save_output_nifti(fout, "gramag_cyclic", nii_gramag, true);
+        save_output_nifti(fout, "gramag_circular", nii_gramag, true);
     }
 
     cout << "\n  Finished." << endl;
