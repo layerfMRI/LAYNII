@@ -63,12 +63,12 @@ LAYNII2		= 	LN2_LAYERS \
 				LN2_UVD_FILTER \
 				LN2_HEXBIN \
 
-LAYNII 	= $(HIGH_PRIORITY) $(LOW_PRIORITY) $(LAYNII2)
+LAYNII 	= $(LAYNII2) $(HIGH_PRIORITY) $(LOW_PRIORITY)
 
 # =============================================================================
 all : $(LAYNII)
 
-.PHONY: all $(HIGH_PRIORITY) $(LOW_PRIORITY) $(LAYNII2)
+.PHONY: all $(LAYNII2) $(HIGH_PRIORITY) $(LOW_PRIORITY)
 
 # =============================================================================
 # LAYNII programs
@@ -155,7 +155,7 @@ LN_LOITUMA:
 
 LN_NOISE_KERNEL:
 	$(CC) $(CFLAGS) -o LN_NOISE_KERNEL src/LN_NOISE_KERNEL.cpp $(LIBRARIES) $(LFLAGS)
-	
+
 LN2_DIRECTIONALITY_BIN:
 	$(CC) $(CFLAGS) -o LN2_DIRECTIONALITY_BIN src/LN2_DIRECTIONALITY_BIN.cpp $(LIBRARIES) $(LFLAGS)
 
