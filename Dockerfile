@@ -43,7 +43,7 @@ RUN export ND_ENTRYPOINT="/neurodocker/startup.sh" \
 
 ENTRYPOINT ["/neurodocker/startup.sh"]
 
-LABEL version="v2.3.0"
+LABEL version="v2.4.0"
 
 RUN apt-get update -qq \
     && apt-get install -y -q --no-install-recommends \
@@ -83,7 +83,7 @@ RUN echo '{ \
     \n    [ \
     \n      "label", \
     \n      { \
-    \n        "version": "v2.3.0" \
+    \n        "version": "v2.4.0" \
     \n      } \
     \n    ], \
     \n    [ \
