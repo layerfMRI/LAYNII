@@ -314,7 +314,7 @@ int main(int argc, char * argv[]) {
     // finding local patch of neigbors (snipets repurposed from LN2_COLTRAIN) ///////
     ////////////////////////////////////////////////////////////////////////////////////
     uint32_t ix, iy, iz;
-
+    uint32_t iix, iiy, iiz;
 	// Voxels of interest
     uint32_t nr_voi = 0;
     for (uint32_t i = 0; i != nxyz; ++i) {
@@ -355,36 +355,23 @@ int main(int argc, char * argv[]) {
 	   ColId_in_neigh_column [j] =0 ;
 	   val_in_neigh_column [j] =0 ;
    }
-
-   int* ColId_in_neigh_layer = new int[Nr_parcels*Nr_layers];
-      //Access the parcel as: [ Nr_parcels * NeighLayidx  +   parcelID ]  
-   // center parcelID: Nr_columns * layeridx + columnindx
-   int* val_in_neigh_layer   = new int[Nr_parcels*Nr_layers];
-      //Access the parcel as: [ Nr_parcels * NeighLayidx +   parcelID ]  
-   // center parcelID: Nr_columns * layeridx + columnindx
-   for (int j=0; j<Nr_parcels*Nr_layers; ++j) {
-	   ColId_in_neigh_layer [j] =0 ;
-	   val_in_neigh_layer [j] =0 ;
+   
+   int* Collumn_in_neighbor = new int[Nr_parcels*27];
+   int* layer_in_neighbor   = new int[Nr_parcels*27];
+   for (int j=0; j<Nr_parcels*27; ++j) {
+	   Collumn_in_neighbor [j] =0 ;
+	   layer_in_neighbor [j] =0 ;
    }
       
 
-   int Nr_neigh_columns[Nr_parcels];
-   int runidx_neigh_columns[Nr_parcels];
+   int runidx_neigh_parcel[Nr_parcels];
       //Access the parcel as: [ parcelID ]  
    // center parcelID: Nr_columns * layeridx + columnindx
    for (int j=0; j<Nr_parcels; ++j) {
-	   Nr_neigh_columns [j] =0 ;
-	   runidx_neigh_columns [j] =0 ;
+	   runidx_neigh_parcel [j] = 1 ;
    }
    
-   int Nr_neigh_layers[Nr_parcels];
-   int runidx_neigh_layers[Nr_parcels];
-   //Access the parcel as: [ parcelID ]  
-   // center parcelID: Nr_columns * layeridx + columnindx
-    for (int j=0; j<Nr_parcels; ++j) {
-	   Nr_neigh_layers [j] =0 ;
-	   runidx_neigh_layers [j] =0 ;
-   }
+  
    
    int current_column_idx = 0 ;
    int current_layer_idx  = 0 ; 
@@ -393,91 +380,84 @@ int main(int argc, char * argv[]) {
    int current_layer_neighbor  = 0 ; 
    int current_parcel_neighbor  = 0 ;
    int layer_of_new_neigbor = 0; 
-   int column_of_new_niegbor = 0; 
-   int is_notnew_column_nighbor = 0;
-   int is_notnew_layer_nighbor = 0;
+   int niegbor_id = 0; 
+   int is_notnew_nighbor = 0;
+   int is_notnew_parcel_nighbor = 0;
+//   int is_notnew_layer_nighbor = 0;
    
     cout << " Hi3 "  << endl;  
   
     for(uint32_t ii = 0; ii != nr_voi; ++ii) { 
         uint32_t i = *(voi_id + ii);
         tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
-        current_column_idx = (int)*(nim_columns_data + i)-1;
-        current_layer_idx  = (int)*(nim_layers_data + i) -1;
+        current_column_idx = (int)*(nim_columns_data + i) -1;
+        current_layer_idx  = (int)*(nim_layers_data  + i) -1;
         current_parcel_idx =  Nr_columns * current_layer_idx + current_column_idx;
         
         //cout << "column, layer, parcel " << current_column_idx << " "<< current_layer_idx << " "<< current_parcel_idx << " "<< endl;
         //*(neighbours + 0) = *(nim_columns_data + i);
 
+		layer_in_neighbor   	[ Nr_parcels * 0 +  current_parcel_idx ] = current_layer_idx ; 
+        Collumn_in_neighbor 	[ Nr_parcels * 0 +  current_parcel_idx ] = current_column_idx ; 
+        val_in_neigh_column 	[ Nr_parcels * 0 +  current_parcel_idx ] = (int)*(nii_parcelval_data + i) ;
+        ColId_in_neigh_column 	[ Nr_parcels * 0 +  current_parcel_idx ] = current_parcel_idx; 
+        
         // 1-jump neighbours
          if (ix > 0) {
             int j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
 				
-				 is_notnew_layer_nighbor = 0;
-				 is_notnew_column_nighbor = 0; 
+				 is_notnew_parcel_nighbor = 0; 
 				 current_column_neighbor  = (int)*(nim_columns_data + j)-1;
                  current_layer_neighbor   = (int)*(nim_layers_data + j) -1; 
                  current_parcel_neighbor  =  Nr_columns * current_layer_neighbor + current_column_neighbor ;
                  
-           // checking if this neigbor is already considered or not
-                 for (int current_layer_neighboridx = 0 ; current_layer_neighboridx < Nr_layers; current_layer_neighboridx++ ){ 
-						 if (current_parcel_neighbor == ColId_in_neigh_layer[Nr_parcels * current_layer_neighboridx +  current_parcel_idx ]){
-					         is_notnew_layer_nighbor ++; 
-						 }
-				 }          
+               // checking if this neigbor is already considered or not        
 				 for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
 					     if (current_parcel_neighbor == ColId_in_neigh_column[Nr_parcels * current_column_neighboridx +  current_parcel_idx ]){
-					         is_notnew_column_nighbor ++;
+					         is_notnew_parcel_nighbor ++;
 						 }
 				 }
-				 if (current_parcel_idx == current_parcel_neighbor   ){
-							  is_notnew_layer_nighbor = 1;
-							  is_notnew_column_nighbor = 1;
-				 }
-//cout << Nr_parcels << "  Nr_parcels" << endl; 
-//cout << " current_parcel_idx " << current_parcel_idx << " current_column_idx " << current_column_idx << " current_layer_idx " << current_layer_idx  << endl; 
-//cout << " runidx_neigh_layers  [current_parcel_idx] " << runidx_neigh_layers  [current_parcel_idx] << endl;
-//cout << " runidx_neigh_columns [current_parcel_idx] " << runidx_neigh_columns [current_parcel_idx] << endl;
- 
-                 if ( is_notnew_layer_nighbor == 0 ){
-					 layer_of_new_neigbor  = runidx_neigh_layers  [current_parcel_idx];
-					 ColId_in_neigh_layer [Nr_parcels * layer_of_new_neigbor +  current_parcel_idx ] = current_parcel_neighbor;
-					 val_in_neigh_layer   [Nr_parcels * layer_of_new_neigbor +  current_parcel_idx ] = (int)*(nii_data + j) ; 
-					 runidx_neigh_layers  [current_parcel_idx] ++; 
-				 }	 
+				 if (current_parcel_idx == current_parcel_neighbor )   is_notnew_parcel_nighbor = 1;
 			 
-				 if ( is_notnew_column_nighbor == 0 ){
-					 column_of_new_niegbor = runidx_neigh_columns [current_parcel_idx]; 
-					 ColId_in_neigh_column [Nr_parcels * column_of_new_niegbor +  current_parcel_idx ] = current_parcel_neighbor;
-					 val_in_neigh_column   [Nr_parcels * column_of_new_niegbor +  current_parcel_idx ] = (int)*(nii_data + j) ; 
-					 runidx_neigh_columns  [current_parcel_idx] ++; 
+				 if ( is_notnew_parcel_nighbor == 0 ){
+					 niegbor_id = min (runidx_neigh_parcel [current_parcel_idx], 27) ; // this is to make sure that we are not runnign out of memory if there are more than 27 nioghbors. 
+					 ColId_in_neigh_column [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_parcel_neighbor;
+					 val_in_neigh_column   [Nr_parcels * niegbor_id +  current_parcel_idx ] = (int)*(nii_parcelval_data + j) ; 
+					 Collumn_in_neighbor   [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_column_neighbor ; 
+					 layer_in_neighbor     [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_layer_neighbor ; 
+					 runidx_neigh_parcel   [current_parcel_idx] ++; 
 				 }	 
 				 
 					 
-/*
-					 cout << " current_parcel_idx " << current_parcel_idx << " current_column_idx " << current_column_idx << " current_layer_idx " << current_layer_idx  << endl;
-				     cout << ix<< " "<< iy << " " << iz << endl ; 
-				
-				
-				      for (int current_layer_neighboridx = 0 ; current_layer_neighboridx < Nr_layers; current_layer_neighboridx++ ){ 
-					      for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
-					      	cout << ColId_in_neigh_pacels[Nr_parcels * 27 * current_layer_neighboridx +  Nr_parcels * current_column_neighboridx +  current_parcel_idx ] << " " ;
-				          }     
-				          cout << endl; 
-				          for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
-					      	cout << val_in_neigh_pacels[Nr_parcels * 27 * current_layer_neighboridx +  Nr_parcels * current_column_neighboridx +  current_parcel_idx ] << " " ;
-				          }     
-				          cout << endl; 
-				      }
-*/
-				    
-				  
-				
+				if (current_parcel_neighbor !=current_parcel_idx &&   is_notnew_parcel_nighbor == 0 ) {
+					// cout << " current_parcel_idx " << current_parcel_idx << " current_column_idx " << current_column_idx << " current_layer_idx " << current_layer_idx  << endl;
+					// cout << " current_parcel_neighbor " << current_parcel_neighbor << " current_column_neighbor " << current_column_neighbor << " current_layer_neighbor " << current_layer_neighbor  << endl;
+				    // cout << ix<< " "<< iy << " " << iz <<"       " <<   runidx_neigh_parcel  [current_parcel_idx]<< "  "<< runidx_neigh_parcel  [current_parcel_idx]<<  endl ; 
+				    // cout << ix-1<< " "<< iy << " " << iz <<"       " <<   runidx_neigh_parcel  [current_parcel_idx]<< "  "<< runidx_neigh_parcel  [current_parcel_idx]<<  endl ; 
 
-			
-                //*(neighbours + 1) = *(nim_columns_data + j);
-            }
+				
+					      for (int niegbor_id_index = 0 ; niegbor_id_index < 27; niegbor_id_index++ ){ 
+					      	cout << ColId_in_neigh_column[Nr_parcels * niegbor_id_index +  current_parcel_idx ] << " " ;
+					      	//cout << ColId_in_neigh_layer [Nr_parcels * current_column_neighboridx +  current_parcel_idx ] << " " ;
+						  }
+						  cout << endl; 
+				          for (int niegbor_id_index = 0 ; niegbor_id_index < 27; niegbor_id_index++ ){ 
+					      	cout << Collumn_in_neighbor[Nr_parcels * niegbor_id_index +  current_parcel_idx ] << " " ;
+				          }     
+				          cout << endl; 
+				          for (int niegbor_id_index = 0 ; niegbor_id_index < 27; niegbor_id_index++ ){ 
+					      	cout << layer_in_neighbor[Nr_parcels * niegbor_id_index +  current_parcel_idx ] << " " ;
+				          }     
+				          cout << endl; 
+				          for (int niegbor_id_index = 0 ; niegbor_id_index < 27; niegbor_id_index++ ){ 
+					      	cout << val_in_neigh_column[Nr_parcels * niegbor_id_index +  current_parcel_idx ] << " " ;
+					      	//cout << ColId_in_neigh_layer [Nr_parcels * current_column_neighboridx +  current_parcel_idx ] << " " ;
+						  }
+						  cout << endl; 
+				}
+				    
+            } //loop across neigbors closed
         }
         
         		
@@ -485,31 +465,131 @@ int main(int argc, char * argv[]) {
         if (iy > 0) {
             int j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 2) = *(nim_columns_data + j);
+               				 is_notnew_parcel_nighbor = 0; 
+				 current_column_neighbor  = (int)*(nim_columns_data + j)-1;
+                 current_layer_neighbor   = (int)*(nim_layers_data + j) -1; 
+                 current_parcel_neighbor  =  Nr_columns * current_layer_neighbor + current_column_neighbor ;
+                 
+               // checking if this neigbor is already considered or not        
+				 for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
+					     if (current_parcel_neighbor == ColId_in_neigh_column[Nr_parcels * current_column_neighboridx +  current_parcel_idx ]){
+					         is_notnew_parcel_nighbor ++;
+						 }
+				 }
+				 if (current_parcel_idx == current_parcel_neighbor )   is_notnew_parcel_nighbor = 1;
+			 
+				 if ( is_notnew_parcel_nighbor == 0 ){
+					 niegbor_id = min (runidx_neigh_parcel [current_parcel_idx], 27) ; // this is to make sure that we are not runnign out of memory if there are more than 27 nioghbors. 
+					 ColId_in_neigh_column [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_parcel_neighbor;
+					 val_in_neigh_column   [Nr_parcels * niegbor_id +  current_parcel_idx ] = (int)*(nii_parcelval_data + j) ; 
+					 Collumn_in_neighbor   [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_column_neighbor ; 
+					 layer_in_neighbor     [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_layer_neighbor ; 
+					 runidx_neigh_parcel   [current_parcel_idx] ++; 
+				 }	 
             }
         }
         if (iz > 0) {
             int j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 3) = *(nim_columns_data + j);
+                				 is_notnew_parcel_nighbor = 0; 
+				 current_column_neighbor  = (int)*(nim_columns_data + j)-1;
+                 current_layer_neighbor   = (int)*(nim_layers_data + j) -1; 
+                 current_parcel_neighbor  =  Nr_columns * current_layer_neighbor + current_column_neighbor ;
+                 
+               // checking if this neigbor is already considered or not        
+				 for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
+					     if (current_parcel_neighbor == ColId_in_neigh_column[Nr_parcels * current_column_neighboridx +  current_parcel_idx ]){
+					         is_notnew_parcel_nighbor ++;
+						 }
+				 }
+				 if (current_parcel_idx == current_parcel_neighbor )   is_notnew_parcel_nighbor = 1;
+			 
+				 if ( is_notnew_parcel_nighbor == 0 ){
+					 niegbor_id = min (runidx_neigh_parcel [current_parcel_idx], 27) ; // this is to make sure that we are not runnign out of memory if there are more than 27 nioghbors. 
+					 ColId_in_neigh_column [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_parcel_neighbor;
+					 val_in_neigh_column   [Nr_parcels * niegbor_id +  current_parcel_idx ] = (int)*(nii_parcelval_data + j) ; 
+					 Collumn_in_neighbor   [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_column_neighbor ; 
+					 layer_in_neighbor     [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_layer_neighbor ; 
+					 runidx_neigh_parcel   [current_parcel_idx] ++; 
+				 }	 
             }
         }
         if (ix < size_x) {
             int j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 4) = *(nim_columns_data + j);
+                				 is_notnew_parcel_nighbor = 0; 
+				 current_column_neighbor  = (int)*(nim_columns_data + j)-1;
+                 current_layer_neighbor   = (int)*(nim_layers_data + j) -1; 
+                 current_parcel_neighbor  =  Nr_columns * current_layer_neighbor + current_column_neighbor ;
+                 
+               // checking if this neigbor is already considered or not        
+				 for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
+					     if (current_parcel_neighbor == ColId_in_neigh_column[Nr_parcels * current_column_neighboridx +  current_parcel_idx ]){
+					         is_notnew_parcel_nighbor ++;
+						 }
+				 }
+				 if (current_parcel_idx == current_parcel_neighbor )   is_notnew_parcel_nighbor = 1;
+			 
+				 if ( is_notnew_parcel_nighbor == 0 ){
+					 niegbor_id = min (runidx_neigh_parcel [current_parcel_idx], 27) ; // this is to make sure that we are not runnign out of memory if there are more than 27 nioghbors. 
+					 ColId_in_neigh_column [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_parcel_neighbor;
+					 val_in_neigh_column   [Nr_parcels * niegbor_id +  current_parcel_idx ] = (int)*(nii_parcelval_data + j) ; 
+					 Collumn_in_neighbor   [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_column_neighbor ; 
+					 layer_in_neighbor     [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_layer_neighbor ; 
+					 runidx_neigh_parcel   [current_parcel_idx] ++; 
+				 }	 
             }
         }
         if (iy < size_y) {
             int j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 5) = *(nim_columns_data + j);
+                				 is_notnew_parcel_nighbor = 0; 
+				 current_column_neighbor  = (int)*(nim_columns_data + j)-1;
+                 current_layer_neighbor   = (int)*(nim_layers_data + j) -1; 
+                 current_parcel_neighbor  =  Nr_columns * current_layer_neighbor + current_column_neighbor ;
+                 
+               // checking if this neigbor is already considered or not        
+				 for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
+					     if (current_parcel_neighbor == ColId_in_neigh_column[Nr_parcels * current_column_neighboridx +  current_parcel_idx ]){
+					         is_notnew_parcel_nighbor ++;
+						 }
+				 }
+				 if (current_parcel_idx == current_parcel_neighbor )   is_notnew_parcel_nighbor = 1;
+			 
+				 if ( is_notnew_parcel_nighbor == 0 ){
+					 niegbor_id = min (runidx_neigh_parcel [current_parcel_idx], 27) ; // this is to make sure that we are not runnign out of memory if there are more than 27 nioghbors. 
+					 ColId_in_neigh_column [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_parcel_neighbor;
+					 val_in_neigh_column   [Nr_parcels * niegbor_id +  current_parcel_idx ] = (int)*(nii_parcelval_data + j) ; 
+					 Collumn_in_neighbor   [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_column_neighbor ; 
+					 layer_in_neighbor     [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_layer_neighbor ; 
+					 runidx_neigh_parcel   [current_parcel_idx] ++; 
+				 }	 
             }
         }
         if (iz < size_z) {
             int j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 6) = *(nim_columns_data + j);
+                				 is_notnew_parcel_nighbor = 0; 
+				 current_column_neighbor  = (int)*(nim_columns_data + j)-1;
+                 current_layer_neighbor   = (int)*(nim_layers_data + j) -1; 
+                 current_parcel_neighbor  =  Nr_columns * current_layer_neighbor + current_column_neighbor ;
+                 
+               // checking if this neigbor is already considered or not        
+				 for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
+					     if (current_parcel_neighbor == ColId_in_neigh_column[Nr_parcels * current_column_neighboridx +  current_parcel_idx ]){
+					         is_notnew_parcel_nighbor ++;
+						 }
+				 }
+				 if (current_parcel_idx == current_parcel_neighbor )   is_notnew_parcel_nighbor = 1;
+			 
+				 if ( is_notnew_parcel_nighbor == 0 ){
+					 niegbor_id = min (runidx_neigh_parcel [current_parcel_idx], 27) ; // this is to make sure that we are not runnign out of memory if there are more than 27 nioghbors. 
+					 ColId_in_neigh_column [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_parcel_neighbor;
+					 val_in_neigh_column   [Nr_parcels * niegbor_id +  current_parcel_idx ] = (int)*(nii_parcelval_data + j) ; 
+					 Collumn_in_neighbor   [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_column_neighbor ; 
+					 layer_in_neighbor     [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_layer_neighbor ; 
+					 runidx_neigh_parcel   [current_parcel_idx] ++; 
+				 }	 
             }
         }
 
@@ -517,131 +597,367 @@ int main(int argc, char * argv[]) {
         if (ix > 0 && iy > 0) {
             int j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 7) = *(nim_columns_data + j);
+                				 is_notnew_parcel_nighbor = 0; 
+				 current_column_neighbor  = (int)*(nim_columns_data + j)-1;
+                 current_layer_neighbor   = (int)*(nim_layers_data + j) -1; 
+                 current_parcel_neighbor  =  Nr_columns * current_layer_neighbor + current_column_neighbor ;
+                 
+               // checking if this neigbor is already considered or not        
+				 for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
+					     if (current_parcel_neighbor == ColId_in_neigh_column[Nr_parcels * current_column_neighboridx +  current_parcel_idx ]){
+					         is_notnew_parcel_nighbor ++;
+						 }
+				 }
+				 if (current_parcel_idx == current_parcel_neighbor )   is_notnew_parcel_nighbor = 1;
+			 
+				 if ( is_notnew_parcel_nighbor == 0 ){
+					 niegbor_id = min (runidx_neigh_parcel [current_parcel_idx], 27) ; // this is to make sure that we are not runnign out of memory if there are more than 27 nioghbors. 
+					 ColId_in_neigh_column [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_parcel_neighbor;
+					 val_in_neigh_column   [Nr_parcels * niegbor_id +  current_parcel_idx ] = (int)*(nii_parcelval_data + j) ; 
+					 Collumn_in_neighbor   [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_column_neighbor ; 
+					 layer_in_neighbor     [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_layer_neighbor ; 
+					 runidx_neigh_parcel   [current_parcel_idx] ++; 
+				 }	 
             }
         }
         if (ix > 0 && iy < size_y) {
             int j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 8) = *(nim_columns_data + j);
+                				 is_notnew_parcel_nighbor = 0; 
+				 current_column_neighbor  = (int)*(nim_columns_data + j)-1;
+                 current_layer_neighbor   = (int)*(nim_layers_data + j) -1; 
+                 current_parcel_neighbor  =  Nr_columns * current_layer_neighbor + current_column_neighbor ;
+                 
+               // checking if this neigbor is already considered or not        
+				 for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
+					     if (current_parcel_neighbor == ColId_in_neigh_column[Nr_parcels * current_column_neighboridx +  current_parcel_idx ]){
+					         is_notnew_parcel_nighbor ++;
+						 }
+				 }
+				 if (current_parcel_idx == current_parcel_neighbor )   is_notnew_parcel_nighbor = 1;
+			 
+				 if ( is_notnew_parcel_nighbor == 0 ){
+					 niegbor_id = min (runidx_neigh_parcel [current_parcel_idx], 27) ; // this is to make sure that we are not runnign out of memory if there are more than 27 nioghbors. 
+					 ColId_in_neigh_column [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_parcel_neighbor;
+					 val_in_neigh_column   [Nr_parcels * niegbor_id +  current_parcel_idx ] = (int)*(nii_parcelval_data + j) ; 
+					 Collumn_in_neighbor   [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_column_neighbor ; 
+					 layer_in_neighbor     [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_layer_neighbor ; 
+					 runidx_neigh_parcel   [current_parcel_idx] ++; 
+				 }	 
             }
         }
         if (ix < size_x && iy > 0) {
             int j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 9) = *(nim_columns_data + j);
+                				 is_notnew_parcel_nighbor = 0; 
+				 current_column_neighbor  = (int)*(nim_columns_data + j)-1;
+                 current_layer_neighbor   = (int)*(nim_layers_data + j) -1; 
+                 current_parcel_neighbor  =  Nr_columns * current_layer_neighbor + current_column_neighbor ;
+                 
+               // checking if this neigbor is already considered or not        
+				 for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
+					     if (current_parcel_neighbor == ColId_in_neigh_column[Nr_parcels * current_column_neighboridx +  current_parcel_idx ]){
+					         is_notnew_parcel_nighbor ++;
+						 }
+				 }
+				 if (current_parcel_idx == current_parcel_neighbor )   is_notnew_parcel_nighbor = 1;
+			 
+				 if ( is_notnew_parcel_nighbor == 0 ){
+					 niegbor_id = min (runidx_neigh_parcel [current_parcel_idx], 27) ; // this is to make sure that we are not runnign out of memory if there are more than 27 nioghbors. 
+					 ColId_in_neigh_column [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_parcel_neighbor;
+					 val_in_neigh_column   [Nr_parcels * niegbor_id +  current_parcel_idx ] = (int)*(nii_parcelval_data + j) ; 
+					 Collumn_in_neighbor   [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_column_neighbor ; 
+					 layer_in_neighbor     [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_layer_neighbor ; 
+					 runidx_neigh_parcel   [current_parcel_idx] ++; 
+				 }	 
             }
         }
         if (ix < size_x && iy < size_y) {
             int j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 10) = *(nim_columns_data + j);
+                				 is_notnew_parcel_nighbor = 0; 
+				 current_column_neighbor  = (int)*(nim_columns_data + j)-1;
+                 current_layer_neighbor   = (int)*(nim_layers_data + j) -1; 
+                 current_parcel_neighbor  =  Nr_columns * current_layer_neighbor + current_column_neighbor ;
+                 
+               // checking if this neigbor is already considered or not        
+				 for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
+					     if (current_parcel_neighbor == ColId_in_neigh_column[Nr_parcels * current_column_neighboridx +  current_parcel_idx ]){
+					         is_notnew_parcel_nighbor ++;
+						 }
+				 }
+				 if (current_parcel_idx == current_parcel_neighbor )   is_notnew_parcel_nighbor = 1;
+			 
+				 if ( is_notnew_parcel_nighbor == 0 ){
+					 niegbor_id = min (runidx_neigh_parcel [current_parcel_idx], 27) ; // this is to make sure that we are not runnign out of memory if there are more than 27 nioghbors. 
+					 ColId_in_neigh_column [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_parcel_neighbor;
+					 val_in_neigh_column   [Nr_parcels * niegbor_id +  current_parcel_idx ] = (int)*(nii_parcelval_data + j) ; 
+					 Collumn_in_neighbor   [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_column_neighbor ; 
+					 layer_in_neighbor     [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_layer_neighbor ; 
+					 runidx_neigh_parcel   [current_parcel_idx] ++; 
+				 }	 
             }
         }
        if (iy > 0 && iz > 0) {
             int j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 11) = *(nim_columns_data + j);
+                				 is_notnew_parcel_nighbor = 0; 
+				 current_column_neighbor  = (int)*(nim_columns_data + j)-1;
+                 current_layer_neighbor   = (int)*(nim_layers_data + j) -1; 
+                 current_parcel_neighbor  =  Nr_columns * current_layer_neighbor + current_column_neighbor ;
+                 
+               // checking if this neigbor is already considered or not        
+				 for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
+					     if (current_parcel_neighbor == ColId_in_neigh_column[Nr_parcels * current_column_neighboridx +  current_parcel_idx ]){
+					         is_notnew_parcel_nighbor ++;
+						 }
+				 }
+				 if (current_parcel_idx == current_parcel_neighbor )   is_notnew_parcel_nighbor = 1;
+			 
+				 if ( is_notnew_parcel_nighbor == 0 ){
+					 niegbor_id = min (runidx_neigh_parcel [current_parcel_idx], 27) ; // this is to make sure that we are not runnign out of memory if there are more than 27 nioghbors. 
+					 ColId_in_neigh_column [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_parcel_neighbor;
+					 val_in_neigh_column   [Nr_parcels * niegbor_id +  current_parcel_idx ] = (int)*(nii_parcelval_data + j) ; 
+					 Collumn_in_neighbor   [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_column_neighbor ; 
+					 layer_in_neighbor     [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_layer_neighbor ; 
+					 runidx_neigh_parcel   [current_parcel_idx] ++; 
+				 }	 
             }
         }
         if (iy > 0 && iz < size_z) {
             int j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 12) = *(nim_columns_data + j);
+                				 is_notnew_parcel_nighbor = 0; 
+				 current_column_neighbor  = (int)*(nim_columns_data + j)-1;
+                 current_layer_neighbor   = (int)*(nim_layers_data + j) -1; 
+                 current_parcel_neighbor  =  Nr_columns * current_layer_neighbor + current_column_neighbor ;
+                 
+               // checking if this neigbor is already considered or not        
+				 for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
+					     if (current_parcel_neighbor == ColId_in_neigh_column[Nr_parcels * current_column_neighboridx +  current_parcel_idx ]){
+					         is_notnew_parcel_nighbor ++;
+						 }
+				 }
+				 if (current_parcel_idx == current_parcel_neighbor )   is_notnew_parcel_nighbor = 1;
+			 
+				 if ( is_notnew_parcel_nighbor == 0 ){
+					 niegbor_id = min (runidx_neigh_parcel [current_parcel_idx], 27) ; // this is to make sure that we are not runnign out of memory if there are more than 27 nioghbors. 
+					 ColId_in_neigh_column [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_parcel_neighbor;
+					 val_in_neigh_column   [Nr_parcels * niegbor_id +  current_parcel_idx ] = (int)*(nii_parcelval_data + j) ; 
+					 Collumn_in_neighbor   [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_column_neighbor ; 
+					 layer_in_neighbor     [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_layer_neighbor ; 
+					 runidx_neigh_parcel   [current_parcel_idx] ++; 
+				 }	 
             }
         }
         if (iy < size_y && iz > 0) {
             int j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 13) = *(nim_columns_data + j);
+                				 is_notnew_parcel_nighbor = 0; 
+				 current_column_neighbor  = (int)*(nim_columns_data + j)-1;
+                 current_layer_neighbor   = (int)*(nim_layers_data + j) -1; 
+                 current_parcel_neighbor  =  Nr_columns * current_layer_neighbor + current_column_neighbor ;
+                 
+               // checking if this neigbor is already considered or not        
+				 for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
+					     if (current_parcel_neighbor == ColId_in_neigh_column[Nr_parcels * current_column_neighboridx +  current_parcel_idx ]){
+					         is_notnew_parcel_nighbor ++;
+						 }
+				 }
+				 if (current_parcel_idx == current_parcel_neighbor )   is_notnew_parcel_nighbor = 1;
+			 
+				 if ( is_notnew_parcel_nighbor == 0 ){
+					 niegbor_id = min (runidx_neigh_parcel [current_parcel_idx], 27) ; // this is to make sure that we are not runnign out of memory if there are more than 27 nioghbors. 
+					 ColId_in_neigh_column [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_parcel_neighbor;
+					 val_in_neigh_column   [Nr_parcels * niegbor_id +  current_parcel_idx ] = (int)*(nii_parcelval_data + j) ; 
+					 Collumn_in_neighbor   [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_column_neighbor ; 
+					 layer_in_neighbor     [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_layer_neighbor ; 
+					 runidx_neigh_parcel   [current_parcel_idx] ++; 
+				 }	 
             }
         }
         if (iy < size_y && iz < size_z) {
             int j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 14) = *(nim_columns_data + j);
+                				 is_notnew_parcel_nighbor = 0; 
+				 current_column_neighbor  = (int)*(nim_columns_data + j)-1;
+                 current_layer_neighbor   = (int)*(nim_layers_data + j) -1; 
+                 current_parcel_neighbor  =  Nr_columns * current_layer_neighbor + current_column_neighbor ;
+                 
+               // checking if this neigbor is already considered or not        
+				 for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
+					     if (current_parcel_neighbor == ColId_in_neigh_column[Nr_parcels * current_column_neighboridx +  current_parcel_idx ]){
+					         is_notnew_parcel_nighbor ++;
+						 }
+				 }
+				 if (current_parcel_idx == current_parcel_neighbor )   is_notnew_parcel_nighbor = 1;
+			 
+				 if ( is_notnew_parcel_nighbor == 0 ){
+					 niegbor_id = min (runidx_neigh_parcel [current_parcel_idx], 27) ; // this is to make sure that we are not runnign out of memory if there are more than 27 nioghbors. 
+					 ColId_in_neigh_column [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_parcel_neighbor;
+					 val_in_neigh_column   [Nr_parcels * niegbor_id +  current_parcel_idx ] = (int)*(nii_parcelval_data + j) ; 
+					 Collumn_in_neighbor   [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_column_neighbor ; 
+					 layer_in_neighbor     [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_layer_neighbor ; 
+					 runidx_neigh_parcel   [current_parcel_idx] ++; 
+				 }	 
             }
         }
         if (ix > 0 && iz > 0) {
             int j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 15) = *(nim_columns_data + j);
+               				 is_notnew_parcel_nighbor = 0; 
+				 current_column_neighbor  = (int)*(nim_columns_data + j)-1;
+                 current_layer_neighbor   = (int)*(nim_layers_data + j) -1; 
+                 current_parcel_neighbor  =  Nr_columns * current_layer_neighbor + current_column_neighbor ;
+                 
+               // checking if this neigbor is already considered or not        
+				 for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
+					     if (current_parcel_neighbor == ColId_in_neigh_column[Nr_parcels * current_column_neighboridx +  current_parcel_idx ]){
+					         is_notnew_parcel_nighbor ++;
+						 }
+				 }
+				 if (current_parcel_idx == current_parcel_neighbor )   is_notnew_parcel_nighbor = 1;
+			 
+				 if ( is_notnew_parcel_nighbor == 0 ){
+					 niegbor_id = min (runidx_neigh_parcel [current_parcel_idx], 27) ; // this is to make sure that we are not runnign out of memory if there are more than 27 nioghbors. 
+					 ColId_in_neigh_column [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_parcel_neighbor;
+					 val_in_neigh_column   [Nr_parcels * niegbor_id +  current_parcel_idx ] = (int)*(nii_parcelval_data + j) ; 
+					 Collumn_in_neighbor   [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_column_neighbor ; 
+					 layer_in_neighbor     [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_layer_neighbor ; 
+					 runidx_neigh_parcel   [current_parcel_idx] ++; 
+				 }	 
             }
         }
         if (ix < size_x && iz > 0) {
             int j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 16) = *(nim_columns_data + j);
+               				 is_notnew_parcel_nighbor = 0; 
+				 current_column_neighbor  = (int)*(nim_columns_data + j)-1;
+                 current_layer_neighbor   = (int)*(nim_layers_data + j) -1; 
+                 current_parcel_neighbor  =  Nr_columns * current_layer_neighbor + current_column_neighbor ;
+                 
+               // checking if this neigbor is already considered or not        
+				 for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
+					     if (current_parcel_neighbor == ColId_in_neigh_column[Nr_parcels * current_column_neighboridx +  current_parcel_idx ]){
+					         is_notnew_parcel_nighbor ++;
+						 }
+				 }
+				 if (current_parcel_idx == current_parcel_neighbor )   is_notnew_parcel_nighbor = 1;
+			 
+				 if ( is_notnew_parcel_nighbor == 0 ){
+					 niegbor_id = min (runidx_neigh_parcel [current_parcel_idx], 27) ; // this is to make sure that we are not runnign out of memory if there are more than 27 nioghbors. 
+					 ColId_in_neigh_column [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_parcel_neighbor;
+					 val_in_neigh_column   [Nr_parcels * niegbor_id +  current_parcel_idx ] = (int)*(nii_parcelval_data + j) ; 
+					 Collumn_in_neighbor   [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_column_neighbor ; 
+					 layer_in_neighbor     [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_layer_neighbor ; 
+					 runidx_neigh_parcel   [current_parcel_idx] ++; 
+				 }	 
             }
         }
         if (ix > 0 && iz < size_z) {
             int j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 17) = *(nim_columns_data + j);
+                				 is_notnew_parcel_nighbor = 0; 
+				 current_column_neighbor  = (int)*(nim_columns_data + j)-1;
+                 current_layer_neighbor   = (int)*(nim_layers_data + j) -1; 
+                 current_parcel_neighbor  =  Nr_columns * current_layer_neighbor + current_column_neighbor ;
+                 
+               // checking if this neigbor is already considered or not        
+				 for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
+					     if (current_parcel_neighbor == ColId_in_neigh_column[Nr_parcels * current_column_neighboridx +  current_parcel_idx ]){
+					         is_notnew_parcel_nighbor ++;
+						 }
+				 }
+				 if (current_parcel_idx == current_parcel_neighbor )   is_notnew_parcel_nighbor = 1;
+			 
+				 if ( is_notnew_parcel_nighbor == 0 ){
+					 niegbor_id = min (runidx_neigh_parcel [current_parcel_idx], 27) ; // this is to make sure that we are not runnign out of memory if there are more than 27 nioghbors. 
+					 ColId_in_neigh_column [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_parcel_neighbor;
+					 val_in_neigh_column   [Nr_parcels * niegbor_id +  current_parcel_idx ] = (int)*(nii_parcelval_data + j) ; 
+					 Collumn_in_neighbor   [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_column_neighbor ; 
+					 layer_in_neighbor     [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_layer_neighbor ; 
+					 runidx_neigh_parcel   [current_parcel_idx] ++; 
+				 }	 
             }
         }
         if (ix < size_x && iz < size_z) {
             int j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 18) = *(nim_columns_data + j);
+                				 is_notnew_parcel_nighbor = 0; 
+				 current_column_neighbor  = (int)*(nim_columns_data + j)-1;
+                 current_layer_neighbor   = (int)*(nim_layers_data + j) -1; 
+                 current_parcel_neighbor  =  Nr_columns * current_layer_neighbor + current_column_neighbor ;
+                 
+               // checking if this neigbor is already considered or not        
+				 for (int current_column_neighboridx = 0 ; current_column_neighboridx < 27; current_column_neighboridx++ ){ 
+					     if (current_parcel_neighbor == ColId_in_neigh_column[Nr_parcels * current_column_neighboridx +  current_parcel_idx ]){
+					         is_notnew_parcel_nighbor ++;
+						 }
+				 }
+				 if (current_parcel_idx == current_parcel_neighbor )   is_notnew_parcel_nighbor = 1;
+			 
+				 if ( is_notnew_parcel_nighbor == 0 ){
+					 niegbor_id = min (runidx_neigh_parcel [current_parcel_idx], 27) ; // this is to make sure that we are not runnign out of memory if there are more than 27 nioghbors. 
+					 ColId_in_neigh_column [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_parcel_neighbor;
+					 val_in_neigh_column   [Nr_parcels * niegbor_id +  current_parcel_idx ] = (int)*(nii_parcelval_data + j) ; 
+					 Collumn_in_neighbor   [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_column_neighbor ; 
+					 layer_in_neighbor     [Nr_parcels * niegbor_id +  current_parcel_idx ] = current_layer_neighbor ; 
+					 runidx_neigh_parcel   [current_parcel_idx] ++; 
+				 }	 
             }
         }
 
-        // 3-jump neighbour
+        //  not useing 3-jump neighbours 
         if (ix > 0 && iy > 0 && iz > 0) {
             int j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 19) = *(nim_columns_data + j);
+                //*(neighbours + 19) = *(nim_columns_data + j);
             }
         }
         if (ix > 0 && iy > 0 && iz < size_z) {
             int j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 20) = *(nim_columns_data + j);
+               // *(neighbours + 20) = *(nim_columns_data + j);
             }
         }
         if (ix > 0 && iy < size_y && iz > 0) {
             int j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 21) = *(nim_columns_data + j);
+                //*(neighbours + 21) = *(nim_columns_data + j);
             }
         }
         if (ix < size_x && iy > 0 && iz > 0) {
             int j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 22) = *(nim_columns_data + j);
+                //*(neighbours + 22) = *(nim_columns_data + j);
             }
         }
         if (ix > 0 && iy < size_y && iz < size_z) {
             int j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 23) = *(nim_columns_data + j);
+                //*(neighbours + 23) = *(nim_columns_data + j);
             }
         }
         if (ix < size_x && iy > 0 && iz < size_z) {
             int j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 24) = *(nim_columns_data + j);
+                //*(neighbours + 24) = *(nim_columns_data + j);
             }
         }
         if (ix < size_x && iy < size_y && iz > 0) {
             int j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 25) = *(nim_columns_data + j);
+                //*(neighbours + 25) = *(nim_columns_data + j);
             }
         }
         if (ix < size_x && iy < size_y && iz < size_z) {
             int j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
             if (*(nim_columns_data + j) > 0) {
-                *(neighbours + 26) = *(nim_columns_data + j);
+                //*(neighbours + 26) = *(nim_columns_data + j);
             }
         }
 
 
-
-        // --------------------------------------------------------------------
-        // Find non-zero unique elements in array
-        int count_neigh = 0;
 
 		/*
         // Have an array to note down columns id's that will form triangles.
@@ -674,13 +990,102 @@ int main(int argc, char * argv[]) {
     }
 
 
+
+cout << " I am done filling the neighbor array "<< endl; 
+
+//////////////////////////////////////////////////////////////
+////////////  Loop over parcels and quantifying their similary of valued across layers and columns
+//////////////////////////////////////////////////////////////////////
+
+double laminarity[Nr_parcels];      //Access the parcel as: [ parcelID ]  // center parcelID: Nr_columns * layeridx + columnindx
+for (int j=0; j<Nr_parcels; ++j)   laminarity [j] = 0;  
+int count_same_val_layer = 0;    
+int count_same_layer = 0;       
+
+for (int paridx=0; paridx<Nr_parcels; ++paridx) {
+//	cout << "runidx_neigh_parcel["<<paridx<<"]   "<< runidx_neigh_parcel[paridx] << endl; 
+//    cout << "   layer_in_neighbor[Nr_parcels *"<<paridx<<" + 0]   "<< layer_in_neighbor[Nr_parcels * paridx +  0 ] << endl; 
+	count_same_val_layer = 0;    
+	count_same_layer = 0;   
+
+	for (int nigidx=1; nigidx<min(runidx_neigh_parcel[paridx],27); ++nigidx){
+		if (layer_in_neighbor[Nr_parcels * 0 +  paridx] == layer_in_neighbor[Nr_parcels * nigidx +  paridx ]  ){
+			count_same_layer ++;
+			if (val_in_neigh_column[Nr_parcels * 0 +  paridx ] == val_in_neigh_column[Nr_parcels * nigidx +  paridx ]  ){
+				count_same_val_layer++;
+			}
+		}
+	}	
+	if ( count_same_layer > 0 ) laminarity [paridx] = (double)count_same_val_layer / (double) count_same_layer; 
+	 //cout << "   laminarity[ "<<paridx<<" ]   "<< laminarity [paridx]<< endl; 
+}
+
+   for(int iy=0; iy<size_y; ++iy){
+     for(int ix=0; ix<size_x; ++ix){
+       for(int iz=0; iz<size_z; ++iz){
+		   if (*(nim_columns_data +  nxy*iz + nx*iy + ix) >0) { 
+			layeridx = *(nim_layers_data +  nxy*iz + nx*iy + ix) -1 ;
+			columnindx = *(nim_columns_data +  nxy*iz + nx*iy + ix) -1 ; 
+		    *(nii_laminarity_data +  nxy*iz + nx*iy + ix)  = laminarity [ Nr_columns * layeridx + columnindx];
+		   }
+	   }
+	 }
+   }
+
+
+    if (!use_outpath) fout = fin;
+    save_output_nifti(fout, "output_laminarity", nii_laminarity, true, use_outpath);
+    
+
+double columnarity[Nr_parcels];      //Access the parcel as: [ parcelID ]  // center parcelID: Nr_columns * layeridx + columnindx
+for (int j=0; j<Nr_parcels; ++j)   laminarity [j] = 0;  
+int count_same_val_col = 0;    
+int count_same_col = 0;       
+
+for (int paridx=0; paridx<Nr_parcels; ++paridx) {
+//	cout << "runidx_neigh_parcel["<<paridx<<"]   "<< runidx_neigh_parcel[paridx] << endl; 
+//    cout << "   layer_in_neighbor[Nr_parcels *"<<paridx<<" + 0]   "<< layer_in_neighbor[Nr_parcels * paridx +  0 ] << endl; 
+	count_same_val_col = 0;    
+	count_same_col = 0;   
+
+	for (int nigidx=1; nigidx<min(runidx_neigh_parcel[paridx],27); ++nigidx){
+		if (Collumn_in_neighbor[Nr_parcels * 0 +  paridx] == Collumn_in_neighbor[Nr_parcels * nigidx +  paridx ]  ){
+			count_same_col ++;
+			if (val_in_neigh_column[Nr_parcels * 0 +  paridx ] == val_in_neigh_column[Nr_parcels * nigidx +  paridx ]  ){
+				count_same_val_col++;
+			}
+		}
+	}	
+	if ( count_same_col > 0 ) columnarity [paridx] = (double)count_same_val_col / (double) count_same_col; 
+	 //cout << "   columnarity[ "<<paridx<<" ]   "<< columnarity [paridx]<< endl; 
+}
+
+
+   for(int iy=0; iy<size_y; ++iy){
+     for(int ix=0; ix<size_x; ++ix){
+       for(int iz=0; iz<size_z; ++iz){
+		   if (*(nim_columns_data +  nxy*iz + nx*iy + ix) >0) { 
+			layeridx = *(nim_layers_data +  nxy*iz + nx*iy + ix) -1 ;
+			columnindx = *(nim_columns_data +  nxy*iz + nx*iy + ix) -1 ; 
+		    *(nii_laminarity_data +  nxy*iz + nx*iy + ix)  = laminarity [ Nr_columns * layeridx + columnindx];
+		    *(nii_columnarity_data +  nxy*iz + nx*iy + ix) = columnarity[ Nr_columns * layeridx + columnindx];
+		   }
+	   }
+	 }
+   }
+
+//Collumn_in_neighbor[Nr_parcels * niegbor_id_index +  current_parcel_idx ] 
+//layer_in_neighbor[Nr_parcels * niegbor_id_index +  current_parcel_idx ] 
+//val_in_neigh_column[Nr_parcels * niegbor_id_index +  current_parcel_idx ] 
+//runidx_neigh_parcel   [current_parcel_idx]
+
+
+
     // =======================
     //////////////////////////
     // writing output  ///////
     //////////////////////////
-    if (!use_outpath) fout = fin;
-    save_output_nifti(fout, "output_laminarity", nii_laminarity, true, use_outpath);
-    
+
     if (!use_outpath) fout = fin;
     save_output_nifti(fout, "output_columnarity", nii_columnarity, true, use_outpath);
 
