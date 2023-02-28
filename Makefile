@@ -186,6 +186,9 @@ LN2_MULTILATERATE:
 LN2_PATCH_FLATTEN:
 	$(CC) $(CFLAGS) -o LN2_PATCH_FLATTEN src/LN2_PATCH_FLATTEN.cpp $(LIBRARIES) $(LFLAGS)
 
+LN2_PATCH_UNFLATTEN:
+	$(CC) $(CFLAGS) -o LN2_PATCH_UNFLATTEN src/LN2_PATCH_UNFLATTEN.cpp $(LIBRARIES) $(LFLAGS)
+
 LN2_CHOLMO:
 	$(CC) $(CFLAGS) -o LN2_CHOLMO src/LN2_CHOLMO.cpp $(LIBRARIES) $(LFLAGS)
 
@@ -240,7 +243,7 @@ tests:
 
 # =============================================================================
 # Maintenance
-
+# =============================================================================
 bump_version:
 	VERSION=`cat dep/laynii_lib.cpp | grep LayNii | cut -c 21- | rev | cut -c 20- | rev` && \
 	echo "\nbumping to version: $$VERSION \n" && \
@@ -250,7 +253,7 @@ bump_version:
 
 # =============================================================================
 # Docker related content
-
+# =============================================================================
 .PHONY: Dockerfile docker_build
 
 Dockerfile:
