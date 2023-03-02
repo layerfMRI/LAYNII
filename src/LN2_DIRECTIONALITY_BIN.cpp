@@ -430,32 +430,32 @@ int main(int argc, char * argv[]) {
 				 }	 
 				 
 					 
-				if (current_parcel_neighbor !=current_parcel_idx &&   is_notnew_parcel_nighbor == 0 ) {
-					// cout << " current_parcel_idx " << current_parcel_idx << " current_column_idx " << current_column_idx << " current_layer_idx " << current_layer_idx  << endl;
-					// cout << " current_parcel_neighbor " << current_parcel_neighbor << " current_column_neighbor " << current_column_neighbor << " current_layer_neighbor " << current_layer_neighbor  << endl;
-				    // cout << ix<< " "<< iy << " " << iz <<"       " <<   runidx_neigh_parcel  [current_parcel_idx]<< "  "<< runidx_neigh_parcel  [current_parcel_idx]<<  endl ; 
-				    // cout << ix-1<< " "<< iy << " " << iz <<"       " <<   runidx_neigh_parcel  [current_parcel_idx]<< "  "<< runidx_neigh_parcel  [current_parcel_idx]<<  endl ; 
+//				if (current_parcel_neighbor !=current_parcel_idx &&   is_notnew_parcel_nighbor == 0 ) {
+//					 cout << " current_parcel_idx " << current_parcel_idx << " current_column_idx " << current_column_idx << " current_layer_idx " << current_layer_idx  << endl;
+//					 cout << " current_parcel_neighbor " << current_parcel_neighbor << " current_column_neighbor " << current_column_neighbor << " current_layer_neighbor " << current_layer_neighbor  << endl;
+//				     cout << ix<< " "<< iy << " " << iz <<"       " <<   runidx_neigh_parcel  [current_parcel_idx]<< "  "<< runidx_neigh_parcel  [current_parcel_idx]<<  endl ; 
+//				     cout << ix-1<< " "<< iy << " " << iz <<"       " <<   runidx_neigh_parcel  [current_parcel_idx]<< "  "<< runidx_neigh_parcel  [current_parcel_idx]<<  endl ; 
 
 				
-					      for (int niegbor_id_index = 0 ; niegbor_id_index < 27; niegbor_id_index++ ){ 
-					      	cout << ColId_in_neigh_column[Nr_parcels * niegbor_id_index +  current_parcel_idx ] << " " ;
+//					      for (int niegbor_id_index = 0 ; niegbor_id_index < 27; niegbor_id_index++ ){ 
+//					      	cout << ColId_in_neigh_column[Nr_parcels * niegbor_id_index +  current_parcel_idx ] << " " ;
 					      	//cout << ColId_in_neigh_layer [Nr_parcels * current_column_neighboridx +  current_parcel_idx ] << " " ;
-						  }
-						  cout << endl; 
-				          for (int niegbor_id_index = 0 ; niegbor_id_index < 27; niegbor_id_index++ ){ 
-					      	cout << Collumn_in_neighbor[Nr_parcels * niegbor_id_index +  current_parcel_idx ] << " " ;
-				          }     
-				          cout << endl; 
-				          for (int niegbor_id_index = 0 ; niegbor_id_index < 27; niegbor_id_index++ ){ 
-					      	cout << layer_in_neighbor[Nr_parcels * niegbor_id_index +  current_parcel_idx ] << " " ;
-				          }     
-				          cout << endl; 
-				          for (int niegbor_id_index = 0 ; niegbor_id_index < 27; niegbor_id_index++ ){ 
-					      	cout << val_in_neigh_column[Nr_parcels * niegbor_id_index +  current_parcel_idx ] << " " ;
+//						  }
+//						  cout << endl; 
+//				          for (int niegbor_id_index = 0 ; niegbor_id_index < 27; niegbor_id_index++ ){ 
+//					      	cout << Collumn_in_neighbor[Nr_parcels * niegbor_id_index +  current_parcel_idx ] << " " ;
+//				          }     
+//				          cout << endl; 
+//				          for (int niegbor_id_index = 0 ; niegbor_id_index < 27; niegbor_id_index++ ){ 
+//					      	cout << layer_in_neighbor[Nr_parcels * niegbor_id_index +  current_parcel_idx ] << " " ;
+//				          }     
+//				          cout << endl; 
+//				          for (int niegbor_id_index = 0 ; niegbor_id_index < 27; niegbor_id_index++ ){ 
+//					      	cout << val_in_neigh_column[Nr_parcels * niegbor_id_index +  current_parcel_idx ] << " " ;
 					      	//cout << ColId_in_neigh_layer [Nr_parcels * current_column_neighboridx +  current_parcel_idx ] << " " ;
-						  }
-						  cout << endl; 
-				}
+//						  }
+//						  cout << endl; 
+//				}
 				    
             } //loop across neigbors closed
         }
