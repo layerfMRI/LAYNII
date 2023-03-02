@@ -194,7 +194,7 @@ int main(int argc, char*  argv[]) {
 
     // Loop until desired number of points is reached
     for (int32_t n = 1; n < nr_points; ++n) {
-        cout << "\r    Point [" << n+1 << "/" << nr_points << "]" << flush;
+        cout << "\r    Point [" << n+1 << "/" << nr_points << "]";
         int32_t grow_step = 1;
         uint32_t voxel_counter = nr_voxels;
         uint32_t ix, iy, iz, i, j;
@@ -554,6 +554,7 @@ int main(int argc, char*  argv[]) {
                 idx_new_point = i;
             }
         }
+        cout << " | Max. distance between points: " << max_distance << " [voxel dimension units]" << flush;
 
         *(nii_domain_data + idx_new_point) = 2;
         *(nii_points_data + idx_new_point) = n + 1;

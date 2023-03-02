@@ -476,7 +476,7 @@ int main(int argc, char*  argv[]) {
 
     // Loop until desired number of columns reached
     for (int32_t n = max_column_id; n < nr_columns; ++n) {
-        cout << "\r    Column [" << n+1 << "/" << nr_columns << "]" << flush;
+        cout << "\r    Column [" << n+1 << "/" << nr_columns << "]";
 
         int32_t grow_step = 1;
         voxel_counter = 1;
@@ -859,6 +859,20 @@ int main(int argc, char*  argv[]) {
         *(nii_midgm_data + new_voxel_id) = 2;
         *(nii_columns_data + new_voxel_id) = n+1;
 
+        // --------------------------------------------------------------------
+        // Find farthest point
+        float max_distance = 0;
+        int idx_new_point;
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            i = *(voi_id + ii);
+            if (*(flood_dist_data + i) > max_distance) {
+                max_distance = *(flood_dist_data + i);
+                idx_new_point = i;
+            }
+        }
+        cout << " | Max. distance between points: " << max_distance << " [voxel dimension units]" << flush;
+
+        // --------------------------------------------------------------------
         // Remove the initial voxel (reduces arbitrariness of the 1st point)
         // NOTE(Faruk): This step guarantees to start from extrememums. The
         // initial point is only used to determine an extremum distance.
