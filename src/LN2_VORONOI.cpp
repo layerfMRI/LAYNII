@@ -17,6 +17,8 @@ int show_help(void) {
     "    -init         : Initial voxels.\n"
     "    -max_dist     : (Optional) Maximum distance from the initial voxels\n"
     "                    where Voronoi cells will be propagated.\n"
+    "    -iter_smooth  : (Optional) Number of smoothing iterations. Default\n"
+    "                    is 0 (no smoothing).\n"
     "    -debug        : (Optional) Save extra intermediate outputs.\n"
     "    -output       : (Optional) Output basename for all outputs.\n"
     "\n");
@@ -30,6 +32,7 @@ int main(int argc, char*  argv[]) {
     int ac;
     bool mode_debug = false, mode_initialize_with_centroids = false;
     float max_dist = 0;
+    int iter_smooth = 0;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -62,6 +65,12 @@ int main(int argc, char*  argv[]) {
                 fprintf(stderr, "** missing argument for -max_dist\n");
             } else {
                 max_dist = atof(argv[ac]);
+            }
+        } else if (!strcmp(argv[ac], "-iter_smooth")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -iter_smooth\n");
+            } else {
+                iter_smooth = atof(argv[ac]);
             }
         } else if (!strcmp(argv[ac], "-debug")) {
             mode_debug = true;
@@ -546,6 +555,11 @@ int main(int argc, char*  argv[]) {
     if (mode_debug) {
         save_output_nifti(fout, "flood_step", flood_step, false);
         save_output_nifti(fout, "flood_dist", flood_dist, false);
+    }
+
+    // Smooth
+    if (iter_smooth > 0) {
+        nii_init = iterative_smoothing(nii_init, iter_smooth, nii_domain, 1);
     }
 
     // Threshold
