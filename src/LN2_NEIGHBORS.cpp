@@ -124,10 +124,9 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Find connected clusters
     // ========================================================================
-    cout << "  Start finding neighbors (3-jump neighbourhood)..." << endl;
-
-
+    cout << "  Start finding neighbors (3-jump neighborhood)..." << endl;
     uint32_t i, j, ix, iy, iz;
+
     // Loop through all unique labels
     for (int k : set_labels) {
         set<uint32_t> set_neighbors;
@@ -261,7 +260,7 @@ int main(int argc, char*  argv[]) {
         set_neighbors.erase(k);
 
         // TODO: Make this part export to a text file
-        cout << "  Label " << k << " neighbors: ";
+        cout << "    Label " << k << " neighbors: ";
         for (uint32_t value : set_neighbors) {
             cout << value << " ";
         }
