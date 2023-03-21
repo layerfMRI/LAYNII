@@ -237,6 +237,9 @@ LN2_UVD_LSTSQR:
 LN2_PEAK_DETECT:
 	$(CC) $(CFLAGS) -o LN2_PEAK_DETECT src/LN2_PEAK_DETECT.cpp $(LIBRARIES) $(LFLAGS)
 
+LN2_NEIGHBORS:
+	$(CC) $(CFLAGS) -o LN2_NEIGHBORS src/LN2_NEIGHBORS.cpp $(LIBRARIES) $(LFLAGS)
+
 # =============================================================================
 
 clean:
