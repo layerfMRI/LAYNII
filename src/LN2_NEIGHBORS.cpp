@@ -78,6 +78,7 @@ int main(int argc, char*  argv[]) {
 
     // ========================================================================
     // Fix input datatype issues
+    // ========================================================================
     nifti_image* nii_input = copy_nifti_as_int32(nii1);
     int32_t* nii_input_data = static_cast<int32_t*>(nii_input->data);
 
@@ -125,7 +126,7 @@ int main(int argc, char*  argv[]) {
     // Find connected clusters
     // ========================================================================
     cout << "  Start finding neighbors (3-jump neighborhood)..." << endl;
-    uint32_t i, j, ix, iy, iz;
+    uint32_t i, j, ix, iy, iz, max_nr_neighbors = 0;
 
     // Loop through all unique labels
     for (int k : set_labels) {
@@ -138,9 +139,9 @@ int main(int argc, char*  argv[]) {
 
                 tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
 
-                // ----------------------------------------------------------------
+                // ------------------------------------------------------------
                 // 1-jump neighbours
-                // ----------------------------------------------------------------
+                // ------------------------------------------------------------
                 if (ix > 0) {
                     j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
                     set_neighbors.insert(*(nii_input_data + j));
@@ -165,9 +166,9 @@ int main(int argc, char*  argv[]) {
                     j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
                     set_neighbors.insert(*(nii_input_data + j));
                 }
-                // ----------------------------------------------------------------
+                // ------------------------------------------------------------
                 // 2-jump neighbours
-                // ----------------------------------------------------------------
+                // ------------------------------------------------------------
                 if (ix > 0 && iy > 0) {
                     j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
                     set_neighbors.insert(*(nii_input_data + j));
@@ -217,9 +218,9 @@ int main(int argc, char*  argv[]) {
                     set_neighbors.insert(*(nii_input_data + j));
                 }
 
-                // --------------------------------------------------------
+                // ------------------------------------------------------------
                 // 3-jump neighbours
-                // --------------------------------------------------------
+                // ------------------------------------------------------------
                 if (ix > 0 && iy > 0 && iz > 0) {
                     j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
                     set_neighbors.insert(*(nii_input_data + j));
@@ -259,13 +260,38 @@ int main(int argc, char*  argv[]) {
         set_neighbors.erase(0);
         set_neighbors.erase(k);
 
-        // TODO: Make this part export to a text file
+        // ====================================================================
+        // TODO: Export neighbor information as text file
+        // ====================================================================
         cout << "    Label " << k << " neighbors: ";
         for (uint32_t value : set_neighbors) {
             cout << value << " ";
         }
         cout << endl;
+
+        // Update maximum number of neighbors (useful for preparing 4D output)
+        if (max_nr_neighbors < set_labels.size()) {
+            max_nr_neighbors = set_labels.size();
+        }
     }
+
+    // ========================================================================
+    // Prepare a 4D nifti output
+    // ========================================================================
+    nifti_image* nii_output = nifti_copy_nim_info(nii_input);
+    nii_output->dim[0] = 4;  // For proper 4D nifti
+    nii_output->dim[1] = size_x;
+    nii_output->dim[2] = size_y;
+    nii_output->dim[3] = size_z;
+    nii_output->dim[4] = max_nr_neighbors + 1;  // +1 for the iniitial label
+    nifti_update_dims_from_array(nii_output);
+    nii_output->nvox = nr_voxels * (max_nr_neighbors + 1);
+    nii_output->nbyper = sizeof(float);
+    nii_output->data = calloc(nii_output->nvox, nii_output->nbyper);
+    float* nii_output_data = static_cast<float*>(nii_output->data);
+
+    // ------------------------------------------------------------------------
+
 
     cout << "\n  Finished." << endl;
     return 0;
