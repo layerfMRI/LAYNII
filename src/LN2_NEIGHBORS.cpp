@@ -3,6 +3,8 @@
 #include <sstream>
 #include <algorithm>
 #include <set>
+#include <vector>
+
 
 int show_help(void) {
     printf(
@@ -19,6 +21,7 @@ int show_help(void) {
     "\n");
     return 0;
 }
+
 
 int main(int argc, char*  argv[]) {
 
@@ -82,6 +85,16 @@ int main(int argc, char*  argv[]) {
     nifti_image* nii_input = copy_nifti_as_int32(nii1);
     int32_t* nii_input_data = static_cast<int32_t*>(nii_input->data);
 
+    // TODO[Faruk]: I cannot think of a way to avoid this right now but I think
+    // this nifti can be avoided to decrease RAM load, when needed. E.g. I
+    // might hold a small vector that holds the indices of the labels. But I
+    // need to query that vector by the label value. Grumble grumble...
+    nifti_image* idx_label = copy_nifti_as_int32(nii_input);
+    int32_t* idx_label_data = static_cast<int32_t*>(idx_label->data);
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        *(idx_label_data + i) = 0;
+    }
+
     // ------------------------------------------------------------------------
     // NOTE(Faruk): This section is written to constrain the big iterative
     // flooding distance loop to the subset of voxels. Required for substantial
@@ -109,18 +122,24 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Find unique labels
     // ========================================================================
-    set<uint32_t> set_labels;
+    set<int> set_labels;
 
     for (uint32_t ii = 0; ii != nr_voi; ++ii) {
         uint32_t i = *(voi_id + ii);  // Map subset to full set
         set_labels.insert(*(nii_input_data + i));
     }
+
     cout << "  Unique labels: [ ";
-    for (uint32_t value : set_labels) {
+    for (int value : set_labels) {
         cout << value << " ";
     }
     cout << "]" << endl;
     cout << "  Number of unique labels: " << set_labels.size() << endl;
+
+    // Prepare a vector of vectors to hold the neighbournood information
+    // NOTE[Faruk]: This is basically like an excel sheet, rows by columns.
+    // But the columns are 'jagged'
+    std::vector<std::vector<int>> vec_neighbors;
 
     // ========================================================================
     // Find connected clusters
@@ -129,6 +148,7 @@ int main(int argc, char*  argv[]) {
     uint32_t i, j, ix, iy, iz, max_nr_neighbors = 0;
 
     // Loop through all unique labels
+    int c = 0;
     for (int k : set_labels) {
         set<uint32_t> set_neighbors;
         // Loop though voxels
@@ -136,6 +156,7 @@ int main(int argc, char*  argv[]) {
             // Map subset to full set
             i = *(voi_id + ii);
             if (*(nii_input_data + i) == k) {
+                *(idx_label_data + i) = c;
 
                 tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
 
@@ -260,19 +281,22 @@ int main(int argc, char*  argv[]) {
         set_neighbors.erase(0);
         set_neighbors.erase(k);
 
-        // ====================================================================
-        // TODO: Export neighbor information as text file
-        // ====================================================================
         cout << "    Label " << k << " neighbors: ";
         for (uint32_t value : set_neighbors) {
             cout << value << " ";
         }
         cout << endl;
 
+        // Insert the set as a vector into the main vector
+        vector<int> vec_temp(set_neighbors.begin(), set_neighbors.end());
+        vec_neighbors.push_back(vec_temp);
+
         // Update maximum number of neighbors (useful for preparing 4D output)
-        if (max_nr_neighbors < set_labels.size()) {
-            max_nr_neighbors = set_labels.size();
+        if (max_nr_neighbors < set_neighbors.size()) {
+            max_nr_neighbors = set_neighbors.size();
         }
+
+        c += 1;
     }
 
     // ========================================================================
@@ -283,15 +307,28 @@ int main(int argc, char*  argv[]) {
     nii_output->dim[1] = size_x;
     nii_output->dim[2] = size_y;
     nii_output->dim[3] = size_z;
-    nii_output->dim[4] = max_nr_neighbors + 1;  // +1 for the iniitial label
+    nii_output->dim[4] = max_nr_neighbors + 1;  // +1 for the initial label
     nifti_update_dims_from_array(nii_output);
     nii_output->nvox = nr_voxels * (max_nr_neighbors + 1);
-    nii_output->nbyper = sizeof(float);
+    nii_output->nbyper = sizeof(int32_t);
     nii_output->data = calloc(nii_output->nvox, nii_output->nbyper);
-    float* nii_output_data = static_cast<float*>(nii_output->data);
+    int32_t* nii_output_data = static_cast<int32_t*>(nii_output->data);
 
     // ------------------------------------------------------------------------
+    for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+        i = *(voi_id + ii);  // Map subset to full set
 
+        // First volume is the input labels
+        *(nii_output_data + i) = *(nii_input_data + i);
+
+        // Populate the neighbors
+        j = *(idx_label_data + i);
+        for (int m = 0; m != vec_neighbors[j].size(); ++m) {
+            *(nii_output_data + nr_voxels*(m+1) + i) = vec_neighbors[j][m];
+        }
+    }
+
+    save_output_nifti(fout, "neighbors", nii_output, true);
 
     cout << "\n  Finished." << endl;
     return 0;
