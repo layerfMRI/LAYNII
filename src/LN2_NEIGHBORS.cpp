@@ -142,12 +142,12 @@ int main(int argc, char*  argv[]) {
         set_labels.insert(*(nii_input_data + i));
     }
 
-    cout << "  Unique labels: [ ";
+    cout << "  Unique labels: ";
     for (int value : set_labels) {
         cout << value << " ";
     }
-    cout << "]" << endl;
-    cout << "  Number of unique labels: " << set_labels.size() << endl;
+    cout << "\n" << endl;
+    cout << "  Number of unique labels: " << set_labels.size() << "\n" << endl;
 
     // Prepare a vector of vectors to hold the neighbournood information
     // NOTE[Faruk]: This is basically like an excel sheet, rows by columns.
@@ -351,6 +351,8 @@ int main(int argc, char*  argv[]) {
 
         c += 1;
     }
+    cout << endl;
+    cout << "  Maximum number of neighbors:" << max_nr_neighbors << endl;
 
     // ====================================================================
     // Export to a CSV (comma separated value) text file
