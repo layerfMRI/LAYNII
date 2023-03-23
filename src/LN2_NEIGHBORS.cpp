@@ -1,9 +1,12 @@
 
 #include "../dep/laynii_lib.h"
 #include <sstream>
+#include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <set>
 #include <vector>
+#include <string>
 
 
 int show_help(void) {
@@ -152,7 +155,47 @@ int main(int argc, char*  argv[]) {
     std::vector<std::vector<int>> vec_neighbors;
 
     // ========================================================================
-    // Find connected clusters
+    // Prepare text output
+    // ========================================================================
+    // Parse output path
+    string path = fout;
+    std::string dir, file, basename, sep, csv_path_out;
+    auto pos1 = path.find_last_of('/');
+    if (pos1 != string::npos) {  // For Unix
+        sep = "/";
+        dir = path.substr(0, pos1);
+        file = path.substr(pos1 + 1);
+    } else {  // For Windows
+        pos1 = path.find_last_of('\\');
+        if (pos1 != string::npos) {
+            sep = "\\";
+            dir = path.substr(0, pos1);
+            file = path.substr(pos1 + 1);
+        } else {  // Only the filename
+            sep = "";
+            dir = "";
+            file = path;
+        }
+    }
+
+    // Parse filename
+    auto const pos2 = file.find_first_of('.');
+    if (pos2 != string::npos) {
+        basename = file.substr(0, pos2);
+    }
+
+    // Prepare output path
+    csv_path_out = dir + sep + basename + "_neighbors" + ".csv";
+
+    // Prepare file
+    std::ofstream output_file(csv_path_out);
+    if (!output_file.is_open()) {
+        std::cout << "  Unable to open text file!\n";
+        return 1;
+    }
+
+    // ========================================================================
+    // Find first order neighbors
     // ========================================================================
     cout << "  Start finding neighbors (3-jump neighborhood)..." << endl;
     uint32_t i, j, ix, iy, iz, max_nr_neighbors = 0;
@@ -309,12 +352,35 @@ int main(int argc, char*  argv[]) {
         c += 1;
     }
 
+    // ====================================================================
+    // Export to a CSV (comma separated value) text file
+    // ====================================================================
+
+    // Set first row as column titles
+    output_file << "Label" << ",";
+    for (int i = 0; i != max_nr_neighbors; ++i) {
+        output_file << "Neighbor-" << i+1 << ",";
+    }
+    output_file << "\n";
+
+    // Insert values in each row
+    c = 0;
+    for (int value : set_labels) {
+        output_file << value << ",";
+        for (int m = 0; m != vec_neighbors[c].size(); ++m) {
+            output_file << vec_neighbors[c][m] << ",";
+        }
+        output_file << "\n";
+        c += 1;
+    }
+
+    output_file.close();
+
+    // ========================================================================
+    // Export a 4D nifti output
+    // ========================================================================
     if (export_nifti) {
         cout << "  Exporting nifti..." << endl;
-
-        // ====================================================================
-        // Prepare a 4D nifti output
-        // ====================================================================
         nifti_image* nii_output = nifti_copy_nim_info(nii_input);
         nii_output->dim[0] = 4;  // For proper 4D nifti
         nii_output->dim[1] = size_x;
