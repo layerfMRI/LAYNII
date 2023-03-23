@@ -8,15 +8,22 @@
 
 int show_help(void) {
     printf(
-    "LN2_NEIGHBORS: Find first order neighbors of each label.\n"
+    "LN2_NEIGHBORS: Find first order neighbors of each label, export a text or a nifti file.\n"
     "\n"
     "Usage:\n"
     "    LN2_NEIGHBORS -input input.nii\n"
     "    ../LN2_NEIGHBORS -input input.nii\n"
+    "    ../LN2_NEIGHBORS -input input.nii -export_nifti\n"
     "\n"
     "Options:\n"
     "    -help         : Show this help.\n"
     "    -input        : Integer nifti image.\n"
+    "    -export_nifti : (Optional) Export the neighbor information as a 4D nifti file.\n"
+    "                    This is off by default because it might result in very large files.\n"
+    "                    The resulting file contains the initial labels as the first volume.\n"
+    "                    Other volumes contain the labels of the neighbors for each voxel.\n"
+    "                    Note that different labels can have different number of neighbors.\n"
+    "                    Therefore, later volumes can contains more zeros.\n"
     "    -output       : (Optional) Output basename for all outputs.\n"
     "\n");
     return 0;
@@ -28,6 +35,7 @@ int main(int argc, char*  argv[]) {
     nifti_image *nii1 = NULL;
     char *fin1 = NULL, *fout = NULL;
     int ac;
+    bool export_nifti = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -41,6 +49,8 @@ int main(int argc, char*  argv[]) {
             }
             fin1 = argv[ac];
             fout = argv[ac];
+        } else if (!strcmp(argv[ac], "-export_nifti")) {
+            export_nifti = true;
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -299,36 +309,40 @@ int main(int argc, char*  argv[]) {
         c += 1;
     }
 
-    // ========================================================================
-    // Prepare a 4D nifti output
-    // ========================================================================
-    nifti_image* nii_output = nifti_copy_nim_info(nii_input);
-    nii_output->dim[0] = 4;  // For proper 4D nifti
-    nii_output->dim[1] = size_x;
-    nii_output->dim[2] = size_y;
-    nii_output->dim[3] = size_z;
-    nii_output->dim[4] = max_nr_neighbors + 1;  // +1 for the initial label
-    nifti_update_dims_from_array(nii_output);
-    nii_output->nvox = nr_voxels * (max_nr_neighbors + 1);
-    nii_output->nbyper = sizeof(int32_t);
-    nii_output->data = calloc(nii_output->nvox, nii_output->nbyper);
-    int32_t* nii_output_data = static_cast<int32_t*>(nii_output->data);
+    if (export_nifti) {
+        cout << "  Exporting nifti..." << endl;
 
-    // ------------------------------------------------------------------------
-    for (uint32_t ii = 0; ii != nr_voi; ++ii) {
-        i = *(voi_id + ii);  // Map subset to full set
+        // ====================================================================
+        // Prepare a 4D nifti output
+        // ====================================================================
+        nifti_image* nii_output = nifti_copy_nim_info(nii_input);
+        nii_output->dim[0] = 4;  // For proper 4D nifti
+        nii_output->dim[1] = size_x;
+        nii_output->dim[2] = size_y;
+        nii_output->dim[3] = size_z;
+        nii_output->dim[4] = max_nr_neighbors + 1;  // +1 for the initial label
+        nifti_update_dims_from_array(nii_output);
+        nii_output->nvox = nr_voxels * (max_nr_neighbors + 1);
+        nii_output->nbyper = sizeof(int32_t);
+        nii_output->data = calloc(nii_output->nvox, nii_output->nbyper);
+        int32_t* nii_output_data = static_cast<int32_t*>(nii_output->data);
 
-        // First volume is the input labels
-        *(nii_output_data + i) = *(nii_input_data + i);
+        // --------------------------------------------------------------------
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            i = *(voi_id + ii);  // Map subset to full set
 
-        // Populate the neighbors
-        j = *(idx_label_data + i);
-        for (int m = 0; m != vec_neighbors[j].size(); ++m) {
-            *(nii_output_data + nr_voxels*(m+1) + i) = vec_neighbors[j][m];
+            // First volume is the input labels
+            *(nii_output_data + i) = *(nii_input_data + i);
+
+            // Populate the neighbors
+            j = *(idx_label_data + i);
+            for (int m = 0; m != vec_neighbors[j].size(); ++m) {
+                *(nii_output_data + nr_voxels*(m+1) + i) = vec_neighbors[j][m];
+            }
         }
-    }
 
-    save_output_nifti(fout, "neighbors", nii_output, true);
+        save_output_nifti(fout, "neighbors", nii_output, true);
+    }
 
     cout << "\n  Finished." << endl;
     return 0;
