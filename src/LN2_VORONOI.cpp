@@ -12,7 +12,7 @@ int show_help(void) {
     "\n"
     "Options:\n"
     "    -help         : Show this help.\n"
-    "    -domain       : Set of voxels in which points will be used  Voronoi.\n"
+    "    -domain       : Set of voxels in which points will be used in Voronoi.\n"
     "                    propagation.\n"
     "    -init         : Initial voxels.\n"
     "    -max_dist     : (Optional) Maximum distance from the initial voxels\n"
@@ -106,6 +106,8 @@ int main(int argc, char*  argv[]) {
     log_welcome("LN2_VORONOI");
     log_nifti_descriptives(nii1);
     log_nifti_descriptives(nii2);
+
+    cout << "    Maximum distance is: " << max_dist << endl;
 
     // Get dimensions of input
     const uint32_t size_x = nii1->nx;
@@ -563,8 +565,7 @@ int main(int argc, char*  argv[]) {
     }
 
     // Threshold
-    cout << max_dist << endl;
-    if (max_dist > 0) {
+    if (iter_smooth > 0) {
         cout << "\n  Start mildly smoothing distances before thresholding..." << endl;
         flood_dist = iterative_smoothing(flood_dist, 3, nii_domain, 1);
         float* flood_dist_data = static_cast<float*>(flood_dist->data);
