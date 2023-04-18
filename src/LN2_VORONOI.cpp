@@ -205,7 +205,7 @@ int main(int argc, char*  argv[]) {
         voxel_counter = 0;
         for (uint32_t ii = 0; ii != nr_voi; ++ii) {
             i = *(voi_id + ii);
-            if (*(flood_step_data + i) == grow_step) {
+            if (*(flood_step_data + i) == grow_step && *(flood_dist_data + i) < max_dist) {
                 tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
                 voxel_counter += 1;
                 bool jump_lock = false;
