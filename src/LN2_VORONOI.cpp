@@ -189,6 +189,7 @@ int main(int argc, char*  argv[]) {
     }
 
     // Initialize grow volume
+    uint32_t i;
     for (uint32_t ii = 0; ii != nr_voi; ++ii) {
         i = *(voi_id + ii);
         if (*(nii_init_data + i) != 0) {
@@ -201,7 +202,7 @@ int main(int argc, char*  argv[]) {
     }
 
     int32_t grow_step = 1;
-    uint32_t ix, iy, iz, i, j;
+    uint32_t ix, iy, iz, j;
     float d;
     int voxel_counter = nr_voxels;
     while (voxel_counter != 0) {
