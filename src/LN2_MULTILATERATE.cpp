@@ -2918,7 +2918,9 @@ int main(int argc, char*  argv[]) {
     // Label perimeter borders
     float thr_radius_with_borders = dia_xyz*2 + thr_radius;
     bool switch_border = false;
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
+    // for (uint32_t i = 0; i != nr_voxels; ++i) {
+    for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
+        i = *(voi_id2 + iii);
         tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
 
         if (*(perimeter_data + i) == 0) {
@@ -3099,7 +3101,9 @@ int main(int argc, char*  argv[]) {
         switch_border = false;
     }
     // Update perimeter voxels
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
+    // for (uint32_t i = 0; i != nr_voxels; ++i) {
+    for (uint32_t iii = 0; iii != nr_voi2; ++iii) {
+        i = *(voi_id2 + iii);
         *(perimeter_data + i) = *(flood_step_data + i);
     }
     save_output_nifti(fout, "perimeter_chunk", perimeter, true);
