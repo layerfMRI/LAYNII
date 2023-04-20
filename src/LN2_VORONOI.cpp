@@ -189,7 +189,8 @@ int main(int argc, char*  argv[]) {
     }
 
     // Initialize grow volume
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
+    for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+        i = *(voi_id + ii);
         if (*(nii_init_data + i) != 0) {
             *(flood_step_data + i) = 1;
             *(flood_dist_data + i) = 0;
