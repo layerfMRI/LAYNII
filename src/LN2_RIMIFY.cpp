@@ -1,5 +1,7 @@
 
 #include "../dep/laynii_lib.h"
+#include <limits>
+
 
 int show_help(void) {
     printf(
@@ -15,15 +17,23 @@ int show_help(void) {
     "    TODO: Add freesurfer example\n"
     "\n"
     "Options:\n"
-    "    -help    : Show this help.\n"
-    "    -input   : Input multi-tissue segmentation image (2D or 3D).\n"
-    "    -innergm : Integer that will be regarded as the inner gray matter\n"
-    "               boundary (1). White matter tissue label can be used here.\n"
-    "    -outergm : Integer that will be regarded as the outer gray matter\n"
-    "               boundary (2). CSF tissue label can be used here.\n"
-    "    -gm      : Integer that will be regarded as pure gray matter (3).\n"
-    "    -output  : (Optional) Output filename, including .nii or\n"
-    "               .nii.gz, and path if needed. Overwrites existing files.\n"
+    "    -help         : Show this help.\n"
+    "    -input        : Input multi-tissue segmentation image (2D or 3D).\n"
+    "    -innergm      : Integer that will be regarded as the inner gray matter\n"
+    "                    boundary (1). White matter tissue label can be used here.\n"
+    "    -outergm      : Integer that will be regarded as the outer gray matter\n"
+    "                    boundary (2). CSF tissue label can be used here.\n"
+    "    -gm           : Integer that will be regarded as pure gray matter (3).\n"
+    "    -brainvoyager : (Optional) Add this flag to automatically convert BrainVoyager.\n"
+    "                    cortical white and gray matter segmentations to 'rim' format.\n"
+    "                    The input should be a nifti file converted from a VMR file\n"
+    "                    containing 100 & 150, or 240 & 243 labeled voxels.\n"
+    "                    When given '-innergm', '-outergm', and '-gm' parameters are not used.\n"
+    // "    -freesurfer   : (Optional) Add this flag to automatically convert Freesurfer.\n"
+    // "                    cortical white and gray matter segmentation to 'rim' format.\n"
+    // "                    'aseg' files containing 100 & 150, or 240 & 243 labeled voxels.\n"
+    "    -output       : (Optional) Output filename, including .nii or\n"
+    "                    .nii.gz, and path if needed. Overwrites existing files.\n"
     "\n"
     "Notes:\n"
     "    - Values not indicated as innergm, outergm or gm will be 0 in\n"
@@ -35,10 +45,12 @@ int show_help(void) {
 }
 
 int main(int argc, char *argv[]) {
-    bool use_outpath = false ;
+    bool use_outpath = false, mode_custom = true, mode_brainvoyager=false;
     char *fin = NULL, *fout = NULL;
     int ac;
-    int innergm, outergm, gm;
+    int innergm=std::numeric_limits<int>::min();
+    int outergm=std::numeric_limits<int>::min();
+    int gm=std::numeric_limits<int>::min();
     if (argc < 3) return show_help();
 
     // Process user options
@@ -70,6 +82,9 @@ int main(int argc, char *argv[]) {
                 return 2;
             }
             gm = std::stoi(argv[ac]);
+        } else if (!strcmp(argv[ac], "-brainvoyager")) {
+            mode_custom = false;
+            mode_brainvoyager = true;
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -88,6 +103,22 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    if (mode_custom) {
+        if (innergm == std::numeric_limits<int>::min()){
+            fprintf(stderr, "** missing option '-innergm'\n");
+            return 1;
+        }
+        if (outergm == std::numeric_limits<int>::min()){
+            fprintf(stderr, "** missing option '-outergm'\n");
+            return 1;
+        }
+        if (gm == std::numeric_limits<int>::min()){
+            fprintf(stderr, "** missing option '-gm'\n");
+            return 1;
+        }
+    }
+
+
     // Read input dataset
     nifti_image *nii = nifti_image_read(fin, 1);
     if (!nii) {
@@ -97,8 +128,6 @@ int main(int argc, char *argv[]) {
 
     log_welcome("LN_RIMIFY");
     log_nifti_descriptives(nii);
-
-    cout << innergm << " | " << outergm << " | " << gm << endl;
 
     // Get dimensions of input
     const int size_x = nii->nx;
@@ -113,15 +142,33 @@ int main(int argc, char *argv[]) {
     int16_t* nii_rim_data = static_cast<int16_t*>(nii_rim->data);
 
     // Swap input tissue labels with LAYII rim file standards
-    for (int i = 0; i != nr_voxels; ++i) {
-        if (*(nii_in_data + i) == innergm){
-            *(nii_rim_data + i) = 2;   // Renzo touched this on June 12th
-        } else if (*(nii_in_data + i) == outergm){
-            *(nii_rim_data + i) = 1;  // Renzo touched this on June 12th
-        } else if (*(nii_in_data + i) == gm){
-            *(nii_rim_data + i) = 3;
-        } else {
-            *(nii_rim_data + i) = 0;
+    if (mode_custom == true) {
+        cout << "  Custom mode is selected." << endl;
+        cout << "    Inner GM: " << innergm << "\n";
+        cout << "    Outer GM: " << outergm << "\n";
+        cout << "    GM: " << gm << "\n" << endl;
+        for (int i = 0; i != nr_voxels; ++i) {
+            if (*(nii_in_data + i) == innergm){
+                *(nii_rim_data + i) = 2;
+            } else if (*(nii_in_data + i) == outergm){
+                *(nii_rim_data + i) = 1;
+            } else if (*(nii_in_data + i) == gm){
+                *(nii_rim_data + i) = 3;
+            } else {
+                *(nii_rim_data + i) = 0;
+            }
+        }
+    } else if (mode_brainvoyager == true) {
+        cout << "  BrainVoyager mode is selected." << endl;
+        cout << "    Therefore not using innergm, outergm, and gm parameters even if they are given." << endl;
+        for (int i = 0; i != nr_voxels; ++i) {
+            if (*(nii_in_data + i) == 240 || *(nii_in_data + i) == 150) {
+                *(nii_rim_data + i) = 2;
+            } else if (*(nii_in_data + i) == 243 || *(nii_in_data + i) == 100) {
+                *(nii_rim_data + i) = 3;
+            } else {
+                *(nii_rim_data + i) = 1;
+            }
         }
     }
 
