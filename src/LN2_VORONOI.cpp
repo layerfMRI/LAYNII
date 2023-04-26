@@ -107,7 +107,10 @@ int main(int argc, char*  argv[]) {
     log_nifti_descriptives(nii1);
     log_nifti_descriptives(nii2);
 
-    cout << "    Maximum distance is: " << max_dist << endl;
+    if (max_dist > 0) {
+        cout << "    Maximum distance is: " << max_dist << endl;
+    } else
+        cout << "    No maximum distance is selected." << endl;
 
     // Get dimensions of input
     const uint32_t size_x = nii1->nx;
