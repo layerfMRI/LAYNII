@@ -34,6 +34,7 @@ int show_help(void) {
     "    -min       : (Optional) Take the minimum within the window.\n"
     "    -max       : (Optional) Take the maximum within the window.\n"
     "    -columns   : (Optional) Take the mode within the window.\n"
+    "    -peak_d    : (Optional) Take depth of the maximum value in the window.\n"
     "    -output    : (Optional) Output basename for all outputs.\n"
     "\n");
     return 0;
@@ -45,7 +46,7 @@ int main(int argc, char* argv[]) {
     char *fin1 = NULL, *fout = NULL, *fin2=NULL, *fin3=NULL, *fin4=NULL;
     int ac;
     float radius = 3, height = 0.25;
-    bool mode_median = true, mode_min = false, mode_max = false, mode_cols = false;
+    bool mode_median = true, mode_min = false, mode_max = false, mode_cols = false, mode_peak = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -95,21 +96,31 @@ int main(int argc, char* argv[]) {
             mode_max = false;
             mode_cols = false;
             mode_min = false;
+            mode_peak = false;
         } else if (!strcmp(argv[ac], "-min")) {
             mode_median = false;
             mode_max = false;
             mode_cols = false;
             mode_min = true;
+            mode_peak = false;
         } else if (!strcmp(argv[ac], "-max")) {
             mode_median = false;
             mode_min = false;
             mode_cols = false;
             mode_max = true;
+            mode_peak = false;
+        } else if (!strcmp(argv[ac], "-peak_d")) {
+            mode_median = false;
+            mode_min = false;
+            mode_cols = false;
+            mode_max = false;
+            mode_peak = true;
         } else if (!strcmp(argv[ac], "-columns")) {
             mode_median = false;
             mode_min = false;
             mode_max = false;
             mode_cols = true;
+            mode_peak = false;
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -235,6 +246,7 @@ int main(int argc, char* argv[]) {
         cout << "\r    " << i * 100 / nr_voi << " %" << flush;
         vector <float> temp_vec;
         vector <int> temp_vec_id;
+        vector <float> temp_vec_d;
 
         // --------------------------------------------------------------------
         // Cylinder windowing in UVD space
@@ -247,6 +259,8 @@ int main(int argc, char* argv[]) {
                 if (dist_uv < radius_sqr) {  // Check Euclidean distance
                     temp_vec.push_back(vec_val[j]);
                     temp_vec_id.push_back(vec_voi_id[j]);
+                    temp_vec_d.push_back(vec_d[j]);
+
                 }
             }
         }
@@ -313,6 +327,26 @@ int main(int argc, char* argv[]) {
             *(nii_output_data + vec_voi_id[i]) = temp_max;
             *(temp_nii_output_extra_data + vec_voi_id[i]) = static_cast<float>(n);
         }
+
+        // --------------------------------------------------------------------
+        // Find peak depth of maximum (Works with binary mask)
+        // NOTE: temp_mask = 1 or 0
+        // --------------------------------------------------------------------
+        if (mode_peak) {
+            float temp_ref = vec_val[i];
+            float temp_max = vec_val[i];
+            float temp_peak = vec_d[i];
+
+            for (int j = 0; j != n; ++j) {
+                if (temp_vec[j] > temp_max) {
+                    temp_max = temp_vec[j];
+                    temp_peak = temp_vec_d[j];
+                }
+            }
+            *(nii_output_data + vec_voi_id[i]) = temp_peak;
+            *(temp_nii_output_extra_data + vec_voi_id[i]) = static_cast<float>(n);
+        }
+
         // --------------------------------------------------------------------
         // A) Find functional columns: write back to a single voxel
         // TODO[Faruk]: Code review this part.
@@ -383,6 +417,9 @@ int main(int argc, char* argv[]) {
     } else if (mode_max) {
         save_output_nifti(fout, "UVD_max_filter", nii_output, true);
         save_output_nifti(fout, "UVD_max_filter_window_count", temp_nii_output_extra, true);
+    } else if (mode_peak) {
+        save_output_nifti(fout, "UVD_peak_filter", nii_output, true);
+        save_output_nifti(fout, "UVD_peak_filter_window_count", temp_nii_output_extra, true);
 
     } else if (mode_cols) {
         save_output_nifti(fout, "UVD_columns_mode_filter", nii_output, true);
