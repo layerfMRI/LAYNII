@@ -145,6 +145,7 @@ If you have any issues when using LayNii, or want to request a new feature, we a
 - Omer Faruk Gulban  
 - Remi Gau  
 - Alessandra Pizzuti  
+- Sebastian Dresbach
 
 ## License
 LayNii is licensed under [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause).
