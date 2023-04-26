@@ -557,7 +557,7 @@ int main(int argc, char*  argv[]) {
         *(nii_domain_data + idx_new_point) = 2;
         *(nii_points_data + idx_new_point) = n + 1;
     }
-    cout << endl;
+    cout << "\n" << endl;
 
     // Add number of points into the output tag
     std::ostringstream tag;
