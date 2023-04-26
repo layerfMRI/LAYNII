@@ -30,7 +30,7 @@ int main(int argc, char*  argv[]) {
     char *fin1 = NULL, *fout = NULL, *fin2=NULL;
     int ac;
     bool mode_debug = false, mode_initialize_with_centroids = false;
-    float max_dist = 0;
+    float max_dist = std::numeric_limits<float>::max();
     int iter_smooth = 0;
 
     // Process user options
@@ -105,7 +105,7 @@ int main(int argc, char*  argv[]) {
     log_nifti_descriptives(nii1);
     log_nifti_descriptives(nii2);
 
-    if (max_dist > 0) {
+    if (max_dist < std::numeric_limits<float>::max()) {
         cout << "    Maximum distance is: " << max_dist << endl;
     } else
         cout << "    No maximum distance is selected." << endl;
