@@ -26,7 +26,6 @@ int show_help(void) {
 }
 
 int main(int argc, char*  argv[]) {
-    bool use_outpath = false;
     nifti_image *nii1 = NULL, *nii2 = NULL;
     char *fin1 = NULL, *fout = NULL, *fin2=NULL;
     int ac;
@@ -59,7 +58,6 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             fout = argv[ac];
-            use_outpath = true;
         } else if (!strcmp(argv[ac], "-max_dist")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -max_dist\n");
@@ -584,7 +582,7 @@ int main(int argc, char*  argv[]) {
     }
 
     // Add number of points into the output tag
-    save_output_nifti(fout, "voronoi", nii_init, true, use_outpath);
+    save_output_nifti(fout, "voronoi", nii_init, true);
 
     cout << "\n  Finished." << endl;
     return 0;
