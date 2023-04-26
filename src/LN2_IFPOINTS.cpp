@@ -30,7 +30,6 @@ int show_help(void) {
 }
 
 int main(int argc, char*  argv[]) {
-    bool use_outpath = false;
     nifti_image *nii1 = NULL, *nii3 = NULL;
     char *fin1 = NULL, *fout = NULL, *fin3=NULL;
     int ac;
@@ -68,7 +67,6 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             fout = argv[ac];
-            use_outpath = true;
         } else if (!strcmp(argv[ac], "-debug")) {
             mode_debug = true;
         } else {
@@ -564,7 +562,7 @@ int main(int argc, char*  argv[]) {
     // Add number of points into the output tag
     std::ostringstream tag;
     tag << nr_points;
-    save_output_nifti(fout, "points"+tag.str(), nii_points, true, use_outpath);
+    save_output_nifti(fout, "points"+tag.str(), nii_points, true);
 
     // ========================================================================
     // Grow Voronoi cells from points towards the rest of the domain
@@ -948,7 +946,7 @@ int main(int argc, char*  argv[]) {
         save_output_nifti(fout, "flood_dist", flood_dist, false);
     }
     // Add number of points into the output tag
-    save_output_nifti(fout, "cells"+tag.str(), nii_points, true, use_outpath);
+    save_output_nifti(fout, "cells"+tag.str(), nii_points, true);
 
     cout << "\n  Finished." << endl;
     return 0;
