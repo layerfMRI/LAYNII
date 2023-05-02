@@ -115,7 +115,7 @@ int main(int argc, char*  argv[]) {
     bool terminate_switch1 = true;
     while (terminate_switch1) {
         uint32_t ix, iy, iz, i, j;
-        cout << "  " << voxel_counter << "/" << nr_voi << flush;
+        // cout << "  " << voxel_counter << "/" << nr_voi << flush;
 
         if (voxel_counter == nr_voi) {
             // Indicates all clusters are reached. Terminate condition.
