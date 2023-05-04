@@ -2,6 +2,7 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
+#include <unordered_set>
 
 int show_help(void) {
     printf(
@@ -16,28 +17,30 @@ int show_help(void) {
     "    LN2_UVD_FILTER -values activation.nii -coord_uv uv_coord.nii -coord_d metric_equidist.nii -domain mask.nii -radius 3 -height 0.25\n"
     "\n"
     "Options:\n"
-    "    -help      : Show this help.\n"
-    "    -values    : Nifti image with values that will be filtered.\n"
-    "                 For example an activation map or anatomical T1w images.\n"
-    "    -coord_uv  : A 4D nifti file that contains 2D (UV) coordinates.\n"
-    "                 For example LN2_MULTILATERATE output named 'UV_coords'.\n"
-    "    -coord_d   : A 3D nifti file that contains cortical depth measurements or layers.\n"
-    "                 For example either LN2_LAYERS output named 'metric'.\n"
-    "    -domain    : A 3D binary nifti file to limit the flattened voxels.\n"
-    "                 For example LN2_MULTILATERATE output named 'perimeter_chunk.'\n"
-    "    -radius    : Radius of cylinder that will be passed over UV coordinates.\n"
-    "                 In units of UV coordinates, which often are in mm.\n"
-    "    -height    : height/height of cylinder that will be passed over D (depth)\n"
-    "                 coordinates. In units of normalized depth metric, which\n"
-    "                 are often in 0-1 range. If you intend to make a cylinder\n"
-    "                 that covers all depths at all times, make sure to enter '2'\n"
-    "                 as the cylinder height.\n"
-    "    -median    : (Default) Take the median within the window.\n"
-    "    -min       : (Optional) Take the minimum within the window.\n"
-    "    -max       : (Optional) Take the maximum within the window.\n"
-    "    -columns   : (Optional) Take the mode within the window.\n"
-    "    -peak_d    : (Optional) Take depth of the maximum value in the window.\n"
-    "    -output    : (Optional) Output basename for all outputs.\n"
+    "    -help          : Show this help.\n"
+    "    -values        : Nifti image with values that will be filtered.\n"
+    "                     For example an activation map or anatomical T1w images.\n"
+    "    -coord_uv      : A 4D nifti file that contains 2D (UV) coordinates.\n"
+    "                     For example LN2_MULTILATERATE output named 'UV_coords'.\n"
+    "    -coord_d       : A 3D nifti file that contains cortical depth measurements or layers.\n"
+    "                     For example either LN2_LAYERS output named 'metric'.\n"
+    "    -domain        : A 3D binary nifti file to limit the flattened voxels.\n"
+    "                     For example LN2_MULTILATERATE output named 'perimeter_chunk.'\n"
+    "    -radius        : Radius of cylinder that will be passed over UV coordinates.\n"
+    "                     In units of UV coordinates, which often are in mm.\n"
+    "    -height        : height/height of cylinder that will be passed over D (depth)\n"
+    "                     coordinates. In units of normalized depth metric, which\n"
+    "                     are often in 0-1 range. If you intend to make a cylinder\n"
+    "                     that covers all depths at all times, make sure to enter '2'\n"
+    "                     as the cylinder height.\n"
+    "    -median        : (Default) Take the median within the window.\n"
+    "    -min           : (Optional) Take the minimum within the window.\n"
+    "    -max           : (Optional) Take the maximum within the window.\n"
+    "    -columns       : (Optional) Take the mode within the window.\n"
+    "    -peak_d        : (Optional) Take depth of the maximum value in the window.\n"
+    "    -count_uniques : (Optional) Count number of uniquely labeled voxels within\n"
+    "                     each window.\n"
+    "    -output        : (Optional) Output basename for all outputs.\n"
     "\n");
     return 0;
 }
@@ -48,7 +51,8 @@ int main(int argc, char* argv[]) {
     char *fin1 = NULL, *fout = NULL, *fin2=NULL, *fin3=NULL, *fin4=NULL;
     int ac;
     float radius = 3, height = 0.25;
-    bool mode_median = true, mode_min = false, mode_max = false, mode_cols = false, mode_peak = false;
+    bool mode_median = true, mode_min = false, mode_max = false;
+    bool mode_cols = false, mode_peak = false, mode_count_uniques = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -99,30 +103,42 @@ int main(int argc, char* argv[]) {
             mode_cols = false;
             mode_min = false;
             mode_peak = false;
+            mode_count_uniques = false;
         } else if (!strcmp(argv[ac], "-min")) {
             mode_median = false;
             mode_max = false;
             mode_cols = false;
             mode_min = true;
             mode_peak = false;
+            mode_count_uniques = false;
         } else if (!strcmp(argv[ac], "-max")) {
             mode_median = false;
             mode_min = false;
             mode_cols = false;
             mode_max = true;
             mode_peak = false;
-        } else if (!strcmp(argv[ac], "-peak_d")) {
-            mode_median = false;
-            mode_min = false;
-            mode_cols = false;
-            mode_max = false;
-            mode_peak = true;
+            mode_count_uniques = false;
         } else if (!strcmp(argv[ac], "-columns")) {
             mode_median = false;
             mode_min = false;
             mode_max = false;
             mode_cols = true;
             mode_peak = false;
+            mode_count_uniques = false;
+        } else if (!strcmp(argv[ac], "-peak_d")) {
+            mode_median = false;
+            mode_min = false;
+            mode_cols = false;
+            mode_max = false;
+            mode_peak = true;
+            mode_count_uniques = false;
+        } else if (!strcmp(argv[ac], "-count_uniques")) {
+            mode_median = false;
+            mode_min = false;
+            mode_cols = false;
+            mode_max = false;
+            mode_peak = false;
+            mode_count_uniques = true;
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -331,25 +347,6 @@ int main(int argc, char* argv[]) {
         }
 
         // --------------------------------------------------------------------
-        // Find peak depth of maximum (Works with binary mask)
-        // NOTE: temp_mask = 1 or 0
-        // --------------------------------------------------------------------
-        if (mode_peak) {
-            float temp_ref = vec_val[i];
-            float temp_max = vec_val[i];
-            float temp_peak = vec_d[i];
-
-            for (int j = 0; j != n; ++j) {
-                if (temp_vec[j] > temp_max) {
-                    temp_max = temp_vec[j];
-                    temp_peak = temp_vec_d[j];
-                }
-            }
-            *(nii_output_data + vec_voi_id[i]) = temp_peak;
-            *(temp_nii_output_extra_data + vec_voi_id[i]) = static_cast<float>(n);
-        }
-
-        // --------------------------------------------------------------------
         // A) Find functional columns: write back to a single voxel
         // TODO[Faruk]: Code review this part.
         // --------------------------------------------------------------------
@@ -409,6 +406,37 @@ int main(int argc, char* argv[]) {
         //         }
         //     }
         // }
+
+        // --------------------------------------------------------------------
+        // Find peak depth of maximum (Works with binary mask)
+        // NOTE: temp_mask = 1 or 0
+        // --------------------------------------------------------------------
+        if (mode_peak) {
+            float temp_ref = vec_val[i];
+            float temp_max = vec_val[i];
+            float temp_peak = vec_d[i];
+
+            for (int j = 0; j != n; ++j) {
+                if (temp_vec[j] > temp_max) {
+                    temp_max = temp_vec[j];
+                    temp_peak = temp_vec_d[j];
+                }
+            }
+            *(nii_output_data + vec_voi_id[i]) = temp_peak;
+            *(temp_nii_output_extra_data + vec_voi_id[i]) = static_cast<float>(n);
+        }
+
+        // --------------------------------------------------------------------
+        // Count number of unique labels within each window
+        // --------------------------------------------------------------------
+        if (mode_count_uniques) {
+            unordered_set<int> unique_elements;
+            for (int j = 0; j != n; ++j) {
+                unique_elements.insert(temp_vec[j]);
+            }
+            *(nii_output_data + vec_voi_id[i]) = unique_elements.size();
+            *(temp_nii_output_extra_data + vec_voi_id[i]) = static_cast<float>(n);
+        }
     }
     cout << endl;
 
