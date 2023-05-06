@@ -172,8 +172,8 @@ int main(int argc, char*  argv[]) {
         }
     }
 
-    save_output_nifti(fout, "backprojected", folded, true);
-    save_output_nifti(fout, "backprojected_density", folded_density, true);
+    save_output_nifti(fout, "unflattened", folded, true);
+    save_output_nifti(fout, "unflattened_density", folded_density, true);
 
     cout << "\n  Finished." << endl;
     return 0;
