@@ -244,8 +244,8 @@ LN2_PEAK_DETECT:
 LN2_NEIGHBORS:
 	$(CC) $(CFLAGS) -o LN2_NEIGHBORS src/LN2_NEIGHBORS.cpp $(LIBRARIES) $(LFLAGS)
 
-LN2_COUNT_2D:
-	$(CC) $(CFLAGS) -o LN2_COUNT_2D src/LN2_COUNT_2D.cpp $(LIBRARIES) $(LFLAGS)
+LN2_WINDOWED_COUNTER_2D:
+	$(CC) $(CFLAGS) -o LN2_WINDOWED_COUNTER_2D src/LN2_WINDOWED_COUNTER_2D.cpp $(LIBRARIES) $(LFLAGS)
 
 # =============================================================================
 
