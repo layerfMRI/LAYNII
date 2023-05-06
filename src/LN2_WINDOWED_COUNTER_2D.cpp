@@ -14,7 +14,7 @@ int show_help(void) {
     "!!! EXPERIMENTAL !!!\n"
     "\n"
     "Usage:\n"
-    "    LN2_WINDOWED_COUNTER_2D -input counts.nii\n"
+    "    LN2_WINDOWED_COUNTER_2D -input counts.nii -radius 50\n"
     "\n"
     "Options:\n"
     "    -help   : Show this help.\n"
