@@ -242,6 +242,90 @@ void save_output_nifti(const string path, const string tag,  nifti_image* nii,
     }
 }
 
+
+nifti_image* copy_nifti_as_float32_with_scl_slope_and_scl_inter(nifti_image* nii) {
+    nifti_image* nii_new = nifti_copy_nim_info(nii);
+    nii_new->datatype = NIFTI_TYPE_FLOAT32;
+    nii_new->nbyper = sizeof(float);
+    nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
+    float* nii_new_data = static_cast<float*>(nii_new->data);
+    int nr_voxels = nii_new->nvox;
+
+    // NOTE(Faruk): See nifti1.h for notes on data types
+    // ------------------------------------------------------------------------
+    if (nii->datatype == 2) {  // NIFTI_TYPE_UINT8
+        uint8_t* nii_data = static_cast<uint8_t*>(nii->data);
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
+        }
+    } else if (nii->datatype == 512) {  // NIFTI_TYPE_UINT16
+        uint16_t* nii_data = static_cast<uint16_t*>(nii->data);
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
+        }
+    } else if (nii->datatype == 768) {  // NIFTI_TYPE_UINT32
+        uint32_t* nii_data = static_cast<uint32_t*>(nii->data);
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
+        }
+    } else if (nii->datatype == 1280) {  // NIFTI_TYPE_UINT64
+        uint64_t* nii_data = static_cast<uint64_t*>(nii->data);
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
+        }
+    } else if (nii->datatype == 256) {  // NIFTI_TYPE_INT8
+        int8_t* nii_data = static_cast<int8_t*>(nii->data);
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
+        }
+    } else if (nii->datatype == 4) {  // NIFTI_TYPE_INT16
+        int16_t* nii_data = static_cast<int16_t*>(nii->data);
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
+        }
+    } else if (nii->datatype == 8) {  // NIFTI_TYPE_INT32
+        int32_t* nii_data = static_cast<int32_t*>(nii->data);
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
+        }
+    } else if (nii->datatype == 1024) {  // NIFTI_TYPE_INT64
+        int64_t* nii_data = static_cast<int64_t*>(nii->data);
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
+        }
+    } else if (nii->datatype == 16) {  // NIFTI_TYPE_FLOAT32
+        float* nii_data = static_cast<float*>(nii->data);
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
+        }
+    } else if (nii->datatype == 64) {  // NIFTI_TYPE_FLOAT64
+        double* nii_data = static_cast<double*>(nii->data);
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
+        }
+    } else {
+        cout << "Warning! Unrecognized nifti data type!" << endl;
+    }
+
+    // Replace nans with zeros
+    for (int i = 0; i < nr_voxels; ++i) {
+        if (*(nii_new_data + i)!= *(nii_new_data + i)) {
+            *(nii_new_data + i) = 0;
+        }
+    }
+
+    //  Incorporate scaling (scl_slope) and translation (scl_inter) headers
+    for (int i = 0; i < nr_voxels; ++i) {
+        *(nii_new_data + i) *= nii->scl_slope;
+        *(nii_new_data + i) += nii->scl_inter;
+    }
+    nii_new->scl_slope = 1.;
+    nii_new->scl_inter = 0.;
+
+    return nii_new;
+}
+
+
 nifti_image* copy_nifti_as_float32(nifti_image* nii) {
     ///////////////////////////////////////////////////////////////////////////
     // NOTE(Renzo): Fixing potential problems with different input datatypes //
@@ -647,22 +731,32 @@ nifti_image* copy_nifti_as_int16(nifti_image* nii) {
 // Faruk's favorite functions
 // ============================================================================
 std::tuple<uint32_t, uint32_t, uint32_t> ind2sub_3D(
-    const uint32_t linear_index, const uint32_t size_x, const uint32_t size_y) {
+    const uint32_t linear_index,
+    const uint32_t size_x,
+    const uint32_t size_y) {
+
     uint32_t z = linear_index / (size_x * size_y);
     uint32_t temp = linear_index % (size_x * size_y);
     uint32_t y = temp / size_x;
     uint32_t x = temp % size_x;
+
     return std::make_tuple(x, y, z);
 }
 
 std::tuple<uint32_t, uint32_t, uint32_t, uint32_t> ind2sub_4D(
-    const uint32_t linear_index, const uint32_t size_x, const uint32_t size_y,
-    const uint32_t size_y) {
-    uint32_t z = linear_index / (size_x * size_y);
-    uint32_t temp = linear_index % (size_x * size_y);
+    const uint32_t linear_index,
+    const uint32_t size_x,
+    const uint32_t size_y,
+    const uint32_t size_z) {
+
+    uint32_t t = linear_index / (size_x * size_y * size_z);
+    uint32_t temp = linear_index % (size_x * size_y * size_z);
+    uint32_t z = temp / (size_x * size_y);
+    temp = linear_index % (size_x * size_y);
     uint32_t y = temp / size_x;
     uint32_t x = temp % size_x;
-    return std::make_tuple(x, y, z);
+
+    return std::make_tuple(x, y, z, t);
 }
 
 
