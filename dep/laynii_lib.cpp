@@ -655,10 +655,27 @@ std::tuple<uint32_t, uint32_t, uint32_t> ind2sub_3D(
     return std::make_tuple(x, y, z);
 }
 
+std::tuple<uint32_t, uint32_t, uint32_t, uint32_t> ind2sub_4D(
+    const uint32_t linear_index, const uint32_t size_x, const uint32_t size_y,
+    const uint32_t size_y) {
+    uint32_t z = linear_index / (size_x * size_y);
+    uint32_t temp = linear_index % (size_x * size_y);
+    uint32_t y = temp / size_x;
+    uint32_t x = temp % size_x;
+    return std::make_tuple(x, y, z);
+}
+
+
 uint32_t sub2ind_3D(const uint32_t x, const uint32_t y, const uint32_t z,
                     const uint32_t size_x, const uint32_t size_y) {
     return size_x * size_y * z + size_x * y + x;
 }
+
+uint32_t sub2ind_4D(const uint32_t x, const uint32_t y, const uint32_t z, const uint32_t t,
+                    const uint32_t size_x, const uint32_t size_y, const uint32_t size_z) {
+    return size_x * size_y * size_z * t + size_x * size_y * z + size_x * y + x;
+}
+
 
 std::tuple<float, float> simplex_closure_2D(float x, float y) {
     float component_sum = x + y;

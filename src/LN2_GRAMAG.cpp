@@ -10,12 +10,13 @@ int show_help(void) {
     "    ../LN2_GRAMAG -input input.nii\n"
     "\n"
     "Options:\n"
-    "    -help     : Show this help.\n"
-    "    -input    : Nifti image that will be used to compute gradients.\n"
-    "    -circular : Gradients are computed using circular difference. Needed\n"
-    "                when the input contains e.g. phase values (0 to 2*pi).\n"
-    "                Input range is assumed to be 2*pi.\n"
-    "    -output   : (Optional) Output basename for all outputs.\n"
+    "    -help           : Show this help.\n"
+    "    -input          : Nifti image that will be used to compute gradients.\n"
+    "    -circular       : Gradients are computed using circular difference. Needed\n"
+    "                      when the input contains e.g. phase values (0 to 2*pi).\n"
+    "                      Input range is assumed to be 2*pi.\n"
+    "    -circular_int13 : (Optional) Cast the input range from [-4096 4096] to [0 2*pi].\n"
+    "    -output         : (Optional) Output basename for all outputs.\n"
     "\n"
     "Reference / further reading:\n"
     "    [See Figure 1 from] Gulban, O.F., Schneider, M., Marquardt, I., \n"
@@ -30,7 +31,7 @@ int main(int argc, char*  argv[]) {
     nifti_image *nii1 = NULL;
     char *fin1 = NULL, *fout = NULL;
     int ac;
-    bool mode_circular = false;
+    bool mode_circular = false, mode_circular_int13 = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -46,6 +47,8 @@ int main(int argc, char*  argv[]) {
             fout = argv[ac];
         } else if (!strcmp(argv[ac], "-circular")) {
             mode_circular = true;
+        } else if (!strcmp(argv[ac], "-circular_int13")) {
+            mode_circular_int13 = true;
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -77,6 +80,7 @@ int main(int argc, char*  argv[]) {
     const uint32_t size_x = nii1->nx;
     const uint32_t size_y = nii1->ny;
     const uint32_t size_z = nii1->nz;
+    const uint32_t size_time = nii1->nt;
 
     const uint32_t end_x = size_x - 1;
     const uint32_t end_y = size_y - 1;
@@ -95,8 +99,19 @@ int main(int argc, char*  argv[]) {
     float* nii_gramag_data = static_cast<float*>(nii_gramag->data);
 
     // Set to zero
-    for (uint32_t i = 0; i != nr_voxels; ++i) {
+    for (uint32_t i = 0; i != nr_voxels*size_time; ++i) {
         *(nii_gramag_data + i) = 0;
+    }
+
+    // ========================================================================
+    // Convert ranges to 0 to 2*pi if opted for
+    // ========================================================================
+    if (mode_circular_int13) {
+        cout << "  Casting [-4096 4096] to [0 2*pi] range..." << endl;
+        for (uint32_t i = 0; i != nr_voxels*size_time; ++i) {
+            float k = *(nii_input_data + i);
+            *(nii_input_data + i) = ((k + 4096) / 8192) * 2*3.14159265358979323846;
+        }
     }
 
     // ========================================================================
@@ -104,11 +119,11 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     cout << "  Computing gradients..." << endl;
 
-    uint32_t ix, iy, iz, j, k;
+    uint32_t ix, iy, iz, it, j, k;
 
     if (mode_circular == false) {
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
-            tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+        for (uint32_t i = 0; i != nr_voxels*size_time; ++i) {
+            tie(ix, iy, iz, it) = ind2sub_4D(i, size_x, size_y, size_z);
             float gra_x = 0, gra_y = 0, gra_z = 0;
             float g21 = 0, g22 = 0, g23 = 0, g24 = 0, g25 = 0, g26 = 0;
             float g31 = 0, g32 = 0, g33 = 0, g34 = 0;
@@ -118,20 +133,20 @@ int main(int argc, char*  argv[]) {
             // 1-jump neighbours
             // ----------------------------------------------------------------
             if (ix > 0 && ix < end_x) {
-                j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                k = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                j = sub2ind_4D(ix-1, iy, iz, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix+1, iy, iz, it, size_x, size_y, size_z);
                 gra_x += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 count_1 += 1;
             }
             if (iy > 0 && iy < end_y) {
-                j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                k = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                j = sub2ind_4D(ix, iy-1, iz, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix, iy+1, iz, it, size_x, size_y, size_z);
                 gra_y += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 count_1 += 1;
             }
             if (iz > 0 && iz < end_z) {
-                j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                k = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                j = sub2ind_4D(ix, iy, iz-1, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix, iy, iz+1, it, size_x, size_y, size_z);
                 gra_z += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 count_1 += 1;
             }
@@ -140,38 +155,38 @@ int main(int argc, char*  argv[]) {
             // 2-jump neighbours
             // ----------------------------------------------------------------
             if (ix > 0 && iy > 0 && ix < end_x && iy < end_y) {
-                j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
-                k = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
+                j = sub2ind_4D(ix-1, iy-1, iz, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix+1, iy+1, iz, it, size_x, size_y, size_z);
                 g21 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 count_2 += 1;
             }
             if (ix > 0 && iy < end_y && ix < end_x && iy > 0) {
-                j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
-                k = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
+                j = sub2ind_4D(ix-1, iy+1, iz, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix+1, iy-1, iz, it, size_x, size_y, size_z);
                 g22 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 count_2 += 1;
             }
             if (iy > 0 && iz > 0 && iy < end_y && iz < end_z) {
-                j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
-                k = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
+                j = sub2ind_4D(ix, iy-1, iz-1, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix, iy+1, iz+1, it, size_x, size_y, size_z);
                 g23 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 count_2 += 1;
             }
             if (iy > 0 && iz < end_z && iy < end_y && iz > 0) {
-                j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
-                k = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
+                j = sub2ind_4D(ix, iy-1, iz+1, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix, iy+1, iz-1, it, size_x, size_y, size_z);
                 g24 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 count_2 += 1;
             }
             if (ix > 0 && iz > 0 && ix < end_x && iz < end_z) {
-                j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
-                k = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
+                j = sub2ind_4D(ix-1, iy, iz-1, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix+1, iy, iz+1, it, size_x, size_y, size_z);
                 g25 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 count_2 += 1;
             }
             if (ix < end_x && iz > 0 && ix > 0 && iz < end_z) {
-                j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
-                k = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
+                j = sub2ind_4D(ix+1, iy, iz-1, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix-1, iy, iz+1, it, size_x, size_y, size_z);
                 g26 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 count_2 += 1;
             }
@@ -180,26 +195,26 @@ int main(int argc, char*  argv[]) {
             // 3-jump neighbours
             // ----------------------------------------------------------------
             if (ix > 0 && iy > 0 && iz > 0 && ix < end_x && iy < end_y && iz < end_z) {
-                j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
-                k = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
+                j = sub2ind_4D(ix-1, iy-1, iz-1, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix+1, iy+1, iz+1, it, size_x, size_y, size_z);
                 g31 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 count_3 += 1;
             }
             if (ix > 0 && iy > 0 && iz < end_z && ix < end_x && iy < end_y && iz > 0) {
-                j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
-                k = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
+                j = sub2ind_4D(ix-1, iy-1, iz+1, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix+1, iy+1, iz-1, it, size_x, size_y, size_z);
                 g32 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 count_3 += 1;
             }
             if (ix > 0 && iy < end_y && iz > 0 && ix < end_x && iy > 0 && iz < end_z) {
-                j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
-                k = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
+                j = sub2ind_4D(ix-1, iy+1, iz-1, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix+1, iy-1, iz+1, it, size_x, size_y, size_z);
                 g33 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 count_3 += 1;
             }
             if (ix < end_x && iy > 0 && iz > 0 && ix > 0 && iy < end_y && iz < end_z) {
-                j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
-                k = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
+                j = sub2ind_4D(ix+1, iy-1, iz-1, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix-1, iy+1, iz+1, it, size_x, size_y, size_z);
                 g34 += std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 count_3 += 1;
             }
@@ -225,8 +240,8 @@ int main(int argc, char*  argv[]) {
         const float ONEPI = 3.14159265358979f;
         const float TWOPI = 2.0f * 3.14159265358979f;
 
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
-            tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+        for (uint32_t i = 0; i != nr_voxels*size_time; ++i) {
+            tie(ix, iy, iz) = ind2sub_4D(i, size_x, size_y, size_z);
             float gra_x, gra_y, gra_z, diff1, diff2, diff3;
             float g21, g22, g23, g24, g25, g26;
             float g31, g32, g33, g34;
@@ -236,8 +251,8 @@ int main(int argc, char*  argv[]) {
             // 1-jump neighbours
             // ----------------------------------------------------------------
             if (ix > 0 && ix < end_x) {
-                j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                k = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                j = sub2ind_4D(ix-1, iy, iz, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix+1, iy, iz, it, size_x, size_y, size_z);
                 diff1 = std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 diff2 = *(nii_input_data + j) - *(nii_input_data + k) + TWOPI;
                 diff3 = *(nii_input_data + k) - *(nii_input_data + j) + TWOPI;
@@ -245,8 +260,8 @@ int main(int argc, char*  argv[]) {
                 count_1 += 1;
             }
             if (iy > 0 && iy < end_y) {
-                j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-                k = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                j = sub2ind_4D(ix, iy-1, iz, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix, iy+1, iz, it, size_x, size_y, size_z);
                 diff1 = std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 diff2 = *(nii_input_data + j) - *(nii_input_data + k) + TWOPI;
                 diff3 = *(nii_input_data + k) - *(nii_input_data + j) + TWOPI;
@@ -254,8 +269,8 @@ int main(int argc, char*  argv[]) {
                 count_1 += 1;
             }
             if (iz > 0 && iz < end_z) {
-                j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-                k = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                j = sub2ind_4D(ix, iy, iz-1, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix, iy, iz+1, it, size_x, size_y, size_z);
                 diff1 = std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 diff2 = *(nii_input_data + j) - *(nii_input_data + k) + TWOPI;
                 diff3 = *(nii_input_data + k) - *(nii_input_data + j) + TWOPI;
@@ -267,8 +282,8 @@ int main(int argc, char*  argv[]) {
             // 2-jump neighbours
             // ----------------------------------------------------------------
             if (ix > 0 && iy > 0 && ix < end_x && iy < end_y) {
-                j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
-                k = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
+                j = sub2ind_4D(ix-1, iy-1, iz, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix+1, iy+1, iz, it, size_x, size_y, size_z);
                 diff1 = std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 diff2 = *(nii_input_data + j) - *(nii_input_data + k) + TWOPI;
                 diff3 = *(nii_input_data + k) - *(nii_input_data + j) + TWOPI;
@@ -276,8 +291,8 @@ int main(int argc, char*  argv[]) {
                 count_2 += 1;
             }
             if (ix > 0 && iy < end_y && ix < end_x && iy > 0) {
-                j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
-                k = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
+                j = sub2ind_4D(ix-1, iy+1, iz, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix+1, iy-1, iz, it, size_x, size_y, size_z);
                 diff1 = std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 diff2 = *(nii_input_data + j) - *(nii_input_data + k) + TWOPI;
                 diff3 = *(nii_input_data + k) - *(nii_input_data + j) + TWOPI;
@@ -285,8 +300,8 @@ int main(int argc, char*  argv[]) {
                 count_2 += 1;
             }
             if (iy > 0 && iz > 0 && iy < end_y && iz < end_z) {
-                j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
-                k = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
+                j = sub2ind_4D(ix, iy-1, iz-1, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix, iy+1, iz+1, it, size_x, size_y, size_z);
                 diff1 = std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 diff2 = *(nii_input_data + j) - *(nii_input_data + k) + TWOPI;
                 diff3 = *(nii_input_data + k) - *(nii_input_data + j) + TWOPI;
@@ -294,8 +309,8 @@ int main(int argc, char*  argv[]) {
                 count_2 += 1;
             }
             if (iy > 0 && iz < end_z && iy < end_y && iz > 0) {
-                j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
-                k = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
+                j = sub2ind_4D(ix, iy-1, iz+1, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix, iy+1, iz-1, it, size_x, size_y, size_z);
                 diff1 = std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 diff2 = *(nii_input_data + j) - *(nii_input_data + k) + TWOPI;
                 diff3 = *(nii_input_data + k) - *(nii_input_data + j) + TWOPI;
@@ -303,8 +318,8 @@ int main(int argc, char*  argv[]) {
                 count_2 += 1;
             }
             if (ix > 0 && iz > 0 && ix < end_x && iz < end_z) {
-                j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
-                k = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
+                j = sub2ind_4D(ix-1, iy, iz-1, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix+1, iy, iz+1, it, size_x, size_y, size_z);
                 diff1 = std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 diff2 = *(nii_input_data + j) - *(nii_input_data + k) + TWOPI;
                 diff3 = *(nii_input_data + k) - *(nii_input_data + j) + TWOPI;
@@ -312,8 +327,8 @@ int main(int argc, char*  argv[]) {
                 count_2 += 1;
             }
             if (ix < end_x && iz > 0 && ix > 0 && iz < end_z) {
-                j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
-                k = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
+                j = sub2ind_4D(ix+1, iy, iz-1, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix-1, iy, iz+1, it, size_x, size_y, size_z);
                 diff1 = std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 diff2 = *(nii_input_data + j) - *(nii_input_data + k) + TWOPI;
                 diff3 = *(nii_input_data + k) - *(nii_input_data + j) + TWOPI;
@@ -325,8 +340,8 @@ int main(int argc, char*  argv[]) {
             // 3-jump neighbours
             // ----------------------------------------------------------------
             if (ix > 0 && iy > 0 && iz > 0 && ix < end_x && iy < end_y && iz < end_z) {
-                j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
-                k = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
+                j = sub2ind_4D(ix-1, iy-1, iz-1, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix+1, iy+1, iz+1, it, size_x, size_y, size_z);
                 diff1 = std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 diff2 = *(nii_input_data + j) - *(nii_input_data + k) + TWOPI;
                 diff3 = *(nii_input_data + k) - *(nii_input_data + j) + TWOPI;
@@ -334,8 +349,8 @@ int main(int argc, char*  argv[]) {
                 count_3 += 1;
             }
             if (ix > 0 && iy > 0 && iz < end_z && ix < end_x && iy < end_y && iz > 0) {
-                j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
-                k = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
+                j = sub2ind_4D(ix-1, iy-1, iz+1, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix+1, iy+1, iz-1, it, size_x, size_y, size_z);
                 diff1 = std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 diff2 = *(nii_input_data + j) - *(nii_input_data + k) + TWOPI;
                 diff3 = *(nii_input_data + k) - *(nii_input_data + j) + TWOPI;
@@ -343,8 +358,8 @@ int main(int argc, char*  argv[]) {
                 count_3 += 1;
             }
             if (ix > 0 && iy < end_y && iz > 0 && ix < end_x && iy > 0 && iz < end_z) {
-                j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
-                k = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
+                j = sub2ind_4D(ix-1, iy+1, iz-1, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix+1, iy-1, iz+1, it, size_x, size_y, size_z);
                 diff1 = std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 diff2 = *(nii_input_data + j) - *(nii_input_data + k) + TWOPI;
                 diff3 = *(nii_input_data + k) - *(nii_input_data + j) + TWOPI;
@@ -352,8 +367,8 @@ int main(int argc, char*  argv[]) {
                 count_3 += 1;
             }
             if (ix < end_x && iy > 0 && iz > 0 && ix > 0 && iy < end_y && iz < end_z) {
-                j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
-                k = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
+                j = sub2ind_4D(ix+1, iy-1, iz-1, it, size_x, size_y, size_z);
+                k = sub2ind_4D(ix-1, iy+1, iz+1, it, size_x, size_y, size_z);
                 diff1 = std::abs(*(nii_input_data + j) - *(nii_input_data + k));
                 diff2 = *(nii_input_data + j) - *(nii_input_data + k) + TWOPI;
                 diff3 = *(nii_input_data + k) - *(nii_input_data + j) + TWOPI;

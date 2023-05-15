@@ -44,8 +44,15 @@ nifti_image* copy_nifti_as_int16(nifti_image* nii);
 std::tuple<uint32_t, uint32_t, uint32_t> ind2sub_3D(
     const uint32_t linear_index, const uint32_t size_x, const uint32_t size_y);
 
+std::tuple<uint32_t, uint32_t, uint32_t, uint32_t> ind2sub_4D(
+    const uint32_t linear_index, const uint32_t size_x, const uint32_t size_y,
+    const uint32_t size_z);
+
 uint32_t sub2ind_3D(const uint32_t x, const uint32_t y, const uint32_t z,
                     const uint32_t size_x, const uint32_t size_y);
+
+uint32_t sub2ind_4D(const uint32_t x, const uint32_t y, const uint32_t z, const uint32_t t,
+                    const uint32_t size_x, const uint32_t size_y, const uint32_t size_z);
 
 std::tuple<float, float> simplex_closure_2D(float x, float y);
 std::tuple<float, float> simplex_perturb_2D(float x, float y, float a, float b);
