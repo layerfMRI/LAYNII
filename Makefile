@@ -247,6 +247,9 @@ LN2_NEIGHBORS:
 LN2_WINDOWED_COUNTER_2D:
 	$(CC) $(CFLAGS) -o LN2_WINDOWED_COUNTER_2D src/LN2_WINDOWED_COUNTER_2D.cpp $(LIBRARIES) $(LFLAGS)
 
+LN2_RIM_POLISH:
+	$(CC) $(CFLAGS) -o LN2_RIM_POLISH src/LN2_RIM_POLISH.cpp $(LIBRARIES) $(LFLAGS)
+
 # =============================================================================
 
 clean:
