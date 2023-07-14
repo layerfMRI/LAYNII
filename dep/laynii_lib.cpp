@@ -7,7 +7,7 @@
 
 void log_welcome(const char* programname) {
     cout << "======================="<< endl;
-    cout << "LayNii v2.4.0          "<< endl;
+    cout << "LayNii v2.5.1          "<< endl;
     cout << "======================="<< endl;
     cout << programname << "\n" << endl;
 }
