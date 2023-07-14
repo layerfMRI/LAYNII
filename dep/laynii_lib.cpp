@@ -38,6 +38,7 @@ double ren_average(double arr[], int size) {
         sum += arr[i];
     }
     avg = double(sum) / size;
+    if (avg != avg ) avg = 0; 
     return avg;
 }
 
@@ -51,6 +52,7 @@ double ren_stdev(double arr[], int size) {
     for (i = 0; i < size; ++i) {
         sum += (arr[i] - mean) * (arr[i] - mean) / ((double)size - 1);
     }
+    if (sqrt( sum) != sqrt( sum) ) sum = 0;
     return sqrt( sum);
 }
 
@@ -59,6 +61,7 @@ double ren_correl(double arr1[], double arr2[], int size) {
     double sum1 = 0;
     double sum2 = 0;
     double sum3 = 0;
+    double correl = 0;
     double mean1 = ren_average(arr1, size);
     double mean2 = ren_average(arr2, size);
 
@@ -67,7 +70,9 @@ double ren_correl(double arr1[], double arr2[], int size) {
         sum2 += (arr1[i] - mean1) * (arr1[i] - mean1);
         sum3 += (arr2[i] - mean2) * (arr2[i] - mean2);
     }
-    return sum1 / sqrt(sum2 * sum3);
+    correl = sum1 / sqrt(sum2 * sum3); 
+    if (correl != correl ) correl = 0;
+    return correl;
 }
 
 double ren_skew(double arr[], int size) {
@@ -75,31 +80,38 @@ double ren_skew(double arr[], int size) {
     double sum1 = 0;
     double sum2 = 0;
     double mean = ren_average(arr, size);
+    double skew = 0; 
 
     for (i = 0; i < size; ++i) {
         sum1 += (arr[i] - mean) * (arr[i] - mean) * (arr[i] - mean);
         sum2 += (arr[i] - mean) * (arr[i] - mean);
     }
-    return ((1 / ((double)size) * sum1) / (pow(1 / ((double)size - 1) * sum2, 1.5)));
+    skew = (1 / ((double)size) * sum1) / (pow(1 / ((double)size - 1) * sum2, 1.5)); 
+    if (skew != skew ) skew = 0; 
+    return (skew);
 }
 
 double ren_kurt(double arr[], int size) {
     int i;
     double sum1 = 0;
     double sum2 = 0;
+    double kurt = 0; 
     double mean = ren_average(arr, size);
 
     for (i = 0; i < size; ++i) {
         sum1 += (arr[i] - mean) * (arr[i] - mean) * (arr[i] - mean) * (arr[i] - mean) / ((double)size);
         sum2 += (arr[i] - mean) * (arr[i] - mean) / ((double)size);
     }
-    return sum1 / (sum2 * sum2) - 3;
+    kurt =  sum1 / (sum2 * sum2) - 3 ; 
+    if (kurt != kurt ) kurt = 0 ;
+    return kurt;
 }
 
 double ren_autocor(double arr[], int size) {
     int i;
     double sum1 = 0;
     double sum2 = 0;
+    double autocorr = 0;
     double mean = ren_average(arr, size);
 
     for (i = 1; i < size; ++i) {
@@ -108,7 +120,9 @@ double ren_autocor(double arr[], int size) {
     for (i = 0; i < size; ++i) {
         sum2 += (arr[i]-mean)*(arr[i]-mean);
     }
-    return sum1/sum2;
+    autocorr = sum1/sum2 ; 
+    if (autocorr != autocorr )  autocorr = 0 ;
+    return autocorr;
 }
 
 

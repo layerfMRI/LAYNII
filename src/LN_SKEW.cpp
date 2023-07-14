@@ -153,6 +153,7 @@ int main(int argc, char * argv[]) {
 
     for (int voxel_i = 0; voxel_i < nxyz ; voxel_i++) {
       if ((nii_tSNR->scl_slope) != 0)  *(nii_tSNR_data + voxel_i) /=  (nii_tSNR->scl_slope) ; 
+      if ( *(nii_tSNR_data + voxel_i) != *(nii_tSNR_data + voxel_i) ) *(nii_tSNR_data + voxel_i) = 0; // filtering NaNs
     }
 
     if (!use_outpath) fout = fin;
@@ -281,6 +282,7 @@ int main(int argc, char * argv[]) {
     
     for (int voxel_i = 0; voxel_i < nxyz ; voxel_i++) {
         if ((nii_NOISESTDEV->scl_slope) != 0) *(nii_NOISESTDEV_data + voxel_i) /=  (nii_NOISESTDEV->scl_slope) ; 
+        if ( *(nii_NOISESTDEV_data + voxel_i) != *(nii_NOISESTDEV_data + voxel_i) ) *(nii_NOISESTDEV_data + voxel_i) = 0; 
     }
 
     save_output_nifti(fout, "imageSNR", nii_NOISESTDEV, true);
