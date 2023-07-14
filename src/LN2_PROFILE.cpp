@@ -32,6 +32,10 @@ int show_help(void) {
     "    -input  : Specify input dataset of to extract the signal from.\n"
     "              This is usually an activation map.\n"
     "              This 3D nii file must have the same dimension as the layer file.\n"
+    "    -mask   : (Optional) Specify a local mask, an ROI to pool the signal from.\n"
+    "              This is usefull, if the layer input is larder than the ROI.\n"
+    "              For many concentional pipelines this might be the output of LN2_MASK.\n"
+    "              This 3D nii file must have the same dimension as the layer file.\n"
     "    -plot   : (Optional)\n"
     "              this option tries to plot the profile as ASKII art in the terminal \n"
     "              This option can be useful if you do not have a graphical plotting profile ready\n"
@@ -51,10 +55,12 @@ int main(int argc, char*  argv[]) {
     uint16_t ac;
     nifti_image *nii1 = NULL;
     nifti_image *niil = NULL;
-    char *fin = NULL, *finl = NULL;
+    nifti_image *niim = NULL;
+    char *fin = NULL, *finl = NULL, *finm = NULL;
     char const *fout = "profile.txt";
     bool  mode_debug = false,  mode_plot = false;
     bool  use_outpath = false;
+    bool  use_mask = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -74,6 +80,13 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             finl = argv[ac];
+        } else if (!strcmp(argv[ac], "-mask")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -mask\n");
+                return 1;
+            }
+            use_mask = true ; 
+            finm = argv[ac];
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -111,7 +124,15 @@ int main(int argc, char*  argv[]) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", finl);
         return 2;
     }
-
+    
+    if (use_mask == true) {
+        niim = nifti_image_read(finm, 1);
+        if (!niim) {
+            fprintf(stderr, "** failed to read NIfTI from '%s'\n", finm);
+            return 2;
+        }
+    }
+    
     log_welcome("LN2_PROFILE");
     log_nifti_descriptives(nii1);
 
@@ -126,7 +147,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     nifti_image* layers = copy_nifti_as_int16(niil);
     int16_t* layers_data = static_cast<int16_t*>(layers->data);
-
+     
     nifti_image* act = copy_nifti_as_float32(nii1);
     float* act_data = static_cast<float*>(act->data);
 
@@ -136,6 +157,7 @@ int main(int argc, char*  argv[]) {
     if(mode_debug){
        cout << "   Layer file has slope " << niil->scl_slope  << endl;
        cout << "   Act  file has slope  " << nii1->scl_slope  << endl;
+       if (use_mask == true)  cout << "   Mask file has slope  " << niim->scl_slope  << endl;
     }
 
     if (act->scl_slope == 0) {
@@ -144,6 +166,22 @@ int main(int argc, char*  argv[]) {
         cout << "   I am setting it to 1 instead " << endl;
         act->scl_slope = 1;
     }
+    
+    // ========================================================================
+    // remove voxels outside mask, if ther is one specified.
+    // ========================================================================
+    if (use_mask == true ) {
+	  nifti_image* mask = copy_nifti_as_int16(niim);
+      int16_t* mask_data = static_cast<int16_t*>(mask->data);	
+      
+	  for (int j = 0; j != nr_voxels; ++j) {
+            if (*(mask_data + j) == 0  ) {
+                *(layers_data + j) = 0 ;
+            }
+        }
+    }
+    
+    
     // ========================================================================
     // Look how many layers we have and allocating the arrays accordingly
     // ========================================================================
@@ -163,7 +201,7 @@ int main(int argc, char*  argv[]) {
         std_layers[i] = 0.;
         numb_voxels[i] = 0.;
     }
-
+	  
     // ========================================================================
     // Look how many voxels we have per layer
     // ========================================================================
@@ -204,6 +242,10 @@ int main(int argc, char*  argv[]) {
         mean_layers[i] = ren_average(vec1, numb_voxels[i])*act->scl_slope;
         std_layers[i]  = ren_stdev  (vec1, numb_voxels[i])*act->scl_slope;
     }
+    
+    
+    
+    
 
     // ========================================================================
     // Write layer profiles to terminal
