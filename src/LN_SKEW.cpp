@@ -11,7 +11,7 @@ int show_help(void) {
     "         It also claculates image SNR (Glover and Lai 1998 and Feinberg 2013).\n"
     "           The even- and odd-numbered time points of a fMRI time series are separately averaged, \n"
     "           and the sum and difference of these two images were calculated.\n"
-    "           The spatial SETEV can be used as a proxy for thermal noise. \n"
+    "           The spatial STDEV can be used as a proxy for thermal noise. \n"
     "\n"
     "Usage:\n"
     "    LN_SKEW -input Nulled_intemp.nii \n"
@@ -161,7 +161,7 @@ int main(int argc, char * argv[]) {
     save_output_nifti(fout, "kurt", nii_kurt, true);
     save_output_nifti(fout, "autocorr", nii_autocorr, true);
     save_output_nifti(fout, "mean", nii_mean, true);
-    save_output_nifti(fout, "stedev", nii_stdev, true);
+    save_output_nifti(fout, "stdev", nii_stdev, true);
     save_output_nifti(fout, "tSNR", nii_tSNR, true);
     // ========================================================================
     cout << "  Calculating correlation with everything..." << endl;
@@ -257,7 +257,7 @@ int main(int argc, char * argv[]) {
 
 
     //-------------------------------------
-    // estimateing local image SNR  
+    // estimating local image SNR  
 
 
     for (int iz = 0; iz < size_z; ++iz) {
