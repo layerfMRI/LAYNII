@@ -329,13 +329,25 @@ nifti_image* copy_nifti_as_float32_with_scl_slope_and_scl_inter(nifti_image* nii
     }
 
     //  Incorporate scaling (scl_slope) and translation (scl_inter) headers
-    for (int i = 0; i < nr_voxels; ++i) {
-        *(nii_new_data + i) *= nii->scl_slope;
-        *(nii_new_data + i) += nii->scl_inter;
+    cout << "  nifti header 'scl slope': " << nii->scl_slope <<endl;
+    cout << "  nifti header 'scl inter': " << nii->scl_inter <<endl;
+    if (nii->scl_slope != 0) {
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_new_data + i) *= nii->scl_slope;
+            *(nii_new_data + i) += nii->scl_inter;
+        }
+        nii_new->scl_slope = 1.;
+        nii_new->scl_inter = 0.;
+    } else {
+        cout << endl;
+        cout << "  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+        cout << "  CAUTION: Nifti scaling parameter 'scl slope' is 0." << endl;
+        cout << "    Make sure that your nifti headers are correct!  " << endl;
+        cout << "    This program will continue by assuming:         " << endl;
+        cout << "      'scl slope = 1' instead of 'scl slope = 0'.   " << endl;
+        cout << "  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+        cout << endl;
     }
-    nii_new->scl_slope = 1.;
-    nii_new->scl_inter = 0.;
-
     return nii_new;
 }
 

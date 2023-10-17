@@ -24,6 +24,7 @@ int show_help(void) {
     "                      is int13, even though the data type is uint16 and only int12 portion\n"
     "                      is used to store the phase values.\n"
     "    -output         : (Optional) Output basename for all outputs.\n"
+    "    -debug          : (Optional) Save extra intermediate outputs.\n"
     "\n"
     "Reference / further reading:\n"
     "    [See Figure 1 from] Gulban, O.F., Schneider, M., Marquardt, I., \n"
@@ -38,7 +39,7 @@ int main(int argc, char*  argv[]) {
     nifti_image *nii1 = NULL;
     char *fin1 = NULL, *fout = NULL;
     int ac;
-    bool mode_circular = false, mode_circular_int13 = false;
+    bool mode_circular = false, mode_circular_int13 = false, mode_debug = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -56,6 +57,8 @@ int main(int argc, char*  argv[]) {
             mode_circular = true;
         } else if (!strcmp(argv[ac], "-circular_int13")) {
             mode_circular_int13 = true;
+        } else if (!strcmp(argv[ac], "-debug")) {
+            mode_debug = true;
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -119,6 +122,10 @@ int main(int argc, char*  argv[]) {
             float k = *(nii_input_data + i);
             *(nii_input_data + i) = ((k + 4096) / 8192) * 2*3.14159265358979323846;
         }
+    }
+
+    if (mode_debug) {
+        save_output_nifti(fout, "float32", nii_input, false);
     }
 
     // ========================================================================
