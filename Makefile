@@ -251,6 +251,9 @@ LN2_WINDOWED_COUNTER_2D:
 LN2_RIM_POLISH:
 	$(CC) $(CFLAGS) -o LN2_RIM_POLISH src/LN2_RIM_POLISH.cpp $(LIBRARIES) $(LFLAGS)
 
+LN2_DIVERGENCE:
+	$(CC) $(CFLAGS) -o LN2_DIVERGENCE src/LN2_DIVERGENCE.cpp $(LIBRARIES) $(LFLAGS)
+
 # =============================================================================
 
 clean:
