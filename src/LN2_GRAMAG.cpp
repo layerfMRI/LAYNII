@@ -140,7 +140,7 @@ int main(int argc, char*  argv[]) {
             cout << "    Volume: " << t+1 << "/" << size_time << endl;
 
             for (uint32_t i = 0; i != nr_voxels; ++i) {
-                tie(ix, iy, iz, it) = ind2sub_4D(i, size_x, size_y, size_z);
+                tie(ix, iy, iz, it) = ind2sub_4D(i+nr_voxels*t, size_x, size_y, size_z);
                 float gra_x = 0, gra_y = 0, gra_z = 0;
                 float g21 = 0, g22 = 0, g23 = 0, g24 = 0, g25 = 0, g26 = 0;
                 float g31 = 0, g32 = 0, g33 = 0, g34 = 0;
@@ -245,10 +245,10 @@ int main(int argc, char*  argv[]) {
                 // Average rate of change across spheres (shells)
                 // NOTE[Faruk]: This is a bit of experimental thinking... Need to think
                 // if thinking neighbors as separate spherical shells has some benefits...
-                *(nii_gramag_data + i) += (gra_x + gra_y + gra_z) / count_1;
-                *(nii_gramag_data + i) += (g21 + g22 + g23 + g24 + g25 + g26) / count_2;
-                *(nii_gramag_data + i) += (g31 + g32 + g33 + g34) / count_3;
-                *(nii_gramag_data + i) /= (count_1 / 3) + (count_2 / 6) + (count_3 / 4);
+                *(nii_gramag_data + i+nr_voxels*t) += (gra_x + gra_y + gra_z) / count_1;
+                *(nii_gramag_data + i+nr_voxels*t) += (g21 + g22 + g23 + g24 + g25 + g26) / count_2;
+                *(nii_gramag_data + i+nr_voxels*t) += (g31 + g32 + g33 + g34) / count_3;
+                *(nii_gramag_data + i+nr_voxels*t) /= (count_1 / 3) + (count_2 / 6) + (count_3 / 4);
             }
         }
         cout << "  Saving output..." << endl;
