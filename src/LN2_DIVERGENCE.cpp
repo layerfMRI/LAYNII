@@ -200,7 +200,7 @@ int main(int argc, char*  argv[]) {
             save_output_nifti(fout, "gra_z", nii_gra_z, true);
         }
     } else {
-        cout << "  Circular difference mode (-pi to pi range) is selected..." << endl;
+        cout << "    Circular difference mode is selected..." << endl;
         const float ONEPI = 3.14159265358979f;
         const float TWOPI = 2.0f * 3.14159265358979f;
 
@@ -282,52 +282,285 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Compute Divergence on the gradient vector field
     // ========================================================================
-    cout << "  Computing divergence..." << endl;
+    if (mode_circular == false) {
+        cout << "  Computing divergence..." << endl;
 
-    for (uint32_t t = 0; t != size_time; ++t) {
-        cout << "    Volume: " << t+1 << "/" << size_time << endl;
+        for (uint32_t t = 0; t != size_time; ++t) {
+            cout << "    Volume: " << t+1 << "/" << size_time << endl;
 
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
-            tie(ix, iy, iz, it) = ind2sub_4D(i+nr_voxels*t, size_x, size_y, size_z);
-            float gra_x, gra_y, gra_z;
+            for (uint32_t i = 0; i != nr_voxels; ++i) {
+                tie(ix, iy, iz, it) = ind2sub_4D(i+nr_voxels*t, size_x, size_y, size_z);
+                float gra_x, gra_y, gra_z;
 
-            // ------------------------------------------------------------
-            // 1-jump neighbours
-            // ------------------------------------------------------------
-            if (ix > 0 && ix < end_x) {
-                j = sub2ind_4D(ix-1, iy, iz, it, size_x, size_y, size_z);
-                k = sub2ind_4D(ix+1, iy, iz, it, size_x, size_y, size_z);
-                gra_x = *(nii_gra_x_data + j) - *(nii_gra_x_data + k);
+                // ------------------------------------------------------------
+                // 1-jump neighbours
+                // ------------------------------------------------------------
+                if (ix > 0 && ix < end_x) {
+                    j = sub2ind_4D(ix-1, iy, iz, it, size_x, size_y, size_z);
+                    k = sub2ind_4D(ix+1, iy, iz, it, size_x, size_y, size_z);
+                    gra_x = *(nii_gra_x_data + j) - *(nii_gra_x_data + k);
+                }
+                if (iy > 0 && iy < end_y) {
+                    j = sub2ind_4D(ix, iy-1, iz, it, size_x, size_y, size_z);
+                    k = sub2ind_4D(ix, iy+1, iz, it, size_x, size_y, size_z);
+                    gra_y = *(nii_gra_y_data + j) - *(nii_gra_y_data + k);
+                }
+                if (iz > 0 && iz < end_z) {
+                    j = sub2ind_4D(ix, iy, iz-1, it, size_x, size_y, size_z);
+                    k = sub2ind_4D(ix, iy, iz+1, it, size_x, size_y, size_z);
+                    gra_z = *(nii_gra_z_data + j) - *(nii_gra_z_data + k);
+                }
+
+                // NOTE[Faruk]: Remove these for optimal RAM in next iteration
+                *(nii_gra2_x_data + i+nr_voxels*t) = gra_x;
+                *(nii_gra2_y_data + i+nr_voxels*t) = gra_y;
+                *(nii_gra2_z_data + i+nr_voxels*t) = gra_z;
+
+                *(nii_divergence_data + i+nr_voxels*t) = gra_x + gra_y + gra_z;
             }
-            if (iy > 0 && iy < end_y) {
-                j = sub2ind_4D(ix, iy-1, iz, it, size_x, size_y, size_z);
-                k = sub2ind_4D(ix, iy+1, iz, it, size_x, size_y, size_z);
-                gra_y = *(nii_gra_y_data + j) - *(nii_gra_y_data + k);
-            }
-            if (iz > 0 && iz < end_z) {
-                j = sub2ind_4D(ix, iy, iz-1, it, size_x, size_y, size_z);
-                k = sub2ind_4D(ix, iy, iz+1, it, size_x, size_y, size_z);
-                gra_z = *(nii_gra_z_data + j) - *(nii_gra_z_data + k);
-            }
-
-            // NOTE[Faruk]: Remove these for optimal RAM in next iteration
-            *(nii_gra2_x_data + i+nr_voxels*t) = gra_x;
-            *(nii_gra2_y_data + i+nr_voxels*t) = gra_y;
-            *(nii_gra2_z_data + i+nr_voxels*t) = gra_z;
-
-            *(nii_divergence_data + i+nr_voxels*t) = gra_x + gra_y + gra_z;
         }
-    }
 
-    if (mode_debug) {
-        cout << "  Saving 2nd gradients..." << endl;
-        save_output_nifti(fout, "gra2_x", nii_gra2_x, true);
-        save_output_nifti(fout, "gra2_y", nii_gra2_y, true);
-        save_output_nifti(fout, "gra2_z", nii_gra2_z, true);
-    }
+        if (mode_debug) {
+            cout << "  Saving 2nd gradients..." << endl;
+            save_output_nifti(fout, "gra2_x", nii_gra2_x, true);
+            save_output_nifti(fout, "gra2_y", nii_gra2_y, true);
+            save_output_nifti(fout, "gra2_z", nii_gra2_z, true);
+        }
 
-    cout << "  Saving divergence..." << endl;
-    save_output_nifti(fout, "divergence", nii_divergence, true);
+        cout << "  Saving divergence..." << endl;
+        save_output_nifti(fout, "divergence", nii_divergence, true);
+    } else {
+        cout << "  Computing Frobenius norm on 2nd derivative matrices..." << endl;
+        const float ONEPI = 3.14159265358979f;
+        const float TWOPI = 2.0f * 3.14159265358979f;
+        
+        // ====================================================================
+        // Second derivatives of x
+        // ====================================================================
+        cout << "    Second derivatives on x..." << endl;
+
+        for (uint32_t t = 0; t != size_time; ++t) {
+            cout << "    Volume: " << t+1 << "/" << size_time << endl;
+
+            for (uint32_t i = 0; i != nr_voxels; ++i) {
+                tie(ix, iy, iz, it) = ind2sub_4D(i+nr_voxels*t, size_x, size_y, size_z);
+                float gra_x, gra_y, gra_z, diff1, diff2, diff3, a, b;
+
+                // ------------------------------------------------------------
+                // 1-jump neighbours
+                // ------------------------------------------------------------
+                if (ix > 0 && ix < end_x) {
+                    j = sub2ind_4D(ix-1, iy, iz, it, size_x, size_y, size_z);
+                    k = sub2ind_4D(ix+1, iy, iz, it, size_x, size_y, size_z);
+                    a = *(nii_gra_x_data + j);
+                    b = *(nii_gra_x_data + k);
+                    diff1 = b - a;
+                    diff2 = TWOPI + b - a;
+                    diff3 = b - (TWOPI + a);
+                    if (std::abs(diff2) < std::abs(diff1)) {
+                        gra_x = diff2;
+                    } else if (std::abs(diff3) < std::abs(diff1)) {
+                        gra_x = diff3;
+                    } else {
+                        gra_x = diff1;
+                    }
+                }
+                if (iy > 0 && iy < end_y) {
+                    j = sub2ind_4D(ix, iy-1, iz, it, size_x, size_y, size_z);
+                    k = sub2ind_4D(ix, iy+1, iz, it, size_x, size_y, size_z);
+                    a = *(nii_gra_x_data + j);
+                    b = *(nii_gra_x_data + k);
+                    diff1 = b - a;
+                    diff2 = TWOPI + b - a;
+                    diff3 = b - (TWOPI + a);
+                    if (std::abs(diff2) < std::abs(diff1)) {
+                        gra_y = diff2;
+                    } else if (std::abs(diff3) < std::abs(diff1)) {
+                        gra_y = diff3;
+                    } else {
+                        gra_y = diff1;
+                    }
+                }
+                if (iz > 0 && iz < end_z) {
+                    j = sub2ind_4D(ix, iy, iz-1, it, size_x, size_y, size_z);
+                    k = sub2ind_4D(ix, iy, iz+1, it, size_x, size_y, size_z);
+                    a = *(nii_gra_x_data + j);
+                    b = *(nii_gra_x_data + k);
+                    diff1 = b - a;
+                    diff2 = TWOPI + b - a;
+                    diff3 = b - (TWOPI + a);
+                    if (std::abs(diff2) < std::abs(diff1)) {
+                        gra_z = diff2;
+                    } else if (std::abs(diff3) < std::abs(diff1)) {
+                        gra_z = diff3;
+                    } else {
+                        gra_z = diff1;
+                    }
+                }
+
+                *(nii_gra2_x_data + i+nr_voxels*t) = gra_x*gra_x + gra_y*gra_y + gra_z*gra_z;
+            }
+        }
+
+        // ====================================================================
+        // Second derivatives of y
+        // ====================================================================
+        cout << "    Second derivatives on y..." << endl;
+        
+        for (uint32_t t = 0; t != size_time; ++t) {
+            cout << "    Volume: " << t+1 << "/" << size_time << endl;
+
+            for (uint32_t i = 0; i != nr_voxels; ++i) {
+                tie(ix, iy, iz, it) = ind2sub_4D(i+nr_voxels*t, size_x, size_y, size_z);
+                float gra_x, gra_y, gra_z, diff1, diff2, diff3, a, b;
+
+                // ------------------------------------------------------------
+                // 1-jump neighbours
+                // ------------------------------------------------------------
+                if (ix > 0 && ix < end_x) {
+                    j = sub2ind_4D(ix-1, iy, iz, it, size_x, size_y, size_z);
+                    k = sub2ind_4D(ix+1, iy, iz, it, size_x, size_y, size_z);
+                    a = *(nii_gra_y_data + j);
+                    b = *(nii_gra_y_data + k);
+                    diff1 = b - a;
+                    diff2 = TWOPI + b - a;
+                    diff3 = b - (TWOPI + a);
+                    if (std::abs(diff2) < std::abs(diff1)) {
+                        gra_x = diff2;
+                    } else if (std::abs(diff3) < std::abs(diff1)) {
+                        gra_x = diff3;
+                    } else {
+                        gra_x = diff1;
+                    }
+                }
+                if (iy > 0 && iy < end_y) {
+                    j = sub2ind_4D(ix, iy-1, iz, it, size_x, size_y, size_z);
+                    k = sub2ind_4D(ix, iy+1, iz, it, size_x, size_y, size_z);
+                    a = *(nii_gra_y_data + j);
+                    b = *(nii_gra_y_data + k);
+                    diff1 = b - a;
+                    diff2 = TWOPI + b - a;
+                    diff3 = b - (TWOPI + a);
+                    if (std::abs(diff2) < std::abs(diff1)) {
+                        gra_y = diff2;
+                    } else if (std::abs(diff3) < std::abs(diff1)) {
+                        gra_y = diff3;
+                    } else {
+                        gra_y = diff1;
+                    }
+                }
+                if (iz > 0 && iz < end_z) {
+                    j = sub2ind_4D(ix, iy, iz-1, it, size_x, size_y, size_z);
+                    k = sub2ind_4D(ix, iy, iz+1, it, size_x, size_y, size_z);
+                    a = *(nii_gra_y_data + j);
+                    b = *(nii_gra_y_data + k);
+                    diff1 = b - a;
+                    diff2 = TWOPI + b - a;
+                    diff3 = b - (TWOPI + a);
+                    if (std::abs(diff2) < std::abs(diff1)) {
+                        gra_z = diff2;
+                    } else if (std::abs(diff3) < std::abs(diff1)) {
+                        gra_z = diff3;
+                    } else {
+                        gra_z = diff1;
+                    }
+                }
+
+                *(nii_gra2_y_data + i+nr_voxels*t) = gra_x*gra_x + gra_y*gra_y + gra_z*gra_z;
+            }
+        }
+
+        // ====================================================================
+        // Second derivatives of z
+        // ====================================================================
+        cout << "    Second derivatives on z..." << endl;
+
+        for (uint32_t t = 0; t != size_time; ++t) {
+            cout << "    Volume: " << t+1 << "/" << size_time << endl;
+
+            for (uint32_t i = 0; i != nr_voxels; ++i) {
+                tie(ix, iy, iz, it) = ind2sub_4D(i+nr_voxels*t, size_x, size_y, size_z);
+                float gra_x, gra_y, gra_z, diff1, diff2, diff3, a, b;
+
+                // ------------------------------------------------------------
+                // 1-jump neighbours
+                // ------------------------------------------------------------
+                if (ix > 0 && ix < end_x) {
+                    j = sub2ind_4D(ix-1, iy, iz, it, size_x, size_y, size_z);
+                    k = sub2ind_4D(ix+1, iy, iz, it, size_x, size_y, size_z);
+                    a = *(nii_gra_z_data + j);
+                    b = *(nii_gra_z_data + k);
+                    diff1 = b - a;
+                    diff2 = TWOPI + b - a;
+                    diff3 = b - (TWOPI + a);
+                    if (std::abs(diff2) < std::abs(diff1)) {
+                        gra_x = diff2;
+                    } else if (std::abs(diff3) < std::abs(diff1)) {
+                        gra_x = diff3;
+                    } else {
+                        gra_x = diff1;
+                    }
+                }
+                if (iy > 0 && iy < end_y) {
+                    j = sub2ind_4D(ix, iy-1, iz, it, size_x, size_y, size_z);
+                    k = sub2ind_4D(ix, iy+1, iz, it, size_x, size_y, size_z);
+                    a = *(nii_gra_z_data + j);
+                    b = *(nii_gra_z_data + k);
+                    diff1 = b - a;
+                    diff2 = TWOPI + b - a;
+                    diff3 = b - (TWOPI + a);
+                    if (std::abs(diff2) < std::abs(diff1)) {
+                        gra_y = diff2;
+                    } else if (std::abs(diff3) < std::abs(diff1)) {
+                        gra_y = diff3;
+                    } else {
+                        gra_y = diff1;
+                    }
+                }
+                if (iz > 0 && iz < end_z) {
+                    j = sub2ind_4D(ix, iy, iz-1, it, size_x, size_y, size_z);
+                    k = sub2ind_4D(ix, iy, iz+1, it, size_x, size_y, size_z);
+                    a = *(nii_gra_z_data + j);
+                    b = *(nii_gra_z_data + k);
+                    diff1 = b - a;
+                    diff2 = TWOPI + b - a;
+                    diff3 = b - (TWOPI + a);
+                    if (std::abs(diff2) < std::abs(diff1)) {
+                        gra_z = diff2;
+                    } else if (std::abs(diff3) < std::abs(diff1)) {
+                        gra_z = diff3;
+                    } else {
+                        gra_z = diff1;
+                    }
+                }
+
+                *(nii_gra2_z_data + i+nr_voxels*t) = gra_x*gra_x + gra_y*gra_y + gra_z*gra_z;
+            }
+        }
+
+        if (mode_debug) {
+            cout << "  Saving 2nd gradient sum of squares..." << endl;
+            save_output_nifti(fout, "gra2_x_sumsqr", nii_gra2_x, true);
+            save_output_nifti(fout, "gra2_y_sumsqr", nii_gra2_y, true);
+            save_output_nifti(fout, "gra2_z_sumsqr", nii_gra2_z, true);
+        }
+
+        // ====================================================================
+        // Compute Frobenius norm of 2nd derivative matrices (voxel-wise)
+        // ====================================================================
+        cout << "  Saving 2nd derivative Frobenius norms..." << endl;
+        float xx, yy, zz;
+        for (uint32_t t = 0; t != size_time; ++t) {
+            cout << "    Volume: " << t+1 << "/" << size_time << endl;
+            for (uint32_t i = 0; i != nr_voxels; ++i) {
+                xx = *(nii_gra2_x_data + i+nr_voxels*t);
+                yy = *(nii_gra2_y_data + i+nr_voxels*t);
+                zz = *(nii_gra2_z_data + i+nr_voxels*t);
+                *(nii_divergence_data + i+nr_voxels*t) = sqrt(xx + yy + zz);
+            }
+        }
+        save_output_nifti(fout, "frobenius", nii_divergence, true);
+    }
 
     cout << "\n  Finished." << endl;
     return 0;
