@@ -329,8 +329,8 @@ nifti_image* copy_nifti_as_float32_with_scl_slope_and_scl_inter(nifti_image* nii
     }
 
     //  Incorporate scaling (scl_slope) and translation (scl_inter) headers
-    cout << "  nifti header 'scl slope': " << nii->scl_slope <<endl;
-    cout << "  nifti header 'scl inter': " << nii->scl_inter <<endl;
+    cout << "  Nifti header 'scl slope': " << nii->scl_slope <<endl;
+    cout << "  Nifti header 'scl inter': " << nii->scl_inter <<endl;
     if (nii->scl_slope != 0) {
         for (int i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) *= nii->scl_slope;
