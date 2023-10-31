@@ -280,7 +280,7 @@ int main(int argc, char*  argv[]) {
     }
 
     // ========================================================================
-    // Compute Divergence on the gradient vector field
+    // Compute second derivative summary metrics
     // ========================================================================
     if (mode_circular == false) {
         cout << "  Computing divergence..." << endl;
@@ -330,7 +330,7 @@ int main(int argc, char*  argv[]) {
         cout << "  Saving divergence..." << endl;
         save_output_nifti(fout, "divergence", nii_divergence, true);
     } else {
-        cout << "  Computing Frobenius norm on 2nd derivative matrices..." << endl;
+        cout << "  Computing L1 norm on 2nd derivative matrices..." << endl;
         const float ONEPI = 3.14159265358979f;
         const float TWOPI = 2.0f * 3.14159265358979f;
         
@@ -398,7 +398,8 @@ int main(int argc, char*  argv[]) {
                     }
                 }
 
-                *(nii_gra2_x_data + i+nr_voxels*t) = gra_x*gra_x + gra_y*gra_y + gra_z*gra_z;
+                // *(nii_gra2_x_data + i+nr_voxels*t) = gra_x*gra_x + gra_y*gra_y + gra_z*gra_z;
+                *(nii_gra2_x_data + i+nr_voxels*t) = (std::abs(gra_x) + std::abs(gra_y) + std::abs(gra_z)) / 3;
             }
         }
 
@@ -466,7 +467,8 @@ int main(int argc, char*  argv[]) {
                     }
                 }
 
-                *(nii_gra2_y_data + i+nr_voxels*t) = gra_x*gra_x + gra_y*gra_y + gra_z*gra_z;
+                // *(nii_gra2_y_data + i+nr_voxels*t) = gra_x*gra_x + gra_y*gra_y + gra_z*gra_z;
+                *(nii_gra2_y_data + i+nr_voxels*t) = (std::abs(gra_x) + std::abs(gra_y) + std::abs(gra_z)) / 3;
             }
         }
 
@@ -534,21 +536,22 @@ int main(int argc, char*  argv[]) {
                     }
                 }
 
-                *(nii_gra2_z_data + i+nr_voxels*t) = gra_x*gra_x + gra_y*gra_y + gra_z*gra_z;
+                // *(nii_gra2_z_data + i+nr_voxels*t) = gra_x*gra_x + gra_y*gra_y + gra_z*gra_z;
+                *(nii_gra2_z_data + i+nr_voxels*t) = (std::abs(gra_x) + std::abs(gra_y) + std::abs(gra_z)) / 3;
             }
         }
 
         if (mode_debug) {
-            cout << "  Saving 2nd gradient sum of squares..." << endl;
-            save_output_nifti(fout, "gra2_x_sumsqr", nii_gra2_x, true);
-            save_output_nifti(fout, "gra2_y_sumsqr", nii_gra2_y, true);
-            save_output_nifti(fout, "gra2_z_sumsqr", nii_gra2_z, true);
+            cout << "  Saving 2nd gradient sums..." << endl;
+            save_output_nifti(fout, "gra2_x", nii_gra2_x, true);
+            save_output_nifti(fout, "gra2_y", nii_gra2_y, true);
+            save_output_nifti(fout, "gra2_z", nii_gra2_z, true);
         }
 
         // ====================================================================
         // Compute Frobenius norm of 2nd derivative matrices (voxel-wise)
         // ====================================================================
-        cout << "  Saving 2nd derivative Frobenius norms..." << endl;
+        cout << "  Saving L1 norms of second derivatives..." << endl;
         float xx, yy, zz;
         for (uint32_t t = 0; t != size_time; ++t) {
             cout << "    Volume: " << t+1 << "/" << size_time << endl;
@@ -556,10 +559,11 @@ int main(int argc, char*  argv[]) {
                 xx = *(nii_gra2_x_data + i+nr_voxels*t);
                 yy = *(nii_gra2_y_data + i+nr_voxels*t);
                 zz = *(nii_gra2_z_data + i+nr_voxels*t);
-                *(nii_divergence_data + i+nr_voxels*t) = sqrt(xx + yy + zz);
+                // *(nii_divergence_data + i+nr_voxels*t) = sqrt(xx + yy + zz);
+                *(nii_divergence_data + i+nr_voxels*t) = (xx + yy + zz) / 3.;
             }
         }
-        save_output_nifti(fout, "frobenius", nii_divergence, true);
+        save_output_nifti(fout, "L1D2", nii_divergence, true);
     }
 
     cout << "\n  Finished." << endl;
