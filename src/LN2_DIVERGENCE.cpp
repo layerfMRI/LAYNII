@@ -125,13 +125,13 @@ int main(int argc, char*  argv[]) {
 
     // Set to zero
     for (uint32_t i = 0; i != nr_voxels*size_time; ++i) {
-        *(nii_gra_x_data + i) = 0;
-        *(nii_gra_y_data + i) = 0;
-        *(nii_gra_z_data + i) = 0;
-        *(nii_gra2_x_data + i) = 0;
-        *(nii_gra2_y_data + i) = 0;
-        *(nii_gra2_z_data + i) = 0;
-        *(nii_divergence_data + i) = 0;
+        *(nii_gra_x_data + i) = 0.;
+        *(nii_gra_y_data + i) = 0.;
+        *(nii_gra_z_data + i) = 0.;
+        *(nii_gra2_x_data + i) = 0.;
+        *(nii_gra2_y_data + i) = 0.;
+        *(nii_gra2_z_data + i) = 0.;
+        *(nii_divergence_data + i) = 0.;
     }
 
     // ========================================================================
@@ -209,7 +209,7 @@ int main(int argc, char*  argv[]) {
 
             for (uint32_t i = 0; i != nr_voxels; ++i) {
                 tie(ix, iy, iz, it) = ind2sub_4D(i+nr_voxels*t, size_x, size_y, size_z);
-                float gra_x, gra_y, gra_z, diff1, diff2, diff3, a, b;
+                float gra_x=0, gra_y=0, gra_z=0, diff1=0, diff2=0, diff3=0, a=0, b=0;
 
                 // ------------------------------------------------------------
                 // 1-jump neighbours
@@ -344,7 +344,7 @@ int main(int argc, char*  argv[]) {
 
             for (uint32_t i = 0; i != nr_voxels; ++i) {
                 tie(ix, iy, iz, it) = ind2sub_4D(i+nr_voxels*t, size_x, size_y, size_z);
-                float gra_x, gra_y, gra_z, diff1, diff2, diff3, a, b;
+                float gra_x=0, gra_y=0, gra_z=0, diff1=0, diff2=0, diff3=0, a=0, b=0;
 
                 // ------------------------------------------------------------
                 // 1-jump neighbours
@@ -413,7 +413,7 @@ int main(int argc, char*  argv[]) {
 
             for (uint32_t i = 0; i != nr_voxels; ++i) {
                 tie(ix, iy, iz, it) = ind2sub_4D(i+nr_voxels*t, size_x, size_y, size_z);
-                float gra_x, gra_y, gra_z, diff1, diff2, diff3, a, b;
+                float gra_x=0, gra_y=0, gra_z=0, diff1=0, diff2=0, diff3=0, a=0, b=0;
 
                 // ------------------------------------------------------------
                 // 1-jump neighbours
@@ -482,7 +482,7 @@ int main(int argc, char*  argv[]) {
 
             for (uint32_t i = 0; i != nr_voxels; ++i) {
                 tie(ix, iy, iz, it) = ind2sub_4D(i+nr_voxels*t, size_x, size_y, size_z);
-                float gra_x, gra_y, gra_z, diff1, diff2, diff3, a, b;
+                float gra_x=0, gra_y=0, gra_z=0, diff1=0, diff2=0, diff3=0, a=0, b=0;
 
                 // ------------------------------------------------------------
                 // 1-jump neighbours
@@ -554,7 +554,6 @@ int main(int argc, char*  argv[]) {
         cout << "  Saving L1 norms of second derivatives..." << endl;
         float xx, yy, zz;
         for (uint32_t t = 0; t != size_time; ++t) {
-            cout << "    Volume: " << t+1 << "/" << size_time << endl;
             for (uint32_t i = 0; i != nr_voxels; ++i) {
                 xx = *(nii_gra2_x_data + i+nr_voxels*t);
                 yy = *(nii_gra2_y_data + i+nr_voxels*t);
