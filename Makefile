@@ -254,6 +254,9 @@ LN2_RIM_POLISH:
 LN2_DIVERGENCE:
 	$(CC) $(CFLAGS) -o LN2_DIVERGENCE src/LN2_DIVERGENCE.cpp $(LIBRARIES) $(LFLAGS)
 
+LN2_GRADIENTS:
+	$(CC) $(CFLAGS) -o LN2_GRADIENTS src/LN2_GRADIENTS.cpp $(LIBRARIES) $(LFLAGS)
+
 # =============================================================================
 
 clean:
