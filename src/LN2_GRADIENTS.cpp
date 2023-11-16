@@ -16,6 +16,7 @@ int show_help(void) {
     "                     will be computed for each volume.\n"
     "    -merge_outputs : (Optional) Save gradients as a 4D file. Only works\n"
     "                     with 3D images.\n"
+    "    -normalize     : (Optional) Output gradients will be unit vectors.\n"
     "    -output        : (Optional) Output basename for all outputs.\n"
     "    -debug         : (Optional) Save extra intermediate outputs.\n"
     "\n");
@@ -26,7 +27,7 @@ int main(int argc, char*  argv[]) {
     nifti_image *nii1 = NULL;
     char *fin1 = NULL, *fout = NULL;
     int ac;
-    bool mode_debug = false, mode_merge_outputs = false;
+    bool mode_debug = false, mode_merge_outputs = false, mode_normalize = false;
 
     nifti_image *nii_gra = NULL;
     float *nii_gra_data = NULL;
@@ -48,6 +49,8 @@ int main(int argc, char*  argv[]) {
             fout = argv[ac];
         } else if (!strcmp(argv[ac], "-merge_outputs")) {
             mode_merge_outputs = true;
+        } else if (!strcmp(argv[ac], "-normalize")) {
+            mode_normalize = true;
         } else if (!strcmp(argv[ac], "-debug")) {
             mode_debug = true;
         } else if (!strcmp(argv[ac], "-output")) {
@@ -174,6 +177,13 @@ int main(int argc, char*  argv[]) {
             }
 
             // ----------------------------------------------------------------
+            if (mode_normalize) {
+                float magnitude = sqrt(gra_x*gra_x + gra_y*gra_y + gra_z*gra_z);
+                gra_x /= magnitude;
+                gra_y /= magnitude;
+                gra_z /= magnitude;
+            }
+
             if (mode_merge_outputs) {
                 *(nii_gra_data + i+nr_voxels*0) = gra_x;
                 *(nii_gra_data + i+nr_voxels*1) = gra_y;
@@ -187,13 +197,25 @@ int main(int argc, char*  argv[]) {
     }
     cout << endl;
 
+    // ========================================================================
     cout << "  Saving output..." << endl;
+
     if (mode_merge_outputs) {
-        save_output_nifti(fout, "gradients", nii_gra, true);
+        if (mode_normalize) {
+            save_output_nifti(fout, "gradients_normalized", nii_gra, true);
+        } else {
+            save_output_nifti(fout, "gradients", nii_gra, true);
+        }
     } else {
-        save_output_nifti(fout, "gradient_x", nii_gra_x, true);
-        save_output_nifti(fout, "gradient_y", nii_gra_y, true);
-        save_output_nifti(fout, "gradient_z", nii_gra_z, true);
+        if (mode_normalize) {
+            save_output_nifti(fout, "gradient_x", nii_gra_x, true);
+            save_output_nifti(fout, "gradient_y", nii_gra_y, true);
+            save_output_nifti(fout, "gradient_z", nii_gra_z, true);
+        } else {
+            save_output_nifti(fout, "gradient_x_normalized", nii_gra_x, true);
+            save_output_nifti(fout, "gradient_y_normalized", nii_gra_y, true);
+            save_output_nifti(fout, "gradient_z_normalized", nii_gra_z, true);
+        }
     }
     
     cout << "\n  Finished." << endl;
