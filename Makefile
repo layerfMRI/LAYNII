@@ -257,6 +257,9 @@ LN2_DIVERGENCE:
 LN2_GRADIENTS:
 	$(CC) $(CFLAGS) -o LN2_GRADIENTS src/LN2_GRADIENTS.cpp $(LIBRARIES) $(LFLAGS)
 
+LN2_LAPLACIAN:
+	$(CC) $(CFLAGS) -o LN2_LAPLACIAN src/LN2_LAPLACIAN.cpp $(LIBRARIES) $(LFLAGS)
+
 # =============================================================================
 
 clean:
