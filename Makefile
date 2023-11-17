@@ -260,6 +260,9 @@ LN2_GRADIENTS:
 LN2_LAPLACIAN:
 	$(CC) $(CFLAGS) -o LN2_LAPLACIAN src/LN2_LAPLACIAN.cpp $(LIBRARIES) $(LFLAGS)
 
+LN2_PHASE_GRADIENTS:
+	$(CC) $(CFLAGS) -o LN2_PHASE_GRADIENTS src/LN2_PHASE_GRADIENTS.cpp $(LIBRARIES) $(LFLAGS)
+
 # =============================================================================
 
 clean:
