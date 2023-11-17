@@ -208,13 +208,13 @@ int main(int argc, char*  argv[]) {
         }
     } else {
         if (mode_normalize) {
-            save_output_nifti(fout, "gradient_x", nii_gra_x, true);
-            save_output_nifti(fout, "gradient_y", nii_gra_y, true);
-            save_output_nifti(fout, "gradient_z", nii_gra_z, true);
-        } else {
             save_output_nifti(fout, "gradient_x_normalized", nii_gra_x, true);
             save_output_nifti(fout, "gradient_y_normalized", nii_gra_y, true);
             save_output_nifti(fout, "gradient_z_normalized", nii_gra_z, true);
+        } else {
+            save_output_nifti(fout, "gradient_x", nii_gra_x, true);
+            save_output_nifti(fout, "gradient_y", nii_gra_y, true);
+            save_output_nifti(fout, "gradient_z", nii_gra_z, true);
         }
     }
     
