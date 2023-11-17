@@ -144,7 +144,7 @@ int main(int argc, char*  argv[]) {
     cout << endl;
 
     if (mode_debug) {
-        cout << "  Saving intermediate output..." << endl;
+        cout << "  Saving intermediate outputs..." << endl;
         save_output_nifti(fout, "gradient_x", nii_gra_x, true);
         save_output_nifti(fout, "gradient_y", nii_gra_y, true);
         save_output_nifti(fout, "gradient_z", nii_gra_z, true);
