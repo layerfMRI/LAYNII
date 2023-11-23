@@ -21,6 +21,7 @@ int show_help(void) {
     "                      is int13, even though the data type is uint16 and only int12 portion\n"
     "                      is used to store the phase values.\n"
     "    -phase_jump     : (Optional) Output L1 norm of the 1st spatial derivative.\n"
+    "    -2D             : (Optional) Do not compute along z. Experimental.\n"
     "    -output         : (Optional) Output basename for all outputs.\n"
     "    -debug          : (Optional) Save extra intermediate outputs.\n"
     "\n"
@@ -33,6 +34,7 @@ int main(int argc, char*  argv[]) {
     char *fin1 = NULL, *fout = NULL;
     int ac;
     bool mode_int13 = false, mode_debug = false, mode_phase_jump = false;
+    bool mode_2D = false;
     const float ONEPI = 3.14159265358979f;
     const float TWOPI = 2.0f * 3.14159265358979f;
 
@@ -52,6 +54,8 @@ int main(int argc, char*  argv[]) {
             mode_int13 = true;
         } else if (!strcmp(argv[ac], "-phase_jump")) {
             mode_phase_jump = true;
+        } else if (!strcmp(argv[ac], "-2D")) {
+            mode_2D = true;
         } else if (!strcmp(argv[ac], "-debug")) {
             mode_debug = true;
         } else if (!strcmp(argv[ac], "-output")) {
@@ -194,7 +198,7 @@ int main(int argc, char*  argv[]) {
                     gra_y = diff1;
                 }
             }
-            if (iz > 0 && iz < end_z) {
+            if (iz > 0 && iz < end_z && mode_2D == false) {
                 j = sub2ind_4D(ix, iy, iz-1, it, size_x, size_y, size_z);
                 k = sub2ind_4D(ix, iy, iz+1, it, size_x, size_y, size_z);
                 a = *(nii_input_data + j);
@@ -215,8 +219,10 @@ int main(int argc, char*  argv[]) {
             *(nii_gra_z_data + i+nr_voxels*t) = gra_z;
 
             // Compute L1 norm of the first spatial derivative (phase jump)
-            if (mode_phase_jump) {
+            if (mode_phase_jump && mode_2D == false) {
                 *(nii_divergence_data + i+nr_voxels*t) = (std::abs(gra_x) + std::abs(gra_y) + std::abs(gra_z)) / 3;
+            } else if (mode_phase_jump && mode_2D == true) {
+                *(nii_divergence_data + i+nr_voxels*t) = (std::abs(gra_x) + std::abs(gra_y)) / 2;
             }
         }
     }
@@ -241,9 +247,9 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     cout << "  Computing L1 norm on 2nd derivative matrices..." << endl;
     
-    // ====================================================================
+    // ========================================================================
     // Second derivatives of x
-    // ====================================================================
+    // ========================================================================
     cout << "    Second derivatives on x..." << endl;
 
     for (uint32_t t = 0; t != size_time; ++t) {
@@ -253,9 +259,9 @@ int main(int argc, char*  argv[]) {
             tie(ix, iy, iz, it) = ind2sub_4D(i+nr_voxels*t, size_x, size_y, size_z);
             float gra_x=0, gra_y=0, gra_z=0, diff1=0, diff2=0, diff3=0, a=0, b=0;
 
-            // ------------------------------------------------------------
+            // ----------------------------------------------------------------
             // 1-jump neighbours
-            // ------------------------------------------------------------
+            // ----------------------------------------------------------------
             if (ix > 0 && ix < end_x) {
                 j = sub2ind_4D(ix-1, iy, iz, it, size_x, size_y, size_z);
                 k = sub2ind_4D(ix+1, iy, iz, it, size_x, size_y, size_z);
@@ -311,9 +317,9 @@ int main(int argc, char*  argv[]) {
     }
     cout << endl;
 
-    // ====================================================================
+    // ========================================================================
     // Second derivatives of y
-    // ====================================================================
+    // ========================================================================
     cout << "    Second derivatives on y..." << endl;
     
     for (uint32_t t = 0; t != size_time; ++t) {
@@ -323,9 +329,9 @@ int main(int argc, char*  argv[]) {
             tie(ix, iy, iz, it) = ind2sub_4D(i+nr_voxels*t, size_x, size_y, size_z);
             float gra_x=0, gra_y=0, gra_z=0, diff1=0, diff2=0, diff3=0, a=0, b=0;
 
-            // ------------------------------------------------------------
+            // ----------------------------------------------------------------
             // 1-jump neighbours
-            // ------------------------------------------------------------
+            // ----------------------------------------------------------------
             if (ix > 0 && ix < end_x) {
                 j = sub2ind_4D(ix-1, iy, iz, it, size_x, size_y, size_z);
                 k = sub2ind_4D(ix+1, iy, iz, it, size_x, size_y, size_z);
@@ -381,9 +387,10 @@ int main(int argc, char*  argv[]) {
     }
     cout << endl;
 
-    // ====================================================================
+    // ========================================================================
     // Second derivatives of z
-    // ====================================================================
+    // ========================================================================
+    if (mode_2D == false) {
     cout << "    Second derivatives on z..." << endl;
 
     for (uint32_t t = 0; t != size_time; ++t) {
@@ -393,9 +400,9 @@ int main(int argc, char*  argv[]) {
             tie(ix, iy, iz, it) = ind2sub_4D(i+nr_voxels*t, size_x, size_y, size_z);
             float gra_x=0, gra_y=0, gra_z=0, diff1=0, diff2=0, diff3=0, a=0, b=0;
 
-            // ------------------------------------------------------------
+            // ----------------------------------------------------------------
             // 1-jump neighbours
-            // ------------------------------------------------------------
+            // ----------------------------------------------------------------
             if (ix > 0 && ix < end_x) {
                 j = sub2ind_4D(ix-1, iy, iz, it, size_x, size_y, size_z);
                 k = sub2ind_4D(ix+1, iy, iz, it, size_x, size_y, size_z);
@@ -449,6 +456,7 @@ int main(int argc, char*  argv[]) {
         }
     }
     cout << endl;
+    }
 
     if (mode_debug) {
         cout << "  Saving 2nd gradient sums..." << endl;
@@ -457,9 +465,9 @@ int main(int argc, char*  argv[]) {
         save_output_nifti(fout, "gra2_z", nii_gra2_z, true);
     }
 
-    // ====================================================================
+    // ========================================================================
     // Compute jolt
-    // ====================================================================
+    // ========================================================================
     cout << "  Saving L1 norms of second derivatives..." << endl;
     float xx, yy, zz;
     for (uint32_t t = 0; t != size_time; ++t) {
@@ -467,7 +475,11 @@ int main(int argc, char*  argv[]) {
             xx = *(nii_gra2_x_data + i+nr_voxels*t);
             yy = *(nii_gra2_y_data + i+nr_voxels*t);
             zz = *(nii_gra2_z_data + i+nr_voxels*t);
-            *(nii_divergence_data + i+nr_voxels*t) = (xx + yy + zz) / 3.;
+            if (mode_2D) {
+                *(nii_divergence_data + i+nr_voxels*t) = (xx + yy) / 2.;
+            } else {
+                *(nii_divergence_data + i+nr_voxels*t) = (xx + yy + zz) / 3.;                
+            }
         }
     }
     save_output_nifti(fout, "phase_jolt", nii_divergence, true);
