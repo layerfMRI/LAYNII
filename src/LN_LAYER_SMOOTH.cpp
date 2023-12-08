@@ -168,6 +168,19 @@ if ( nim_inputfi->datatype == NIFTI_TYPE_FLOAT32 ) {
 	}
 }
 
+if ( nim_inputfi->datatype == NIFTI_TYPE_FLOAT64 ) {
+  double  *nim_inputfi_data = (double *) nim_inputfi->data;
+  	for(int it=0; it<nrep; ++it){
+	  for(int islice=0; islice<sizeSlice; ++islice){
+	      for(int iy=0; iy<sizePhase; ++iy){
+	        for(int ix=0; ix<sizeRead; ++ix){
+        		 *(nim_inputf_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = (float) (*(nim_inputfi_data  + nxyz *it +  nxy*islice + nx*ix  + iy  )) ;
+           }
+	    }
+	  }
+	}
+}
+
 
 if ( nim_inputfi->datatype == NIFTI_TYPE_INT16 ) {
   short  *nim_inputfi_data = (short *) nim_inputfi->data;
@@ -198,6 +211,19 @@ if ( nim_inputfi->datatype == NIFTI_TYPE_INT32 ) {
 
 if ( nim_maski->datatype == NIFTI_TYPE_FLOAT32 ) {
   float  *nim_maski_data = (float *) nim_maski->data;
+  	for(int it=0; it<nrepm; ++it){
+	  for(int islice=0; islice<sizeSlice; ++islice){
+	      for(int iy=0; iy<sizePhase; ++iy){
+	        for(int ix=0; ix<sizeRead; ++ix){
+        		 *(nim_mask_data  + nxyz *it +  nxy*islice + nx*ix  + iy  ) = (int) (*(nim_maski_data  + nxyz *it +  nxy*islice + nx*ix  + iy  )) ;
+           }
+	    }
+	  }
+	}
+}
+
+if ( nim_maski->datatype == NIFTI_TYPE_FLOAT64 ) {
+  double  *nim_maski_data = (double *) nim_maski->data;
   	for(int it=0; it<nrepm; ++it){
 	  for(int islice=0; islice<sizeSlice; ++islice){
 	      for(int iy=0; iy<sizePhase; ++iy){
@@ -493,18 +519,34 @@ int pref_ratio = 0 ;
 	      			for(int ix_i=max(0,ix-vinc); ix_i<=min(ix+vinc,sizeRead-1); ++ix_i){
 	      			  if ( *(hairy_brain_data  + nxy*iz_i + nx*ix_i  + iy_i) == 1){
 		  				dist_i = dist((float)ix,(float)iy,(float)iz,(float)ix_i,(float)iy_i,(float)iz_i,dX,dY,dZ);
-		  				*(smoothed_data    + nxy*iz + nx*ix  + iy  ) = *(smoothed_data    + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data  + nxy*iz_i + nx*ix_i  + iy_i) * gaus(dist_i ,FWHM_val ) ;
-		    			*(gausweight_data  + nxy*iz + nx*ix  + iy  ) = *(gausweight_data  + nxy*iz + nx*ix  + iy  ) + gaus(dist_i ,FWHM_val ) ;
+		  				//*(smoothed_data    + nxy*iz + nx*ix  + iy  ) = *(smoothed_data    + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data  + nxy*iz_i + nx*ix_i  + iy_i) * gaus(dist_i ,FWHM_val ) ;
+		    			//*(gausweight_data  + nxy*iz + nx*ix  + iy  ) = *(gausweight_data  + nxy*iz + nx*ix  + iy  ) + gaus(dist_i ,FWHM_val ) ;
+		    			
+		    			for (int time_i = 0 ; time_i < nrep ; ++time_i){
+                            *(smoothed_data + nxyz *time_i    + nxy*iz + nx*ix  + iy  ) = *(smoothed_data  +  nxyz *time_i    + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data +  nxyz *time_i  + nxy*iz_i + nx*ix_i  + iy_i  ) * gaus(dist_i ,FWHM_val ) ;
+                            }
+                              //  *(smoothed_data     + nxy*iz + nx*ix  + iy  ) = *(smoothed_data     + nxy*iz + nx*ix  + iy  ) + *(nim_inputf_data  + nxy*iz_i + nx*ix_i  + iy_i  ) * gaus(dist_i ,FWHM_val ) ;
+
+		    				*(gausweight_data  + nxy*iz + nx*ix  + iy  ) = *(gausweight_data  + nxy*iz + nx*ix  + iy  ) + gaus(dist_i ,FWHM_val ) ;
 
 			  		  }
 		            }
 	      	    }
 	          }
-	       if (*(gausweight_data  + nxy*iz + nx*ix  + iy  ) > 0 ) *(smoothed_data    + nxy*iz + nx*ix  + iy  )  = *(smoothed_data    + nxy*iz + nx*ix  + iy  )/ *(gausweight_data  + nxy*iz + nx*ix  + iy  );
+	       //if (*(gausweight_data  + nxy*iz + nx*ix  + iy  ) > 0 ) *(smoothed_data    + nxy*iz + nx*ix  + iy  )  = *(smoothed_data    + nxy*iz + nx*ix  + iy  )/ *(gausweight_data  + nxy*iz + nx*ix  + iy  );
 
-
+                for (int time_i = 0 ; time_i < nrep ; ++time_i){
+                    if (*(gausweight_data  + nxy*iz + nx*ix  + iy  ) > 0 ) *(smoothed_data + nxyz *time_i     + nxy*iz + nx*ix  + iy  )  = *(smoothed_data  + nxyz *time_i  + nxy*iz + nx*ix  + iy  )/ *(gausweight_data  + nxy*iz + nx*ix  + iy  );
+                }
 
 	     } /// if scope  if (*(nim_mask_data +  nxy*iz + nx*ix  + iy  )  > 0  ){ closed
+	     
+	     if (*(nim_mask_data   +  nxy*iz + nx*ix  + iy  )  <= 0 )	 {
+
+                for (int time_i = 0 ; time_i < nrep ; ++time_i){
+                 	*(smoothed_data +  nxyz *time_i   + nxy*iz + nx*ix  + iy  ) =  *(nim_inputf_data  +  nxyz *time_i + nxy*iz + nx*ix  + iy  ) ;
+                }
+         }
 
         }
       }
