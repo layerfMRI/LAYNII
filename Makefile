@@ -266,6 +266,9 @@ LN2_PHASE_LAPLACIAN:
 LN2_PHASE_JOLT:
 	$(CC) $(CFLAGS) -o LN2_PHASE_JOLT src/LN2_PHASE_JOLT.cpp $(LIBRARIES) $(LFLAGS)
 
+LN2_SKELETONIZE:
+	$(CC) $(CFLAGS) -o LN2_SKELETONIZE src/LN2_SKELETONIZE.cpp $(LIBRARIES) $(LFLAGS)
+
 # =============================================================================
 
 clean:
