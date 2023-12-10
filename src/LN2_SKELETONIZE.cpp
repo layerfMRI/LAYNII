@@ -114,6 +114,8 @@ int main(int argc, char*  argv[]) {
 
     int count = 1;
     while (!set_initial.empty()) {
+    // int max_iter = 1;
+    // while (!set_initial.empty() && count <= max_iter) {
     cout << "  " << count << endl;
 
     // ========================================================================
@@ -162,12 +164,15 @@ int main(int argc, char*  argv[]) {
         }
     }
 
-    // (Optional) Write intermediate output
     for (const auto i : set_connected) {
         *(nii_temp_data + i) = 2;
     }
     for (const auto i : set_candidate) {
         *(nii_temp_data + i) = 1;
+    }
+
+    if (mode_debug) {
+        save_output_nifti(fout, "step-1", nii_temp, false);
     }
 
     // ========================================================================
@@ -213,9 +218,12 @@ int main(int argc, char*  argv[]) {
         } 
     }
 
-    // (Optional) Write intermediate output
     for (const auto i : set_candidate2) {
         *(nii_temp_data + i) = 3;
+    }
+
+    if (mode_debug) {
+        save_output_nifti(fout, "step-2", nii_temp, false);
     }
 
     // ========================================================================
@@ -234,7 +242,8 @@ int main(int argc, char*  argv[]) {
 
     // Write out the determined skeleton pieces
     for (const auto i : set_candidate2) {
-        *(nii_output_data + i) = count;
+        // *(nii_output_data + i) = count;
+        *(nii_output_data + i) = 1;
     }
 
     // Refresh the sets in preparation to the next iteration
