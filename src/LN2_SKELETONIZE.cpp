@@ -116,145 +116,194 @@ int main(int argc, char*  argv[]) {
     while (!set_initial.empty()) {
     // int max_iter = 1;
     // while (!set_initial.empty() && count <= max_iter) {
-    cout << "  " << count << endl;
+        
+        cout << "  " << count << endl;
+
+        // ========================================================================
+        // Step 1: Separate fully connected voxels
+        // ========================================================================
+        std::set<uint32_t> set_connected, set_candidate;
+        uint32_t ix, iy, iz, j, k;
+        for (const auto i : set_initial) {
+            tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+            uint8_t count = 0;
+            // ----------------------------------------------------------------
+            // 1-jump neighbours
+            // ----------------------------------------------------------------
+            if (ix > 0 && ix < end_x) {
+                j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                k = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                if (*(nii_input_data + j) == 1) count += 1;
+                if (*(nii_input_data + k) == 1) count += 1;
+            }
+            if (iy > 0 && iy < end_y) {
+                j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                k = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                if (*(nii_input_data + j) == 1) count += 1;
+                if (*(nii_input_data + k) == 1) count += 1;
+            }
+            // ----------------------------------------------------------------
+            // 2-jump neighbours
+            // ----------------------------------------------------------------
+            if (ix > 0 && ix < end_x) {
+                j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
+                k = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
+                if (*(nii_input_data + j) == 1) count += 1;
+                if (*(nii_input_data + k) == 1) count += 1;
+            }
+            if (iy > 0 && iy < end_y) {
+                j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
+                k = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
+                if (*(nii_input_data + j) == 1) count += 1;
+                if (*(nii_input_data + k) == 1) count += 1;
+            }
+
+            if (count == 8) {
+                set_connected.insert(i);
+            } else {
+                set_candidate.insert(i);
+            }
+        }
+
+        for (const auto i : set_connected) {
+            *(nii_temp_data + i) = 2;
+        }
+        for (const auto i : set_candidate) {
+            *(nii_temp_data + i) = 1;
+        }
+
+        if (mode_debug) {
+            save_output_nifti(fout, "step-1", nii_temp, false);
+        }
+
+        // ====================================================================
+        // Step 2: Eliminate candidates that are neighbouring fully connected
+        // ====================================================================
+        std::set<uint32_t> set_candidate2;
+        for (const auto i : set_candidate) {
+            tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+            bool detector = false;
+            // ----------------------------------------------------------------
+            // 1-jump neighbours
+            // ----------------------------------------------------------------
+            if (ix > 0 && ix < end_x) {
+                j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                k = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                if (*(nii_temp_data + j) == 2) detector = true;
+                if (*(nii_temp_data + k) == 2) detector = true;
+            }
+            if (iy > 0 && iy < end_y) {
+                j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                k = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                if (*(nii_temp_data + j) == 2) detector = true;
+                if (*(nii_temp_data + k) == 2) detector = true;
+            }
+            // ----------------------------------------------------------------
+            // 2-jump neighbours
+            // ----------------------------------------------------------------
+            if (ix > 0 && ix < end_x) {
+                j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
+                k = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
+                if (*(nii_temp_data + j) == 2) detector = true;
+                if (*(nii_temp_data + k) == 2) detector = true;
+            }
+            if (iy > 0 && iy < end_y) {
+                j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
+                k = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
+                if (*(nii_temp_data + j) == 2) detector = true;
+                if (*(nii_temp_data + k) == 2) detector = true;
+            }
+
+            if (detector == false) {
+                set_candidate2.insert(i);
+            } 
+        }
+
+        for (const auto i : set_candidate2) {
+            *(nii_temp_data + i) = 3;
+        }
+
+        if (mode_debug) {
+            save_output_nifti(fout, "step-2", nii_temp, false);
+        }
+
+        // ====================================================================
+        // Step 3: Keep voxels that touch on selected
+        // ====================================================================
+        for (const auto i : set_candidate) {
+            tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+            bool detector = false;
+            // ----------------------------------------------------------------
+            // 1-jump neighbours
+            // ----------------------------------------------------------------
+            if (ix > 0 && ix < end_x) {
+                j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                k = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                if (*(nii_temp_data + j) == 3) detector = true;
+                if (*(nii_temp_data + k) == 3) detector = true;
+            }
+            if (iy > 0 && iy < end_y) {
+                j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                k = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                if (*(nii_temp_data + j) == 3) detector = true;
+                if (*(nii_temp_data + k) == 3) detector = true;
+            }
+            // ----------------------------------------------------------------
+            // 2-jump neighbours
+            // ----------------------------------------------------------------
+            if (ix > 0 && ix < end_x) {
+                j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
+                k = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
+                if (*(nii_temp_data + j) == 3) detector = true;
+                if (*(nii_temp_data + k) == 3) detector = true;
+            }
+            if (iy > 0 && iy < end_y) {
+                j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
+                k = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
+                if (*(nii_temp_data + j) == 3) detector = true;
+                if (*(nii_temp_data + k) == 3) detector = true;
+            }
+
+            if (detector == true) {
+                set_candidate2.insert(i);
+            }
+        }
+
+        // ====================================================================
+        // Step 6: Replace the initial set with fully connected voxels
+        // ====================================================================
+        // Only operate on the fully connected voxels in the next iteration
+        for (const auto i : set_candidate) {
+            *(nii_input_data + i) = 0;
+        }
+
+        // Clear temporary data
+        for (const auto i : set_initial) {
+            *(nii_temp_data + i) = 0;
+        }
+
+        // Write out the determined skeleton pieces
+        for (const auto i : set_candidate2) {
+            // *(nii_output_data + i) = count;
+            *(nii_output_data + i) = 1;
+        }
+
+        // Refresh the sets in preparation to the next iteration
+        set_initial.swap(set_connected);
+        set_connected.clear();
+        set_candidate.clear();
+        set_candidate2.clear();
+
+        count += 1;
+    }
 
     // ========================================================================
-    // Step 1: Separate fully connected voxels
+    // Step 4?: Dilate chosen?
     // ========================================================================
-    std::set<uint32_t> set_connected, set_candidate;
-    uint32_t ix, iy, iz, j, k;
-    for (const auto i : set_initial) {
-        tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
-        uint8_t count = 0;
-        // --------------------------------------------------------------------
-        // 1-jump neighbours
-        // --------------------------------------------------------------------
-        if (ix > 0 && ix < end_x) {
-            j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-            k = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-            if (*(nii_input_data + j) == 1) count += 1;
-            if (*(nii_input_data + k) == 1) count += 1;
-        }
-        if (iy > 0 && iy < end_y) {
-            j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-            k = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-            if (*(nii_input_data + j) == 1) count += 1;
-            if (*(nii_input_data + k) == 1) count += 1;
-        }
-        // --------------------------------------------------------------------
-        // 2-jump neighbours
-        // --------------------------------------------------------------------
-        if (ix > 0 && ix < end_x) {
-            j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
-            k = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
-            if (*(nii_input_data + j) == 1) count += 1;
-            if (*(nii_input_data + k) == 1) count += 1;
-        }
-        if (iy > 0 && iy < end_y) {
-            j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
-            k = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
-            if (*(nii_input_data + j) == 1) count += 1;
-            if (*(nii_input_data + k) == 1) count += 1;
-        }
-
-        if (count == 8) {
-            set_connected.insert(i);
-        } else {
-            set_candidate.insert(i);
-        }
-    }
-
-    for (const auto i : set_connected) {
-        *(nii_temp_data + i) = 2;
-    }
-    for (const auto i : set_candidate) {
-        *(nii_temp_data + i) = 1;
-    }
-
-    if (mode_debug) {
-        save_output_nifti(fout, "step-1", nii_temp, false);
-    }
 
     // ========================================================================
-    // Step 2: Eliminate candidates that are neighbouring fully connected
+    // Step 5?: Symmetry filter
     // ========================================================================
-    std::set<uint32_t> set_candidate2;
-    for (const auto i : set_candidate) {
-        tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
-        bool detector = false;
-        // ----------------------------------------------------------------
-        // 1-jump neighbours
-        // ----------------------------------------------------------------
-        if (ix > 0 && ix < end_x) {
-            j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-            k = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-            if (*(nii_temp_data + j) == 2) detector = true;
-            if (*(nii_temp_data + k) == 2) detector = true;
-        }
-        if (iy > 0 && iy < end_y) {
-            j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-            k = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-            if (*(nii_temp_data + j) == 2) detector = true;
-            if (*(nii_temp_data + k) == 2) detector = true;
-        }
-        // ----------------------------------------------------------------
-        // 2-jump neighbours
-        // ----------------------------------------------------------------
-        if (ix > 0 && ix < end_x) {
-            j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
-            k = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
-            if (*(nii_temp_data + j) == 2) detector = true;
-            if (*(nii_temp_data + k) == 2) detector = true;
-        }
-        if (iy > 0 && iy < end_y) {
-            j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
-            k = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
-            if (*(nii_temp_data + j) == 2) detector = true;
-            if (*(nii_temp_data + k) == 2) detector = true;
-        }
-
-        if (detector == false) {
-            set_candidate2.insert(i);
-        } 
-    }
-
-    for (const auto i : set_candidate2) {
-        *(nii_temp_data + i) = 3;
-    }
-
-    if (mode_debug) {
-        save_output_nifti(fout, "step-2", nii_temp, false);
-    }
-
-    // ========================================================================
-    // Step 3: Replace the initial set with fully connected voxels
-    // ========================================================================
-    // Only operate on the fully connected voxels in the next iteration
-    for (const auto i : set_candidate) {
-        *(nii_input_data + i) = 0;
-        *(nii_temp_data + i) = 0;
-    }
-
-    // Clear temporary data
-    for (const auto i : set_connected) {
-        *(nii_temp_data + i) = 0;
-    }
-
-    // Write out the determined skeleton pieces
-    for (const auto i : set_candidate2) {
-        // *(nii_output_data + i) = count;
-        *(nii_output_data + i) = 1;
-    }
-
-    // Refresh the sets in preparation to the next iteration
-    set_initial.swap(set_connected);
-    set_connected.clear();
-    set_candidate.clear();
-    set_candidate2.clear();
-
-    count += 1;
-
-    }
 
     // ========================================================================
     cout << "  Saving output..." << endl;
