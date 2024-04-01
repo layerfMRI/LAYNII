@@ -272,6 +272,9 @@ LN2_PHASE_JOLT:
 LN2_SKELETONIZE:
 	$(CC) $(CFLAGS) -o LN2_SKELETONIZE src/LN2_SKELETONIZE.cpp $(LIBRARIES) $(LFLAGS)
 
+LN3_LAYERS:
+	$(CC) $(CFLAGS) -o LN3_LAYERS src/LN3_LAYERS.cpp $(LIBRARIES) $(LFLAGS)
+
 # =============================================================================
 
 clean:
