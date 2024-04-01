@@ -40,6 +40,7 @@ nifti_image* copy_nifti_as_float32(nifti_image* nii);
 nifti_image* copy_nifti_as_float16(nifti_image* nii);
 nifti_image* copy_nifti_as_int32(nifti_image* nii);
 nifti_image* copy_nifti_as_int16(nifti_image* nii);
+nifti_image* copy_nifti_as_int8(nifti_image* nii);
 nifti_image* copy_nifti_as_float32_with_scl_slope_and_scl_inter(nifti_image* nii);
 
 std::tuple<uint32_t, uint32_t, uint32_t> ind2sub_3D(
