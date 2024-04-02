@@ -124,50 +124,172 @@ int main(int argc, char*  argv[]) {
 
     // ========================================================================
     // Fix input datatype issues
+    // ========================================================================
     nifti_image* nii_rim = copy_nifti_as_int8(nii1);
     int8_t* nii_rim_data = static_cast<int8_t*>(nii_rim->data);
     free(nii1);
 
     // ------------------------------------------------------------------------
     // Prepare for RAM optimization RAM by allocating minimal data
-
-    int nr_voi = 0;  // Voxels of interest
+    // ------------------------------------------------------------------------
+    // First find all gray matter voxels
+    int nr_voi_gm = 0;
     for (int i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {  // Only gray matter voxels
-            nr_voi += 1;
+            nr_voi_gm += 1;
         }
     }
+
     // Allocate memory to only the voxel of interest
-    int* voi_id;
-    voi_id = (int*) malloc(nr_voi*sizeof(int));
+    int* voi_id_gm = (int*) malloc(nr_voi_gm*sizeof(int));
 
     // Fill in indices to be able to remap from subset to full set of voxels
     int ii = 0;
     for (int i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
-            *(voi_id + ii) = i;
+            *(voi_id_gm + ii) = i;
             ii += 1;
         }
     }
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // TODO: I need to save neighbor indices, triangular mesh style
-    // This would require 27 times more data than nr_voi initially, but deflate 
-    // the overall RAM usage by sparsity factor
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // Second, find all gray matter boundaries
+    std::set<int> voi_id_borders;  // Need sets as j's can overlap over loop
+    int ix, iy, iz, j;
+    for (int ii = 0; ii != nr_voi_gm; ++ii) {
+        int i = *(voi_id_gm + ii);
+        tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
 
-    // Loop over 3 voxels
-    //     If j's are non zero, add to neighbor index list
-    //     (NOTE: I need to preserve a special value for invalid voxels, maybe 0?
+        // --------------------------------------------------------------------
+        // 1-jump neighbours
+        // --------------------------------------------------------------------
+        if (ix > 0) {
+            j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+            if (*(nii_rim_data + j) == 1 || *(nii_rim_data + j) == 2) {
+                voi_id_borders.insert(j);
+            }
+        }
+        if (ix < end_x) {
+            j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+            if (*(nii_rim_data + j) == 1 || *(nii_rim_data + j) == 2) {
+                voi_id_borders.insert(j);
+            }
+        }
+        if (iy > 0) {
+            j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+            if (*(nii_rim_data + j) == 1 || *(nii_rim_data + j) == 2) {
+                voi_id_borders.insert(j);
+            }
+        }
+        if (iy < end_y) {
+            j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+            if (*(nii_rim_data + j) == 1 || *(nii_rim_data + j) == 2) {
+                voi_id_borders.insert(j);
+            }
+        }
+        if (iz > 0) {
+            j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+            if (*(nii_rim_data + j) == 1 || *(nii_rim_data + j) == 2) {
+                voi_id_borders.insert(j);
+            }
+        }
+        if (iz < end_z) {
+            j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+            if (*(nii_rim_data + j) == 1 || *(nii_rim_data + j) == 2) {
+                voi_id_borders.insert(j);
+            }
+        }
+    }
+    int nr_voi_borders = voi_id_borders.size();
 
     // ------------------------------------------------------------------------
-    printf("  Sparsity: %.1f %% (%.2fM out of %.2fM voxels)", 
+    // Allocate memory to gray matter + border voxels of interest
+    int nr_voi = (nr_voi_gm + nr_voi_borders);
+    int* voi_id = (int*)malloc(nr_voi * sizeof(int));
+
+    // Merge gray matter and border voxel indices
+    for (int i = 0; i != nr_voi_gm; ++i) {
+        *(voi_id + i) = *(voi_id_gm + i);
+    }
+    int temp_counter = 0;
+    for (const int& i : voi_id_borders) {
+        *(voi_id + nr_voi_gm + temp_counter) = i;
+        temp_counter += 1;
+    }
+
+    // ------------------------------------------------------------------------
+    printf("  Sparsity: %.1f %% (%.2fM out of %.2fM voxels are gray matter + borders)", 
            static_cast<float>(nr_voi) / nr_voxels * 100, 
            static_cast<float>(nr_voi) / 1000000, 
            static_cast<float>(nr_voxels) / 1000000
            );
 
     // ------------------------------------------------------------------------
+    // Reduce input to voxels of interest
+    // ------------------------------------------------------------------------
+    int8_t* voi_rim = (int8_t*)malloc(nr_voi * sizeof(int8_t));
+    for (int ii = 0; ii != nr_voi; ++ii) {
+        int i = *(voi_id + ii);
+        *(voi_rim + ii) = *(nii_rim_data + i);
+    }
+
+    // DEBUG
+    nifti_image* nii_out = copy_nifti_as_int8(nii1);
+    int8_t* nii_out_data = static_cast<int8_t*>(nii_out->data);
+    for (int i = 0; i != nr_voxels; ++i) {
+        *(nii_out_data + i) = 0;
+    }
+    for (int ii = 0; ii != nr_voi; ++ii) {
+        int i = *(voi_id + ii);
+        *(nii_out_data + i) = *(voi_rim + ii);
+    }
+    save_output_nifti(fout, "DEBUG_voi", nii_out, false);
+
+    // // ------------------------------------------------------------------------
+    // // Allocate memory for neighbor indices
+    // // ------------------------------------------------------------------------
+    // int* voi_id_11 = (int*)malloc(nr_voi * sizeof(int));
+    // int* voi_id_12 = (int*)malloc(nr_voi * sizeof(int));
+    // int* voi_id_13 = (int*)malloc(nr_voi * sizeof(int));
+    // int* voi_id_14 = (int*)malloc(nr_voi * sizeof(int));
+    // int* voi_id_15 = (int*)malloc(nr_voi * sizeof(int));
+    // int* voi_id_16 = (int*)malloc(nr_voi * sizeof(int));
+
+    // // Populate neighbors
+    // int ix, iy, iz, j, k;
+    // for (int ii = 0; ii != nr_voi; ++ii) {
+    //     int i = *(voi_id + ii);
+    //     tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+
+    //     // --------------------------------------------------------------------
+    //     // 1-jump neighbours
+    //     // --------------------------------------------------------------------
+    //     if (ix > 0) {
+    //         j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+    //         *(voi_id_11 + ii) = j;
+    //     }
+    //     if (ix < end_x) {
+    //         j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+    //         *(voi_id_12 + ii) = j;
+    //     }
+    //     if (iy > 0) {
+    //         j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+    //         *(voi_id_13 + ii) = j;
+    //     }
+    //     if (iy < end_y) {
+    //         j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+    //         *(voi_id_14 + ii) = j;
+    //     }
+    //     if (iz > 0) {
+    //         j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+    //         *(voi_id_15 + ii) = j;
+    //     }
+    //     if (iz < end_z) {
+    //         j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+    //         *(voi_id_16 + ii) = j;
+    //     }
+    // }
+
+    // // ------------------------------------------------------------------------
     // // Allocate memory for only voxels of interest
     // int16_t* innerGM_step_data;
     // innerGM_step_data = (int16_t*) malloc(nr_voi * sizeof(int16_t));
@@ -199,24 +321,22 @@ int main(int argc, char*  argv[]) {
 
     // uint16_t grow_step = 1;
     // uint32_t voxel_counter = nr_voxels;
-    // uint32_t ix, iy, iz, j, k;
     // float d;
     // while (voxel_counter != 0) {
     //     voxel_counter = 0;
     //     for (int ii = 0; ii != nr_voi; ++ii) {
     //         int i = *(voi_id + ii);
 
-    //         if (*(innerGM_step_data + i) == grow_step) {
-    //             tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+    //         if (*(innerGM_step_data + ii) == grow_step) {
     //             voxel_counter += 1;
 
     //             // ------------------------------------------------------------
     //             // 1-jump neighbours
     //             // ------------------------------------------------------------
     //             if (ix > 0) {
-    //                 j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-    //                 if (*(nii_rim_data + j) == 3) {
-    //                     d = *(innerGM_dist_data + i) + dX;
+    //                 j = *(voi_id_11 + ii);
+    //                 if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
+    //                     d = *(innerGM_dist_data + ii) + dX;
     //                     if (d < *(innerGM_dist_data + j)
     //                         || *(innerGM_dist_data + j) == 0) {
     //                         *(innerGM_dist_data + j) = d;
