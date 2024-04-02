@@ -281,7 +281,7 @@ int main(int argc, char*  argv[]) {
                 // ------------------------------------------------------------
                 if (ix > 0) {
                     j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-                    if (*(nii_rim_data + j) == 3) {
+                    if (*(nii_rim_data + j) == 3 || *(nii_rim_data + j) == 1 ) {
                         d = *(innerGM_dist_data + i) + dX;
                         if (d < *(innerGM_dist_data + j)
                             || *(innerGM_dist_data + j) == 0) {
