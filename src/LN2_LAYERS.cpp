@@ -193,7 +193,7 @@ int main(int argc, char*  argv[]) {
             ii += 1;
         }
     }
-    cout << "  Rim file voxel sparsity " << (nr_voi / nr_voxels) * 100 << "%"<< endl;
+    cout << "  Rim file voxel sparsity " << (static_cast<float>(nr_voi) / nr_voxels) * 100 << " %"<< endl;
 
     // ------------------------------------------------------------------------
     // Prepare required nifti images
