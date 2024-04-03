@@ -306,7 +306,7 @@ int main(int argc, char*  argv[]) {
     }
 
     // ------------------------------------------------------------------------
-    // Fill in first iteration of neighbors
+    // Fill in first iteration of neighbors only for borders
     // ------------------------------------------------------------------------
     int jj;
     for (int ii = 0; ii != nr_voi_gm; ++ii) {
