@@ -114,11 +114,11 @@ int main(int argc, char*  argv[]) {
     const float dZ = nii1->pixdim[3];
 
     // Short diagonals
-    const float dia_xy = sqrt(dX * dX + dY * dY);
-    const float dia_xz = sqrt(dX * dX + dZ * dZ);
-    const float dia_yz = sqrt(dY * dY + dZ * dZ);
+    const float dia_XY = sqrt(dX * dX + dY * dY);
+    const float dia_XZ = sqrt(dX * dX + dZ * dZ);
+    const float dia_YZ = sqrt(dY * dY + dZ * dZ);
     // Long diagonals
-    const float dia_xyz = sqrt(dX * dX + dY * dY + dZ * dZ);
+    const float dia_XYZ = sqrt(dX * dX + dY * dY + dZ * dZ);
 
     // ------------------------------------------------------------------------
     // Fix input datatype issues
@@ -409,7 +409,7 @@ int main(int argc, char*  argv[]) {
             *(innerGM_dist + ii) = 0.;
         } else {
             *(innerGM_step + ii) = 0.;
-            *(innerGM_dist + ii) = std::numeric_limits<float>::max() - dia_xyz * 2;
+            *(innerGM_dist + ii) = std::numeric_limits<float>::max();
         }
     }
 
@@ -426,7 +426,6 @@ int main(int argc, char*  argv[]) {
 
     // Loop over gray matter voxels, compute distance if neighbor is border
     int step = 1;
-    float d;
     int jj;
     int counter = 666;
     while (counter != 0) {
@@ -439,6 +438,7 @@ int main(int argc, char*  argv[]) {
             int kk = *(voi_id_inv + i);
             tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
             bool border_detected = false;
+            float d = std::numeric_limits<float>::max();
 
             // ----------------------------------------------------------------
             // 1-jump neighbours
@@ -446,60 +446,54 @@ int main(int argc, char*  argv[]) {
             j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dX;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dX < d) {
+                    d = *(innerGM_dist + jj) + dX;              
                 }
             }
 
             j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dX;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dX < d) {
+                    d = *(innerGM_dist + jj) + dX;              
                 }
             }
 
             j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dY;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dY < d) {
+                    d = *(innerGM_dist + jj) + dY;              
                 }
             }
 
             j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dY;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dY < d) {
+                    d = *(innerGM_dist + jj) + dY;              
                 }
             }
 
             j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dZ;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dZ < d) {
+                    d = *(innerGM_dist + jj) + dZ;              
                 }
             }
 
             j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dZ;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dZ < d) {
+                    d = *(innerGM_dist + jj) + dZ;              
                 }
             }
 
@@ -509,120 +503,108 @@ int main(int argc, char*  argv[]) {
             j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_xy;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_XY < d) {
+                    d = *(innerGM_dist + jj) + dia_XY;              
                 }
             }
 
             j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_xy;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_XY < d) {
+                    d = *(innerGM_dist + jj) + dia_XY;              
                 }
             }
 
             j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_xy;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_XY < d) {
+                    d = *(innerGM_dist + jj) + dia_XY;              
                 }
             }
 
             j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_xy;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_XY < d) {
+                    d = *(innerGM_dist + jj) + dia_XY;              
                 }
             }
 
             j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_yz;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_YZ < d) {
+                    d = *(innerGM_dist + jj) + dia_YZ;              
                 }
             }
 
             j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_yz;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_YZ < d) {
+                    d = *(innerGM_dist + jj) + dia_YZ;              
                 }
             }
 
             j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_yz;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_YZ < d) {
+                    d = *(innerGM_dist + jj) + dia_YZ;              
                 }
             }
 
             j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_yz;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_YZ < d) {
+                    d = *(innerGM_dist + jj) + dia_YZ;              
                 }
             }
 
             j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_xz;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_XZ < d) {
+                    d = *(innerGM_dist + jj) + dia_XZ;              
                 }
             }
 
             j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_xz;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_XZ < d) {
+                    d = *(innerGM_dist + jj) + dia_XZ;              
                 }
             }
 
             j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_xz;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_XZ < d) {
+                    d = *(innerGM_dist + jj) + dia_XZ;              
                 }
             }
 
             j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_xz;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_XZ < d) {
+                    d = *(innerGM_dist + jj) + dia_XZ;              
                 }
             }
 
@@ -632,80 +614,72 @@ int main(int argc, char*  argv[]) {
             j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_xyz;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_XYZ < d) {
+                    d = *(innerGM_dist + jj) + dia_XYZ;              
                 }
             }
 
             j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_xyz;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_XYZ < d) {
+                    d = *(innerGM_dist + jj) + dia_XYZ;              
                 }
             }
 
             j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_xyz;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_XYZ < d) {
+                    d = *(innerGM_dist + jj) + dia_XYZ;              
                 }
             }
 
             j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_xyz;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_XYZ < d) {
+                    d = *(innerGM_dist + jj) + dia_XYZ;              
                 }
             }
 
             j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_xyz;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_XYZ < d) {
+                    d = *(innerGM_dist + jj) + dia_XYZ;              
                 }
             }
 
             j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_xyz;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_XYZ < d) {
+                    d = *(innerGM_dist + jj) + dia_XYZ;              
                 }
             }
 
             j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_xyz;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_XYZ < d) {
+                    d = *(innerGM_dist + jj) + dia_XYZ;              
                 }
             }
 
             j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
             jj = *(voi_id_inv + j);
             if (*(innerGM_step + jj) == step) {
-                d = *(innerGM_dist + jj) + dia_xyz;
-                if (d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
-                    border_detected = true;              
+                border_detected = true;
+                if (*(innerGM_dist + jj) + dia_XYZ < d) {
+                    d = *(innerGM_dist + jj) + dia_XYZ;              
                 }
             }
 
@@ -714,8 +688,7 @@ int main(int argc, char*  argv[]) {
                 ++size_determined;
                 ++counter;
                 *(innerGM_step + kk) = step + 1;
-                // TODO: Update distance data once at the end
-                // Keep other calculations temp.
+                *(innerGM_dist + kk) = d;
             } else {
                 *(vox_id_undetermined + ii-counter) = i;
 
