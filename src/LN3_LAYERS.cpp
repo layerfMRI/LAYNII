@@ -122,8 +122,8 @@ int main(int argc, char*  argv[]) {
 
     // ------------------------------------------------------------------------
     // Fix input datatype issues
-    nifti_image* nii_rim = copy_nifti_as_int8(nii1);
-    int8_t* nii_rim_data = static_cast<int8_t*>(nii_rim->data);
+    nifti_image* nii_rim = copy_nifti_as_int32(nii1);
+    int* nii_rim_data = static_cast<int*>(nii_rim->data);
 
     // ================================================================================================================
     // Prepare for RAM optimization RAM by allocating minimal data
@@ -146,7 +146,7 @@ int main(int argc, char*  argv[]) {
     for (int i = 0; i != nr_voxels; ++i) {
         if (*(nii_rim_data + i) == 3) {
             *(voi_id_gm + ii) = i;
-            ii += 1;
+            ++ii;
         }
     }
 
@@ -361,28 +361,20 @@ int main(int argc, char*  argv[]) {
     free(voi_id_gm);
 
     // ------------------------------------------------------------------------
-    // Prepare inverse mapping
-    // ------------------------------------------------------------------------
-    int* voi_id_inv = (int*)malloc(nr_voxels * sizeof(int));  // 3D
-    for (int ii = 0; ii != nr_voi; ++ii) {
-        int i = *(voi_id + ii);
-        *(voi_id_inv + i) = ii;
-    }
-
-    // ------------------------------------------------------------------------
     // Reduce input to voxels of interest
     // ------------------------------------------------------------------------
-    int8_t* voi_rim = (int8_t*)malloc(nr_voi * sizeof(int8_t));
+    int8_t* voi_rim = (int8_t*)malloc((nr_voi+1) * sizeof(int8_t));  // +1 is very important to hold references to 0
     for (int ii = 0; ii != nr_voi; ++ii) {
         int i = *(voi_id + ii);
         *(voi_rim + ii) = *(nii_rim_data + i);
     }
+    *(voi_rim + nr_voi) = 0;  // Reserve last data point to 0 label in rim (very important)
     free(nii_rim_data);
     free(nii_rim);
 
     // // DEBUG
-    // nifti_image* nii_out1 = copy_nifti_as_int8(nii1);
-    // int8_t* nii_out1_data = static_cast<int8_t*>(nii_out1->data);
+    // nifti_image* nii_out1 = copy_nifti_as_int32(nii1);
+    // int* nii_out1_data = static_cast<int*>(nii_out1->data);
     // for (int i = 0; i != nr_voxels; ++i) {
     //     *(nii_out1_data + i) = 0;
     // }
@@ -393,10 +385,24 @@ int main(int argc, char*  argv[]) {
     // save_output_nifti(fout, "DEBUG_voi", nii_out1, false);
     // free(nii_out1);
 
+    // ------------------------------------------------------------------------
+    // Prepare inverse mapping
+    // ------------------------------------------------------------------------
+    int* voi_id_inv = (int*)malloc(nr_voxels * sizeof(int));  // 3D
+    // All voxels point to 0 in voi_id by default if the following assignment is not done. Therefore, I decided to
+    // allocate one extra voxels in voi_id to point to 0.
+    for (int i = 0; i != nr_voxels; ++i) {
+        *(voi_id_inv + i) = nr_voi + 1;  
+    }
+    for (int ii = 0; ii != nr_voi; ++ii) {
+        int i = *(voi_id + ii);
+        *(voi_id_inv + i) = ii;
+    }
+
     // ================================================================================================================
     // Grow from inner GM border
     // ================================================================================================================
-    cout << "\n  Start growing from inner GM (WM-facing border)..." << endl;
+    printf("\n  Start growing from inner GM (WM-facing border)...\n");
 
     // Allocate memory
     int16_t* innerGM_step = (int16_t*)malloc(nr_voi * sizeof(int16_t));
@@ -414,325 +420,383 @@ int main(int argc, char*  argv[]) {
     }
 
     // Initialize unprocessed and processed sets
-    int* vox_id_undetermined = (int*)malloc(nr_voi_gm * sizeof(int));
-    int* temp = (int*)malloc(nr_voi_gm * sizeof(int));
+    int* vox_id_undetermined = (int*)malloc(nr_voi * sizeof(int));
 
-    int size_undetermined = nr_voi_gm;
+    int size_undetermined = nr_voi;
     int size_determined = 0;
 
-    for (int i = 0; i != nr_voi_gm; ++i) {
+    for (int i = 0; i != nr_voi; ++i) {
         *(vox_id_undetermined + i) = *(voi_id + i);
     } 
 
     // Loop over gray matter voxels, compute distance if neighbor is border
     int step = 1;
     int jj;
-    int counter = 666;
-    while (counter != 0) {
-    // for (int iter = 0; iter != 12; ++iter) {  // DEBUG
-        cout << "    Processing voxels: " << size_undetermined << " -> " << size_determined << endl;
+    printf("    Processing voxels [undetermined -> determined]\n");
+    while (size_undetermined != 0) {
+        std::cout << "\r      Step: " << step << " | " << size_undetermined << " -> " << size_determined << "        ";
+        std::cout.flush();
 
         // Loop over undetermined voxels only
-        counter = 0;
+        int temp_counter = 0;
         for (int ii = 0; ii != size_undetermined; ++ii) {
             int i = *(vox_id_undetermined + ii);
             int kk = *(voi_id_inv + i);
-            tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
-            bool border_detected = false;
-            float d = std::numeric_limits<float>::max();
 
-            // ----------------------------------------------------------------
-            // 1-jump neighbours
-            // ----------------------------------------------------------------
-            j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dX;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
+            if (*(innerGM_step + kk) == step) {
+
+                tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+                bool border_detected = false;
+                float d = std::numeric_limits<float>::max();
+
+                // ----------------------------------------------------------------
+                // 1-jump neighbours
+                // ----------------------------------------------------------------
+                if (ix > 0) {
+                    j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dX;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dX;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                    *(innerGM_dist + kk) = d;
+                if (ix < end_x) {
+                    j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dX;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dY;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;                }
-            }
-
-            j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dY;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
+                if (iy > 0) {
+                    j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dY;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dZ;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;                }
-            }
-
-            j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dZ;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
+                if (iy < end_y) {
+                    j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dY;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            // ----------------------------------------------------------------
-            // 2-jump neighbours
-            // ----------------------------------------------------------------
-            j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_XY;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                if (iz > 0) {
+                    j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dZ;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_XY;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                if (iz < end_z) {
+                    j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dZ;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
 
-            j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_XY;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                // ------------------------------------------------------------
+                // 2-jump neighbours
+                // ------------------------------------------------------------
+                if (ix > 0 && iy > 0) {
+                    j = sub2ind_3D(ix-1, iy-1, iz, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_XY;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_XY;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                if (ix > 0 && iy < end_y) {
+                    j = sub2ind_3D(ix-1, iy+1, iz, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_XY;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_YZ;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                if (ix < end_x && iy > 0) {
+                    j = sub2ind_3D(ix+1, iy-1, iz, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_XY;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_YZ;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                if (ix < end_x && iy < end_y) {
+                    j = sub2ind_3D(ix+1, iy+1, iz, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_XY;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_YZ;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                if (iy > 0 && iz > 0) {
+                    j = sub2ind_3D(ix, iy-1, iz-1, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_YZ;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_YZ;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                if (iy > 0 && iz < end_z) {
+                    j = sub2ind_3D(ix, iy-1, iz+1, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_YZ;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_XZ;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                if (iy < end_y && iz > 0) {
+                    j = sub2ind_3D(ix, iy+1, iz-1, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_YZ;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_XZ;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                if (iy < end_y && iz < end_z) {
+                    j = sub2ind_3D(ix, iy+1, iz+1, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_YZ;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_XZ;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                if (ix > 0 && iz > 0) {
+                    j = sub2ind_3D(ix-1, iy, iz-1, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_XZ;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_XZ;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                if (ix < end_x && iz > 0) {
+                    j = sub2ind_3D(ix+1, iy, iz-1, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_XZ;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            // ----------------------------------------------------------------
-            // 3-jump neighbours
-            // ----------------------------------------------------------------
-            j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_XYZ;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                if (ix > 0 && iz < end_z) {
+                    j = sub2ind_3D(ix-1, iy, iz+1, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_XZ;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_XYZ;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                if (ix < end_x && iz < end_z) {
+                    j = sub2ind_3D(ix+1, iy, iz+1, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_XZ;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
 
-            j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_XYZ;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                // ------------------------------------------------------------
+                // 3-jump neighbours
+                // ------------------------------------------------------------
+                if (ix > 0 && iy > 0 && iz > 0) {
+                    j = sub2ind_3D(ix-1, iy-1, iz-1, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_XYZ;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_XYZ;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                if (ix > 0 && iy > 0 && iz < end_z) {
+                    j = sub2ind_3D(ix-1, iy-1, iz+1, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_XYZ;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_XYZ;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                if (ix > 0 && iy < end_y && iz > 0) {
+                    j = sub2ind_3D(ix-1, iy+1, iz-1, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_XYZ;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_XYZ;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                if (ix < end_x && iy > 0 && iz > 0) {
+                    j = sub2ind_3D(ix+1, iy-1, iz-1, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_XYZ;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_XYZ;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                if (ix > 0 && iy < end_y && iz < end_z) {
+                    j = sub2ind_3D(ix-1, iy+1, iz+1, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_XYZ;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
-
-            j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
-            jj = *(voi_id_inv + j);
-            if (*(innerGM_step + jj) == step) {
-                border_detected = true;
-                d = *(innerGM_dist + jj) + dia_XYZ;
-                if (*(innerGM_dist + kk) == 0. || d < *(innerGM_dist + kk)) {
-                *(innerGM_dist + kk) = d;
+                if (ix < end_x && iy > 0 && iz < end_z) {
+                    j = sub2ind_3D(ix+1, iy-1, iz+1, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_XYZ;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
                 }
-            }
+                if (ix < end_x && iy < end_y && iz > 0) {
+                    j = sub2ind_3D(ix+1, iy+1, iz-1, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_XYZ;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
+                }
+                if (ix < end_x && iy < end_y && iz < end_z) {
+                    j = sub2ind_3D(ix+1, iy+1, iz+1, size_x, size_y);
+                    jj = *(voi_id_inv + j);
+                    if (*(voi_rim + jj) == 3 || *(voi_rim + jj) == 1 ) {
+                        d = *(innerGM_dist + kk) + dia_XYZ;
+                        if (d < *(innerGM_dist + jj)
+                            || *(innerGM_dist + jj) == 0) {
+                            *(innerGM_dist + jj) = d;
+                            *(innerGM_step + jj) = step + 1;
+                        }
+                    }
+                }
 
-            // ----------------------------------------------------------------
-            if (border_detected) {
                 ++size_determined;
-                ++counter;
-                *(innerGM_step + kk) = step + 1;
+                ++temp_counter;
             } else {
-                *(vox_id_undetermined + ii-counter) = i;
-
+                *(vox_id_undetermined + ii - temp_counter) = i;
             }
-            // ----------------------------------------------------------------
         }
+        size_undetermined = nr_voi - size_determined;
         ++step;
-        size_undetermined = nr_voi_gm - size_determined;  // Update this outside
     }
+    std::cout << std::endl;
+    printf("    Processed all voxels [%d -> %d]\n", size_undetermined, size_determined);
 
-    // // DEBUG
-    // nifti_image* nii_out3 = copy_nifti_as_int16(nii1);
-    // int16_t* nii_out3_data = static_cast<int16_t*>(nii_out3->data);
-    // for (int i = 0; i != nr_voxels; ++i) {
-    //     *(nii_out3_data + i) = 0;
-    // }
-    // for (int ii = 0; ii != nr_voi_gm; ++ii) {
-    //     int i = *(voi_id + ii);
-    //     *(nii_out3_data + i) = *(innerGM_step + ii);
-    // }
-    // save_output_nifti(fout, "DEBUG_innerGM_step", nii_out3, false);
 
+   // DEBUG
+    nifti_image* nii_out3 = copy_nifti_as_int16(nii1);
+    int16_t* nii_out3_data = static_cast<int16_t*>(nii_out3->data);
+    for (int i = 0; i != nr_voxels; ++i) {
+        *(nii_out3_data + i) = 0;
+    }
+    for (int ii = 0; ii != nr_voi; ++ii) {
+        int i = *(voi_id + ii);
+        *(nii_out3_data + i) = *(innerGM_step + ii);
+    }
+    save_output_nifti(fout, "DEBUG_innerGM_step", nii_out3, false);
 
     // DEBUG
     nifti_image* nii_out = copy_nifti_as_float32(nii1);
@@ -740,357 +804,11 @@ int main(int argc, char*  argv[]) {
     for (int i = 0; i != nr_voxels; ++i) {
         *(nii_out_data + i) = 0;
     }
-    for (int ii = 0; ii != nr_voi_gm; ++ii) {
+    for (int ii = 0; ii != nr_voi; ++ii) {
         int i = *(voi_id + ii);
         *(nii_out_data + i) = *(innerGM_dist + ii);
     }
     save_output_nifti(fout, "DEBUG_innerGM_dist", nii_out, false);
-
-    // // ================================================================================================================
-    // // Grow from outer GM border
-    // // ================================================================================================================
-    // cout << "\n  Start growing from outer GM..." << endl;
-
-    // // Allocate memory
-    // int16_t*    outerGM_step           = (int16_t*)malloc(nr_voi * sizeof(int16_t));
-    // float*      outerGM_dist           = (float*)malloc(nr_voi * sizeof(float));
-
-    // // Initialize grow volume
-    // for (int ii = 0; ii != nr_voi; ++ii) {
-    //     if (*(voi_rim + ii) == 1) {  // WM boundary voxels within GM
-    //         *(outerGM_step + ii) = 1;
-    //         *(outerGM_dist + ii) = 0.;
-    //     } else {
-    //         *(outerGM_step + ii) = 0.;
-    //         *(outerGM_dist + ii) = 0.;
-    //     }
-    // }
-
-    // // ------------------------------------------------------------------------
-    // // Fill in first iteration of neighbors
-    // // ------------------------------------------------------------------------
-    // for (int ii = 0; ii != nr_voi_gm; ++ii) {
-    //     // --------------------------------------------------------------------
-    //     // 1-jump neighbours
-    //     // --------------------------------------------------------------------
-    //     j = *(voi_id3D_n11 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dX; }
-
-    //     j = *(voi_id3D_n12 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dX; }
-
-    //     j = *(voi_id3D_n13 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dX; }
-
-    //     j = *(voi_id3D_n14 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dX; }
-
-    //     j = *(voi_id3D_n15 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dX; }
-
-    //     j = *(voi_id3D_n16 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dX; }
-
-    //     // --------------------------------------------------------------------
-    //     // 2-jump neighbours
-    //     // --------------------------------------------------------------------
-    //     j = *(voi_id3D_n201 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_xy; }
-
-    //     j = *(voi_id3D_n202 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_xy; }
-
-    //     j = *(voi_id3D_n203 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_xy; }
-
-    //     j = *(voi_id3D_n204 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_xy; }
-
-    //     j = *(voi_id3D_n205 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_yz; }
-
-    //     j = *(voi_id3D_n206 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_yz; }
-
-    //     j = *(voi_id3D_n207 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_yz; }
-
-    //     j = *(voi_id3D_n208 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_yz; }
-
-    //     j = *(voi_id3D_n209 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_xz; }
-
-    //     j = *(voi_id3D_n210 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_xz; }
-
-    //     j = *(voi_id3D_n211 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_xz; }
-
-    //     j = *(voi_id3D_n212 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_xz; }
-
-    //     // --------------------------------------------------------------------
-    //     // 3-jump neighbours
-    //     // --------------------------------------------------------------------
-    //     j = *(voi_id3D_n31 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_xyz; }
-
-    //     j = *(voi_id3D_n32 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_xyz; }
-
-    //     j = *(voi_id3D_n33 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_xyz; }
-
-    //     j = *(voi_id3D_n34 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_xyz; }
-
-    //     j = *(voi_id3D_n35 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_xyz; }
-
-    //     j = *(voi_id3D_n36 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_xyz; }
-
-    //     j = *(voi_id3D_n37 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_xyz; }
-
-    //     j = *(voi_id3D_n38 + ii); jj = *(voi_id_inv + j);
-    //     if (*(voi_rim + jj) == 1) { *(outerGM_step + ii) = 2; *(outerGM_dist + ii) = dia_xyz; }
-
-    // }
-
-    // // ------------------------------------------------------------------------
-    // // Fill rest of gray matter
-    // // ------------------------------------------------------------------------
-    // grow_step = 2;
-    // voxel_counter = nr_voi_gm;
-    // while (voxel_counter != 0) {
-    //     voxel_counter = 0;
-    //     for (int ii = 0; ii != nr_voi_gm; ++ii) {
-    //         if (*(outerGM_step + ii) == grow_step) {
-    //             voxel_counter += 1;
-
-    //             // ------------------------------------------------------------
-    //             // 1-jump neighbours
-    //             // ------------------------------------------------------------
-    //             j = *(voi_id3D_n11 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dX;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n12 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dX;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n13 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dX;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n14 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dX;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n15 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dX;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n16 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dX;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             // ------------------------------------------------------------
-    //             // 2-jump neighbours
-    //             // ------------------------------------------------------------
-    //             j = *(voi_id3D_n201 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_xy;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n202 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_xy;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n203 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_xy;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n204 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_xy;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n205 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_yz;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n206 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_yz;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n207 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_yz;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n208 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_yz;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n209 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_xz;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n210 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_xz;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n211 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_xz;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n212 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_xz;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             // ------------------------------------------------------------
-    //             // 3-jump neighbours
-    //             // ------------------------------------------------------------
-    //             j = *(voi_id3D_n31 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_xyz;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n32 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_xyz;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n33 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_xyz;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n34 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_xyz;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n35 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_xyz;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n36 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_xyz;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n37 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_xyz;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-
-    //             j = *(voi_id3D_n38 + ii);
-    //             jj = *(voi_id_inv + j);
-    //             d = *(outerGM_dist + ii) + dia_xyz;
-    //             if (d < *(outerGM_dist + jj) || *(outerGM_step + jj) == 0) {
-    //                 *(outerGM_dist + jj) = d;
-    //                 *(outerGM_step + jj) = grow_step + 1;
-    //             }
-    //         }
-    //     }
-    //     grow_step += 1;
-    // }
-
 
     // // DEBUG
     // for (int ii = 0; ii != nr_voi_gm; ++ii) {
