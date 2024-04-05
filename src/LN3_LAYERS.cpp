@@ -399,6 +399,15 @@ int main(int argc, char*  argv[]) {
         *(voi_id_inv + i) = ii;
     }
 
+    // ------------------------------------------------------------------------
+    // Prepare output nifti
+    // ------------------------------------------------------------------------
+    nifti_image* nii_out_float32 = copy_nifti_as_float32(nii1);
+    float* nii_out_float32_data = static_cast<float*>(nii_out_float32->data);
+    for (int i = 0; i != nr_voxels; ++i) {
+        *(nii_out_float32_data + i) = 0;
+    }
+
     // ================================================================================================================
     // Grow from inner GM border
     // ================================================================================================================
@@ -783,17 +792,12 @@ int main(int argc, char*  argv[]) {
     std::cout << std::endl;
     printf("    Processed all voxels [%d -> %d]\n", size_undetermined, size_determined);
 
-    // DEBUG
-    nifti_image* nii_out_float32 = copy_nifti_as_float32(nii1);
-    float* nii_out_float32_data = static_cast<float*>(nii_out_float32->data);
-    for (int i = 0; i != nr_voxels; ++i) {
-        *(nii_out_float32_data + i) = 0;
-    }
-    for (int ii = 0; ii != nr_voi; ++ii) {
-        int i = *(voi_id + ii);
-        *(nii_out_float32_data + i) = *(innerGM_dist + ii);
-    }
-    save_output_nifti(fout, "DEBUG_innerGM_dist", nii_out_float32, false);
+    // // DEBUG
+    // for (int ii = 0; ii != nr_voi; ++ii) {
+    //     int i = *(voi_id + ii);
+    //     *(nii_out_float32_data + i) = *(innerGM_dist + ii);
+    // }
+    // save_output_nifti(fout, "DEBUG_innerGM_dist", nii_out_float32, false);
 
     // ================================================================================================================
     // Grow from outer GM border
@@ -1176,60 +1180,50 @@ int main(int argc, char*  argv[]) {
     std::cout << std::endl;
     printf("    Processed all voxels [%d -> %d]\n", size_undetermined, size_determined);
 
+    // // DEBUG
+    // for (int ii = 0; ii != nr_voi; ++ii) {
+    //     int i = *(voi_id + ii);
+    //     *(nii_out_float32_data + i) = *(outerGM_dist + ii);
+    // }
+    // save_output_nifti(fout, "DEBUG_outerGM_dist", nii_out_float32, false);
+
+    // ================================================================================================================
+    // Compute Thickness
+    // ================================================================================================================
+    float* voi_thickness = (float*)malloc(nr_voi * sizeof(float));
+    for (int ii = 0; ii != nr_voi; ++ii) {
+        *(voi_thickness + ii) = *(innerGM_dist + ii) + *(outerGM_dist + ii);
+    }
+
+    // DEBUG
+    for (int ii = 0; ii != nr_voi_gm; ++ii) {
+        int i = *(voi_id + ii);
+        *(nii_out_float32_data + i) = *(voi_thickness + ii);
+    }
+    save_output_nifti(fout, "DEBUG_thickness", nii_out_float32, false);
+
+    // ================================================================================================================
+    // Compute Equidistant Metric
+    // ================================================================================================================
+    printf("  Saving metric...\n");
+
+    float* voi_metric = (float*)malloc(nr_voi * sizeof(float));
+    for (int ii = 0; ii != nr_voi; ++ii) {
+        *(voi_metric + ii) = *(innerGM_dist + ii) / *(voi_thickness + ii);
+    }
+
     // DEBUG
     for (int ii = 0; ii != nr_voi; ++ii) {
         int i = *(voi_id + ii);
-        *(nii_out_float32_data + i) = *(outerGM_dist + ii);
+        *(nii_out_float32_data + i) = *(voi_metric + ii);
     }
-    save_output_nifti(fout, "DEBUG_outerGM_dist", nii_out_float32, false);
+    save_output_nifti(fout, "DEBUG_equidist_metric", nii_out_float32, false);
 
-    // // ================================================================================================================
-    // // Compute Thickness
-    // // ================================================================================================================
-    // float* voi_thickness = (float*)malloc(nr_voi_gm * sizeof(float));
-    // for (int ii = 0; ii != nr_voi_gm; ++ii) {
-    //     *(voi_thickness + ii) = *(innerGM_dist + ii) + *(outerGM_dist + ii);
-    // }
+    // ================================================================================================================
+    // Compute Equidistant Layers
+    // ================================================================================================================
 
-    // // DEBUG
-    // for (int ii = 0; ii != nr_voi_gm; ++ii) {
-    //     int i = *(voi_id + ii);
-    //     *(nii_out_float32 + i) = *(voi_thickness + ii);
-    // }
-    // save_output_nifti(fout, "DEBUG_thickness", nii_out, false);
-
-    // // ================================================================================================================
-    // // Compute Equidistant Metric
-    // // ================================================================================================================
-    // float* voi_metric = (float*)malloc(nr_voi_gm * sizeof(float));
-    // for (int ii = 0; ii != nr_voi_gm; ++ii) {
-    //     *(voi_metric + ii) = *(innerGM_dist + ii) / *(voi_thickness + ii);
-    // }
-
-    // // DEBUG
-    // for (int ii = 0; ii != nr_voi_gm; ++ii) {
-    //     int i = *(voi_id + ii);
-    //     *(nii_out_float32 + i) = *(voi_metric + ii);
-    // }
-    // save_output_nifti(fout, "DEBUG_equidist_metric", nii_out, false);
-
-    // // ================================================================================================================
-    // // Compute Equidistant Layers
-    // // ================================================================================================================
-    // int* voi_layers = (int*)malloc(nr_voi_gm * sizeof(int));
-    // for (int ii = 0; ii != nr_voi_gm; ++ii) {
-    //     *(voi_layers + ii) = static_cast<int>(std::ceil(*(voi_metric + ii) * nr_layers));
-    // }
-
-    // // DEBUG
-    // nifti_image* nii_out_int = copy_nifti_as_float32(nii_out);
-    // float* nii_out_int_data = static_cast<float*>(nii_out_int->data);
-    // for (int ii = 0; ii != nr_voi_gm; ++ii) {
-    //     int i = *(voi_id + ii);
-    //     *(nii_out_int_data + i) = *(voi_layers + ii);
-    // }
-    // save_output_nifti(fout, "DEBUG_equidist_layers", nii_out_int, false);
-
+    // TODO
 
     cout << "\n  Finished.\n" << endl;
     return 0;
