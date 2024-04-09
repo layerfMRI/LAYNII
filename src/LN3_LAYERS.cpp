@@ -18,30 +18,30 @@ int show_help(void) {
     "                    gray matter border voxels (facing mostly white matter), and\n"
     "                    3 to code pure gray matter voxels.\n"
     "    -nr_layers    : Number of layers. Default is 3.\n"
-    "    -equivol      : (Optional) Create equi-volume layers. We do not\n"
-    "                    recommend this option if your rim file is above 0.3mm\n"
-    "                    resolution. You can always upsample your rim file to\n"
-    "                    a higher resolution first (<0.3mm) and then use this\n"
-    "                    option.\n"
-    "    -iter_smooth  : (Optional) Number of smoothing iterations. Default\n"
-    "                    is 100. Only used together with '-equivol' flag. Use\n"
-    "                    larger values when equi-volume layers are jagged.\n"
-    "    -curvature    : (Optional) Compute curvature. Uses -iter_smooth value\n"
-    "                    for smoothing the curvature estimates. Off by default.\n"
-    "    -streamlines  : (Optional) Export streamline vectors. Useful for e.g.\n"
-    "                    computing B0 angular differences. Off by default.\n"
-    "    -thickness    : (Optional) Export cortical thickness. Uses -iter_smooth\n"
-    "                    value for smoothing the thickness. Off by default.\n"
-    "    -incl_borders : (Optional) Include inner and outer gray matter borders\n"
-    "                    into the layering. This treats the borders as \n"
-    "                    a part of gray matter. Off by default.\n"
-    "    -equal_counts : (Optional) Equalize number of voxels for each layer.\n"
-    "                    This option inherently includes the borders.\n"
-    "                    output is given with file name addition `*layers_equicount*.\n"
-    "                    Useful for ~0.8 mm inputs where no upsampling is done.\n"
-    "    -no_smooth    : (Optional) Disable smoothing on cortical depth metric.\n"
-    "    -debug        : (Optional) Save extra intermediate outputs.\n"
-    "    -output       : (Optional) Output basename for all outputs.\n"
+    // "    -equivol      : (Optional) Create equi-volume layers. We do not\n"
+    // "                    recommend this option if your rim file is above 0.3mm\n"
+    // "                    resolution. You can always upsample your rim file to\n"
+    // "                    a higher resolution first (<0.3mm) and then use this\n"
+    // "                    option.\n"
+    // "    -iter_smooth  : (Optional) Number of smoothing iterations. Default\n"
+    // "                    is 100. Only used together with '-equivol' flag. Use\n"
+    // "                    larger values when equi-volume layers are jagged.\n"
+    // "    -curvature    : (Optional) Compute curvature. Uses -iter_smooth value\n"
+    // "                    for smoothing the curvature estimates. Off by default.\n"
+    // "    -streamlines  : (Optional) Export streamline vectors. Useful for e.g.\n"
+    // "                    computing B0 angular differences. Off by default.\n"
+    // "    -thickness    : (Optional) Export cortical thickness. Uses -iter_smooth\n"
+    // "                    value for smoothing the thickness. Off by default.\n"
+    // "    -incl_borders : (Optional) Include inner and outer gray matter borders\n"
+    // "                    into the layering. This treats the borders as \n"
+    // "                    a part of gray matter. Off by default.\n"
+    // "    -equal_counts : (Optional) Equalize number of voxels for each layer.\n"
+    // "                    This option inherently includes the borders.\n"
+    // "                    output is given with file name addition `*layers_equicount*.\n"
+    // "                    Useful for ~0.8 mm inputs where no upsampling is done.\n"
+    // "    -no_smooth    : (Optional) Disable smoothing on cortical depth metric.\n"
+    // "    -debug        : (Optional) Save extra intermediate outputs.\n"
+    // "    -output       : (Optional) Output basename for all outputs.\n"
     "\n"
     "\n");
     return 0;
@@ -1205,7 +1205,7 @@ int main(int argc, char*  argv[]) {
     // ================================================================================================================
     // Compute Equidistant Metric
     // ================================================================================================================
-    printf("  Saving metric...\n");
+    printf("\n  Saving equidistant metric...\n");
 
     float* voi_metric = (float*)malloc(nr_voi * sizeof(float));
     for (int ii = 0; ii != nr_voi; ++ii) {
@@ -1222,8 +1222,20 @@ int main(int argc, char*  argv[]) {
     // ================================================================================================================
     // Compute Equidistant Layers
     // ================================================================================================================
+    printf("\n  Saving equidistant layers...\n");
 
-    // TODO
+    nifti_image* nii_out_int16 = copy_nifti_as_int16(nii1);
+    int16_t* nii_out_int16_data = static_cast<int16_t*>(nii_out_int16->data);
+    for (int i = 0; i != nr_voxels; ++i) {
+        *(nii_out_int16_data + i) = 0;
+    }
+
+    // DEBUG
+    for (int ii = 0; ii != nr_voi_gm; ++ii) {
+        int i = *(voi_id + ii);
+        *(nii_out_int16_data + i) = static_cast<int16_t>(*(voi_metric + ii) * static_cast<float>(nr_layers)) + 1;
+    }
+    save_output_nifti(fout, "DEBUG_equidist_layers", nii_out_int16, false);
 
     cout << "\n  Finished.\n" << endl;
     return 0;
