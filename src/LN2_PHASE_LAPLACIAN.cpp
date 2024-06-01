@@ -20,6 +20,7 @@ int show_help(void) {
     "              scl_inter = -4096 in the header. Meaning that the intended range\n"
     "              is int13, even though the data type is uint16 and only int12 portion\n"
     "              is used to store the phase values.\n"
+    "    -2D     : (Optional) Do not compute along z. Experimental.\n"
     "    -output : (Optional) Output basename for all outputs.\n"
     "    -debug  : (Optional) Save extra intermediate outputs.\n"
     "\n");
@@ -30,7 +31,7 @@ int main(int argc, char*  argv[]) {
     nifti_image *nii1 = NULL;
     char *fin1 = NULL, *fout = NULL;
     int ac;
-    bool mode_int13 = false, mode_debug = false;
+    bool mode_int13 = false, mode_debug = false, mode_2D = false;
     const float ONEPI = 3.14159265358979f;
     const float TWOPI = 2.0f * 3.14159265358979f;
 
@@ -48,6 +49,8 @@ int main(int argc, char*  argv[]) {
             fout = argv[ac];
         } else if (!strcmp(argv[ac], "-int13")) {
             mode_int13 = true;
+        } else if (!strcmp(argv[ac], "-2D")) {
+            mode_2D = true;
         } else if (!strcmp(argv[ac], "-debug")) {
             mode_debug = true;
         } else if (!strcmp(argv[ac], "-output")) {
@@ -174,7 +177,7 @@ int main(int argc, char*  argv[]) {
                     gra_y = diff1;
                 }
             }
-            if (iz > 0 && iz < end_z) {
+            if (iz > 0 && iz < end_z && mode_2D == false) {
                 j = sub2ind_4D(ix, iy, iz-1, it, size_x, size_y, size_z);
                 k = sub2ind_4D(ix, iy, iz+1, it, size_x, size_y, size_z);
                 a = *(nii_input_data + j);
@@ -251,7 +254,7 @@ int main(int argc, char*  argv[]) {
                     gra_yy = diff1;
                 }
             }
-            if (iz > 0 && iz < end_z) {
+            if (iz > 0 && iz < end_z && mode_2D == false) {
                 j = sub2ind_4D(ix, iy, iz-1, it, size_x, size_y, size_z);
                 k = sub2ind_4D(ix, iy, iz+1, it, size_x, size_y, size_z);
                 a = *(nii_gra_z_data + j);
@@ -268,7 +271,11 @@ int main(int argc, char*  argv[]) {
                 }
             }
             // Laplacian
-            *(nii_laplacian_data + i+nr_voxels*t) = gra_xx + gra_yy + gra_zz;
+            if (mode_2D) {
+                *(nii_laplacian_data + i+nr_voxels*t) = gra_xx + gra_yy;
+            } else {
+                *(nii_laplacian_data + i+nr_voxels*t) = gra_xx + gra_yy + gra_zz;
+            }
         }
     }
     cout << endl;
