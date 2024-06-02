@@ -283,7 +283,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     cout << "  Saving output..." << endl;
 
-    save_output_nifti(fout, "laplacian", nii_laplacian, true);
+    save_output_nifti(fout, "phase_laplacian", nii_laplacian, true);
 
     cout << "\n  Finished." << endl;
     return 0;
