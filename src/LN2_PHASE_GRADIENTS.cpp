@@ -245,11 +245,11 @@ int main(int argc, char*  argv[]) {
     cout << "  Saving output..." << endl;
 
     if (mode_merge_outputs) {
-        save_output_nifti(fout, "gradients", nii_gra, true);
+        save_output_nifti(fout, "phase_gradients", nii_gra, true);
     } else {
-        save_output_nifti(fout, "gradient_x", nii_gra_x, true);
-        save_output_nifti(fout, "gradient_y", nii_gra_y, true);
-        save_output_nifti(fout, "gradient_z", nii_gra_z, true);
+        save_output_nifti(fout, "phase_gradient_x", nii_gra_x, true);
+        save_output_nifti(fout, "phase_gradient_y", nii_gra_y, true);
+        save_output_nifti(fout, "phase_gradient_z", nii_gra_z, true);
     }
 
     cout << "\n  Finished." << endl;
