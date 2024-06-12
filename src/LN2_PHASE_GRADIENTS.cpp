@@ -3,7 +3,8 @@
 
 int show_help(void) {
     printf(
-    "LN2_PHASE_GRADIENTS: Compute gradients of a phase image using circular difference.\n"
+    "LN2_PHASE_GRADIENTS: Compute spatial gradients of a phase image using circular.\n"
+    "                     difference. Uses 1-jump voxel neighbors for computations.\n"
     "\n"
     "Usage:\n"
     "    LN2_PHASE_GRADIENTS -input input.nii\n"

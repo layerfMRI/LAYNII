@@ -3,7 +3,9 @@
 
 int show_help(void) {
     printf(
-    "LN2_GRAMAG: Compute gradient magnitude image.\n"
+    "LN2_GRAMAG: Compute gradient magnitude image that is the Euclidean norm of \n"
+    "            the first spatial derivatives (sqrt(D_x^2 + D_y^2 + D_z^2)).\n"
+    "            Uses 1-jump voxel neighbors for computations.\n"
     "\n"
     "Usage:\n"
     "    LN2_GRAMAG -input input.nii\n"

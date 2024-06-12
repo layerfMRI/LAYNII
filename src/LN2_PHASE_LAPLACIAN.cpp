@@ -3,7 +3,8 @@
 
 int show_help(void) {
     printf(
-    "LN2_PHASE_LAPLACIAN: Compute Laplacian of a phase image using circular differences.\n"
+    "LN2_PHASE_LAPLACIAN: Compute spatial Laplacian of a phase image using circular.\n"
+    "                     differences. Uses 1-jump voxel neighbors for computations.\n"
     "\n"
     "Usage:\n"
     "    LN2_PHASE_LAPLACIAN -input input.nii\n"

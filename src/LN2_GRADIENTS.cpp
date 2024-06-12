@@ -3,7 +3,8 @@
 
 int show_help(void) {
     printf(
-    "LN2_GRADIENTS: Compute image gradients.\n"
+    "LN2_GRADIENTS: Compute image gradients (spatial derivatives).\n"
+    "               Uses 1-jump voxel neighbors for computations.\n"
     "\n"
     "Usage:\n"
     "    LN2_GRADIENTS -input input.nii\n"

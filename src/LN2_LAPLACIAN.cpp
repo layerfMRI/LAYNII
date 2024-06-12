@@ -3,7 +3,9 @@
 
 int show_help(void) {
     printf(
-    "LN2_LAPLACIAN: Compute image Laplacian.\n"
+    "LN2_LAPLACIAN: Compute spatial image Laplacian that is sum of the second \n"
+    "               derivatives along the main axes (D_xx + D_yy + D_zz).\n"
+    "               Uses 1-jump voxel neighbors for computations.\n"
     "\n"
     "Usage:\n"
     "    LN2_LAPLACIAN -input input.nii\n"

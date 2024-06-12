@@ -4,6 +4,7 @@
 int show_help(void) {
     printf(
     "LN2_PHASE_JOLT: L1 norm of phase image second spatial derivatives.\n"
+    "                Uses 1-jump voxel neighbors for computations.\n"
     "\n"
     "Usage:\n"
     "    LN2_PHASE_JOLT -input input.nii\n"
