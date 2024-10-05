@@ -12,7 +12,7 @@ int show_help(void) {
     "    -init      : Initial voxels that denote 0 distance.\n"
     "    -domain    : Set of voxels in which the distance will be measured.\n"
     "                 All non-zero voxels will be considered.\n"
-    "    -no_smooth : (Optional) Disable smoothing on cortical depth metric.\n"
+    "    -no_smooth : (Optional) Disable smoothing on distance metric.\n"
     "    -output    : (Optional) Output basename for all outputs.\n"
     "\n"
     "\n");
