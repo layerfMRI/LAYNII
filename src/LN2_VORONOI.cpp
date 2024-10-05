@@ -582,7 +582,7 @@ int main(int argc, char*  argv[]) {
     }
 
     // Add number of points into the output tag
-    save_output_nifti(fout, "voronoi", nii_init, true);
+    save_output_nifti(fout, "voronoi", nii_init, true, use_outpath);
 
     cout << "\n  Finished." << endl;
     return 0;
