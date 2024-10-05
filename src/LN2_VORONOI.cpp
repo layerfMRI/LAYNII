@@ -29,7 +29,7 @@ int main(int argc, char*  argv[]) {
     nifti_image *nii1 = NULL, *nii2 = NULL;
     char *fin1 = NULL, *fout = NULL, *fin2=NULL;
     int ac;
-    bool mode_debug = false, mode_initialize_with_centroids = false;
+    bool use_outpath = false, mode_debug = false, mode_initialize_with_centroids = false;
     float max_dist = std::numeric_limits<float>::max();
     int iter_smooth = 0;
 
@@ -58,6 +58,7 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             fout = argv[ac];
+            use_outpath = true;
         } else if (!strcmp(argv[ac], "-max_dist")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -max_dist\n");
