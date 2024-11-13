@@ -107,7 +107,7 @@ int main(int argc, char*  argv[]) {
     log_nifti_descriptives(nii1);
 
     cout << "  Nr. layers that should be added: " << nr_layers << endl;
-    cout << "  Thinkess of those added layers: "  << layer_thickness << endl;
+    cout << "  Thickness of those added layers: "  << layer_thickness << endl;
 
 
     // Get dimensions of input
