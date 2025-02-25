@@ -78,3 +78,34 @@ nifti_image* iterative_smoothing(nifti_image* nii_in, int iter_smooth,
 // Preprocessor macros.
 // ============================================================================
 #define PI 3.14159265;
+
+// ============================================================================
+// WIP NOLAD...
+// ============================================================================
+
+float ln_gaussian(float distance, float sigma);
+
+void ln_normalize_to_zero_one(float* data, int data_size);
+
+void ln_smooth_gaussian_iterative_3D(float* data_in,
+                                     const int   nx, const int   ny, const int   nz, const int nt,
+                                     const float dx, const float dy, const float dz,
+                                     const float FWHM_val, const int nr_iterations, const bool log = true);
+
+void ln_compute_gradients_3D(const float* data, float* data_grad_x, float* data_grad_y, float* data_grad_z, 
+                             const int nx, const int ny, const int nz, const int nt);
+
+
+void ln_compute_gradients_3D_over_x(const float* data, float* data_out, 
+                                    const int nx, const int ny, const int nz, const int nt);
+void ln_compute_gradients_3D_over_y(const float* data, float* data_out, 
+                                    const int nx, const int ny, const int nz, const int nt);
+void ln_compute_gradients_3D_over_z(const float* data, float* data_out, 
+                                    const int nx, const int ny, const int nz, const int nt);
+
+void ln_compute_hessian_3D(const float* data, float* data_shorthessian,
+                           const int nx, const int ny, const int nz, const int nt,
+                           const int dx, const int dy, const int dz, const int nr_smth_iterations);
+
+void ln_compute_eigen_values_3D(const float* data_shorthessian, float* data_eigval1, float* data_eigval2, float* data_eigval3,
+                                const int nx, const int ny, const int nz, const int nt);

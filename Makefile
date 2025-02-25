@@ -284,6 +284,9 @@ LN2_REGRESS_OUT:
 LN3_LAYERS:
 	$(CC) $(CFLAGS) -o LN3_LAYERS src/LN3_LAYERS.cpp $(LIBRARIES) $(LFLAGS)
 
+LN3_NOLAD:
+	$(CC) $(CFLAGS) -o LN3_NOLAD src/LN3_NOLAD.cpp $(LIBRARIES) $(LFLAGS)
+
 # =============================================================================
 
 clean:
