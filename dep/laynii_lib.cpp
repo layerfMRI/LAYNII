@@ -1327,7 +1327,7 @@ void ln_compute_hessian_3D(const float* data_in, float* data_shorthessian,
     free(data_grad_2nd);
 }
 
-void ln_compute_eigen_values_3D(const float* data_hessian, float* data_eigval1, float* data_eigval2, float* data_eigval3,
+void ln_compute_eigen_values_3D(const float* data_shorthessian, float* data_eigval1, float* data_eigval2, float* data_eigval3,
                                 const int nx, const int ny, const int nz, const int nt) {
     // NOTE: Implementing Delledalle et al. 2017, Hal.
     // NOTE: I simplified complex conjugates as I do not have complex values.
@@ -1335,12 +1335,12 @@ void ln_compute_eigen_values_3D(const float* data_hessian, float* data_eigval1, 
     int data_size = nx * ny * nz * nt;
 
     for (uint32_t i = 0; i != data_size; ++i) {
-        float a = *(data_hessian + i*6 + 0);  // xx
-        float b = *(data_hessian + i*6 + 3);  // yy
-        float c = *(data_hessian + i*6 + 5);  // zz
-        float d = *(data_hessian + i*6 + 1);  // xy, yx
-        float e = *(data_hessian + i*6 + 4);  // yz, zy
-        float f = *(data_hessian + i*6 + 2);  // xz, zx
+        float a = *(data_shorthessian + i*6 + 0);  // xx
+        float b = *(data_shorthessian + i*6 + 3);  // yy
+        float c = *(data_shorthessian + i*6 + 5);  // zz
+        float d = *(data_shorthessian + i*6 + 1);  // xy, yx
+        float e = *(data_shorthessian + i*6 + 4);  // yz, zy
+        float f = *(data_shorthessian + i*6 + 2);  // xz, zx
 
         // --------------------------------------------------------------------
         // Compute eigen values 3D
@@ -1375,44 +1375,114 @@ void ln_compute_eigen_values_3D(const float* data_hessian, float* data_eigval1, 
             lambda3 = 0.;
         }
 
-        // --------------------------------------------------------------------
-        // Sort by magnitude while preserving sign of the eigenvalues
-        // --------------------------------------------------------------------
-        bool lambda1_sign = std::signbit(lambda1);
-        bool lambda2_sign = std::signbit(lambda2);
-        bool lambda3_sign = std::signbit(lambda3);
+        *(data_eigval1 + i) = lambda1;
+        *(data_eigval2 + i) = lambda2;
+        *(data_eigval3 + i) = lambda3;
 
-        float lambda1_abs = std::abs(lambda1);
-        float lambda2_abs = std::abs(lambda2);
-        float lambda3_abs = std::abs(lambda3);
+        // // --------------------------------------------------------------------
+        // // TODO: Make this a separate function.
+        // // Sort by magnitude while preserving sign of the eigenvalues
+        // // --------------------------------------------------------------------
+        // bool lambda1_sign = std::signbit(lambda1);
+        // bool lambda2_sign = std::signbit(lambda2);
+        // bool lambda3_sign = std::signbit(lambda3);
 
-        *(data_eigval1 + i) = std::min( std::min( lambda1_abs, lambda2_abs ), lambda3_abs );
-        *(data_eigval3 + i) = std::max( std::max( lambda1_abs, lambda2_abs ), lambda3_abs );
-        *(data_eigval2 + i) = lambda1_abs + lambda2_abs + lambda3_abs - ( *(data_eigval1 + i) + *(data_eigval3 + i) );
+        // float lambda1_abs = std::abs(lambda1);
+        // float lambda2_abs = std::abs(lambda2);
+        // float lambda3_abs = std::abs(lambda3);
+
+        // *(data_eigval1 + i) = std::min( std::min( lambda1_abs, lambda2_abs ), lambda3_abs );
+        // *(data_eigval3 + i) = std::max( std::max( lambda1_abs, lambda2_abs ), lambda3_abs );
+        // *(data_eigval2 + i) = lambda1_abs + lambda2_abs + lambda3_abs - ( *(data_eigval1 + i) + *(data_eigval3 + i) );
  
-        // Put back the signbit
-        if (*(data_eigval1 + i) == lambda1_abs) {
-            *(data_eigval1 + i) *= static_cast<float>(lambda1_sign) * 2 - 1;
-        } else if (*(data_eigval1 + i) == lambda2_abs) {
-            *(data_eigval1 + i) *= static_cast<float>(lambda2_sign) * 2 - 1;
-        } else if (*(data_eigval1 + i) == lambda3_abs) {
-            *(data_eigval1 + i) *= static_cast<float>(lambda3_sign) * 2 - 1;
-        }
+        // // Put back the signbit
+        // if (*(data_eigval1 + i) == lambda1_abs) {
+        //     *(data_eigval1 + i) *= static_cast<float>(lambda1_sign) * 2 - 1;
+        // } else if (*(data_eigval1 + i) == lambda2_abs) {
+        //     *(data_eigval1 + i) *= static_cast<float>(lambda2_sign) * 2 - 1;
+        // } else if (*(data_eigval1 + i) == lambda3_abs) {
+        //     *(data_eigval1 + i) *= static_cast<float>(lambda3_sign) * 2 - 1;
+        // }
 
-        if (*(data_eigval2 + i) == lambda1_abs) {
-            *(data_eigval2 + i) *= static_cast<float>(lambda1_sign) * 2 - 1;
-        } else if (*(data_eigval2 + i) == lambda2_abs) {
-            *(data_eigval2 + i) *= static_cast<float>(lambda2_sign) * 2 - 1;
-        } else if (*(data_eigval2 + i) == lambda3_abs) {
-            *(data_eigval2 + i) *= static_cast<float>(lambda3_sign) * 2 - 1;
-        }
+        // if (*(data_eigval2 + i) == lambda1_abs) {
+        //     *(data_eigval2 + i) *= static_cast<float>(lambda1_sign) * 2 - 1;
+        // } else if (*(data_eigval2 + i) == lambda2_abs) {
+        //     *(data_eigval2 + i) *= static_cast<float>(lambda2_sign) * 2 - 1;
+        // } else if (*(data_eigval2 + i) == lambda3_abs) {
+        //     *(data_eigval2 + i) *= static_cast<float>(lambda3_sign) * 2 - 1;
+        // }
 
-        if (*(data_eigval3 + i) == lambda1_abs) {
-            *(data_eigval3 + i) *= static_cast<float>(lambda1_sign) * 2 - 1;
-        } else if (*(data_eigval3 + i) == lambda2_abs) {
-            *(data_eigval3 + i) *= static_cast<float>(lambda2_sign) * 2 - 1;
-        } else if (*(data_eigval3 + i) == lambda3_abs) {
-            *(data_eigval3 + i) *= static_cast<float>(lambda3_sign) * 2 - 1;
-        }
+        // if (*(data_eigval3 + i) == lambda1_abs) {
+        //     *(data_eigval3 + i) *= static_cast<float>(lambda1_sign) * 2 - 1;
+        // } else if (*(data_eigval3 + i) == lambda2_abs) {
+        //     *(data_eigval3 + i) *= static_cast<float>(lambda2_sign) * 2 - 1;
+        // } else if (*(data_eigval3 + i) == lambda3_abs) {
+        //     *(data_eigval3 + i) *= static_cast<float>(lambda3_sign) * 2 - 1;
+        // }
     }
 }
+
+void ln_compute_eigen_vectors_3D(const float* data_shorthessian,
+                                 const float* data_eigval1, const float* data_eigval2, const float* data_eigval3,
+                                 float* data_eigvec1, float* data_eigvec2, float* data_eigvec3,
+                                 const int nx, const int ny, const int nz, const int nt) {
+
+    // NOTE: Implementing Delledalle et al. 2017, Hal.
+
+    int data_size = nx * ny * nz * nt;
+
+    for (uint32_t i = 0; i != data_size; ++i) {
+        float a = *(data_shorthessian + i*6 + 0);  // xx
+        float b = *(data_shorthessian + i*6 + 3);  // yy
+        float c = *(data_shorthessian + i*6 + 5);  // zz
+        float d = *(data_shorthessian + i*6 + 1);  // xy, yx
+        float e = *(data_shorthessian + i*6 + 4);  // yz, zy
+        float f = *(data_shorthessian + i*6 + 2);  // xz, zx
+
+        float lambda1 = *(data_eigval1 + i);
+        float lambda2 = *(data_eigval2 + i);
+        float lambda3 = *(data_eigval3 + i);
+
+        // --------------------------------------------------------------------
+        // Compute eigen vectors 3D
+        // --------------------------------------------------------------------
+        float t1, t2, m1, m2, m3, v1, v2, v3;
+
+        t1 = d * (c - lambda1) - e * f;
+        t2 = f * (b - lambda1) - d * e;
+        if (f == 0 || t2 == 0) {
+            m1 = 0;
+        } else {
+            m1 = t1 / t2;            
+        }
+
+        t1 = d * (c - lambda2) - e * f;
+        t2 = f * (b - lambda2) - d * e;
+        if (f == 0 || t2 == 0) {
+            m2 = 0;
+        } else {
+            m2 = t1 / t2;            
+        }
+
+        t1 = d * (c - lambda3) - e * f;
+        t2 = f * (b - lambda3) - d * e;
+        if (f == 0 || t2 == 0) {
+            m3 = 0;
+        } else {
+            m3 = t1 / t2;            
+        }
+
+        *(data_eigvec1 + i*3 + 0) = (lambda1 - c - e * m1) / f;
+        *(data_eigvec1 + i*3 + 1) = m1;
+        *(data_eigvec1 + i*3 + 2) = 1;
+
+        *(data_eigvec2 + i*3 + 0) = (lambda2 - c - e * m2) / f;
+        *(data_eigvec2 + i*3 + 1) = m2;
+        *(data_eigvec2 + i*3 + 2) = 1;
+
+        *(data_eigvec3 + i*3 + 0) = (lambda3 - c - e * m3) / f;
+        *(data_eigvec3 + i*3 + 1) = m3;
+        *(data_eigvec3 + i*3 + 2) = 1;
+    }
+}
+

@@ -175,7 +175,7 @@ int main(int argc, char*  argv[]) {
     }
 
     // ========================================================================
-    // Eigendecomposition
+    // Compute Eigen values
     // ========================================================================
     std::printf("\n  Computing Eigen values...\n");
 
@@ -196,8 +196,23 @@ int main(int argc, char*  argv[]) {
     }
 
     // ========================================================================
+    // Compute Eigen vectors
+    // ========================================================================
+    std::printf("\n  Computing Eigen vectors...\n");
+
+    float* data_eigvec1  = (float*)malloc(data_size * 2 * sizeof(float));
+    float* data_eigvec2  = (float*)malloc(data_size * 2 * sizeof(float));
+    float* data_eigvec3  = (float*)malloc(data_size * 2 * sizeof(float));
+    ln_compute_eigen_vectors_3D(data_hessian, data_eigval1, data_eigval2, data_eigval3, 
+                                data_eigvec1, data_eigvec2, data_eigvec3, nx, ny, nz, nt);
+
+    // TODO: Implement vector output for DEBUG5
+
+    // ========================================================================
     // Compute diffusion weights
     // ========================================================================
+    std::printf("\n  Computing diffusion weights...\n");
+
     float* data_diffw1 = (float*)malloc(data_size * sizeof(float));
     float* data_diffw2 = (float*)malloc(data_size * sizeof(float));
     float* data_diffw3 = (float*)malloc(data_size * sizeof(float));
@@ -205,9 +220,9 @@ int main(int argc, char*  argv[]) {
     for (uint32_t i = 0; i != data_size; ++i) {
         // Apply compositional closure
         float eigvalsum = std::abs(*(data_eigval1 + i)) + std::abs(*(data_eigval2 + i)) + std::abs(*(data_eigval3 + i));
-        *(data_diffw1 + i) =  1 - (std::abs(*(data_eigval1 + i)) / eigvalsum);
-        *(data_diffw2 + i) =  1 - (std::abs(*(data_eigval2 + i)) / eigvalsum);
-        *(data_diffw3 + i) =  1 - (std::abs(*(data_eigval3 + i)) / eigvalsum);
+        *(data_diffw1 + i) =  1 - ( std::abs(*(data_eigval1 + i)) / eigvalsum );
+        *(data_diffw2 + i) =  1 - ( std::abs(*(data_eigval2 + i)) / eigvalsum );
+        *(data_diffw3 + i) =  1 - ( std::abs(*(data_eigval3 + i)) / eigvalsum );
 
         // Reclose for balance
         eigvalsum = *(data_diffw1 + i) + *(data_diffw2 + i) + *(data_diffw3 + i);
@@ -220,12 +235,18 @@ int main(int argc, char*  argv[]) {
     if (mode_debug) {
         std::printf("  DEBUG: Saving output...\n"); 
         for (uint32_t i = 0; i != data_size; ++i) *(nii_out_float32_data + i) = *(data_diffw1 + i);
-        save_output_nifti(fout, "DEBUG5-diffweight_1", nii_out_float32, true);
+        save_output_nifti(fout, "DEBUG6-diffweight_1", nii_out_float32, true);
         for (uint32_t i = 0; i != data_size; ++i) *(nii_out_float32_data + i) = *(data_diffw2 + i);
-        save_output_nifti(fout, "DEBUG5-diffweight_2", nii_out_float32, true);
+        save_output_nifti(fout, "DEBUG6-diffweight_2", nii_out_float32, true);
         for (uint32_t i = 0; i != data_size; ++i) *(nii_out_float32_data + i) = *(data_diffw3 + i);
-        save_output_nifti(fout, "DEBUG5-diffweight_3", nii_out_float32, true);        
+        save_output_nifti(fout, "DEBUG6-diffweight_3", nii_out_float32, true);        
     }
+
+    // ========================================================================
+    // Construct diffusion tensors
+    // ========================================================================
+
+    // TODO: implement
 
     cout << "\n  Finished." << endl;
     return 0;

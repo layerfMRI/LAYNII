@@ -109,3 +109,8 @@ void ln_compute_hessian_3D(const float* data, float* data_shorthessian,
 
 void ln_compute_eigen_values_3D(const float* data_shorthessian, float* data_eigval1, float* data_eigval2, float* data_eigval3,
                                 const int nx, const int ny, const int nz, const int nt);
+
+void ln_compute_eigen_vectors_3D(const float* data_shorthessian,
+                                 const float* data_eigval1, const float* data_eigval2, const float* data_eigval3,
+                                 float* data_eigvec1, float* data_eigvec2, float* data_eigvec3,
+                                 const int nx, const int ny, const int nz, const int nt);
