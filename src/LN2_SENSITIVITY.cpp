@@ -3,16 +3,10 @@
 
 int show_help(void) {
     printf(
-    "LN2_SENSITIVITY: Compute a voxel-wise measure of sensitivty based on functional response. \n"
-    "                 given an N-D array containing fMRI response to N-tasks \n "
-    "                 (e.g. betas, percent signal change, t-stat). \n "
-    "                 Note that by default negative values are zeroed. \n "
-    " \n"                  
-    "                 Reference: Pizzuti A, Huber LR, Gulban OF, Benitez-Andonegui A, \n "
-    "                 Peters J, Goebel R. Imaging the columnar functional organization of \n"
-    "                 human area MT+ to axis-of-motion stimuli using VASO at 7 Tesla. \n"
-    "                 Cereb Cortex. 2023 Jun 20;33(13):8693-8711. doi: 10.1093/cercor/bhad151. \n"
-    "                 PMID: 37254796; PMCID: PMC10321107.           \n"
+    "LN2_SENSITIVITY: Compute a voxel-wise measure of functional sensitivty\n"
+    "                 given an 4D matrix containing fMRI response to N-tasks\n"
+    "                 (e.g. betas, percent signal change, t-stat).\n"
+    "                 Note that by default negative values are zeroed.\n"
     "\n"
     "Usage:\n"
     "    LN2_SENSITIVITY -input input.nii\n"
@@ -20,9 +14,14 @@ int show_help(void) {
     "\n"
     "Options:\n"
     "    -help   : Show this help.\n"
-    "    -input : N-D fMRI response to stimuli (N-D nifti)"
+    "    -input : 4D fMRI response to N-stimuli (4D nifti)"
     "    -output : (Optional) Output basename for all outputs.\n"
     "\n"
+    "Citation:\n"
+    "    - Pizzuti, A., Huber, L., Gulban, O.F, Benitez-Andonegui A., Peters, J., Goebel R.,\n"
+    "      (2023). Imaging the columnar functional organization of \n"
+    "      human area MT+ to axis-of-motion stimuli using VASO at 7 Tesla.\n"
+    "      Cerebral Cortex. <https://doi.org/10.1093/cercor/bhad151> \n"
     "\n");
     return 0;
 }
@@ -98,7 +97,7 @@ int main(int argc, char*  argv[]) {
     }
 
     // // ========================================================================
-    cout << "  Calculating sensitivity..." << endl;
+    cout << " Calculating sensitivity..." << endl;
     // // ========================================================================
     // Compute L2 norm (Euclidean norm) across the time dimension
 
@@ -106,6 +105,9 @@ int main(int argc, char*  argv[]) {
         float sum_sq = 0;
         for (uint32_t t = 0; t != size_time; ++t) {  // Loop across time points 
             float val = *(nii_input1_data + i + nr_voxels*t);
+            if (val < 0.0) {
+                val = 0;
+            }
             sum_sq += val * val;
         }
         // Store the computed L2 norm in the 3D output
