@@ -3,9 +3,16 @@
 
 int show_help(void) {
     printf(
-    "LN2_SENSITIVITY: Compute a voxel-wise measure of sensitivty \n"
+    "LN2_SENSITIVITY: Compute a voxel-wise measure of sensitivty based on functional response. \n"
     "                 given an N-D array containing fMRI response to N-tasks \n "
-    "                 (e.g. betas, percent signal change, t-stat).\n"
+    "                 (e.g. betas, percent signal change, t-stat). \n "
+    "                 Note that by default negative values are zeroed. \n "
+    " \n"                  
+    "                 Reference: Pizzuti A, Huber LR, Gulban OF, Benitez-Andonegui A, \n "
+    "                 Peters J, Goebel R. Imaging the columnar functional organization of \n"
+    "                 human area MT+ to axis-of-motion stimuli using VASO at 7 Tesla. \n"
+    "                 Cereb Cortex. 2023 Jun 20;33(13):8693-8711. doi: 10.1093/cercor/bhad151. \n"
+    "                 PMID: 37254796; PMCID: PMC10321107.           \n"
     "\n"
     "Usage:\n"
     "    LN2_SENSITIVITY -input input.nii\n"
@@ -13,7 +20,7 @@ int show_help(void) {
     "\n"
     "Options:\n"
     "    -help   : Show this help.\n"
-    "    -input : First timeseries nifti (4D)"
+    "    -input : N-D fMRI response to stimuli (N-D nifti)"
     "    -output : (Optional) Output basename for all outputs.\n"
     "\n"
     "\n");
@@ -97,7 +104,7 @@ int main(int argc, char*  argv[]) {
 
     for (uint32_t i = 0; i != nr_voxels; ++i) {  // Loop across voxels
         float sum_sq = 0;
-        for (uint32_t t = 0; t != size_time; ++t) {  // Loop across time points
+        for (uint32_t t = 0; t != size_time; ++t) {  // Loop across time points 
             float val = *(nii_input1_data + i + nr_voxels*t);
             sum_sq += val * val;
         }
