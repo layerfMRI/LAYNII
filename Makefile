@@ -287,6 +287,9 @@ LN3_LAYERS:
 LN2_SENSITIVITY:
 	$(CC) $(CFLAGS) -o LN2_SENSITIVITY src/LN2_SENSITIVITY.cpp $(LIBRARIES) $(LFLAGS)
 
+LN2_SPECIFICITY:
+	$(CC) $(CFLAGS) -o LN2_SPECIFICITY src/LN2_SPECIFICITY.cpp $(LIBRARIES) $(LFLAGS)
+
 # =============================================================================
 
 clean:
