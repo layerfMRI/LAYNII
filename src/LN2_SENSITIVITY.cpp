@@ -3,10 +3,12 @@
 
 int show_help(void) {
     printf(
-    "LN2_SENSITIVITY: Compute a voxel-wise measure of functional sensitivty\n"
-    "                 given an 4D matrix containing fMRI response to N-tasks\n"
-    "                 (e.g. betas, percent signal change, t-stat).\n"
-    "                 Note that by default negative values are zeroed.\n"
+    "LN2_SENSITIVITY: Compute a voxel-wise measure of functional sensitivity\n"
+    "                 from a 4D matrix containing fMRI responses to N tasks\n"
+    "                 (e.g., betas, percent signal change, t-statistics).\n"
+    "                 This method is useful as a complement to the 'Winner Takes All'\n" 
+    "                 approach, providing a measure of how strongly a voxel responds\n" 
+    "                 to different tasks (overall responsiveness of a voxel)\n"
     "\n"
     "Usage:\n"
     "    LN2_SENSITIVITY -input input.nii\n"
@@ -14,15 +16,21 @@ int show_help(void) {
     "\n"
     "Options:\n"
     "    -help   : Show this help.\n"
-    "    -input : 4D fMRI response to N-stimuli (4D nifti)"
+    "    -input  : 4D matrix of dimensions (X, Y, Z, N) where\n"
+    "             (X, Y, Z) are the spatial dimensions of the brain volume\n"  
+    "             and N is the number of task conditions (e.g. fMRI task responses)\n"
     "    -output : (Optional) Output basename for all outputs.\n"
     "\n"
     "Citation:\n"
     "    - Pizzuti, A., Huber, L., Gulban, O.F, Benitez-Andonegui A., Peters, J., Goebel R.,\n"
-    "      (2023). Imaging the columnar functional organization of \n"
+    "      (2023). Imaging the columnar functional organization of\n"
     "      human area MT+ to axis-of-motion stimuli using VASO at 7 Tesla.\n"
-    "      Cerebral Cortex. <https://doi.org/10.1093/cercor/bhad151> \n"
-    "\n");
+    "      Cerebral Cortex. <https://doi.org/10.1093/cercor/bhad151>\n"
+    "\n"
+    "NOTES: \n" 
+    "    Sensitivity is based on the magnitude (ln2norm) of a voxel's response profile.\n"
+    "    By default, negative values are zeroed before computation.\n"
+ "\n");
     return 0;
 }
 
