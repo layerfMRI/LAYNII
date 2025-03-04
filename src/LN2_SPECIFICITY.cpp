@@ -6,11 +6,10 @@
 int show_help(void) {
     printf(
     "LN2_SPECIFICITY: Compute a voxel-wise measure of functional specificity\n"
-    "                 from a 4D fMRI response matrix. This measure quantifies\n"
-    "                 how specific (selective) a voxel responds when multiple tasks\n"
-    "                 are evaluated (e.g., betas, percent signal change, t-statistics)\n"
-    "                 This method is useful as a complement to the 'Winner Takes All'\n" 
-    "                 approach, providing a measure of how specific is voxel's response\n"  
+    "                 from a 4D matrix containing fMRI responses to N tasks\n"
+    "                 (e.g., betas, percent signal change, t-statistics)\n"
+    "                 This method complements the 'Winner Takes All' approach\n" 
+    "                 providing a measure of how specific is voxel's response\n"  
     "                 to the winning condition. \n"
     "                 Specificity is normalized between 0-1.\n"
     "\n"
@@ -32,8 +31,8 @@ int show_help(void) {
     "      Cerebral Cortex. <https://doi.org/10.1093/cercor/bhad151>\n"
     "\n"
     "NOTES: \n" 
-    "    Specificity is based on the cosine similarity between the voxel response profile\n"  
-    "    and a reference axis representing a maximally specific response pattern.\n"
+    "    Specificity is based on the cosine similarity between the vector with the voxel's\n"  
+    "    response profile and a reference vector representing a maximally specific response pattern.\n"
     "    By default, negative values are zeroed before computation.\n"
     "\n");
     return 0;
