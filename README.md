@@ -143,9 +143,10 @@ If you have any issues when using LayNii, or want to request a new feature, we a
 ### Code Contributors
 - Renzo Huber
 - Omer Faruk Gulban  
-- Remi Gau  
 - Alessandra Pizzuti  
-- Sebastian Dresbach
+- Sebastian Dresbach  
+- Remi Gau  
+- Marco Barilari  
 
 ## License
 LayNii is licensed under [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause).

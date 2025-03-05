@@ -1,4 +1,6 @@
 #include "../dep/laynii_lib.h"
+#include <limits>
+
 
 int show_help(void) {
     printf(
@@ -12,7 +14,12 @@ int show_help(void) {
     "    -init      : Initial voxels that denote 0 distance.\n"
     "    -domain    : Set of voxels in which the distance will be measured.\n"
     "                 All non-zero voxels will be considered.\n"
-    "    -no_smooth : (Optional) Disable smoothing on cortical depth metric.\n"
+    "    -max_dist  : (Optional) Maximum distance that will be computed.\n"
+    "    -init_val  : (Optional) Initial voxels will be determined by this value.\n"
+    "                  This is useful when the domian and init files are the same\n"
+    "                  file, but the user wants to only take e.g. all values that\n"
+    "                  are '2' within the domain file.\n"
+    "    -no_smooth : (Optional) Disable smoothing on distance metric.\n"
     "    -output    : (Optional) Output basename for all outputs.\n"
     "\n"
     "\n");
@@ -23,8 +30,11 @@ int main(int argc, char*  argv[]) {
 
     nifti_image *nii1 = NULL, *nii2 = NULL;
     char *fin1 = NULL, *fin2 = NULL, *fout = NULL;
-    bool use_outpath = false, mode_smooth = true;
+    bool use_outpath = false, mode_smooth = true, mode_init_val = false, mode_max_dist = false;
     int ac;
+    float max_dist = std::numeric_limits<float>::max();
+    float temp_max_dist = 0;
+    int init_val;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -44,6 +54,20 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             fin2 = argv[ac];
+        } else if (!strcmp(argv[ac], "-max_dist")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -max_dist\n");
+                return 1;
+            }
+            mode_max_dist = true;
+            max_dist = atof(argv[ac]);
+        } else if (!strcmp(argv[ac], "-init_val")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -init_val\n");
+                return 1;
+            }
+            mode_init_val = true;
+            init_val = atof(argv[ac]);
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -151,6 +175,34 @@ int main(int argc, char*  argv[]) {
         }
     }
 
+    // Handle initial voxels file
+    uint32_t nr_init_voxels = 0;
+    for (uint32_t i = 0; i != nr_voxels; ++i) {
+        if (mode_init_val) {
+            if (*(nii_init_data + i) != init_val) {
+                *(nii_init_data + i) = 0;
+            } else {
+                *(nii_init_data + i) = 1;
+                nr_init_voxels += 1;
+            }
+        } else {
+            if (*(nii_init_data + i) != 0) {
+                nr_init_voxels += 1;
+            }
+        }
+    }
+
+    if (mode_init_val) {
+        cout << "  Initial voxels (custom inital voxels mode) = " << nr_init_voxels << endl;
+    } else {
+        cout << "  Initial voxels = " << nr_init_voxels << endl;
+    }
+
+    if (mode_max_dist) {
+        cout << "  Maximum distance mode selected." << endl;
+        cout << "    Maximum distance = " << max_dist << endl;
+    }
+
     // ========================================================================
     // Borders
     // ========================================================================
@@ -174,7 +226,7 @@ int main(int argc, char*  argv[]) {
         }
     }
 
-    while (voxel_counter != 0) {
+    while (voxel_counter != 0 && temp_max_dist < max_dist) {
         voxel_counter = 0;
         for (uint32_t ii = 0; ii != nr_voi; ++ii) {
             i = *(voi_id + ii);  // Map subset to full set
@@ -499,9 +551,21 @@ int main(int argc, char*  argv[]) {
                         }
                     }
                 }
+
+                // Update maximum distance reached
+                if (*(flood_dist_data + i) > temp_max_dist) {
+                    temp_max_dist = *(flood_dist_data + i);
+                }
             }
         }
         grow_step += 1;
+    }
+
+    if (mode_max_dist) {
+        cout << "\n  Maximum distance mode disables smoothing. Distance maps will not be smoothed... " << endl;
+        // NOTE[Faruk]: I could not think of a way to not taper the max edges in max distance case. Therefore,
+        // I have put this workaround for now.
+        mode_smooth = false;
     }
 
     if (mode_smooth) {

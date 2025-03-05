@@ -7,7 +7,7 @@
 
 void log_welcome(const char* programname) {
     cout << "======================="<< endl;
-    cout << "LayNii v2.7.0          "<< endl;
+    cout << "LayNii v2.7.1          "<< endl;
     cout << "======================="<< endl;
     cout << programname << "\n" << endl;
 }
@@ -1046,3 +1046,443 @@ nifti_image* iterative_smoothing(nifti_image* nii_in, int iter_smooth,
     }
     return nii_smooth;
 }
+
+// ============================================================================
+// WIP NOLAD...
+// ============================================================================
+
+float ln_gaussian(float distance, float sigma) {
+    return 1. / (sigma * std::sqrt(2. * 3.141592))
+           * std::exp(-0.5 * distance * distance / (sigma * sigma));
+}
+
+void ln_normalize_to_zero_one(float* data, int data_size) {
+
+    // Find minimum and maximum
+    float temp_max = std::numeric_limits<float>::min();
+    float temp_min = std::numeric_limits<float>::max();
+    for (int i = 0; i != data_size; ++i) {
+        if (*(data + i) > temp_max) {
+            temp_max = *(data + i);
+        }
+        if (*(data + i) < temp_min) {
+            temp_min = *(data + i);
+        }
+    }
+
+    // Translate minimum to zero
+    for (int i = 0; i != data_size; ++i) {
+        *(data + i) -= temp_min;
+    }
+
+    // Scale maximum to one
+    temp_max -= temp_min;
+    for (int i = 0; i != data_size; ++i) {
+        *(data + i) /= temp_max;
+    }    
+}
+
+
+void ln_smooth_gaussian_iterative_3D(float* data_in,
+                                     const int   nx, const int   ny, const int   nz, const int nt,
+                                     const float dx, const float dy, const float dz,
+                                     const float fwhm, const int nr_iterations, const bool log) {
+    // NOTE: Overwrites the input with the smoothed image at the end
+
+    int data_size = nx * ny * nz * nt;
+
+    float* data_temp = (float*)malloc(data_size * sizeof(float));
+
+    // Compute Gaussian weights
+    float w_0 = ln_gaussian(0, fwhm);
+    float w_dX = ln_gaussian(dx, fwhm);
+    float w_dY = ln_gaussian(dy, fwhm);
+    float w_dZ = ln_gaussian(dz, fwhm);
+
+    // Loop over every data point
+    int ix, iy, iz, it, j;
+    for (int n = 0; n != nr_iterations; ++n) {
+
+        if (log) std::printf("    Iteration: %i/%i\n", n+1, nr_iterations);
+
+        for (int i = 0; i != data_size; ++i) {
+
+            std::tie(ix, iy, iz, it) = ind2sub_4D(i, nx, ny, nz);
+            float new_val = 0, total_weight = 0;
+
+            // Start with the voxel itself
+            new_val += *(data_in + i) * w_0;
+            total_weight += w_0;
+
+            // ----------------------------------------------------------------
+            // 1-jump neighbours
+            // ----------------------------------------------------------------
+            if (ix > 0) {
+                j = sub2ind_4D(ix-1, iy, iz, it, nx, ny, nz);
+                new_val += *(data_in + j) * w_dX;
+                total_weight += w_dX;
+            }
+            if (ix < nx-1) {
+                j = sub2ind_4D(ix+1, iy, iz, it, nx, ny, nz);
+                new_val += *(data_in + j) * w_dX;
+                total_weight += w_dX;
+            }
+            if (iy > 0) {
+                j = sub2ind_4D(ix, iy-1, iz, it, nx, ny, nz);
+                new_val += *(data_in + j) * w_dY;
+                total_weight += w_dY;
+            }
+            if (iy < ny-1) {
+                j = sub2ind_4D(ix, iy+1, iz, it, nx, ny, nz);
+                new_val += *(data_in + j) * w_dY;
+                total_weight += w_dY;
+            }
+            if (iz > 0) {
+                j = sub2ind_4D(ix, iy, iz-1, it, nx, ny, nz);
+                new_val += *(data_in + j) * w_dZ;
+                total_weight += w_dZ;
+            }
+            if (iz < nz-1) {
+                j = sub2ind_4D(ix, iy, iz+1, it, nx, ny, nz);
+                new_val += *(data_in + j) * w_dZ;
+                total_weight += w_dZ;
+            }
+
+            // ----------------------------------------------------------------
+            *(data_temp + i) = new_val / total_weight;
+        }
+
+        // Swap image data for the next iteration
+        for (int i = 0; i != data_size; ++i) {
+            *(data_in + i) = *(data_temp + i);
+        }
+    }
+    free(data_temp);
+}
+
+
+void ln_compute_gradients_3D(const float* data_in, float* data_grad_x, float* data_grad_y, float* data_grad_z, 
+                             const int nx, const int ny, const int nz, const int nt) {
+
+    int data_size = nx * ny * nz * nt;
+
+    // Loop over every data point
+    int ix, iy, iz, it, j, k;
+    for (int i = 0; i != data_size; ++i) {
+        std::tie(ix, iy, iz, it) = ind2sub_4D(i, nx, ny, nz);
+
+        // --------------------------------------------------------------------
+        // 1-jump neighbours
+        // --------------------------------------------------------------------
+        if (ix > 0 && ix < nx-1) {
+            j = sub2ind_4D(ix-1, iy, iz, it, nx, ny, nz);
+            k = sub2ind_4D(ix+1, iy, iz, it, nx, ny, nz);
+            *(data_grad_x + i) = *(data_in + j) - *(data_in + k);
+        }
+        if (iy > 0 && iy < ny-1) {
+            j = sub2ind_4D(ix, iy-1, iz, it, nx, ny, nz);
+            k = sub2ind_4D(ix, iy+1, iz, it, nx, ny, nz);
+            *(data_grad_y + i)  = *(data_in + j) - *(data_in + k);
+        }
+        if (iz > 0 && iz < nz-1) {
+            j = sub2ind_4D(ix, iy, iz-1, it, nx, ny, nz);
+            k = sub2ind_4D(ix, iy, iz+1, it, nx, ny, nz);
+            *(data_grad_z + i)  = *(data_in + j) - *(data_in + k);
+        }
+    }
+}
+
+
+void ln_compute_gradients_3D_over_x(const float* data_in, float* data_out, 
+                                    const int nx, const int ny, const int nz, const int nt) {
+
+    int data_size = nx * ny * nz * nt;
+
+    // Loop over every data point
+    int ix, iy, iz, it, j, k;
+    for (int i = 0; i != data_size; ++i) {
+        std::tie(ix, iy, iz, it) = ind2sub_4D(i, nx, ny, nz);
+        if (ix > 0 && ix < nx-1) {
+            j = sub2ind_4D(ix-1, iy, iz, it, nx, ny, nz);
+            k = sub2ind_4D(ix+1, iy, iz, it, nx, ny, nz);
+            *(data_out + i) = *(data_in + j) - *(data_in + k);
+        }
+    }
+}
+
+
+void ln_compute_gradients_3D_over_y(const float* data_in, float* data_out, 
+                                    const int nx, const int ny, const int nz, const int nt) {
+
+    int data_size = nx * ny * nz * nt;
+
+    // Loop over every data point
+    int ix, iy, iz, it, j, k;
+    for (int i = 0; i != data_size; ++i) {
+        std::tie(ix, iy, iz, it) = ind2sub_4D(i, nx, ny, nz);
+        if (iy > 0 && iy < ny-1) {
+            j = sub2ind_4D(ix, iy-1, iz, it, nx, ny, nz);
+            k = sub2ind_4D(ix, iy+1, iz, it, nx, ny, nz);
+            *(data_out + i)  = *(data_in + j) - *(data_in + k);
+        }
+    }
+}
+
+
+void ln_compute_gradients_3D_over_z(const float* data_in, float* data_out, 
+                                    const int nx, const int ny, const int nz, const int nt) {
+
+    int data_size = nx * ny * nz * nt;
+
+    // Loop over every data point
+    int ix, iy, iz, it, j, k;
+    for (int i = 0; i != data_size; ++i) {
+        std::tie(ix, iy, iz, it) = ind2sub_4D(i, nx, ny, nz);
+        if (iz > 0 && iz < nz-1) {
+            j = sub2ind_4D(ix, iy, iz-1, it, nx, ny, nz);
+            k = sub2ind_4D(ix, iy, iz+1, it, nx, ny, nz);
+            *(data_out + i)  = *(data_in + j) - *(data_in + k);
+        }
+    }
+}
+
+
+void ln_compute_hessian_3D(const float* data_in, float* data_shorthessian,
+                           const int nx, const int ny, const int nz, const int nt, 
+                           const int dx, const int dy, const int dz, const int vscale) {
+    // NOTE: Hessian data should be 6 times larger than the input
+    // NOTE: Hessian values are saved consecutively for each voxel
+    //     *(data_shorthessian + i*6 + 0) = 2nd derivative xx
+    //     *(data_shorthessian + i*6 + 1) = 2nd derivative xy yx
+    //     *(data_shorthessian + i*6 + 2) = 2nd derivative xz zx
+    //     *(data_shorthessian + i*6 + 3) = 2nd derivative yy
+    //     *(data_shorthessian + i*6 + 4) = 2nd derivative yz zy
+    //     *(data_shorthessian + i*6 + 5) = 2nd derivative zz
+
+    int data_size = nx * ny * nz * nt;
+    float FWHM = 1.0;
+
+    // Allocate memory (NOTE: I have prioritized RAM optimization)
+    float* data_grad_1st = (float*)malloc(data_size * sizeof(float));
+    float* data_grad_2nd = (float*)malloc(data_size * sizeof(float));
+
+    // x 
+    ln_compute_gradients_3D_over_x(data_in, data_grad_1st, nx, ny, nz, nt);
+    if (vscale > 0) {
+        std::printf("\n  Smoothing 1st gradient (iterative 3D Gaussian [FWHM = %f, iterations = %i])...\n", FWHM, vscale);
+        ln_smooth_gaussian_iterative_3D(data_grad_1st, nx, ny, nz, nt, dx, dy, dz, FWHM, vscale);
+    }
+
+    // xx
+    ln_compute_gradients_3D_over_x(data_grad_1st, data_grad_2nd, nx, ny, nz, nt);
+    for (uint32_t i = 0; i != data_size; ++i) {
+        *(data_shorthessian + i*6 + 0) =  *(data_grad_2nd + i);
+    }
+
+    // xy
+    ln_compute_gradients_3D_over_y(data_grad_1st, data_grad_2nd, nx, ny, nz, nt);
+    for (uint32_t i = 0; i != data_size; ++i) {
+        *(data_shorthessian + i*6 + 1) =  *(data_grad_2nd + i);
+    }
+
+    // xz
+    ln_compute_gradients_3D_over_z(data_grad_1st, data_grad_2nd, nx, ny, nz, nt);
+    for (uint32_t i = 0; i != data_size; ++i) {
+        *(data_shorthessian + i*6 + 2) =  *(data_grad_2nd + i);
+    }
+
+    // y
+    ln_compute_gradients_3D_over_y(data_in, data_grad_1st, nx, ny, nz, nt);
+    if (vscale > 0) {
+        std::printf("\n  Smoothing 2nd gradient (iterative 3D Gaussian [FWHM = %f, iterations = %i])...\n", FWHM, vscale);
+        ln_smooth_gaussian_iterative_3D(data_grad_1st, nx, ny, nz, nt, dx, dy, dz, FWHM, vscale);
+    }
+
+    // yy
+    ln_compute_gradients_3D_over_y(data_grad_1st, data_grad_2nd, nx, ny, nz, nt);
+    for (uint32_t i = 0; i != data_size; ++i) {
+        *(data_shorthessian + i*6 + 3) =  *(data_grad_2nd + i);
+    }
+
+    // yz
+    ln_compute_gradients_3D_over_z(data_grad_1st, data_grad_2nd, nx, ny, nz, nt);
+    for (uint32_t i = 0; i != data_size; ++i) {
+        *(data_shorthessian + i*6 + 4) =  *(data_grad_2nd + i);
+    }
+
+    // z
+    ln_compute_gradients_3D_over_z(data_in, data_grad_1st, nx, ny, nz, nt);
+    if (vscale > 0) {
+        std::printf("\n  Smoothing 3rd gradient (iterative 3D Gaussian [FWHM = %f, iterations = %i])...\n", FWHM, vscale);
+        ln_smooth_gaussian_iterative_3D(data_grad_1st, nx, ny, nz, nt, dx, dy, dz, FWHM, vscale);
+    }
+
+    // zz
+    ln_compute_gradients_3D_over_z(data_grad_1st, data_grad_2nd, nx, ny, nz, nt);
+    for (uint32_t i = 0; i != data_size; ++i) {
+        *(data_shorthessian + i*6 + 5) =  *(data_grad_2nd + i);
+    } 
+
+    free(data_grad_1st);
+    free(data_grad_2nd);
+}
+
+void ln_compute_eigen_values_3D(const float* data_shorthessian, float* data_eigval1, float* data_eigval2, float* data_eigval3,
+                                const int nx, const int ny, const int nz, const int nt) {
+    // NOTE: Implementing Delledalle et al. 2017, Hal.
+    // NOTE: I simplified complex conjugates as I do not have complex values.
+
+    int data_size = nx * ny * nz * nt;
+
+    for (uint32_t i = 0; i != data_size; ++i) {
+        float a = *(data_shorthessian + i*6 + 0);  // xx
+        float b = *(data_shorthessian + i*6 + 3);  // yy
+        float c = *(data_shorthessian + i*6 + 5);  // zz
+        float d = *(data_shorthessian + i*6 + 1);  // xy, yx
+        float e = *(data_shorthessian + i*6 + 4);  // yz, zy
+        float f = *(data_shorthessian + i*6 + 2);  // xz, zx
+
+        // --------------------------------------------------------------------
+        // Compute eigen values 3D
+        // --------------------------------------------------------------------
+        float x1 = a*a + b*b + c*c - a*b - a*c - b*c + 3 * (d*d + f*f + e*e);
+
+        float t1 = 2*a - b - c;
+        float t2 = 2*b - a - c;
+        float t3 = 2*c - a - b;
+        float x2 = - t1 * t2 * t3 + 9*( t3*(d*d) + t2*(f*f) + t1*(e*e) ) - 54*( d*e*f );
+
+        float phi;
+        if (x2 > 0) {
+            phi = std::atan2( 0, std::sqrt( 4.*( (x1*x1)*x1 ) - x2*x2 ) / x2 );
+        }   else if (x2 < 0) {
+            phi = std::atan2( 0, std::sqrt( 4.*( (x1*x1)*x1 ) - x2*x2 ) / x2 ) + M_PI;
+        } else {
+            phi = M_PI / 2.;
+        }
+
+        float lambda1 = ( a + b + c - 2.*std::sqrt( x1 ) * std::cos( phi/3. ) ) / 3.;
+        float lambda2 = ( a + b + c + 2.*std::sqrt( x1 ) * std::cos( (phi - M_PI)/3. ) ) / 3.;
+        float lambda3 = ( a + b + c + 2.*std::sqrt( x1 ) * std::cos( (phi + M_PI)/3. ) ) / 3.;
+
+        if (std::isnan(lambda1)) {
+            lambda1 = 0.;
+        }
+        if (std::isnan(lambda2)) {
+            lambda2 = 0.;
+        }
+        if (std::isnan(lambda3)) {
+            lambda3 = 0.;
+        }
+
+        *(data_eigval1 + i) = lambda1;
+        *(data_eigval2 + i) = lambda2;
+        *(data_eigval3 + i) = lambda3;
+
+        // // --------------------------------------------------------------------
+        // // TODO: Make this a separate function.
+        // // Sort by magnitude while preserving sign of the eigenvalues
+        // // --------------------------------------------------------------------
+        // bool lambda1_sign = std::signbit(lambda1);
+        // bool lambda2_sign = std::signbit(lambda2);
+        // bool lambda3_sign = std::signbit(lambda3);
+
+        // float lambda1_abs = std::abs(lambda1);
+        // float lambda2_abs = std::abs(lambda2);
+        // float lambda3_abs = std::abs(lambda3);
+
+        // *(data_eigval1 + i) = std::min( std::min( lambda1_abs, lambda2_abs ), lambda3_abs );
+        // *(data_eigval3 + i) = std::max( std::max( lambda1_abs, lambda2_abs ), lambda3_abs );
+        // *(data_eigval2 + i) = lambda1_abs + lambda2_abs + lambda3_abs - ( *(data_eigval1 + i) + *(data_eigval3 + i) );
+ 
+        // // Put back the signbit
+        // if (*(data_eigval1 + i) == lambda1_abs) {
+        //     *(data_eigval1 + i) *= static_cast<float>(lambda1_sign) * 2 - 1;
+        // } else if (*(data_eigval1 + i) == lambda2_abs) {
+        //     *(data_eigval1 + i) *= static_cast<float>(lambda2_sign) * 2 - 1;
+        // } else if (*(data_eigval1 + i) == lambda3_abs) {
+        //     *(data_eigval1 + i) *= static_cast<float>(lambda3_sign) * 2 - 1;
+        // }
+
+        // if (*(data_eigval2 + i) == lambda1_abs) {
+        //     *(data_eigval2 + i) *= static_cast<float>(lambda1_sign) * 2 - 1;
+        // } else if (*(data_eigval2 + i) == lambda2_abs) {
+        //     *(data_eigval2 + i) *= static_cast<float>(lambda2_sign) * 2 - 1;
+        // } else if (*(data_eigval2 + i) == lambda3_abs) {
+        //     *(data_eigval2 + i) *= static_cast<float>(lambda3_sign) * 2 - 1;
+        // }
+
+        // if (*(data_eigval3 + i) == lambda1_abs) {
+        //     *(data_eigval3 + i) *= static_cast<float>(lambda1_sign) * 2 - 1;
+        // } else if (*(data_eigval3 + i) == lambda2_abs) {
+        //     *(data_eigval3 + i) *= static_cast<float>(lambda2_sign) * 2 - 1;
+        // } else if (*(data_eigval3 + i) == lambda3_abs) {
+        //     *(data_eigval3 + i) *= static_cast<float>(lambda3_sign) * 2 - 1;
+        // }
+    }
+}
+
+void ln_compute_eigen_vectors_3D(const float* data_shorthessian,
+                                 const float* data_eigval1, const float* data_eigval2, const float* data_eigval3,
+                                 float* data_eigvec1, float* data_eigvec2, float* data_eigvec3,
+                                 const int nx, const int ny, const int nz, const int nt) {
+
+    // NOTE: Implementing Delledalle et al. 2017, Hal.
+
+    int data_size = nx * ny * nz * nt;
+
+    for (uint32_t i = 0; i != data_size; ++i) {
+        float a = *(data_shorthessian + i*6 + 0);  // xx
+        float b = *(data_shorthessian + i*6 + 3);  // yy
+        float c = *(data_shorthessian + i*6 + 5);  // zz
+        float d = *(data_shorthessian + i*6 + 1);  // xy, yx
+        float e = *(data_shorthessian + i*6 + 4);  // yz, zy
+        float f = *(data_shorthessian + i*6 + 2);  // xz, zx
+
+        float lambda1 = *(data_eigval1 + i);
+        float lambda2 = *(data_eigval2 + i);
+        float lambda3 = *(data_eigval3 + i);
+
+        // --------------------------------------------------------------------
+        // Compute eigen vectors 3D
+        // --------------------------------------------------------------------
+        float t1, t2, m1, m2, m3, v1, v2, v3;
+
+        t1 = d * (c - lambda1) - e * f;
+        t2 = f * (b - lambda1) - d * e;
+        if (f == 0 || t2 == 0) {
+            m1 = 0;
+        } else {
+            m1 = t1 / t2;            
+        }
+
+        t1 = d * (c - lambda2) - e * f;
+        t2 = f * (b - lambda2) - d * e;
+        if (f == 0 || t2 == 0) {
+            m2 = 0;
+        } else {
+            m2 = t1 / t2;            
+        }
+
+        t1 = d * (c - lambda3) - e * f;
+        t2 = f * (b - lambda3) - d * e;
+        if (f == 0 || t2 == 0) {
+            m3 = 0;
+        } else {
+            m3 = t1 / t2;            
+        }
+
+        *(data_eigvec1 + i*3 + 0) = (lambda1 - c - e * m1) / f;
+        *(data_eigvec1 + i*3 + 1) = m1;
+        *(data_eigvec1 + i*3 + 2) = 1;
+
+        *(data_eigvec2 + i*3 + 0) = (lambda2 - c - e * m2) / f;
+        *(data_eigvec2 + i*3 + 1) = m2;
+        *(data_eigvec2 + i*3 + 2) = 1;
+
+        *(data_eigvec3 + i*3 + 0) = (lambda3 - c - e * m3) / f;
+        *(data_eigvec3 + i*3 + 1) = m3;
+        *(data_eigvec3 + i*3 + 2) = 1;
+    }
+}
+
