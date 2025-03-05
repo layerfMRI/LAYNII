@@ -284,8 +284,11 @@ LN2_REGRESS_OUT:
 LN3_LAYERS:
 	$(CC) $(CFLAGS) -o LN3_LAYERS src/LN3_LAYERS.cpp $(LIBRARIES) $(LFLAGS)
 
-LN3_NOLAD:
-	$(CC) $(CFLAGS) -o LN3_NOLAD src/LN3_NOLAD.cpp $(LIBRARIES) $(LFLAGS)
+LN2_SENSITIVITY:
+	$(CC) $(CFLAGS) -o LN2_SENSITIVITY src/LN2_SENSITIVITY.cpp $(LIBRARIES) $(LFLAGS)
+
+LN2_SPECIFICITY:
+	$(CC) $(CFLAGS) -o LN2_SPECIFICITY src/LN2_SPECIFICITY.cpp $(LIBRARIES) $(LFLAGS)
 
 # =============================================================================
 
