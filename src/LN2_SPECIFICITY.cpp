@@ -95,18 +95,26 @@ int main(int argc, char*  argv[]) {
     const uint32_t nr_voxels = size_z * size_y * size_x;
 
     // ========================================================================
-    // Fix input datatype issues
+    // Fix input datatype issues and prepare 3D Nifti output
     // ========================================================================
     nifti_image* nii_input1 = copy_nifti_as_float32_with_scl_slope_and_scl_inter(nii1);
     float* nii_input1_data = static_cast<float*>(nii_input1->data);
-   
-    // Prepare output image - this should be 3D 
-    nifti_image* nii_specificity = copy_nifti_as_float32(nii_input1);
+
+    nifti_image* nii_specificity = copy_nifti_as_float32(nii_input1);  // Keep this copy
     float* nii_specificity_data = static_cast<float*>(nii_specificity->data);
 
-    for (int i = 0; i != nr_voxels*size_time; ++i) {
+    // Initialize output to zeros
+    for (int i = 0; i != nr_voxels; ++i) {
         *(nii_specificity_data + i) = 0;
     }
+
+    // Ensure it's correctly set as a 3D image
+    nii_specificity->dim[0] = 3;
+    nii_specificity->dim[1] = size_x;
+    nii_specificity->dim[2] = size_y;
+    nii_specificity->dim[3] = size_z;
+    nii_specificity->dim[4] = 1;
+    nifti_update_dims_from_array(nii_specificity);
 
     // // ========================================================================
     cout << " Calculating specificity..." << endl;
