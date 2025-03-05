@@ -1378,47 +1378,6 @@ void ln_compute_eigen_values_3D(const float* data_shorthessian, float* data_eigv
         *(data_eigval1 + i) = lambda1;
         *(data_eigval2 + i) = lambda2;
         *(data_eigval3 + i) = lambda3;
-
-        // // --------------------------------------------------------------------
-        // // TODO: Make this a separate function.
-        // // Sort by magnitude while preserving sign of the eigenvalues
-        // // --------------------------------------------------------------------
-        // bool lambda1_sign = std::signbit(lambda1);
-        // bool lambda2_sign = std::signbit(lambda2);
-        // bool lambda3_sign = std::signbit(lambda3);
-
-        // float lambda1_abs = std::abs(lambda1);
-        // float lambda2_abs = std::abs(lambda2);
-        // float lambda3_abs = std::abs(lambda3);
-
-        // *(data_eigval1 + i) = std::min( std::min( lambda1_abs, lambda2_abs ), lambda3_abs );
-        // *(data_eigval3 + i) = std::max( std::max( lambda1_abs, lambda2_abs ), lambda3_abs );
-        // *(data_eigval2 + i) = lambda1_abs + lambda2_abs + lambda3_abs - ( *(data_eigval1 + i) + *(data_eigval3 + i) );
- 
-        // // Put back the signbit
-        // if (*(data_eigval1 + i) == lambda1_abs) {
-        //     *(data_eigval1 + i) *= static_cast<float>(lambda1_sign) * 2 - 1;
-        // } else if (*(data_eigval1 + i) == lambda2_abs) {
-        //     *(data_eigval1 + i) *= static_cast<float>(lambda2_sign) * 2 - 1;
-        // } else if (*(data_eigval1 + i) == lambda3_abs) {
-        //     *(data_eigval1 + i) *= static_cast<float>(lambda3_sign) * 2 - 1;
-        // }
-
-        // if (*(data_eigval2 + i) == lambda1_abs) {
-        //     *(data_eigval2 + i) *= static_cast<float>(lambda1_sign) * 2 - 1;
-        // } else if (*(data_eigval2 + i) == lambda2_abs) {
-        //     *(data_eigval2 + i) *= static_cast<float>(lambda2_sign) * 2 - 1;
-        // } else if (*(data_eigval2 + i) == lambda3_abs) {
-        //     *(data_eigval2 + i) *= static_cast<float>(lambda3_sign) * 2 - 1;
-        // }
-
-        // if (*(data_eigval3 + i) == lambda1_abs) {
-        //     *(data_eigval3 + i) *= static_cast<float>(lambda1_sign) * 2 - 1;
-        // } else if (*(data_eigval3 + i) == lambda2_abs) {
-        //     *(data_eigval3 + i) *= static_cast<float>(lambda2_sign) * 2 - 1;
-        // } else if (*(data_eigval3 + i) == lambda3_abs) {
-        //     *(data_eigval3 + i) *= static_cast<float>(lambda3_sign) * 2 - 1;
-        // }
     }
 }
 
@@ -1484,5 +1443,225 @@ void ln_compute_eigen_vectors_3D(const float* data_shorthessian,
         *(data_eigvec3 + i*3 + 1) = m3;
         *(data_eigvec3 + i*3 + 2) = 1;
     }
+
+    // --------------------------------------------------------------------
+    // Normalize eigen vectors 1
+    // --------------------------------------------------------------------
+    for (uint32_t i = 0; i != data_size; ++i) {
+        float a1 = *(data_eigvec1 + i*3 + 0);
+        float a2 = *(data_eigvec1 + i*3 + 1);
+        float a3 = *(data_eigvec1 + i*3 + 2);
+        float norm = std::sqrt(a1*a1 + a2*a2 + a3*a3);
+        *(data_eigvec1 + i*3 + 0) /= norm;
+        *(data_eigvec1 + i*3 + 1) /= norm;
+        *(data_eigvec1 + i*3 + 2) /= norm;
+    }
+
+    // --------------------------------------------------------------------
+    // Orthonormalize eigen vector 2 to eigen vector 1
+    // --------------------------------------------------------------------
+    for (uint32_t i = 0; i != data_size; ++i) {
+        float a1 = *(data_eigvec1 + i*3 + 0);
+        float a2 = *(data_eigvec1 + i*3 + 1);
+        float a3 = *(data_eigvec1 + i*3 + 2);
+
+        float b1 = *(data_eigvec2 + i*3 + 0);
+        float b2 = *(data_eigvec2 + i*3 + 1);
+        float b3 = *(data_eigvec2 + i*3 + 2);
+
+        // Compute dot product (vec2 . 1/vec1)
+        float dotp =  b1 * (1/a1) + b2 * (1/a1) + b3 * (1/a3);
+
+        // Compute projection and subtract from v2
+        b1 -= a1 * dotp;
+        b2 -= a2 * dotp;
+        b3 -= a3 * dotp;
+
+        // Normalize new v2
+        float norm = std::sqrt(b1*b1 + b2*b2 + b3*b3);
+        *(data_eigvec2 + i*3 + 0) = b1 / norm;
+        *(data_eigvec2 + i*3 + 1) = b2 / norm;
+        *(data_eigvec2 + i*3 + 2) = b3 / norm;
+    }
+
+    // --------------------------------------------------------------------
+    // Orthonormalize eigen vector 3 to both eigen vector 1 and 2
+    // --------------------------------------------------------------------
+    for (uint32_t i = 0; i != data_size; ++i) {
+        const float a1 = *(data_eigvec1 + i*3 + 0);
+        const float a2 = *(data_eigvec1 + i*3 + 1);
+        const float a3 = *(data_eigvec1 + i*3 + 2);
+
+        const float b1 = *(data_eigvec2 + i*3 + 0);
+        const float b2 = *(data_eigvec2 + i*3 + 1);
+        const float b3 = *(data_eigvec2 + i*3 + 2);
+
+        float c1, c2, c3;
+
+        // Compute dot product (vec2 . 1/vec1)
+        float dotp = b1 * (1/a1) + b2 * (1/a1) + b3 * (1/a3);
+
+        // Compute projection and subtract from v3
+        c1 = b1 - a1 * dotp;
+        c2 = b2 - a2 * dotp;
+        c3 = b3 - a3 * dotp;
+
+        // Normalize new v3
+        float norm = std::sqrt(c1*c1 + c2*c2 + c3*c3);       
+        c1 /= norm;
+        c2 /= norm;
+        c3 /= norm;            
+
+        // If vector 3 is the same as vector 2, compute a new eigen vector 3
+        if ( b1 - c1 + b2 - c2 + b3 - c3 == 0) {
+            // Compute determinants from cross product of v1 and v2
+            c1 = a2 * b3 - a3 * b2;     // i
+            c2 = -(a1 * b3 - a3 * b1);  // j
+            c3 = a1 * b2 - a2 * b1;     // k
+
+            // Normalize new v3
+            norm = std::sqrt(c1*c1 + c2*c2 + c3*c3);
+            c1 /= norm;
+            c2 /= norm;
+            c3 /= norm;             
+        } 
+
+        // Update final eigen vector 3
+        *(data_eigvec3 + i*3 + 0) = c1;
+        *(data_eigvec3 + i*3 + 1) = c2;
+        *(data_eigvec3 + i*3 + 2) = c3;            
+    }
 }
 
+void ln_update_shorthessian(float* data_shorthessian,
+                            const float* data_eigval1, const float* data_eigval2, const float* data_eigval3,
+                            const int nx, const int ny, const int nz, const int nt) {
+
+    // NOTE: Implementing Delledalle et al. 2017, Hal.
+
+    int data_size = nx * ny * nz * nt;
+
+    for (uint32_t i = 0; i != data_size; ++i) {
+        float a = *(data_shorthessian + i*6 + 0);  // xx
+        float b = *(data_shorthessian + i*6 + 3);  // yy
+        float c = *(data_shorthessian + i*6 + 5);  // zz
+        float d = *(data_shorthessian + i*6 + 1);  // xy, yx
+        float e = *(data_shorthessian + i*6 + 4);  // yz, zy
+        float f = *(data_shorthessian + i*6 + 2);  // xz, zx
+
+        float lambda1 = *(data_eigval1 + i);
+        float lambda2 = *(data_eigval2 + i);
+        float lambda3 = *(data_eigval3 + i);
+
+        // --------------------------------------------------------------------
+        // Following Deledalle Eq. 11
+        // --------------------------------------------------------------------
+        float t1, t2, m1, m2, m3, v1, v2, v3;
+
+        t1 = d * (c - lambda1) - e * f;
+        t2 = f * (b - lambda1) - d * e;
+        if (t2 == 0) {
+            m1 = 0;
+        } else {
+            m1 = t1 / t2;            
+        }
+
+        t1 = d * (c - lambda2) - e * f;
+        t2 = f * (b - lambda2) - d * e;
+        if (t2 == 0) {
+            m2 = 0;
+        } else {
+            m2 = t1 / t2;            
+        }
+
+        t1 = d * (c - lambda3) - e * f;
+        t2 = f * (b - lambda3) - d * e;
+        if (t2 == 0) {
+            m3 = 0;
+        } else {
+            m3 = t1 / t2;            
+        }
+
+        // --------------------------------------------------------------------
+        // Following Deledalle Eq. 14
+        // --------------------------------------------------------------------
+        float y1, y2, y3, n1, n2, n3, lambda1_hat, lambda2_hat, lambda3_hat;
+
+        if (f == 0) {
+            f = 1;
+        } 
+
+        y1 = (lambda1 - c - e*m1);
+        y2 = (lambda2 - c - e*m2);
+        y3 = (lambda3 - c - e*m3);
+
+        n1 = 1 + m1*m1 + (y1*y1) / (f*f);
+        n2 = 1 + m2*m2 + (y2*y2) / (f*f);
+        n3 = 1 + m3*m3 + (y3*y3) / (f*f);
+
+        lambda1_hat = lambda1 / n1;
+        lambda2_hat = lambda2 / n2;
+        lambda3_hat = lambda3 / n3;
+
+        // --------------------------------------------------------------------
+        // Following Deledalle Eq. 13
+        // --------------------------------------------------------------------
+        float a_hat, b_hat, c_hat, d_hat, e_hat, f_hat;
+
+        a_hat = ( lambda1_hat*(y1*y1) + lambda2_hat*(y2*y2) + lambda3_hat*(y3*y3) ) / (f*f);
+        b_hat = lambda1_hat*(m1*m1) + lambda2_hat*(m2*m2) + lambda3_hat*(m3*m3);
+        c_hat = lambda1_hat + lambda2_hat + lambda3_hat;
+        d_hat = ( lambda1_hat*m1*y1 + lambda2_hat*m2*y2 + lambda3_hat*m3*y3 ) / f;
+        e_hat = lambda1_hat*m1 + lambda2_hat*m2 + lambda3_hat*m3;
+        f_hat = ( lambda1_hat*y1 + lambda2_hat*y2 + lambda3_hat*y3 ) / f;            
+
+        // --------------------------------------------------------------------
+        // Update short Hessian
+        // --------------------------------------------------------------------        
+        *(data_shorthessian + i*6 + 0) = a_hat;  // xx
+        *(data_shorthessian + i*6 + 3) = b_hat;  // yy
+        *(data_shorthessian + i*6 + 5) = c_hat;  // zz
+        *(data_shorthessian + i*6 + 1) = d_hat;  // xy, yx
+        *(data_shorthessian + i*6 + 4) = e_hat;  // yz, zy
+        *(data_shorthessian + i*6 + 2) = f_hat;  // xz, zx
+    }
+}
+
+void ln_multiply_matrix_vector_3D(const float* data_shorthessian,
+                                  float* data_gra1, float* data_gra2, float* data_gra3,
+                                  const int nx, const int ny, const int nz, const int nt) {
+    int data_size = nx * ny * nz * nt;
+    for (uint32_t i = 0; i != data_size; ++i) {
+        float a = *(data_shorthessian + i*6 + 0);  // xx
+        float b = *(data_shorthessian + i*6 + 3);  // yy
+        float c = *(data_shorthessian + i*6 + 5);  // zz
+        float d = *(data_shorthessian + i*6 + 1);  // xy, yx
+        float e = *(data_shorthessian + i*6 + 4);  // yz, zy
+        float f = *(data_shorthessian + i*6 + 2);  // xz, zx 
+
+        float g1 = *(data_gra1 + i);
+        float g2 = *(data_gra2 + i);
+        float g3 = *(data_gra3 + i);
+
+        *(data_gra1 + i) = a*g1 + d*g2 + f*g3;
+        *(data_gra2 + i) = d*g1 + b*g2 + e*g3;
+        *(data_gra3 + i) = f*g1 + e*g2 + c*g3;
+    }
+}
+
+void ln_compute_divergence_3D(float* data_out, const float* data_gra1, const float* data_gra2, const float* data_gra3,
+                              const int nx, const int ny, const int nz, const int nt) {
+    int data_size = nx * ny * nz * nt;
+
+    float* data_out1 = (float*)malloc(data_size * sizeof(float));
+    float* data_out2 = (float*)malloc(data_size * sizeof(float));
+    float* data_out3 = (float*)malloc(data_size * sizeof(float));
+
+    ln_compute_gradients_3D_over_x(data_gra1, data_out1, nx, ny, nz, nt);
+    ln_compute_gradients_3D_over_y(data_gra2, data_out2, nx, ny, nz, nt);
+    ln_compute_gradients_3D_over_z(data_gra3, data_out3, nx, ny, nz, nt);
+
+    for (uint32_t i = 0; i != data_size; ++i) {
+        *(data_out + i) = *(data_out1 + i) + *(data_out2 + i) + *(data_out3 + i);
+    }
+}
