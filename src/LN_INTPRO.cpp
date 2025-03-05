@@ -1,11 +1,10 @@
-
-#include <limits>
 #include "../dep/laynii_lib.h"
+
 
 int show_help(void) {
     printf(
     "LN_INTPRO: Do maximum and minimum intensity projections. For example,\n"
-    "      this is useful for visualizing vessels.\n"
+    "           this is useful for visualizing vessels.\n"
     "\n"
     "Usage:\n"
     "     LN_INTPRO -image file.nii -min -direction 3 \n"
@@ -151,14 +150,14 @@ int main(int argc, char * argv[]) {
 
     float extreme_val = 0.0;
     if (is_min == 1) {
-        extreme_val = numeric_limits<float>::max();
+        extreme_val = std::numeric_limits<float>::max();
     }
 
     for (int ix = 0; ix < size_y; ++ix) {
         for (int iy = 0; iy < size_x; ++iy) {
             for (int iz = 0; iz < size_z; ++iz) {
                 int voxel_i, voxel_j;
-                if (is_min == 1) extreme_val = numeric_limits<float>::max();
+                if (is_min == 1) extreme_val = std::numeric_limits<float>::max();
                 if (is_max == 1) extreme_val = 0.0;
                 // ------------------------------------------------------------
                 if (is_direction == 1) {

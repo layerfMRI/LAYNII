@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include <tuple>
+#include <limits>
 #include "./nifti2_io.h"
 
 using namespace std;
