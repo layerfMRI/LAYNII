@@ -67,6 +67,8 @@ LAYNII2		= 	LN2_LAYERS \
 				LN2_NEIGHBORS \
 				LN2_RIM_POLISH \
 				LN2_RIM_BORDERIZE \
+				LN2_SENSITIVITY \
+				LN2_SPECIFICITY \
 				
 DERIVATIVES	=	LN2_GRADIENTS \
 				LN2_GRAMAG \
@@ -261,6 +263,12 @@ LN2_PHASE_LAPLACIAN:
 LN2_PHASE_JOLT:
 	$(CC) $(CFLAGS) -o LN2_PHASE_JOLT src/LN2_PHASE_JOLT.cpp $(LIBRARIES) $(LFLAGS)
 
+LN2_SENSITIVITY:
+	$(CC) $(CFLAGS) -o LN2_SENSITIVITY src/LN2_SENSITIVITY.cpp $(LIBRARIES) $(LFLAGS)
+
+LN2_SPECIFICITY:
+	$(CC) $(CFLAGS) -o LN2_SPECIFICITY src/LN2_SPECIFICITY.cpp $(LIBRARIES) $(LFLAGS)
+
 # =============================================================================
 # Work in progress programs
 LN2_UVD_LSTSQR:
@@ -283,12 +291,6 @@ LN2_REGRESS_OUT:
 
 LN3_LAYERS:
 	$(CC) $(CFLAGS) -o LN3_LAYERS src/LN3_LAYERS.cpp $(LIBRARIES) $(LFLAGS)
-
-LN2_SENSITIVITY:
-	$(CC) $(CFLAGS) -o LN2_SENSITIVITY src/LN2_SENSITIVITY.cpp $(LIBRARIES) $(LFLAGS)
-
-LN2_SPECIFICITY:
-	$(CC) $(CFLAGS) -o LN2_SPECIFICITY src/LN2_SPECIFICITY.cpp $(LIBRARIES) $(LFLAGS)
 
 # =============================================================================
 
