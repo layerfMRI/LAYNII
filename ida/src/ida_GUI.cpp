@@ -17,8 +17,7 @@ namespace IDA
 
         // Variables
         // static char str_input[4096] = "Enter nifti path";
-        // static char str_input[4096] = "/Users/faruk/Git/LayNii/test_data/lo_BOLD_intemp.nii.gz";
-        static char str_input[4096] = "/Users/faruk/Documents/test-LN3_IDA/sub-3003_ses-fine_task-fncloc_run-1_part-mag_bold.nii.gz";
+        static char str_input[4096] = "/Users/faruk/Git/LayNii/test_data/lo_BOLD_intemp.nii.gz";
 
         static bool loaded_file          = false;
         static bool show_header_info     = false;
