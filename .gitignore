@@ -52,3 +52,6 @@ test_data/*.nii*
 
 # Ignore output folder from README docker demo
 output
+
+# Ignore LayNii IDA compiled files
+/ida/*/LN3_IDA
