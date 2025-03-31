@@ -17,7 +17,8 @@ namespace IDA
 
         // Variables
         // static char str_input[4096] = "Enter nifti path";
-        static char str_input[4096] = "/Users/faruk/Git/LayNii/test_data/lo_BOLD_intemp.nii.gz";
+        // static char str_input[4096] = "/Users/faruk/Git/LayNii/test_data/lo_BOLD_intemp.nii.gz";
+        static char str_input[4096] = "/Users/faruk/data/data-alard/75um/sub-99_75um_crop.nii.gz";
 
         static bool loaded_file          = false;
         static bool show_header_info     = false;
@@ -119,7 +120,7 @@ namespace IDA
         if (sf >= 0) {
             ImGui::Text("");
             ImGui::Text("Selected File:");
-            ImGui::Text("  Number of voxels    : %d"  , fl.files[sf].nr_voxels);
+            ImGui::Text("  Number of voxels    : %llu", fl.files[sf].nr_voxels);
             ImGui::Text("  Voxel volume        : %.3f", fl.files[sf].voxel_volume);
             ImGui::Text("  1st Data Axis       : %d"  , fl.files[sf].dim_i);
             ImGui::Text("  2nd Data Axis       : %d"  , fl.files[sf].dim_j);

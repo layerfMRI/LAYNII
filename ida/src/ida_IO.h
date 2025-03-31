@@ -71,7 +71,7 @@ namespace IDA_IO
         int         dim_j;              // File format independent image dimension
         int         dim_i;              // File format independent image dimension
         int         dim_t;              // File format independent image dimension
-        int         nr_voxels;          // Useful in general
+        uint64_t    nr_voxels;          // Useful in general
         float       pixdim_i;           // File format independent image dimension
         float       pixdim_j;           // File format independent image dimension
         float       pixdim_k;           // File format independent image dimension
@@ -113,38 +113,6 @@ namespace IDA_IO
         GLuint      textureIDk_RGB;         // OpenGL needs this
         GLuint      textureIDj_RGB;         // OpenGL needs this
         GLuint      textureIDi_RGB;         // OpenGL needs this
-        // Frangi related ---------------------------------------------------------------------------------------------
-        float*      p_data_frangi;              // Copy original data here
-        float*      p_data_scale1_eigvals_3D;   // Eigen values are consecutive per voxel (like in RGB)
-        float*      p_data_scale2_eigvals_3D;
-        float*      p_data_scale3_eigvals_3D;
-        float*      p_sliceK_float_scale1_eigvals;  // Data slice that holds high precision data (e1 < e2 < e3)
-        float*      p_sliceJ_float_scale1_eigvals;
-        float*      p_sliceI_float_scale1_eigvals;
-        float*      p_sliceK_float_scale2_eigvals;
-        float*      p_sliceJ_float_scale2_eigvals;
-        float*      p_sliceI_float_scale2_eigvals;
-        float*      p_sliceK_float_scale3_eigvals;
-        float*      p_sliceJ_float_scale3_eigvals;
-        float*      p_sliceI_float_scale3_eigvals;
-        float*      p_sliceK_float_scale1_vessellness;  // Data slice that holds a scalar for vessellness
-        float*      p_sliceJ_float_scale1_vessellness;
-        float*      p_sliceI_float_scale1_vessellness;
-        float*      p_sliceK_float_scale2_vessellness;
-        float*      p_sliceJ_float_scale2_vessellness;
-        float*      p_sliceI_float_scale2_vessellness;
-        float*      p_sliceK_float_scale3_vessellness;
-        float*      p_sliceJ_float_scale3_vessellness;
-        float*      p_sliceI_float_scale3_vessellness;
-        float*      p_sliceK_float_final_vessellness;
-        float*      p_sliceJ_float_final_vessellness;
-        float*      p_sliceI_float_final_vessellness;
-        uint8_t*    p_sliceK_RGB_uint8_frangi;  // RGB data slice that holds display data
-        uint8_t*    p_sliceJ_RGB_uint8_frangi;  // RGB data slice that holds display data
-        uint8_t*    p_sliceI_RGB_uint8_frangi;  // RGB data slice that holds display data
-        GLuint      textureIDk_frangi;          // OpenGL needs this
-        GLuint      textureIDj_frangi;          // OpenGL needs this
-        GLuint      textureIDi_frangi;          // OpenGL needs this
         // Correlation related ----------------------------------------------------------------------------------------
         int         voxel_k;               // A selected or hovered over voxel index
         int         voxel_j;               // A selected or hovered over voxel index
@@ -195,7 +163,7 @@ namespace IDA_IO
             fi.pixdim_i = fi.header.pixdim[1];
             fi.pixdim_j = fi.header.pixdim[2];
             fi.pixdim_k = fi.header.pixdim[3];
-            fi.nr_voxels = fi.header.dim[1] * fi.header.dim[2] * fi.header.dim[3];
+            fi.nr_voxels = static_cast<uint64_t>(fi.header.dim[1]) * fi.header.dim[2] * fi.header.dim[3];
             fi.voxel_volume = fi.header.pixdim[1] * fi.header.pixdim[2] * fi.header.pixdim[3];
             fi.display_scale = 1.0;
             fi.visualization_mode = 0;
@@ -366,6 +334,8 @@ namespace IDA_IO
         // ============================================================================================================
         void loadNiftiDataTest(FileInfo& fi)
         {
+            printf("\rLoading data...\n"); 
+
             // Free memory that could be filled if the function is run before
             // NOTE: I am not completely sure that whether this design migth cause crashes. It seems to stop memory
             // accumulation upon multiple "load data" clicks
@@ -387,15 +357,16 @@ namespace IDA_IO
                 printf("Error opening file: %s\n", cString);
             }
 
-            const int skipBytes = static_cast<int>(fi.header.vox_offset);
+            const uint64_t skipBytes = static_cast<uint64_t>(fi.header.vox_offset);
             gzseek(file, skipBytes, SEEK_SET);  // Skip header
-            const uint64_t nr_voxels = fi.header.dim[1] * fi.header.dim[2] * fi.header.dim[3];
-            const uint64_t nr_timepoints = fi.header.dim[4];
-            const uint64_t nr_data_points = nr_voxels * nr_timepoints;
+            const uint64_t nr_data_points = fi.nr_voxels * fi.header.dim[4];
             
             // Allocate memory to float data
-            const size_t array_size = nr_data_points * sizeof(float);
+            const uint64_t array_size = nr_data_points * sizeof(float);
             fi.p_data_float = (float*)malloc(array_size);
+
+            // Read buffer size
+            const int READ_LIMIT = 1024 * 1024 * 1024;  // 1 GB in bytes
 
             // --------------------------------------------------------------------------------------------------------
             // Handle different data types. 
@@ -419,67 +390,236 @@ namespace IDA_IO
             // |  128 | RGB24      | RGB                |  24 bit |  3 byte |  << Not implemented
             // | 2304 | RGBA32     | RGBA               |  32 bit |  4 byte |  << Not implemented
             if (fi.header.datatype == 2) {
-                const size_t        data_size = nr_data_points * sizeof(unsigned char);
-                unsigned char*      data_orig = (unsigned char*)malloc(data_size);
-                gzread(file, data_orig, data_size); gzclose(file);
-                for (uint64_t i = 0; i < nr_data_points; ++i) fi.p_data_float[i] = (float)data_orig[i];
-                free(data_orig);
+                uint64_t size_all_voxels = nr_data_points * sizeof(unsigned char);
+                uint64_t nr_chunks = size_all_voxels / READ_LIMIT;  // Integer division, quotient
+                uint64_t remainder = size_all_voxels % READ_LIMIT;  // Remainder
+                uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(unsigned char);
+                uint64_t nr_voxels_remainder = remainder / sizeof(unsigned char);
+                unsigned char* buffer = (unsigned char*)malloc(READ_LIMIT);
+                for (uint64_t j = 0; j < nr_chunks; ++j) {
+                    printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
+                    gzread(file, buffer, READ_LIMIT);
+                    for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
+                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    }
+                }
+                printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
+                gzread(file, buffer, remainder);
+                for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
+                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                }
+                gzclose(file);
+                free(buffer);
             } else if (fi.header.datatype == 256) {
-                const size_t        data_size = nr_data_points * sizeof(signed char);
-                signed char*        data_orig = (signed char*)malloc(data_size);
-                gzread(file, data_orig, data_size); gzclose(file);
-                for (uint64_t i = 0; i < nr_data_points; ++i) fi.p_data_float[i] = (float)data_orig[i];
-                free(data_orig);
+                uint64_t size_all_voxels = nr_data_points * sizeof(signed char);
+                uint64_t nr_chunks = size_all_voxels / READ_LIMIT;  // Integer division, quotient
+                uint64_t remainder = size_all_voxels % READ_LIMIT;  // Remainder
+                uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(signed char);
+                uint64_t nr_voxels_remainder = remainder / sizeof(signed char);
+                signed char* buffer = (signed char*)malloc(READ_LIMIT);
+                for (uint64_t j = 0; j < nr_chunks; ++j) {
+                    printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
+                    gzread(file, buffer, READ_LIMIT);
+                    for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
+                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    }
+                }
+                printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
+                gzread(file, buffer, remainder);
+                for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
+                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                }
+                gzclose(file);
+                free(buffer);
             } else if (fi.header.datatype == 4) {
-                const size_t        data_size = nr_data_points * sizeof(signed short);
-                signed short*       data_orig = (signed short*)malloc(data_size);
-                gzread(file, data_orig, data_size); gzclose(file);
-                for (uint64_t i = 0; i < nr_data_points; ++i) fi.p_data_float[i] = (float)data_orig[i];
-                free(data_orig);
+                uint64_t size_all_voxels = nr_data_points * sizeof(signed short);
+                uint64_t nr_chunks = size_all_voxels / READ_LIMIT;  // Integer division, quotient
+                uint64_t remainder = size_all_voxels % READ_LIMIT;  // Remainder
+                uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(signed short);
+                uint64_t nr_voxels_remainder = remainder / sizeof(signed short);
+                signed short* buffer = (signed short*)malloc(READ_LIMIT);
+                for (uint64_t j = 0; j < nr_chunks; ++j) {
+                    printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
+                    gzread(file, buffer, READ_LIMIT);
+                    for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
+                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    }
+                }
+                printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
+                gzread(file, buffer, remainder);
+                for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
+                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                }
+                gzclose(file);
+                free(buffer);
             } else if (fi.header.datatype == 512) {
-                const size_t        data_size = nr_data_points * sizeof(unsigned short);
-                unsigned short*     data_orig = (unsigned short*)malloc(data_size);
-                gzread(file, data_orig, data_size); gzclose(file);
-                for (uint64_t i = 0; i < nr_data_points; ++i) fi.p_data_float[i] = (float)data_orig[i];
-                free(data_orig);
+                uint64_t size_all_voxels = nr_data_points * sizeof(unsigned short);
+                uint64_t nr_chunks = size_all_voxels / READ_LIMIT;  // Integer division, quotient
+                uint64_t remainder = size_all_voxels % READ_LIMIT;  // Remainder
+                uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(unsigned short);
+                uint64_t nr_voxels_remainder = remainder / sizeof(unsigned short);
+                unsigned short* buffer = (unsigned short*)malloc(READ_LIMIT);
+                for (uint64_t j = 0; j < nr_chunks; ++j) {
+                    printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
+                    gzread(file, buffer, READ_LIMIT);
+                    for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
+                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    }
+                }
+                printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
+                gzread(file, buffer, remainder);
+                for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
+                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                }
+                gzclose(file);
+                free(buffer);
             } else if (fi.header.datatype == 8) {
-                const size_t        data_size = nr_data_points * sizeof(signed int);
-                signed int*         data_orig = (signed int*)malloc(data_size);
-                gzread(file, data_orig, data_size); gzclose(file);
-                for (uint64_t i = 0; i < nr_data_points; ++i) fi.p_data_float[i] = (float)data_orig[i];
-                free(data_orig);
-            } else if (fi.header.datatype == 16) {  // Special case as the target data type is already float
-                gzread(file, fi.p_data_float, array_size); gzclose(file);
+                uint64_t size_all_voxels = nr_data_points * sizeof(signed int);
+                uint64_t nr_chunks = size_all_voxels / READ_LIMIT;  // Integer division, quotient
+                uint64_t remainder = size_all_voxels % READ_LIMIT;  // Remainder
+                uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(signed int);
+                uint64_t nr_voxels_remainder = remainder / sizeof(signed int);
+                signed int* buffer = (signed int*)malloc(READ_LIMIT);
+                for (uint64_t j = 0; j < nr_chunks; ++j) {
+                    printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
+                    gzread(file, buffer, READ_LIMIT);
+                    for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
+                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    }
+                }
+                printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
+                gzread(file, buffer, remainder);
+                for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
+                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                }
+                gzclose(file);
+                free(buffer);
+            } else if (fi.header.datatype == 16) {
+                uint64_t size_all_voxels = nr_data_points * sizeof(float);
+                uint64_t nr_chunks = size_all_voxels / READ_LIMIT;  // Integer division, quotient
+                uint64_t remainder = size_all_voxels % READ_LIMIT;  // Remainder
+                uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(float);
+                uint64_t nr_voxels_remainder = remainder / sizeof(float);
+                float* buffer = (float*)malloc(READ_LIMIT);
+                for (uint64_t j = 0; j < nr_chunks; ++j) {
+                    printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
+                    gzread(file, buffer, READ_LIMIT);
+                    for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
+                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    }
+                }
+                printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
+                gzread(file, buffer, remainder);
+                for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
+                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                }
+                gzclose(file);
+                free(buffer);
             } else if (fi.header.datatype == 768) {
-                const size_t        data_size = nr_data_points * sizeof(unsigned int);
-                unsigned int*       data_orig = (unsigned int*)malloc(data_size);
-                gzread(file, data_orig, data_size); gzclose(file);
-                for (uint64_t i = 0; i < nr_data_points; ++i) fi.p_data_float[i] = (float)data_orig[i];
-                free(data_orig);
+                uint64_t size_all_voxels = nr_data_points * sizeof(unsigned int);
+                uint64_t nr_chunks = size_all_voxels / READ_LIMIT;  // Integer division, quotient
+                uint64_t remainder = size_all_voxels % READ_LIMIT;  // Remainder
+                uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(unsigned int);
+                uint64_t nr_voxels_remainder = remainder / sizeof(unsigned int);
+                unsigned int* buffer = (unsigned int*)malloc(READ_LIMIT);
+                for (uint64_t j = 0; j < nr_chunks; ++j) {
+                    printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
+                    gzread(file, buffer, READ_LIMIT);
+                    for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
+                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    }
+                }
+                printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
+                gzread(file, buffer, remainder);
+                for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
+                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                }
+                gzclose(file);
+                free(buffer);
             } else if (fi.header.datatype == 64) {
-                const size_t        data_size = nr_data_points * sizeof(double);
-                double*             data_orig = (double*)malloc(data_size);
-                gzread(file, data_orig, data_size); gzclose(file);
-                for (uint64_t i = 0; i < nr_data_points; ++i) fi.p_data_float[i] = (float)data_orig[i];
-                free(data_orig);
+                uint64_t size_all_voxels = nr_data_points * sizeof(double);
+                uint64_t nr_chunks = size_all_voxels / READ_LIMIT;  // Integer division, quotient
+                uint64_t remainder = size_all_voxels % READ_LIMIT;  // Remainder
+                uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(double);
+                uint64_t nr_voxels_remainder = remainder / sizeof(double);
+                double* buffer = (double*)malloc(READ_LIMIT);
+                for (uint64_t j = 0; j < nr_chunks; ++j) {
+                    printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
+                    gzread(file, buffer, READ_LIMIT);
+                    for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
+                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    }
+                }
+                printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
+                gzread(file, buffer, remainder);
+                for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
+                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                }
+                gzclose(file);
+                free(buffer);
             } else if (fi.header.datatype == 1024) {
-                const size_t        data_size = nr_data_points * sizeof(long long);
-                long long*          data_orig = (long long*)malloc(data_size);
-                gzread(file, data_orig, data_size); gzclose(file);
-                for (uint64_t i = 0; i < nr_data_points; ++i) fi.p_data_float[i] = (float)data_orig[i];
-                free(data_orig);
+                uint64_t size_all_voxels = nr_data_points * sizeof(long long);
+                uint64_t nr_chunks = size_all_voxels / READ_LIMIT;  // Integer division, quotient
+                uint64_t remainder = size_all_voxels % READ_LIMIT;  // Remainder
+                uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(long long);
+                uint64_t nr_voxels_remainder = remainder / sizeof(long long);
+                long long* buffer = (long long*)malloc(READ_LIMIT);
+                for (uint64_t j = 0; j < nr_chunks; ++j) {
+                    printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
+                    gzread(file, buffer, READ_LIMIT);
+                    for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
+                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    }
+                }
+                printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
+                gzread(file, buffer, remainder);
+                for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
+                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                }
+                gzclose(file);
+                free(buffer);
             } else if (fi.header.datatype == 1280) {
-                const size_t        data_size = nr_data_points * sizeof(unsigned long long);
-                unsigned long long* data_orig = (unsigned long long*)malloc(data_size);
-                gzread(file, data_orig, data_size); gzclose(file);
-                for (uint64_t i = 0; i < nr_data_points; ++i) fi.p_data_float[i] = (float)data_orig[i];
-                free(data_orig);
+                uint64_t size_all_voxels = nr_data_points * sizeof(unsigned long long);
+                uint64_t nr_chunks = size_all_voxels / READ_LIMIT;  // Integer division, quotient
+                uint64_t remainder = size_all_voxels % READ_LIMIT;  // Remainder
+                uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(unsigned long long);
+                uint64_t nr_voxels_remainder = remainder / sizeof(unsigned long long);
+                unsigned long long* buffer = (unsigned long long*)malloc(READ_LIMIT);
+                for (uint64_t j = 0; j < nr_chunks; ++j) {
+                    printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
+                    gzread(file, buffer, READ_LIMIT);
+                    for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
+                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    }
+                }
+                printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
+                gzread(file, buffer, remainder);
+                for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
+                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                }
+                gzclose(file);
+                free(buffer);
             } else if (fi.header.datatype == 1536) {
-                const size_t        data_size = nr_data_points * sizeof(long double);
-                long double*        data_orig = (long double*)malloc(data_size);
-                gzread(file, data_orig, data_size); gzclose(file);
-                for (uint64_t i = 0; i < nr_data_points; ++i) fi.p_data_float[i] = (float)data_orig[i];
-                free(data_orig);
+                uint64_t size_all_voxels = nr_data_points * sizeof(long double);
+                uint64_t nr_chunks = size_all_voxels / READ_LIMIT;  // Integer division, quotient
+                uint64_t remainder = size_all_voxels % READ_LIMIT;  // Remainder
+                uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(long double);
+                uint64_t nr_voxels_remainder = remainder / sizeof(long double);
+                long double* buffer = (long double*)malloc(READ_LIMIT);
+                for (uint64_t j = 0; j < nr_chunks; ++j) {
+                    printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
+                    gzread(file, buffer, READ_LIMIT);
+                    for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
+                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    }
+                }
+                printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
+                gzread(file, buffer, remainder);
+                for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
+                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                }
+                gzclose(file);
+                free(buffer);
             }
 
             // --------------------------------------------------------------------------------------------------------
@@ -520,14 +660,14 @@ namespace IDA_IO
         // ============================================================================================================
         void loadSliceK_float(FileInfo& fi)
         {
-            int ni = fi.dim_i;
-            int nj = fi.dim_j;
-            int k = fi.display_k;
-            int t = fi.display_t;
-            for (int i = 0; i < ni; i++) {
-                for (int j = 0; j < nj; j++) {
-                    int index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
-                    int index2D = i + j*ni;
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t k = static_cast<uint64_t>(fi.display_k);
+            uint64_t t = static_cast<uint64_t>(fi.display_t);
+            for (uint64_t i = 0; i < ni; ++i) {
+                for (uint64_t j = 0; j < nj; ++j) {
+                    uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+                    uint64_t index2D = i + j*ni;
                     fi.p_sliceK_float[index2D] = fi.p_data_float[index4D];
                 }
             }
@@ -535,15 +675,15 @@ namespace IDA_IO
 
         void loadSliceJ_float(FileInfo& fi)
         {
-            int ni = fi.dim_i;
-            int nj = fi.dim_j;
-            int nk = fi.dim_k;
-            int j = fi.display_j;
-            int t = fi.display_t;
-            for (int i = 0; i < ni; i++) {
-                for (int k = 0; k < nk; k++) {
-                    int index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
-                    int index2D = i + k*ni;
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t j = static_cast<uint64_t>(fi.display_j);
+            uint64_t t = static_cast<uint64_t>(fi.display_t);
+            for (uint64_t i = 0; i < ni; i++) {
+                for (uint64_t k = 0; k < nk; k++) {
+                    uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+                    uint64_t index2D = i + k*ni;
                     fi.p_sliceJ_float[index2D] = fi.p_data_float[index4D];
                 }
             }
@@ -551,15 +691,15 @@ namespace IDA_IO
 
         void loadSliceI_float(FileInfo& fi)
         {
-            int ni = fi.dim_i;
-            int nj = fi.dim_j;
-            int nk = fi.dim_k;
-            int i = fi.display_i;
-            int t = fi.display_t;
-            for (int j = 0; j < nj; j++) {
-                for (int k = 0; k < nk; k++) {
-                    int index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
-                    int index2D = j + k*nj;
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t i = static_cast<uint64_t>(fi.display_i);
+            uint64_t t = static_cast<uint64_t>(fi.display_t);
+            for (uint64_t j = 0; j < nj; j++) {
+                for (uint64_t k = 0; k < nk; k++) {
+                    uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+                    uint64_t index2D = j + k*nj;
                     fi.p_sliceI_float[index2D] = fi.p_data_float[index4D];
                 }
             }
@@ -637,7 +777,7 @@ namespace IDA_IO
 
         void loadSliceK_RGB_uint8(FileInfo& fi)
         {
-            for (int i = 0; i < fi.dim_i*fi.dim_j; i++) {
+            for (uint64_t i = 0; i < fi.dim_i*fi.dim_j; i++) {
                 if ( fi.p_sliceK_float[i] >= fi.overlay_min && fi.p_sliceK_float[i] <= fi.overlay_max) {
                     // Bimodal Highlight Blend
                     if (fi.p_sliceK_uint8[i] <= 122) {
@@ -660,7 +800,7 @@ namespace IDA_IO
 
         void loadSliceJ_RGB_uint8(FileInfo& fi)
         {
-            for (int i = 0; i < fi.dim_i*fi.dim_k; i++) {
+            for (uint64_t i = 0; i < fi.dim_i*fi.dim_k; i++) {
                 if ( fi.p_sliceJ_float[i] >= fi.overlay_min && fi.p_sliceJ_float[i] <= fi.overlay_max) {
                     // Bimodal Highlight Blend
                     if (fi.p_sliceJ_uint8[i] <= 122) {
@@ -683,7 +823,7 @@ namespace IDA_IO
 
         void loadSliceI_RGB_uint8(FileInfo& fi)
         {
-            for (int i = 0; i < fi.dim_j*fi.dim_k; i++) {
+            for (uint64_t i = 0; i < fi.dim_j*fi.dim_k; i++) {
                 if ( fi.p_sliceI_float[i] >= fi.overlay_min && fi.p_sliceI_float[i] <= fi.overlay_max) {
                     // Bimodal Highlight Blend
                     if (fi.p_sliceI_uint8[i] <= 122) {
@@ -802,7 +942,7 @@ namespace IDA_IO
         {
             float max_val = std::numeric_limits<float>::min();
             float min_val = std::numeric_limits<float>::max();
-            for (int i = 0; i < fi.nr_voxels; ++i) {
+            for (uint64_t i = 0; i < fi.nr_voxels; ++i) {
                 if (fi.p_data_float[i] < min_val) {
                     min_val = fi.p_data_float[i];
                 }
@@ -826,7 +966,7 @@ namespace IDA_IO
             int nj = fi.dim_j;
             int nt = fi.time_course_offset - fi.time_course_onset;
             for (int t = 0; t < nt; ++t) {
-                int index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+                uint64_t index4D = static_cast<uint64_t>(i) + j*ni + k*ni*nj + fi.nr_voxels*t;
                 *(fi.p_time_course_float + t) = fi.p_data_float[index4D];
             }
             
@@ -862,7 +1002,7 @@ namespace IDA_IO
 
             // Prepare x array
             for (int t = 0; t < nt; ++t) {
-                int index4D = fi.voxel_i + fi.voxel_j*ni + fi.voxel_k*ni*nj + fi.nr_voxels*t;
+                uint64_t index4D = fi.voxel_i + fi.voxel_j*ni + fi.voxel_k*ni*nj + fi.nr_voxels*t;
                 *(x_arr + t) = fi.p_data_float[index4D];
             }
 
@@ -872,7 +1012,7 @@ namespace IDA_IO
 
                     // Prepare y array
                     for (int t = 0; t < nt; ++t) {
-                        int index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+                        uint64_t index4D = static_cast<uint64_t>(i) + j*ni + k*ni*nj + fi.nr_voxels*t;
                         *(y_arr + t)= fi.p_data_float[index4D];
                     }
 
