@@ -3,52 +3,6 @@
 #include "imgui.h"
 
 // ====================================================================================================================
-// Procedure to draw voxel inspector
-// ====================================================================================================================
-void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window,
-                          bool& show_voxel_value, bool& show_voxel_indices) {
-
-    // Definitions
-    ImGuiIO& io = ImGui::GetIO();
-    ImVec2 cursor_screen_pos;
-    cursor_screen_pos = ImGui::GetCursorScreenPos();  // Relative to top-left corner image
-    float scl = fi.display_scale;
-
-    int ni = fi.dim_i;
-    int nj = fi.dim_j;
-    int nk = fi.dim_k;
-
-    if ( ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone) && ImGui::BeginTooltip() ) {
-        // ------------------------------------------------------------------------------------------------------------
-        // Compute hovered over voxel index
-        // ------------------------------------------------------------------------------------------------------------
-        if ( slice_window == 3 ) {
-            fi.voxel_i = -static_cast<int>((io.MousePos.x - cursor_screen_pos.x) / scl) + ni-1;
-            fi.voxel_j = -static_cast<int>((io.MousePos.y - cursor_screen_pos.y) / scl) + nj-1;
-        } else if ( slice_window == 2 ) {
-            fi.voxel_i = -static_cast<int>((io.MousePos.x - cursor_screen_pos.x) / scl) + ni-1;
-            fi.voxel_k = -static_cast<int>((io.MousePos.y - cursor_screen_pos.y) / scl) + nk-1;
-        } else if ( slice_window == 1 ) {
-            fi.voxel_j = -static_cast<int>((io.MousePos.x - cursor_screen_pos.x) / scl) + nj-1;
-            fi.voxel_k = -static_cast<int>((io.MousePos.y - cursor_screen_pos.y) / scl) + nk-1;
-        }
-
-        // ------------------------------------------------------------------------------------------------------------
-        // Render inspector fields
-        // ------------------------------------------------------------------------------------------------------------
-        if ( show_voxel_value ) {
-            uint64_t index4D = fi.voxel_i + fi.voxel_j*ni + fi.voxel_k*ni*nj + ni*nj*nk*fi.voxel_t;
-            ImGui::Text("Value : %.6f", fi.p_data_float[index4D]);                        
-        }
-        if ( show_voxel_indices ) {
-            ImGui::Text("Index : [%d i, %d j, %d k, %d t]", fi.voxel_i, fi.voxel_j, fi.voxel_k, fi.voxel_t);                        
-        }
-    ImGui::EndTooltip();
-    }
-
-}
-
-// ====================================================================================================================
 // Procedure to draw slice images
 // ====================================================================================================================
 void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, float dim2_sli, 
@@ -57,8 +11,7 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
                  int& visualization_mode, bool& show_slice_crosshair, bool& show_mouse_crosshair,
                  bool& request_image_data_update,
                  bool& show_voxel_inspector, bool& show_voxel_value, bool& show_voxel_indices,
-                 GLuint& textureID, GLuint& textureID_RGB,
-                 IDA_IO::FileInfo& fi, int slice_window) {
+                 GLuint& textureID, GLuint& textureID_RGB) {
 
     // Definitions
     ImGuiIO& io = ImGui::GetIO();
@@ -171,10 +124,62 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
         drawList->AddCircle(ImVec2(io.MousePos.x, io.MousePos.y),
                             5.0f, cross_mouse_color, 45, 1.0f);
     }
-
-    if ( show_voxel_inspector ) {
-        RenderVoxelInspector(fi, slice_window,
-                             show_voxel_value, show_voxel_indices);
-    };
 };
 
+// ====================================================================================================================
+// Procedure to draw voxel inspector
+// ====================================================================================================================
+void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window,
+                          bool& show_voxel_value, bool& show_voxel_indices) {
+
+    // Definitions
+    ImGuiIO& io = ImGui::GetIO();
+    ImVec2 cursor_screen_pos;
+    cursor_screen_pos = ImGui::GetCursorScreenPos();  // Relative to top-left corner image
+    float scl = fi.display_scale;
+
+    int ni = fi.dim_i;
+    int nj = fi.dim_j;
+    int nk = fi.dim_k;
+
+    if ( ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone) && ImGui::BeginTooltip() ) {
+        // ------------------------------------------------------------------------------------------------------------
+        // Compute hovered over voxel index
+        // ------------------------------------------------------------------------------------------------------------
+        if ( slice_window == 3 ) {
+            fi.voxel_i = -static_cast<int>((io.MousePos.x - cursor_screen_pos.x) / scl) + ni-1;
+            fi.voxel_j = -static_cast<int>((io.MousePos.y - cursor_screen_pos.y) / scl) + nj-1;
+            fi.voxel_k = fi.display_k;
+            fi.voxel_t = fi.display_t;
+        } else if ( slice_window == 2 ) {
+            fi.voxel_i = -static_cast<int>((io.MousePos.x - cursor_screen_pos.x) / scl) + ni-1;
+            fi.voxel_j = fi.display_j;
+            fi.voxel_k = -static_cast<int>((io.MousePos.y - cursor_screen_pos.y) / scl) + nk-1;
+            fi.voxel_t = fi.display_t;
+        } else if ( slice_window == 1 ) {
+            fi.voxel_i = fi.display_i;
+            fi.voxel_j = -static_cast<int>((io.MousePos.x - cursor_screen_pos.x) / scl) + nj-1;
+            fi.voxel_k = -static_cast<int>((io.MousePos.y - cursor_screen_pos.y) / scl) + nk-1;
+            fi.voxel_t = fi.display_t;
+        }
+
+        // ------------------------------------------------------------------------------------------------------------
+        // Render inspector fields
+        // ------------------------------------------------------------------------------------------------------------
+        if ( show_voxel_value ) {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t i = static_cast<uint64_t>(fi.display_i);
+            uint64_t j = static_cast<uint64_t>(fi.display_j);
+            uint64_t k = static_cast<uint64_t>(fi.display_k);
+            uint64_t t = static_cast<uint64_t>(fi.display_t);
+            uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+            ImGui::Text("Value : %.6f", fi.p_data_float[index4D]);                        
+        }
+        if ( show_voxel_indices ) {
+            ImGui::Text("Index : [%d i, %d j, %d k, %d t]", fi.voxel_i, fi.voxel_j, fi.voxel_k, fi.voxel_t);                        
+        }
+    ImGui::EndTooltip();
+    }
+
+}

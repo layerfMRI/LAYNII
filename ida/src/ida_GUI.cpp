@@ -150,8 +150,11 @@ namespace IDA
                 fl.files[sf].visualization_mode, show_slice_crosshair, show_mouse_crosshair,
                 request_image_data_update,
                 show_voxel_inspector, show_voxel_value, show_voxel_indices,
-                fl.files[sf].textureIDk, fl.files[sf].textureIDk_RGB,
-                fl.files[sf], 3);
+                fl.files[sf].textureIDk, fl.files[sf].textureIDk_RGB);
+
+                if ( show_voxel_inspector ) {
+                    RenderVoxelInspector(fl.files[sf], 3, show_voxel_value, show_voxel_indices);
+                };
 
             // // --------------------------------------------------------------------------------------------------------
             // // Voxel inspector
@@ -258,8 +261,11 @@ namespace IDA
                 fl.files[sf].visualization_mode, show_slice_crosshair, show_mouse_crosshair,
                 request_image_data_update,
                 show_voxel_inspector, show_voxel_value, show_voxel_indices,
-                fl.files[sf].textureIDj, fl.files[sf].textureIDj_RGB,
-                fl.files[sf], 2);
+                fl.files[sf].textureIDj, fl.files[sf].textureIDj_RGB);
+
+                if ( show_voxel_inspector ) {
+                    RenderVoxelInspector(fl.files[sf], 2, show_voxel_value, show_voxel_indices);
+                };
         }
         ImGui::End();
 
@@ -274,8 +280,11 @@ namespace IDA
                 fl.files[sf].visualization_mode, show_slice_crosshair, show_mouse_crosshair,
                 request_image_data_update,
                 show_voxel_inspector, show_voxel_value, show_voxel_indices,
-                fl.files[sf].textureIDi, fl.files[sf].textureIDi_RGB,
-                fl.files[sf], 1);
+                fl.files[sf].textureIDi, fl.files[sf].textureIDi_RGB);
+
+            if ( show_voxel_inspector ) {
+                RenderVoxelInspector(fl.files[sf], 1, show_voxel_value, show_voxel_indices);
+            };
         }
         ImGui::End();
 
