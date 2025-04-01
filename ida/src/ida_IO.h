@@ -117,6 +117,7 @@ namespace IDA_IO
         int         voxel_k;               // A selected or hovered over voxel index
         int         voxel_j;               // A selected or hovered over voxel index
         int         voxel_i;               // A selected or hovered over voxel index
+        int         voxel_t;               // A selected or hovered over voxel index
         int         time_course_onset;     // Omit volumes from start until this number
         int         time_course_offset;    // Omit volumes from end until this number
         float*      p_sliceK_float_corr; // Holds correlation data

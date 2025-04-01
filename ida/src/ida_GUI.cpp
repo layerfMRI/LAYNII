@@ -1,4 +1,5 @@
 #include "ida_GUI.h"
+#include "ida_GUI_slices.h"
 #include "../dep/idalib.h"
 
 namespace IDA
@@ -18,7 +19,8 @@ namespace IDA
         // Variables
         // static char str_input[4096] = "Enter nifti path";
         // static char str_input[4096] = "/Users/faruk/Git/LayNii/test_data/lo_BOLD_intemp.nii.gz";
-        static char str_input[4096] = "/Users/faruk/data/data-alard/75um/sub-99_75um_crop.nii.gz";
+        static char str_input[4096] = "/Users/faruk/Documents/test-LN3_IDA/test.nii.gz";
+        // static char str_input[4096] = "/Users/faruk/data/data-alard/75um/sub-99_75um_crop.nii.gz";
 
         static bool loaded_file          = false;
         static bool show_header_info     = false;
@@ -39,12 +41,10 @@ namespace IDA
         static int magnifier_zoom = 8;
 
         ImVec2 cursor_screen_pos;
-        ImDrawList* drawList;
-
-        ImU32 cross_mouse_color = IM_COL32(81, 113, 217, 255);  // RGBA
-        ImU32 cross_slice_color = IM_COL32(222, 181, 61, 255);  // RGBA
-
-        float cross_thickness = 1.0f;  // Pixels
+        // ImDrawList* drawList;
+        // ImU32 cross_mouse_color = IM_COL32(81, 113, 217, 255);  // RGBA
+        // ImU32 cross_slice_color = IM_COL32(222, 181, 61, 255);  // RGBA
+        // float cross_thickness = 1.0f;  // Pixels
 
         int nr_files = fl.files.size();
         float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
@@ -142,272 +142,140 @@ namespace IDA
 
         if (loaded_file)  // Slice K window
         {
-            float data_w = fl.files[sf].dim_i;
-            float data_h = fl.files[sf].dim_j;
-            float pix_w = fl.files[sf].pixdim_i;
-            float pix_h = fl.files[sf].pixdim_j;
-            float pixscl_w = pix_w / pix_h;
-            float scl = fl.files[sf].display_scale;
-            float img_w = data_w * pixscl_w * scl;
-            float img_h = data_h * scl;
-            ImVec2 img_size = ImVec2(img_w, img_h);
+            RenderSlice(
+                fl.files[sf].dim_i, fl.files[sf].dim_j, fl.files[sf].dim_k,
+                fl.files[sf].pixdim_j, fl.files[sf].pixdim_j, 
+                fl.files[sf].display_scale, fl.files[sf].display_k_offset_x, fl.files[sf].display_k_offset_y,
+                fl.files[sf].display_i, fl.files[sf].display_j, fl.files[sf].display_k, fl.files[sf].display_t,
+                fl.files[sf].visualization_mode, show_slice_crosshair, show_mouse_crosshair,
+                request_image_data_update,
+                show_voxel_inspector, show_voxel_value, show_voxel_indices,
+                fl.files[sf].textureIDk, fl.files[sf].textureIDk_RGB,
+                fl.files[sf], 3);
 
-            // Center the image center to window center
-            float center_x =  - (img_w - ImGui::GetWindowSize()[0]) / 2;
-            float center_y =  - (img_h - ImGui::GetWindowSize()[1]) / 2;
- 
-            // Move image (important to have it before image render for correct mouse inspector indexing)
-            if ( ImGui::IsWindowHovered() || ImGui::IsWindowFocused() ) {
-                if ( io.KeyCtrl ) {
-                    fl.files[sf].display_k_offset_x += io.MouseDelta.x / scl;
-                    fl.files[sf].display_k_offset_y += io.MouseDelta.y / scl;
-                }
-            }
+            // // --------------------------------------------------------------------------------------------------------
+            // // Voxel inspector
+            // // --------------------------------------------------------------------------------------------------------
+            // if ( show_voxel_inspector ) {
+            //     if ( ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone) && ImGui::BeginTooltip() ) {
+            //         int voxel_i = static_cast<int>((io.MousePos.x - cursor_screen_pos.x) / scl);
+            //         int voxel_j = static_cast<int>((io.MousePos.y - cursor_screen_pos.y) / scl);
+            //         int voxel_k = fl.files[sf].display_k;
+            //         int voxel_t = fl.files[sf].display_t;
 
-            // Zoom image
-            // TODO: Smoother zooming for the inspector can be achieved centering to the mouse position
-            if ( ImGui::IsWindowHovered() && io.KeyCtrl && io.MouseWheel < 0 ) {
-                fl.files[sf].display_scale -= 0.1;
-            } else if ( ImGui::IsWindowHovered() && io.KeyCtrl && io.MouseWheel > 0 ) {
-                fl.files[sf].display_scale += 0.1;
-            }
- 
-            // Render image
-            ImVec2 image_pos = ImVec2(center_x + fl.files[sf].display_k_offset_x * scl,
-                                      center_y + fl.files[sf].display_k_offset_y * scl);
-            ImGui::SetCursorPos(image_pos);
-            cursor_screen_pos = ImGui::GetCursorScreenPos();  // Relative to top-left corner image
-            ImVec2 uv_min = ImVec2(1.0f, 1.0f);  // Default (0.0f, 0.0f) is top-left
-            ImVec2 uv_max = ImVec2(0.0f, 0.0f);  // Default (1.0f, 1.0f) is lower-right
+            //         // NOTE: Important, adjust for OpenGL flips
+            //         voxel_i = -voxel_i + fl.files[sf].dim_i-1;
+            //         voxel_j = -voxel_j + fl.files[sf].dim_j-1;
 
-            // Render texture
-            if (fl.files[sf].visualization_mode == 0) {
-                ImGui::Image((void*)(intptr_t)fl.files[sf].textureIDk       , img_size, uv_min, uv_max);
-            } else if (fl.files[sf].visualization_mode == 1 || fl.files[sf].visualization_mode == 3) {
-                ImGui::Image((void*)(intptr_t)fl.files[sf].textureIDk_RGB   , img_size, uv_min, uv_max);
-            }
+            //         // Render inspector fields
+            //         if ( show_voxel_time_course ) {
+            //             fl.loadVoxelTimeCourse_float(fl.files[sf], voxel_i, voxel_j, voxel_k);
+            //             ImGui::PlotLines(
+            //                 "Time Course",                                                     // Label
+            //                 fl.files[sf].p_time_course_float,                                  // Values
+            //                 fl.files[sf].time_course_offset - fl.files[sf].time_course_onset,  // Values count
+            //                 0,                                                                 // Values offset
+            //                 NULL,                                                              // Overlay Text
+            //                 fl.files[sf].time_course_min,                                      // Scale min (FLT_MIN for auto)
+            //                 fl.files[sf].time_course_max,                                      // Scale max (FLT_MAX for auto)
+            //                 ImVec2(0, 100.0f)                                                  // Plot Size
+            //                 );
+            //         }
 
-            // Draw crosshair at mouse position
-            if ( show_slice_crosshair ) {
-                drawList = ImGui::GetWindowDrawList();
+            //         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //         // TODO: Incorporate this voxel index better
+            //         if ( fl.files[sf].visualization_mode == 3 ) {
+            //             if ( fl.files[sf].voxel_i != voxel_i || fl.files[sf].voxel_j != voxel_j || fl.files[sf].voxel_k != voxel_k ) {
+            //                 fl.files[sf].voxel_i = voxel_i;
+            //                 fl.files[sf].voxel_j = voxel_j;
+            //                 fl.files[sf].voxel_k = voxel_k;
+            //                 request_image_data_update = true;
+            //             }
+            //         }
+            //         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-                // Slice crosshair
-                // TODO: Cross moves in the wrong direction due to OpenGL flip (lower left corner is 0 0)
-                float offset_hori = cursor_screen_pos.y + fl.files[sf].display_j;
-                // Horizontal
-                drawList->AddLine(ImVec2(cursor_screen_pos.x        , offset_hori),
-                                  ImVec2(cursor_screen_pos.x + img_w, offset_hori),
-                                  cross_slice_color,
-                                  cross_thickness);
-                // Vertical
-                drawList->AddLine(ImVec2(cursor_screen_pos.x + fl.files[sf].display_i, cursor_screen_pos.y        ),
-                                  ImVec2(cursor_screen_pos.x + fl.files[sf].display_i, cursor_screen_pos.y + img_h),
-                                  cross_slice_color,
-                                  cross_thickness);
-            }
+            //         if ( show_voxel_value ) {
+            //             float voxel_val = fl.files[sf].p_sliceK_float[voxel_j * fl.files[sf].dim_i + voxel_i];
+            //             ImGui::Text("Value : %.6f", voxel_val);                        
+            //         }
+            //         if ( show_voxel_indices ) {
+            //             ImGui::Text("Index : [%d i, %d j, %d k, %d t]", voxel_i, voxel_j, voxel_k, voxel_t);                        
+            //         }
+            //         if ( show_voxel_magnifier ) {  // Voxel window magnifier
 
-            // Mouse crosshair
-            if ( show_mouse_crosshair && ImGui::IsItemHovered() ) {
-                drawList = ImGui::GetWindowDrawList();
+            //             // Step 1: Mouse pos relative to imgui image cursor
+            //             float subvoxel_i = io.MousePos.x - cursor_screen_pos.x;
+            //             float subvoxel_j = io.MousePos.y - cursor_screen_pos.y;
 
-                // Horizontal
-                drawList->AddLine(ImVec2(cursor_screen_pos.x - 0.5f  , io.MousePos.y - 0.5f),
-                                  ImVec2(cursor_screen_pos.x - 0.5f + img_w, io.MousePos.y - 0.5f),
-                                  cross_mouse_color,
-                                  cross_thickness);
-                // Vertical
-                drawList->AddLine(ImVec2(io.MousePos.x - 0.5f, cursor_screen_pos.y - 0.5f),
-                                  ImVec2(io.MousePos.x - 0.5f, cursor_screen_pos.y - 0.5f + img_h),
-                                  cross_mouse_color,
-                                  cross_thickness);
+            //             // Step 2: Adjust for general image scaling
+            //             subvoxel_i /= scl;
+            //             subvoxel_j /= scl;
 
-                // Draw the circle using ImDrawList
-                drawList->AddCircle(ImVec2(io.MousePos.x, io.MousePos.y),
-                                    5.0f, cross_mouse_color, 45, 1.0f);
-            }
+            //             // Step 3: Adjust for anisotropic voxels. NOTE: Generalize this for other windows, hmmm.
+            //             subvoxel_i /= pixscl_w;
 
-            // --------------------------------------------------------------------------------------------------------
-            // Voxel inspector
-            // --------------------------------------------------------------------------------------------------------
-            if ( show_voxel_inspector ) {
-                if ( ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone) && ImGui::BeginTooltip() ) {
-                    int voxel_i = static_cast<int>((io.MousePos.x - cursor_screen_pos.x) / scl);
-                    int voxel_j = static_cast<int>((io.MousePos.y - cursor_screen_pos.y) / scl);
-                    int voxel_k = fl.files[sf].display_k;
-                    int voxel_t = fl.files[sf].display_t;
+            //             // Step 4: Adjust for OpenGL flips. NOTE: This can break for unconventional data, hmmm.
+            //             subvoxel_i = -subvoxel_i + fl.files[sf].dim_i;
+            //             subvoxel_j = -subvoxel_j + fl.files[sf].dim_j;
 
-                    // NOTE: Important, adjust for OpenGL flips
-                    voxel_i = -voxel_i + fl.files[sf].dim_i-1;
-                    voxel_j = -voxel_j + fl.files[sf].dim_j-1;
+            //             // Determine magnifier window size
+            //             float winmag_sz = static_cast<float>(magnifier_window_size);
+            //             float winmag_x = subvoxel_i - winmag_sz * 0.5f;
+            //             float winmag_y = subvoxel_j - winmag_sz * 0.5f;
+            //             float winmag_zoom = static_cast<float>(magnifier_zoom);
 
-                    // Render inspector fields
-                    if ( show_voxel_time_course ) {
-                        fl.loadVoxelTimeCourse_float(fl.files[sf], voxel_i, voxel_j, voxel_k);
-                        ImGui::PlotLines(
-                            "Time Course",                                                     // Label
-                            fl.files[sf].p_time_course_float,                                  // Values
-                            fl.files[sf].time_course_offset - fl.files[sf].time_course_onset,  // Values count
-                            0,                                                                 // Values offset
-                            NULL,                                                              // Overlay Text
-                            fl.files[sf].time_course_min,                                      // Scale min (FLT_MIN for auto)
-                            fl.files[sf].time_course_max,                                      // Scale max (FLT_MAX for auto)
-                            ImVec2(0, 100.0f)                                                  // Plot Size
-                            );
-                    }
+            //             // --------------------------------------------------------------------------------------------
+            //             ImVec2 winmag_pix = ImVec2( winmag_sz * winmag_zoom * pixscl_w,
+            //                                         winmag_sz * winmag_zoom );
+            //             ImVec2 uv0 = ImVec2( winmag_x / data_w,
+            //                                  winmag_y / data_h );
+            //             ImVec2 uv1 = ImVec2( (winmag_x + winmag_sz) / data_w,
+            //                                  (winmag_y + winmag_sz) / data_h );
+            //             ImGui::Image((void*)(intptr_t)fl.files[sf].textureIDk, winmag_pix, uv1, uv0);
 
-                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    // TODO: Incorporate this voxel index better
-                    if ( fl.files[sf].visualization_mode == 3 ) {
-                        if ( fl.files[sf].voxel_i != voxel_i || fl.files[sf].voxel_j != voxel_j || fl.files[sf].voxel_k != voxel_k ) {
-                            fl.files[sf].voxel_i = voxel_i;
-                            fl.files[sf].voxel_j = voxel_j;
-                            fl.files[sf].voxel_k = voxel_k;
-                            request_image_data_update = true;
-                        }
-                    }
-                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-                    if ( show_voxel_value ) {
-                        float voxel_val = fl.files[sf].p_sliceK_float[voxel_j * fl.files[sf].dim_i + voxel_i];
-                        ImGui::Text("Value : %.6f", voxel_val);                        
-                    }
-                    if ( show_voxel_indices ) {
-                        ImGui::Text("Index : [%d i, %d j, %d k, %d t]", voxel_i, voxel_j, voxel_k, voxel_t);                        
-                    }
-                    if ( show_voxel_magnifier ) {  // Voxel window magnifier
-
-                        // Step 1: Mouse pos relative to imgui image cursor
-                        float subvoxel_i = io.MousePos.x - cursor_screen_pos.x;
-                        float subvoxel_j = io.MousePos.y - cursor_screen_pos.y;
-
-                        // Step 2: Adjust for general image scaling
-                        subvoxel_i /= scl;
-                        subvoxel_j /= scl;
-
-                        // Step 3: Adjust for anisotropic voxels. NOTE: Generalize this for other windows, hmmm.
-                        subvoxel_i /= pixscl_w;
-
-                        // Step 4: Adjust for OpenGL flips. NOTE: This can break for unconventional data, hmmm.
-                        subvoxel_i = -subvoxel_i + fl.files[sf].dim_i;
-                        subvoxel_j = -subvoxel_j + fl.files[sf].dim_j;
-
-                        // Determine magnifier window size
-                        float winmag_sz = static_cast<float>(magnifier_window_size);
-                        float winmag_x = subvoxel_i - winmag_sz * 0.5f;
-                        float winmag_y = subvoxel_j - winmag_sz * 0.5f;
-                        float winmag_zoom = static_cast<float>(magnifier_zoom);
-
-                        // --------------------------------------------------------------------------------------------
-                        ImVec2 winmag_pix = ImVec2( winmag_sz * winmag_zoom * pixscl_w,
-                                                    winmag_sz * winmag_zoom );
-                        ImVec2 uv0 = ImVec2( winmag_x / data_w,
-                                             winmag_y / data_h );
-                        ImVec2 uv1 = ImVec2( (winmag_x + winmag_sz) / data_w,
-                                             (winmag_y + winmag_sz) / data_h );
-                        ImGui::Image((void*)(intptr_t)fl.files[sf].textureIDk, winmag_pix, uv1, uv0);
-
-                        ImGui::Text("Magnification");
-                        ImGui::Text("  Factor  : %.0f [times]", winmag_zoom);
-                        ImGui::Text("  Size    : %.0f X %.0f [pixels]", winmag_sz * winmag_zoom * pixscl_w, winmag_sz * winmag_zoom);
-                        ImGui::Text("  Size    : %.0f X %.0f [~voxels]", winmag_sz, winmag_sz);
-                        ImGui::Text("  Indices :\n    [%.0f:%.0f i, %.0f:%.0f j, %d k]", 
-                            winmag_x, winmag_x + winmag_sz, winmag_y, winmag_y + winmag_sz, voxel_k);
-                    }
-                    ImGui::EndTooltip();
-                }
-            }
-            // --------------------------------------------------------------------------------------------------------
-            ImGui::Text("Pointer = %u", fl.files[sf].textureIDk);
-            ImGui::SameLine();
-            ImGui::Text("Size = %d x %d", fl.files[sf].dim_i, fl.files[sf].dim_j);
-            ImGui::Text("Window size = [%.1f %.1f]", ImGui::GetWindowSize().x, ImGui::GetWindowSize().y);
-            ImGui::Text("Window pos  = [%.1f %.1f]", ImGui::GetWindowPos().x, ImGui::GetWindowPos().y);
-
-            // Scroll through slices (Hover + Wheel)
-            if ( ImGui::IsWindowHovered() && io.MouseWheel < 0 && fl.files[sf].display_k > 0 && !io.KeyCtrl) {
-                fl.files[sf].display_k--;
-                request_image_data_update = true;
-
-            } else if ( ImGui::IsWindowHovered() && io.MouseWheel > 0 && fl.files[sf].display_k < fl.files[sf].dim_k-1 && !io.KeyCtrl) {
-                fl.files[sf].display_k++;
-                request_image_data_update = true;
-            }
+            //             ImGui::Text("Magnification");
+            //             ImGui::Text("  Factor  : %.0f [times]", winmag_zoom);
+            //             ImGui::Text("  Size    : %.0f X %.0f [pixels]", winmag_sz * winmag_zoom * pixscl_w, winmag_sz * winmag_zoom);
+            //             ImGui::Text("  Size    : %.0f X %.0f [~voxels]", winmag_sz, winmag_sz);
+            //             ImGui::Text("  Indices :\n    [%.0f:%.0f i, %.0f:%.0f j, %d k]", 
+            //                 winmag_x, winmag_x + winmag_sz, winmag_y, winmag_y + winmag_sz, voxel_k);
+            //         }
+            //         ImGui::EndTooltip();
+            //     }
+            // }
+            // // --------------------------------------------------------------------------------------------------------
         }
         ImGui::End();
 
         ImGui::Begin("Slice Y axis", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         if (loaded_file)  // Slice J window
         {
-            // Render texture
-            if (fl.files[sf].visualization_mode == 0) {
-                ImGui::Image((void*)(intptr_t)fl.files[sf].textureIDj, 
-                             ImVec2(fl.files[sf].pixdim_i / fl.files[sf].pixdim_k * fl.files[sf].dim_i,
-                                    fl.files[sf].dim_k),
-                             ImVec2(1, 1),  // Horizontal
-                             ImVec2(0, 0)   // Vertical
-                             );
-            } else if (fl.files[sf].visualization_mode == 1) {
-                ImGui::Image((void*)(intptr_t)fl.files[sf].textureIDj_RGB, 
-                             ImVec2(fl.files[sf].pixdim_i / fl.files[sf].pixdim_k * fl.files[sf].dim_i,
-                                    fl.files[sf].dim_k),
-                             ImVec2(1, 1),  // Horizontal
-                             ImVec2(0, 0)   // Vertical
-                             );       
-            }
-
-            // --------------------------------------------------------------------------------------------------------
-            ImGui::Text("Pointer = %u", fl.files[sf].textureIDj);
-            ImGui::SameLine();
-            ImGui::Text("Size = %d x %d", fl.files[sf].dim_i, fl.files[sf].dim_k);
-            ImGui::Text("Window size = [%.1f %.1f]", ImGui::GetWindowSize().x, ImGui::GetWindowSize().y);
-            ImGui::Text("Window pos  = [%.1f %.1f]", ImGui::GetWindowPos().x, ImGui::GetWindowPos().y);
-
-            // Mouse wheel browsing controls
-            if ( ImGui::IsWindowHovered() && io.MouseWheel < 0 && fl.files[sf].display_j > 0) {
-                fl.files[sf].display_j--;
-                request_image_data_update = true;
-            } else if ( ImGui::IsWindowHovered() && io.MouseWheel > 0 && fl.files[sf].display_j < fl.files[sf].dim_j-1 ) {
-                fl.files[sf].display_j++;
-                request_image_data_update = true;
-            }
+            RenderSlice(
+                fl.files[sf].dim_i, fl.files[sf].dim_k, fl.files[sf].dim_j,
+                fl.files[sf].pixdim_i, fl.files[sf].pixdim_k, 
+                fl.files[sf].display_scale, fl.files[sf].display_j_offset_x, fl.files[sf].display_j_offset_y,
+                fl.files[sf].display_i, fl.files[sf].display_k, fl.files[sf].display_j, fl.files[sf].display_t,
+                fl.files[sf].visualization_mode, show_slice_crosshair, show_mouse_crosshair,
+                request_image_data_update,
+                show_voxel_inspector, show_voxel_value, show_voxel_indices,
+                fl.files[sf].textureIDj, fl.files[sf].textureIDj_RGB,
+                fl.files[sf], 2);
         }
         ImGui::End();
 
         ImGui::Begin("Slice X axis", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         if (loaded_file)  // Slice I window
         {
-            // Render texture
-            if (fl.files[sf].visualization_mode == 0) {
-                ImGui::Image((void*)(intptr_t)fl.files[sf].textureIDi, 
-                             ImVec2(fl.files[sf].dim_j,
-                                    fl.files[sf].dim_k),
-                             ImVec2(1, 1),  // Horizontal
-                             ImVec2(0, 0)   // Vertical
-                             ); 
-            } else if (fl.files[sf].visualization_mode == 1) {
-                ImGui::Image((void*)(intptr_t)fl.files[sf].textureIDi_RGB, 
-                             ImVec2(fl.files[sf].dim_j,
-                                    fl.files[sf].dim_k),
-                             ImVec2(1, 1),  // Horizontal
-                             ImVec2(0, 0)   // Vertical
-                             ); 
-            }
-
-            // --------------------------------------------------------------------------------------------------------
-            ImGui::Text("Pointer = %u", fl.files[sf].textureIDi);
-            ImGui::SameLine();
-            ImGui::Text("Size = %d x %d", fl.files[sf].dim_j, fl.files[sf].dim_k);
-            ImGui::Text("Window size = [%.1f %.1f]", ImGui::GetWindowSize().x, ImGui::GetWindowSize().y);
-            ImGui::Text("Window pos  = [%.1f %.1f]", ImGui::GetWindowPos().x, ImGui::GetWindowPos().y);
-
-            // Mouse wheel browsing controls
-            if ( ImGui::IsWindowHovered() && io.MouseWheel < 0 && fl.files[sf].display_i > 0) {
-                fl.files[sf].display_i--;
-                request_image_data_update = true;
-            } else if ( ImGui::IsWindowHovered() && io.MouseWheel > 0 && fl.files[sf].display_i < fl.files[sf].dim_i-1 ) {
-                fl.files[sf].display_i++;
-                request_image_data_update = true;
-            }
+            RenderSlice(
+                fl.files[sf].dim_j, fl.files[sf].dim_k, fl.files[sf].dim_i,
+                fl.files[sf].pixdim_j, fl.files[sf].pixdim_k, 
+                fl.files[sf].display_scale, fl.files[sf].display_i_offset_x, fl.files[sf].display_i_offset_y,
+                fl.files[sf].display_j, fl.files[sf].display_k, fl.files[sf].display_i,  fl.files[sf].display_t,
+                fl.files[sf].visualization_mode, show_slice_crosshair, show_mouse_crosshair,
+                request_image_data_update,
+                show_voxel_inspector, show_voxel_value, show_voxel_indices,
+                fl.files[sf].textureIDi, fl.files[sf].textureIDi_RGB,
+                fl.files[sf], 1);
         }
         ImGui::End();
 
