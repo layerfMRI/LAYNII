@@ -29,7 +29,6 @@ namespace IDA
         static bool show_voxel_inspector = false;
         static bool show_voxel_indices   = true;
         static bool show_voxel_value     = true;
-        static bool show_voxel_magnifier = false;
         static bool show_voxel_time_course  = false;
 
         static bool request_image_data_update = false;
@@ -37,14 +36,7 @@ namespace IDA
 
         static int sf = -1;  // Selected file
 
-        static int magnifier_window_size = 30;
-        static int magnifier_zoom = 8;
-
         ImVec2 cursor_screen_pos;
-        // ImDrawList* drawList;
-        // ImU32 cross_mouse_color = IM_COL32(81, 113, 217, 255);  // RGBA
-        // ImU32 cross_slice_color = IM_COL32(222, 181, 61, 255);  // RGBA
-        // float cross_thickness = 1.0f;  // Pixels
 
         int nr_files = fl.files.size();
         float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
@@ -478,38 +470,38 @@ namespace IDA
                 ImGui::EndDisabled();
             }
 
-            // // --------------------------------------------------------------------------------------------------------
-            // ImGui::SeparatorText("CORRELATIONS CONTROLS");
-            // // --------------------------------------------------------------------------------------------------------
-            // if (fl.files[sf].visualization_mode != 3) {
-            //     if (ImGui::Button("Enable Correlations") || ImGui::IsKeyPressed(ImGuiKey_S, false)) {
-            //         fl.prepareRBGSlices(fl.files[sf]);
+            // --------------------------------------------------------------------------------------------------------
+            ImGui::SeparatorText("CORRELATIONS CONTROLS");
+            // --------------------------------------------------------------------------------------------------------
+            if (fl.files[sf].visualization_mode != 3) {
+                if (ImGui::Button("Enable Correlations") || ImGui::IsKeyPressed(ImGuiKey_S, false)) {
+                    fl.prepareRBGSlices(fl.files[sf]);
 
-            //         free(fl.files[sf].p_sliceK_float_corr);
-            //         fl.files[sf].p_sliceK_float_corr = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
+                    free(fl.files[sf].p_sliceK_float_corr);
+                    fl.files[sf].p_sliceK_float_corr = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
 
-            //         fl.loadSliceK_Correlations_uint8(fl.files[sf]);
+                    fl.loadSliceK_Correlations_uint8(fl.files[sf]);
 
-            //         fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_j, 
-            //                                          fl.files[sf].textureIDk_RGB, fl.files[sf].p_sliceK_RGB_uint8);
+                    fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_j, 
+                                                     fl.files[sf].textureIDk_RGB, fl.files[sf].p_sliceK_RGB_uint8);
 
-            //         fl.files[sf].visualization_mode = 3;
-            //     }
-            // } else {
-            //     if (ImGui::Button("Disable Correlations") || ImGui::IsKeyPressed(ImGuiKey_S, false)) {
-            //         request_image_data_update = true;
-            //         fl.files[sf].visualization_mode = 0;
-            //     }
-            // }
+                    fl.files[sf].visualization_mode = 3;
+                }
+            } else {
+                if (ImGui::Button("Disable Correlations") || ImGui::IsKeyPressed(ImGuiKey_S, false)) {
+                    request_image_data_update = true;
+                    fl.files[sf].visualization_mode = 0;
+                }
+            }
 
-            // if (fl.files[sf].visualization_mode == 3) {
-            //     if ( ImGui::SliderInt("Time Course Onset ", &fl.files[sf].time_course_onset , 0, fl.files[sf].dim_t, "%i") ) {
-            //         request_image_data_update = true;
-            //     }
-            //     if ( ImGui::SliderInt("Time Course Offset", &fl.files[sf].time_course_offset, 0, fl.files[sf].dim_t, "%i") ) {
-            //         request_image_data_update = true;
-            //     }
-            // }
+            if (fl.files[sf].visualization_mode == 3) {
+                if ( ImGui::SliderInt("Time Course Onset ", &fl.files[sf].time_course_onset , 0, fl.files[sf].dim_t, "%i") ) {
+                    request_image_data_update = true;
+                }
+                if ( ImGui::SliderInt("Time Course Offset", &fl.files[sf].time_course_offset, 0, fl.files[sf].dim_t, "%i") ) {
+                    request_image_data_update = true;
+                }
+            }
 
             // --------------------------------------------------------------------------------------------------------
             ImGui::SeparatorText("VOXEL INSPECTOR CONTROLS");
@@ -522,17 +514,6 @@ namespace IDA
             ImGui::Checkbox("Show value", &show_voxel_value); ImGui::SameLine();
             ImGui::Checkbox("Show indices", &show_voxel_indices); ImGui::SameLine();
             ImGui::Checkbox("Show time course", &show_voxel_time_course);
-
-            ImGui::Checkbox("Show magnifier", &show_voxel_magnifier);
-            if ( show_voxel_magnifier ) {
-                ImGui::SliderInt("##Magnifier Voxel Size", &magnifier_window_size, 1, 100, "%i");
-                ImGui::SameLine();
-                ImGui::Text("%i X %i [voxels]", magnifier_window_size, magnifier_window_size);
-
-                ImGui::SliderInt("##Magnifier Zoom", &magnifier_zoom, 1, 20, "%i");
-                ImGui::SameLine();
-                ImGui::Text("%i [times]", magnifier_zoom);
-            }
 
             if (!show_voxel_inspector) {
                 ImGui::EndDisabled();
@@ -686,19 +667,19 @@ namespace IDA
             // --------------------------------------------------------------------------------------------------------
             // Voxel correlations mode
             // --------------------------------------------------------------------------------------------------------
-            // } else if ( fl.files[sf].visualization_mode == 3 ) {
-            //     if ( request_image_data_update ) {
-            //         fl.loadSliceK_float(fl.files[sf]);
-            //         request_image_update = true;
-            //     }
+            } else if ( fl.files[sf].visualization_mode == 3 ) {
+                if ( request_image_data_update ) {
+                    fl.loadSliceK_float(fl.files[sf]);
+                    request_image_update = true;
+                }
 
-            //     if ( request_image_update) {
-            //         fl.computeCorrelationsSliceK_float(fl.files[sf]);
-            //         fl.loadSliceK_uint8(fl.files[sf]);
-            //         fl.loadSliceK_Correlations_uint8(fl.files[sf]);
-            //         fl.updateTextureDataInOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_j, 
-            //                                          fl.files[sf].textureIDk_RGB, fl.files[sf].p_sliceK_RGB_uint8);                    
-            //     }
+                if ( request_image_update) {
+                    fl.computeCorrelationsSliceK_float(fl.files[sf]);
+                    fl.loadSliceK_uint8(fl.files[sf]);
+                    fl.loadSliceK_Correlations_uint8(fl.files[sf]);
+                    fl.updateTextureDataInOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_j, 
+                                                     fl.files[sf].textureIDk_RGB, fl.files[sf].p_sliceK_RGB_uint8);                    
+                }
             }
 
             request_image_data_update = false;

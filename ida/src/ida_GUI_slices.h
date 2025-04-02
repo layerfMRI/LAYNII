@@ -5,8 +5,9 @@
 // ====================================================================================================================
 // Procedure to draw voxel inspector
 // ====================================================================================================================
-void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_screen_pos,
-                          bool& show_voxel_value, bool& show_voxel_indices, bool& show_voxel_time_course) {
+void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_screen_pos, int& visualization_mode,
+                          bool& show_voxel_value, bool& show_voxel_indices, bool& show_voxel_time_course,
+                          bool& request_image_data_update) {
 
     // Definitions
     ImGuiIO& io = ImGui::GetIO();
@@ -57,21 +58,27 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
                 fi.p_time_course_float[t] = fi.p_data_float[index4D];
             }
 
-            // Adjust min max for better visualizing the timecourse
-            // NOTE: I might make a separate function for finding mix max in arbitrary data
-            // NOTE: I can implement percent normalization etc here as well
-            float max_val = std::numeric_limits<float>::min();
-            float min_val = std::numeric_limits<float>::max();
-            for (int t = 0; t < nt; ++t) {
-                if (fi.p_time_course_float[t] < min_val) {
-                    min_val = fi.p_time_course_float[t];
+            if ( show_voxel_time_course ) {
+                // Adjust min max for better visualizing the timecourse
+                // NOTE: I might make a separate function for finding mix max in arbitrary data
+                // NOTE: I can implement percent normalization etc here as well
+                float max_val = std::numeric_limits<float>::min();
+                float min_val = std::numeric_limits<float>::max();
+                for (int t = 0; t < nt; ++t) {
+                    if (fi.p_time_course_float[t] < min_val) {
+                        min_val = fi.p_time_course_float[t];
+                    }
+                    if (fi.p_time_course_float[t] > max_val) {
+                        max_val = fi.p_time_course_float[t];
+                    }
                 }
-                if (fi.p_time_course_float[t] > max_val) {
-                    max_val = fi.p_time_course_float[t];
-                }
+                fi.time_course_min = min_val;
+                fi.time_course_max = max_val;                
             }
-            fi.time_course_min = min_val;
-            fi.time_course_max = max_val;
+
+            if ( fi.visualization_mode == 3) {
+                request_image_data_update = true;
+            }
         }
 
         // ------------------------------------------------------------------------------------------------------------
@@ -227,7 +234,10 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
     }
 
     if ( show_voxel_inspector ) {
-        RenderVoxelInspector(fi, slice_window, cursor_screen_pos, show_voxel_value, show_voxel_indices, show_voxel_time_course);
+        RenderVoxelInspector(fi, slice_window, cursor_screen_pos, visualization_mode,
+            show_voxel_value, show_voxel_indices, show_voxel_time_course,
+            request_image_data_update
+            );
     };
 
 };
