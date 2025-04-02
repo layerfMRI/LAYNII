@@ -149,12 +149,9 @@ namespace IDA
                 fl.files[sf].display_i, fl.files[sf].display_j, fl.files[sf].display_k, fl.files[sf].display_t,
                 fl.files[sf].visualization_mode, show_slice_crosshair, show_mouse_crosshair,
                 request_image_data_update,
-                show_voxel_inspector, show_voxel_value, show_voxel_indices,
-                fl.files[sf].textureIDk, fl.files[sf].textureIDk_RGB);
-
-                if ( show_voxel_inspector ) {
-                    RenderVoxelInspector(fl.files[sf], 3, show_voxel_value, show_voxel_indices);
-                };
+                show_voxel_inspector, show_voxel_value, show_voxel_indices, show_voxel_time_course,
+                fl.files[sf].textureIDk, fl.files[sf].textureIDk_RGB, 3, fl.files[sf]
+                );
 
             // // --------------------------------------------------------------------------------------------------------
             // // Voxel inspector
@@ -260,12 +257,10 @@ namespace IDA
                 fl.files[sf].display_i, fl.files[sf].display_k, fl.files[sf].display_j, fl.files[sf].display_t,
                 fl.files[sf].visualization_mode, show_slice_crosshair, show_mouse_crosshair,
                 request_image_data_update,
-                show_voxel_inspector, show_voxel_value, show_voxel_indices,
-                fl.files[sf].textureIDj, fl.files[sf].textureIDj_RGB);
+                show_voxel_inspector, show_voxel_value, show_voxel_indices, show_voxel_time_course,
+                fl.files[sf].textureIDj, fl.files[sf].textureIDj_RGB, 2, fl.files[sf]
+                );
 
-                if ( show_voxel_inspector ) {
-                    RenderVoxelInspector(fl.files[sf], 2, show_voxel_value, show_voxel_indices);
-                };
         }
         ImGui::End();
 
@@ -279,12 +274,9 @@ namespace IDA
                 fl.files[sf].display_j, fl.files[sf].display_k, fl.files[sf].display_i,  fl.files[sf].display_t,
                 fl.files[sf].visualization_mode, show_slice_crosshair, show_mouse_crosshair,
                 request_image_data_update,
-                show_voxel_inspector, show_voxel_value, show_voxel_indices,
-                fl.files[sf].textureIDi, fl.files[sf].textureIDi_RGB);
-
-            if ( show_voxel_inspector ) {
-                RenderVoxelInspector(fl.files[sf], 1, show_voxel_value, show_voxel_indices);
-            };
+                show_voxel_inspector, show_voxel_value, show_voxel_indices, show_voxel_time_course,
+                fl.files[sf].textureIDi, fl.files[sf].textureIDi_RGB, 1, fl.files[sf]
+                );
         }
         ImGui::End();
 
@@ -486,38 +478,38 @@ namespace IDA
                 ImGui::EndDisabled();
             }
 
-            // --------------------------------------------------------------------------------------------------------
-            ImGui::SeparatorText("CORRELATIONS CONTROLS");
-            // --------------------------------------------------------------------------------------------------------
-            if (fl.files[sf].visualization_mode != 3) {
-                if (ImGui::Button("Enable Correlations") || ImGui::IsKeyPressed(ImGuiKey_S, false)) {
-                    fl.prepareRBGSlices(fl.files[sf]);
+            // // --------------------------------------------------------------------------------------------------------
+            // ImGui::SeparatorText("CORRELATIONS CONTROLS");
+            // // --------------------------------------------------------------------------------------------------------
+            // if (fl.files[sf].visualization_mode != 3) {
+            //     if (ImGui::Button("Enable Correlations") || ImGui::IsKeyPressed(ImGuiKey_S, false)) {
+            //         fl.prepareRBGSlices(fl.files[sf]);
 
-                    free(fl.files[sf].p_sliceK_float_corr);
-                    fl.files[sf].p_sliceK_float_corr = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
+            //         free(fl.files[sf].p_sliceK_float_corr);
+            //         fl.files[sf].p_sliceK_float_corr = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
 
-                    fl.loadSliceK_Correlations_uint8(fl.files[sf]);
+            //         fl.loadSliceK_Correlations_uint8(fl.files[sf]);
 
-                    fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_j, 
-                                                     fl.files[sf].textureIDk_RGB, fl.files[sf].p_sliceK_RGB_uint8);
+            //         fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_j, 
+            //                                          fl.files[sf].textureIDk_RGB, fl.files[sf].p_sliceK_RGB_uint8);
 
-                    fl.files[sf].visualization_mode = 3;
-                }
-            } else {
-                if (ImGui::Button("Disable Correlations") || ImGui::IsKeyPressed(ImGuiKey_S, false)) {
-                    request_image_data_update = true;
-                    fl.files[sf].visualization_mode = 0;
-                }
-            }
+            //         fl.files[sf].visualization_mode = 3;
+            //     }
+            // } else {
+            //     if (ImGui::Button("Disable Correlations") || ImGui::IsKeyPressed(ImGuiKey_S, false)) {
+            //         request_image_data_update = true;
+            //         fl.files[sf].visualization_mode = 0;
+            //     }
+            // }
 
-            if (fl.files[sf].visualization_mode == 3) {
-                if ( ImGui::SliderInt("Time Course Onset ", &fl.files[sf].time_course_onset , 0, fl.files[sf].dim_t, "%i") ) {
-                    request_image_data_update = true;
-                }
-                if ( ImGui::SliderInt("Time Course Offset", &fl.files[sf].time_course_offset, 0, fl.files[sf].dim_t, "%i") ) {
-                    request_image_data_update = true;
-                }
-            }
+            // if (fl.files[sf].visualization_mode == 3) {
+            //     if ( ImGui::SliderInt("Time Course Onset ", &fl.files[sf].time_course_onset , 0, fl.files[sf].dim_t, "%i") ) {
+            //         request_image_data_update = true;
+            //     }
+            //     if ( ImGui::SliderInt("Time Course Offset", &fl.files[sf].time_course_offset, 0, fl.files[sf].dim_t, "%i") ) {
+            //         request_image_data_update = true;
+            //     }
+            // }
 
             // --------------------------------------------------------------------------------------------------------
             ImGui::SeparatorText("VOXEL INSPECTOR CONTROLS");
@@ -694,19 +686,19 @@ namespace IDA
             // --------------------------------------------------------------------------------------------------------
             // Voxel correlations mode
             // --------------------------------------------------------------------------------------------------------
-            } else if ( fl.files[sf].visualization_mode == 3 ) {
-                if ( request_image_data_update ) {
-                    fl.loadSliceK_float(fl.files[sf]);
-                    request_image_update = true;
-                }
+            // } else if ( fl.files[sf].visualization_mode == 3 ) {
+            //     if ( request_image_data_update ) {
+            //         fl.loadSliceK_float(fl.files[sf]);
+            //         request_image_update = true;
+            //     }
 
-                if ( request_image_update) {
-                    fl.computeCorrelationsSliceK_float(fl.files[sf]);
-                    fl.loadSliceK_uint8(fl.files[sf]);
-                    fl.loadSliceK_Correlations_uint8(fl.files[sf]);
-                    fl.updateTextureDataInOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_j, 
-                                                     fl.files[sf].textureIDk_RGB, fl.files[sf].p_sliceK_RGB_uint8);                    
-                }
+            //     if ( request_image_update) {
+            //         fl.computeCorrelationsSliceK_float(fl.files[sf]);
+            //         fl.loadSliceK_uint8(fl.files[sf]);
+            //         fl.loadSliceK_Correlations_uint8(fl.files[sf]);
+            //         fl.updateTextureDataInOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_j, 
+            //                                          fl.files[sf].textureIDk_RGB, fl.files[sf].p_sliceK_RGB_uint8);                    
+            //     }
             }
 
             request_image_data_update = false;

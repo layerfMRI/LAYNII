@@ -114,10 +114,11 @@ namespace IDA_IO
         GLuint      textureIDj_RGB;         // OpenGL needs this
         GLuint      textureIDi_RGB;         // OpenGL needs this
         // Correlation related ----------------------------------------------------------------------------------------
-        int         voxel_k;               // A selected or hovered over voxel index
-        int         voxel_j;               // A selected or hovered over voxel index
-        int         voxel_i;               // A selected or hovered over voxel index
-        int         voxel_t;               // A selected or hovered over voxel index
+        uint64_t    voxel_k;               // A selected or hovered over voxel index
+        uint64_t    voxel_j;               // A selected or hovered over voxel index
+        uint64_t    voxel_i;               // A selected or hovered over voxel index
+        uint64_t    voxel_t;               // A selected or hovered over voxel index
+        uint64_t    voxel_index4D;         // A selected or hovered over voxel index
         int         time_course_onset;     // Omit volumes from start until this number
         int         time_course_offset;    // Omit volumes from end until this number
         float*      p_sliceK_float_corr; // Holds correlation data
@@ -647,9 +648,10 @@ namespace IDA_IO
             fi.p_time_course_float = (float*)malloc(fi.dim_t * sizeof(float));
 
             // Initialize hovered over or selected voxel index
-            fi.voxel_i = fi.display_i;
-            fi.voxel_j = fi.display_j;
-            fi.voxel_k = fi.display_k;
+            fi.voxel_i = static_cast<uint64_t>(fi.display_i);
+            fi.voxel_j = static_cast<uint64_t>(fi.display_j);
+            fi.voxel_k = static_cast<uint64_t>(fi.display_k);
+            fi.voxel_t = static_cast<uint64_t>(fi.display_t);
 
             // Initialize time course parameters
             fi.time_course_onset  = 0;
@@ -961,109 +963,112 @@ namespace IDA_IO
         // ============================================================================================================
         // Procedure to extract one voxel's time course
         // ============================================================================================================
-        void loadVoxelTimeCourse_float(FileInfo& fi, int i, int j, int k)
-        {
-            int ni = fi.dim_i;
-            int nj = fi.dim_j;
-            int nt = fi.time_course_offset - fi.time_course_onset;
-            for (int t = 0; t < nt; ++t) {
-                uint64_t index4D = static_cast<uint64_t>(i) + j*ni + k*ni*nj + fi.nr_voxels*t;
-                *(fi.p_time_course_float + t) = fi.p_data_float[index4D];
-            }
+        // void loadVoxelTimeCourse_float(FileInfo& fi)
+        // {
+        //     uint64_t i = static_cast<uint64_t>(fi.voxel_i);
+        //     uint64_t j = static_cast<uint64_t>(fi.voxel_j);
+        //     uint64_t k = static_cast<uint64_t>(fi.voxel_k);
+        //     uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+        //     uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+        //     uint64_t nt = static_cast<uint64_t>(fi.time_course_offset) - fi.time_course_onset;
+        //     for (int t = 0; t < nt; ++t) {
+        //         uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+        //         *(fi.p_time_course_float + t) = fi.p_data_float[index4D];
+        //     }
             
-            // --------------------------------------------------------------------------------------------------------
-            // NOTE: I might make a separate function for finding mix max in arbitrary data
-            // NOTE: I can implement percent normalization etc here as well
-            float max_val = std::numeric_limits<float>::min();
-            float min_val = std::numeric_limits<float>::max();
-            for (int t = 0; t < nt; ++t) {
-                if (*(fi.p_time_course_float + t) < min_val) {
-                    min_val = *(fi.p_time_course_float + t);
-                }
-                if (*(fi.p_time_course_float + t) > max_val) {
-                    max_val = *(fi.p_time_course_float + t);
-                }
-            }
-            fi.time_course_min = min_val;
-            fi.time_course_max = max_val;
-            // --------------------------------------------------------------------------------------------------------
-        }
+        //     // --------------------------------------------------------------------------------------------------------
+        //     // NOTE: I might make a separate function for finding mix max in arbitrary data
+        //     // NOTE: I can implement percent normalization etc here as well
+        //     float max_val = std::numeric_limits<float>::min();
+        //     float min_val = std::numeric_limits<float>::max();
+        //     for (int t = 0; t < nt; ++t) {
+        //         if (*(fi.p_time_course_float + t) < min_val) {
+        //             min_val = *(fi.p_time_course_float + t);
+        //         }
+        //         if (*(fi.p_time_course_float + t) > max_val) {
+        //             max_val = *(fi.p_time_course_float + t);
+        //         }
+        //     }
+        //     fi.time_course_min = min_val;
+        //     fi.time_course_max = max_val;
+        //     // --------------------------------------------------------------------------------------------------------
+        // }
 
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         // Procedure to compute one voxel's time course correlations to other voxels
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        void computeCorrelationsSliceK_float(FileInfo& fi)
-        {
-            int ni = fi.dim_i;
-            int nj = fi.dim_j;
-            int nt = fi.time_course_offset - fi.time_course_onset;
+        // void computeCorrelationsSliceK_float(FileInfo& fi)
+        // {
+        //     int ni = fi.dim_i;
+        //     int nj = fi.dim_j;
+        //     int nt = fi.time_course_offset - fi.time_course_onset;
 
-            float* x_arr = (float*)malloc(fi.dim_t * sizeof(float));
-            float* y_arr = (float*)malloc(fi.dim_t * sizeof(float));
+        //     float* x_arr = (float*)malloc(fi.dim_t * sizeof(float));
+        //     float* y_arr = (float*)malloc(fi.dim_t * sizeof(float));
 
-            // Prepare x array
-            for (int t = 0; t < nt; ++t) {
-                uint64_t index4D = fi.voxel_i + fi.voxel_j*ni + fi.voxel_k*ni*nj + fi.nr_voxels*t;
-                *(x_arr + t) = fi.p_data_float[index4D];
-            }
+        //     // Prepare x array
+        //     for (int t = 0; t < nt; ++t) {
+        //         uint64_t index4D = fi.voxel_i + fi.voxel_j*ni + fi.voxel_k*ni*nj + fi.nr_voxels*t;
+        //         *(x_arr + t) = fi.p_data_float[index4D];
+        //     }
 
-            int k = fi.display_k;
-            for (int i = 0; i < ni; i++) {
-                for (int j = 0; j < nj; j++) {
+        //     int k = fi.display_k;
+        //     for (int i = 0; i < ni; i++) {
+        //         for (int j = 0; j < nj; j++) {
 
-                    // Prepare y array
-                    for (int t = 0; t < nt; ++t) {
-                        uint64_t index4D = static_cast<uint64_t>(i) + j*ni + k*ni*nj + fi.nr_voxels*t;
-                        *(y_arr + t)= fi.p_data_float[index4D];
-                    }
+        //             // Prepare y array
+        //             for (int t = 0; t < nt; ++t) {
+        //                 uint64_t index4D = static_cast<uint64_t>(i) + j*ni + k*ni*nj + fi.nr_voxels*t;
+        //                 *(y_arr + t)= fi.p_data_float[index4D];
+        //             }
 
-                    // Compute sums for covariance and variances
-                    double sum_X = 0, sum_Y = 0, sum_XY = 0;
-                    double sum_X2 = 0, sum_Y2 = 0;
-                    for (int t = 0; t < nt; t++) {
-                        sum_X += x_arr[t];
-                        sum_Y += y_arr[t];
-                        sum_XY += x_arr[t] * y_arr[t];
-                        sum_X2 += x_arr[t] * x_arr[t];
-                        sum_Y2 += y_arr[t] * y_arr[t];
-                    }
+        //             // Compute sums for covariance and variances
+        //             double sum_X = 0, sum_Y = 0, sum_XY = 0;
+        //             double sum_X2 = 0, sum_Y2 = 0;
+        //             for (int t = 0; t < nt; t++) {
+        //                 sum_X += x_arr[t];
+        //                 sum_Y += y_arr[t];
+        //                 sum_XY += x_arr[t] * y_arr[t];
+        //                 sum_X2 += x_arr[t] * x_arr[t];
+        //                 sum_Y2 += y_arr[t] * y_arr[t];
+        //             }
 
-                    // Compute covariance and variances
-                    double numerator = sum_XY - (sum_X * sum_Y / nt);
-                    double denominator = sqrt((sum_X2 - (sum_X * sum_X / nt)) * (sum_Y2 - (sum_Y * sum_Y / nt)));
+        //             // Compute covariance and variances
+        //             double numerator = sum_XY - (sum_X * sum_Y / nt);
+        //             double denominator = sqrt((sum_X2 - (sum_X * sum_X / nt)) * (sum_Y2 - (sum_Y * sum_Y / nt)));
 
-                    // Handle edge cases where denominator might be zero
-                    float r;
-                    if (denominator == 0) {
-                        r = 0.0f; // No correlation if variance is zero
-                    }
+        //             // Handle edge cases where denominator might be zero
+        //             float r;
+        //             if (denominator == 0) {
+        //                 r = 0.0f; // No correlation if variance is zero
+        //             }
 
-                    // Compute the Pearson correlation coefficient
-                    int index2D = i + j*ni;
-                    r = static_cast<float>(numerator / denominator);
-                    fi.p_sliceK_float_corr[index2D] = r;
-                }
-            }
-        }
+        //             // Compute the Pearson correlation coefficient
+        //             int index2D = i + j*ni;
+        //             r = static_cast<float>(numerator / denominator);
+        //             fi.p_sliceK_float_corr[index2D] = r;
+        //         }
+        //     }
+        // }
 
-        void loadSliceK_Correlations_uint8(FileInfo& fi)
-        {
-            for (int i = 0; i < fi.dim_i*fi.dim_j; i++) {
-                float v = static_cast<float>(fi.p_sliceK_uint8[i]);
-                float r = fi.p_sliceK_float_corr[i];
+        // void loadSliceK_Correlations_uint8(FileInfo& fi)
+        // {
+        //     for (int i = 0; i < fi.dim_i*fi.dim_j; i++) {
+        //         float v = static_cast<float>(fi.p_sliceK_uint8[i]);
+        //         float r = fi.p_sliceK_float_corr[i];
 
-                // Red when r is close to 1, and grayscale underlay otwerwise
-                if (r > 0) {
-                    fi.p_sliceK_RGB_uint8[i*3]   = static_cast<uint8_t>( v * (1-r) + 255 * r );
-                    fi.p_sliceK_RGB_uint8[i*3+1] = static_cast<uint8_t>( v * (1-r) );
-                    fi.p_sliceK_RGB_uint8[i*3+2] = static_cast<uint8_t>( v * (1-r) );
-                // Blue when r is close to -1, and grayscale underlay otwerwise
-                } else {
-                    fi.p_sliceK_RGB_uint8[i*3]   = static_cast<uint8_t>( v * (1+r) );
-                    fi.p_sliceK_RGB_uint8[i*3+1] = static_cast<uint8_t>( v * (1+r) );
-                    fi.p_sliceK_RGB_uint8[i*3+2] = static_cast<uint8_t>( v * (1+r) - 255 * r );
-                }
-            }
-        }
+        //         // Red when r is close to 1, and grayscale underlay otwerwise
+        //         if (r > 0) {
+        //             fi.p_sliceK_RGB_uint8[i*3]   = static_cast<uint8_t>( v * (1-r) + 255 * r );
+        //             fi.p_sliceK_RGB_uint8[i*3+1] = static_cast<uint8_t>( v * (1-r) );
+        //             fi.p_sliceK_RGB_uint8[i*3+2] = static_cast<uint8_t>( v * (1-r) );
+        //         // Blue when r is close to -1, and grayscale underlay otwerwise
+        //         } else {
+        //             fi.p_sliceK_RGB_uint8[i*3]   = static_cast<uint8_t>( v * (1+r) );
+        //             fi.p_sliceK_RGB_uint8[i*3+1] = static_cast<uint8_t>( v * (1+r) );
+        //             fi.p_sliceK_RGB_uint8[i*3+2] = static_cast<uint8_t>( v * (1+r) - 255 * r );
+        //         }
+        //     }
+        // }
     };
 }
