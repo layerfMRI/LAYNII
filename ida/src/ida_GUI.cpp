@@ -6,9 +6,9 @@ namespace IDA
 {
 	void RenderUI(bool& show_demo_window, bool& show_file_window, IDA_IO::FileList& fl)
 	{
-	    // ====================================================================
+	    // ============================================================================================================
 		// Enable Docking
-	    // ====================================================================
+	    // ============================================================================================================
         ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 
         // ------------------------------------------------------------------------------------------------------------
@@ -18,8 +18,8 @@ namespace IDA
 
         // Variables
         // static char str_input[4096] = "Enter nifti path";
-        // static char str_input[4096] = "/Users/faruk/Git/LayNii/test_data/lo_BOLD_intemp.nii.gz";
-        static char str_input[4096] = "/Users/faruk/Documents/test-LN3_IDA/test.nii.gz";
+        static char str_input[4096] = "/Users/faruk/Git/LayNii/test_data/lo_BOLD_intemp.nii.gz";
+        // static char str_input[4096] = "/Users/faruk/Documents/test-LN3_IDA/test.nii.gz";
         // static char str_input[4096] = "/Users/faruk/data/data-alard/75um/sub-99_75um_crop.nii.gz";
 
         static bool loaded_file          = false;
@@ -129,7 +129,6 @@ namespace IDA
         // ============================================================================================================
         // Image Views
         // ============================================================================================================
-
         ImGui::Begin("Slice Z axis", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
         if (loaded_file)  // Slice K window
@@ -144,98 +143,6 @@ namespace IDA
                 show_voxel_inspector, show_voxel_value, show_voxel_indices, show_voxel_time_course,
                 fl.files[sf].textureIDk, fl.files[sf].textureIDk_RGB, 3, fl.files[sf]
                 );
-
-            // // --------------------------------------------------------------------------------------------------------
-            // // Voxel inspector
-            // // --------------------------------------------------------------------------------------------------------
-            // if ( show_voxel_inspector ) {
-            //     if ( ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone) && ImGui::BeginTooltip() ) {
-            //         int voxel_i = static_cast<int>((io.MousePos.x - cursor_screen_pos.x) / scl);
-            //         int voxel_j = static_cast<int>((io.MousePos.y - cursor_screen_pos.y) / scl);
-            //         int voxel_k = fl.files[sf].display_k;
-            //         int voxel_t = fl.files[sf].display_t;
-
-            //         // NOTE: Important, adjust for OpenGL flips
-            //         voxel_i = -voxel_i + fl.files[sf].dim_i-1;
-            //         voxel_j = -voxel_j + fl.files[sf].dim_j-1;
-
-            //         // Render inspector fields
-            //         if ( show_voxel_time_course ) {
-            //             fl.loadVoxelTimeCourse_float(fl.files[sf], voxel_i, voxel_j, voxel_k);
-            //             ImGui::PlotLines(
-            //                 "Time Course",                                                     // Label
-            //                 fl.files[sf].p_time_course_float,                                  // Values
-            //                 fl.files[sf].time_course_offset - fl.files[sf].time_course_onset,  // Values count
-            //                 0,                                                                 // Values offset
-            //                 NULL,                                                              // Overlay Text
-            //                 fl.files[sf].time_course_min,                                      // Scale min (FLT_MIN for auto)
-            //                 fl.files[sf].time_course_max,                                      // Scale max (FLT_MAX for auto)
-            //                 ImVec2(0, 100.0f)                                                  // Plot Size
-            //                 );
-            //         }
-
-            //         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            //         // TODO: Incorporate this voxel index better
-            //         if ( fl.files[sf].visualization_mode == 3 ) {
-            //             if ( fl.files[sf].voxel_i != voxel_i || fl.files[sf].voxel_j != voxel_j || fl.files[sf].voxel_k != voxel_k ) {
-            //                 fl.files[sf].voxel_i = voxel_i;
-            //                 fl.files[sf].voxel_j = voxel_j;
-            //                 fl.files[sf].voxel_k = voxel_k;
-            //                 request_image_data_update = true;
-            //             }
-            //         }
-            //         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-            //         if ( show_voxel_value ) {
-            //             float voxel_val = fl.files[sf].p_sliceK_float[voxel_j * fl.files[sf].dim_i + voxel_i];
-            //             ImGui::Text("Value : %.6f", voxel_val);                        
-            //         }
-            //         if ( show_voxel_indices ) {
-            //             ImGui::Text("Index : [%d i, %d j, %d k, %d t]", voxel_i, voxel_j, voxel_k, voxel_t);                        
-            //         }
-            //         if ( show_voxel_magnifier ) {  // Voxel window magnifier
-
-            //             // Step 1: Mouse pos relative to imgui image cursor
-            //             float subvoxel_i = io.MousePos.x - cursor_screen_pos.x;
-            //             float subvoxel_j = io.MousePos.y - cursor_screen_pos.y;
-
-            //             // Step 2: Adjust for general image scaling
-            //             subvoxel_i /= scl;
-            //             subvoxel_j /= scl;
-
-            //             // Step 3: Adjust for anisotropic voxels. NOTE: Generalize this for other windows, hmmm.
-            //             subvoxel_i /= pixscl_w;
-
-            //             // Step 4: Adjust for OpenGL flips. NOTE: This can break for unconventional data, hmmm.
-            //             subvoxel_i = -subvoxel_i + fl.files[sf].dim_i;
-            //             subvoxel_j = -subvoxel_j + fl.files[sf].dim_j;
-
-            //             // Determine magnifier window size
-            //             float winmag_sz = static_cast<float>(magnifier_window_size);
-            //             float winmag_x = subvoxel_i - winmag_sz * 0.5f;
-            //             float winmag_y = subvoxel_j - winmag_sz * 0.5f;
-            //             float winmag_zoom = static_cast<float>(magnifier_zoom);
-
-            //             // --------------------------------------------------------------------------------------------
-            //             ImVec2 winmag_pix = ImVec2( winmag_sz * winmag_zoom * pixscl_w,
-            //                                         winmag_sz * winmag_zoom );
-            //             ImVec2 uv0 = ImVec2( winmag_x / data_w,
-            //                                  winmag_y / data_h );
-            //             ImVec2 uv1 = ImVec2( (winmag_x + winmag_sz) / data_w,
-            //                                  (winmag_y + winmag_sz) / data_h );
-            //             ImGui::Image((void*)(intptr_t)fl.files[sf].textureIDk, winmag_pix, uv1, uv0);
-
-            //             ImGui::Text("Magnification");
-            //             ImGui::Text("  Factor  : %.0f [times]", winmag_zoom);
-            //             ImGui::Text("  Size    : %.0f X %.0f [pixels]", winmag_sz * winmag_zoom * pixscl_w, winmag_sz * winmag_zoom);
-            //             ImGui::Text("  Size    : %.0f X %.0f [~voxels]", winmag_sz, winmag_sz);
-            //             ImGui::Text("  Indices :\n    [%.0f:%.0f i, %.0f:%.0f j, %d k]", 
-            //                 winmag_x, winmag_x + winmag_sz, winmag_y, winmag_y + winmag_sz, voxel_k);
-            //         }
-            //         ImGui::EndTooltip();
-            //     }
-            // }
-            // // --------------------------------------------------------------------------------------------------------
         }
         ImGui::End();
 
@@ -271,7 +178,6 @@ namespace IDA
                 );
         }
         ImGui::End();
-
 
         // ============================================================================================================
         // Navigation Control Menu
@@ -366,7 +272,6 @@ namespace IDA
                 ImGui::SameLine();
                 ImGui::Text("t [%u/%u]", fl.files[sf].display_t, fl.files[sf].dim_t-1);
             }
-
 
             // --------------------------------------------------------------------------------------------------------
             ImGui::SeparatorText("ZOOM CONTROLS");
@@ -471,37 +376,10 @@ namespace IDA
             }
 
             // --------------------------------------------------------------------------------------------------------
-            ImGui::SeparatorText("CORRELATIONS CONTROLS");
+            ImGui::SeparatorText("CROSSHAIR CONTROLS");
             // --------------------------------------------------------------------------------------------------------
-            if (fl.files[sf].visualization_mode != 3) {
-                if (ImGui::Button("Enable Correlations") || ImGui::IsKeyPressed(ImGuiKey_S, false)) {
-                    fl.prepareRBGSlices(fl.files[sf]);
-
-                    free(fl.files[sf].p_sliceK_float_corr);
-                    fl.files[sf].p_sliceK_float_corr = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
-
-                    fl.loadSliceK_Correlations_uint8(fl.files[sf]);
-
-                    fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_j, 
-                                                     fl.files[sf].textureIDk_RGB, fl.files[sf].p_sliceK_RGB_uint8);
-
-                    fl.files[sf].visualization_mode = 3;
-                }
-            } else {
-                if (ImGui::Button("Disable Correlations") || ImGui::IsKeyPressed(ImGuiKey_S, false)) {
-                    request_image_data_update = true;
-                    fl.files[sf].visualization_mode = 0;
-                }
-            }
-
-            if (fl.files[sf].visualization_mode == 3) {
-                if ( ImGui::SliderInt("Time Course Onset ", &fl.files[sf].time_course_onset , 0, fl.files[sf].dim_t, "%i") ) {
-                    request_image_data_update = true;
-                }
-                if ( ImGui::SliderInt("Time Course Offset", &fl.files[sf].time_course_offset, 0, fl.files[sf].dim_t, "%i") ) {
-                    request_image_data_update = true;
-                }
-            }
+            ImGui::Checkbox("Show mouse crosshair", &show_mouse_crosshair);
+            // ImGui::Checkbox("Show slice crosshair", &show_slice_crosshair);
 
             // --------------------------------------------------------------------------------------------------------
             ImGui::SeparatorText("VOXEL INSPECTOR CONTROLS");
@@ -520,10 +398,52 @@ namespace IDA
             }
 
             // --------------------------------------------------------------------------------------------------------
-            ImGui::SeparatorText("CROSSHAIR CONTROLS");
+            ImGui::SeparatorText("CORRELATIONS CONTROLS");
             // --------------------------------------------------------------------------------------------------------
-            ImGui::Checkbox("Show mouse crosshair", &show_mouse_crosshair);
-            // ImGui::Checkbox("Show slice crosshair", &show_slice_crosshair);
+            if (fl.files[sf].visualization_mode != 3) {
+                if (ImGui::Button("Enable Correlations") || ImGui::IsKeyPressed(ImGuiKey_S, false)) {
+                    show_voxel_inspector = true;
+                    fl.prepareRBGSlices(fl.files[sf]);
+
+                    // Prepare data to hold correlation maps
+                    free(fl.files[sf].p_sliceK_float_corr);
+                    free(fl.files[sf].p_sliceJ_float_corr);
+                    free(fl.files[sf].p_sliceI_float_corr);
+                    fl.files[sf].p_sliceK_float_corr = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
+                    fl.files[sf].p_sliceJ_float_corr = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
+                    fl.files[sf].p_sliceI_float_corr = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
+
+                    // Prepare corelations images
+                    fl.loadSliceK_Correlations_uint8(fl.files[sf]);
+                    fl.loadSliceJ_Correlations_uint8(fl.files[sf]);
+                    fl.loadSliceI_Correlations_uint8(fl.files[sf]);
+
+                    // Prepare corelations textures
+                    fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_j, 
+                                                     fl.files[sf].textureIDk_RGB, fl.files[sf].p_sliceK_RGB_uint8);
+                    fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_k, 
+                                                     fl.files[sf].textureIDj_RGB, fl.files[sf].p_sliceJ_RGB_uint8);
+                    fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_j, fl.files[sf].dim_k, 
+                                                     fl.files[sf].textureIDi_RGB, fl.files[sf].p_sliceI_RGB_uint8);
+
+                    fl.files[sf].visualization_mode = 3;
+                    request_image_data_update = true;
+                }
+            } else {
+                if (ImGui::Button("Disable Correlations") || ImGui::IsKeyPressed(ImGuiKey_S, false)) {
+                    request_image_data_update = true;
+                    fl.files[sf].visualization_mode = 0;
+                }
+            }
+
+            if (fl.files[sf].visualization_mode == 3) {
+                if ( ImGui::SliderInt("Time Course Onset ", &fl.files[sf].time_course_onset , 0, fl.files[sf].dim_t, "%i") ) {
+                    request_image_data_update = true;
+                }
+                if ( ImGui::SliderInt("Time Course Offset", &fl.files[sf].time_course_offset, 0, fl.files[sf].dim_t, "%i") ) {
+                    request_image_data_update = true;
+                }
+            }
         }
         ImGui::End();
 
@@ -670,15 +590,28 @@ namespace IDA
             } else if ( fl.files[sf].visualization_mode == 3 ) {
                 if ( request_image_data_update ) {
                     fl.loadSliceK_float(fl.files[sf]);
+                    fl.loadSliceJ_float(fl.files[sf]);
+                    fl.loadSliceI_float(fl.files[sf]);
                     request_image_update = true;
                 }
 
                 if ( request_image_update) {
-                    fl.computeCorrelationsSliceK_float(fl.files[sf]);
+                    fl.computeCorrelationsForSlices_float(fl.files[sf]);
+
                     fl.loadSliceK_uint8(fl.files[sf]);
+                    fl.loadSliceJ_uint8(fl.files[sf]);
+                    fl.loadSliceI_uint8(fl.files[sf]);
+
                     fl.loadSliceK_Correlations_uint8(fl.files[sf]);
+                    fl.loadSliceJ_Correlations_uint8(fl.files[sf]);
+                    fl.loadSliceI_Correlations_uint8(fl.files[sf]);
+
                     fl.updateTextureDataInOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_j, 
                                                      fl.files[sf].textureIDk_RGB, fl.files[sf].p_sliceK_RGB_uint8);                    
+                    fl.updateTextureDataInOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_k, 
+                                                     fl.files[sf].textureIDj_RGB, fl.files[sf].p_sliceJ_RGB_uint8);                    
+                    fl.updateTextureDataInOpenGL_RGB(fl.files[sf].dim_j, fl.files[sf].dim_k, 
+                                                     fl.files[sf].textureIDi_RGB, fl.files[sf].p_sliceI_RGB_uint8);                    
                 }
             }
 
@@ -696,7 +629,7 @@ namespace IDA
         // Show file selection window
         if (show_file_window)
         {
-            ImGui::Begin("Another Window", &show_file_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+            ImGui::Begin("Another Window", &show_file_window);  // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
             ImGui::Text("Hello from another window!");
             if (ImGui::Button("Close Me"))
                 show_file_window = false;
