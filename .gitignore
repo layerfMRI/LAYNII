@@ -57,4 +57,4 @@ output
 /ida/*/LN3_IDA
 
 # Ignore this unless if you are intentionallyc hanging the default window placings
-/ida/src/imgui.ini
+/ida/*/imgui.ini
