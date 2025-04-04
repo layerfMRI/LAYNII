@@ -121,6 +121,7 @@ namespace IDA_IO
         uint64_t    voxel_index4D;         // A selected or hovered over voxel index
         int         time_course_onset;     // Omit volumes from start until this number
         int         time_course_offset;    // Omit volumes from end until this number
+        int         time_course_shift;     // Shift time course data by this amount
         float*      p_sliceK_float_corr;   // Holds correlation data
         float*      p_sliceJ_float_corr;   // Holds correlation data
         float*      p_sliceI_float_corr;   // Holds correlation data
@@ -658,6 +659,7 @@ namespace IDA_IO
             // Initialize time course parameters
             fi.time_course_onset  = 0;
             fi.time_course_offset = fi.header.dim[4];
+            fi.time_course_shift = 0;
         }
 
         // ============================================================================================================
@@ -979,7 +981,8 @@ namespace IDA_IO
             // Prepare x array (selected voxel's data)
             for (uint64_t t = 0; t < nt; ++t) {
                 uint64_t index4D = fi.voxel_i + fi.voxel_j*ni + fi.voxel_k*ni*nj + fi.nr_voxels*t;
-                *(x_arr + t) = fi.p_data_float[index4D];
+                uint64_t tt = (t + fi.time_course_shift) % nt;
+                *(x_arr + tt) = fi.p_data_float[index4D];
             }
 
             // --------------------------------------------------------------------------------------------------------

@@ -204,6 +204,36 @@ namespace IDA
                 fl.files[sf].voxel_t = static_cast<uint64_t>(fl.files[sf].display_t);
                 request_image_data_update = true;
             }
+
+            // --------------------------------------------------------------------------------------------------------
+            // Center on focused voxel
+            // TODO: Center on slice windows as well
+            if (ImGui::IsKeyPressed(ImGuiKey_C, false)) {
+                fl.files[sf].display_i = fl.files[sf].voxel_i;
+                fl.files[sf].display_j = fl.files[sf].voxel_j;
+                fl.files[sf].display_k = fl.files[sf].voxel_k;
+                fl.files[sf].display_t = fl.files[sf].voxel_t;
+                request_image_data_update = true;
+            }
+
+            // --------------------------------------------------------------------------------------------------------
+            // Shift/lag (forward-backwad) the focused voxel's timepoints
+            if (ImGui::IsKeyPressed(ImGuiKey_Comma, true)) {
+                if (fl.files[sf].time_course_shift < -fl.files[sf].dim_t + 1) {
+                    fl.files[sf].time_course_shift = fl.files[sf].dim_t;
+                } else {
+                    fl.files[sf].time_course_shift = fl.files[sf].time_course_shift - 1;
+                }
+                request_image_data_update = true;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_Period, true)) {
+                if (fl.files[sf].time_course_shift > fl.files[sf].dim_t - 1) {
+                    fl.files[sf].time_course_shift = -fl.files[sf].dim_t;
+                } else {
+                    fl.files[sf].time_course_shift = fl.files[sf].time_course_shift + 1; 
+                }
+                request_image_data_update = true;
+            }
         }
 
         // ============================================================================================================
@@ -526,6 +556,9 @@ namespace IDA
                     request_image_data_update = true;
                 }
                 if ( ImGui::SliderInt("Time Course Offset", &fl.files[sf].time_course_offset, 0, fl.files[sf].dim_t, "%i") ) {
+                    request_image_data_update = true;
+                }
+                if ( ImGui::SliderInt("Time Course Shift", &fl.files[sf].time_course_shift, -fl.files[sf].dim_t, fl.files[sf].dim_t, "%i") ) {
                     request_image_data_update = true;
                 }
             }
