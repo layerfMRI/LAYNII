@@ -16,7 +16,7 @@ namespace IDA
 
         static bool loaded_file          = false;
         static bool show_header_info     = false;
-        static bool show_slice_crosshair = false;
+        static bool show_focused_voxel = false;
         static bool show_mouse_crosshair = true;
         static bool show_voxel_inspector = false;
         static bool show_voxel_indices   = true;
@@ -248,7 +248,7 @@ namespace IDA
                 fl.files[sf].pixdim_j, fl.files[sf].pixdim_j, 
                 fl.files[sf].display_scale, fl.files[sf].display_k_offset_x, fl.files[sf].display_k_offset_y,
                 fl.files[sf].display_i, fl.files[sf].display_j, fl.files[sf].display_k, fl.files[sf].display_t,
-                fl.files[sf].visualization_mode, show_slice_crosshair, show_mouse_crosshair,
+                fl.files[sf].visualization_mode, show_focused_voxel, show_mouse_crosshair,
                 request_image_data_update,
                 show_voxel_inspector, show_voxel_value, show_voxel_indices, show_voxel_time_course,
                 fl.files[sf].textureIDk, fl.files[sf].textureIDk_RGB, 3, fl.files[sf]
@@ -264,7 +264,7 @@ namespace IDA
                 fl.files[sf].pixdim_i, fl.files[sf].pixdim_k, 
                 fl.files[sf].display_scale, fl.files[sf].display_j_offset_x, fl.files[sf].display_j_offset_y,
                 fl.files[sf].display_i, fl.files[sf].display_k, fl.files[sf].display_j, fl.files[sf].display_t,
-                fl.files[sf].visualization_mode, show_slice_crosshair, show_mouse_crosshair,
+                fl.files[sf].visualization_mode, show_focused_voxel, show_mouse_crosshair,
                 request_image_data_update,
                 show_voxel_inspector, show_voxel_value, show_voxel_indices, show_voxel_time_course,
                 fl.files[sf].textureIDj, fl.files[sf].textureIDj_RGB, 2, fl.files[sf]
@@ -281,10 +281,27 @@ namespace IDA
                 fl.files[sf].pixdim_j, fl.files[sf].pixdim_k, 
                 fl.files[sf].display_scale, fl.files[sf].display_i_offset_x, fl.files[sf].display_i_offset_y,
                 fl.files[sf].display_j, fl.files[sf].display_k, fl.files[sf].display_i,  fl.files[sf].display_t,
-                fl.files[sf].visualization_mode, show_slice_crosshair, show_mouse_crosshair,
+                fl.files[sf].visualization_mode, show_focused_voxel, show_mouse_crosshair,
                 request_image_data_update,
                 show_voxel_inspector, show_voxel_value, show_voxel_indices, show_voxel_time_course,
                 fl.files[sf].textureIDi, fl.files[sf].textureIDi_RGB, 1, fl.files[sf]
+                );
+        }
+        ImGui::End();
+
+        ImGui::Begin("Time Course View"); 
+        if (loaded_file && fl.files[sf].dim_t > 1)
+        {
+            SampleVoxelTimeCourse(fl.files[sf]);
+            ImGui::PlotLines(
+                "",                                                                // Label
+                fl.files[sf].p_time_course_float,                                  // Values
+                fl.files[sf].time_course_offset - fl.files[sf].time_course_onset,  // Values count
+                0,                                                                 // Values offset
+                NULL,                                                              // Overlay Text
+                fl.files[sf].time_course_min,                                      // Scale min (FLT_MIN for auto)
+                fl.files[sf].time_course_max,                                      // Scale max (FLT_MAX for auto)
+                ImVec2(0, 75.0f)                                                   // Plot Size
                 );
         }
         ImGui::End();
@@ -489,7 +506,7 @@ namespace IDA
             ImGui::SeparatorText("CROSSHAIR CONTROLS");
             // --------------------------------------------------------------------------------------------------------
             ImGui::Checkbox("Show mouse crosshair", &show_mouse_crosshair);
-            // ImGui::Checkbox("Show slice crosshair", &show_slice_crosshair);
+            ImGui::Checkbox("Show focused voxel", &show_focused_voxel);
 
             // --------------------------------------------------------------------------------------------------------
             ImGui::SeparatorText("VOXEL INSPECTOR CONTROLS");
@@ -507,59 +524,62 @@ namespace IDA
                 ImGui::EndDisabled();
             }
 
-            // --------------------------------------------------------------------------------------------------------
-            ImGui::SeparatorText("CORRELATIONS CONTROLS");
-            // --------------------------------------------------------------------------------------------------------
-            if (fl.files[sf].visualization_mode != 3) {
-                if (ImGui::Button("Enable Correlations")) {
-                    show_voxel_inspector = true;
-                    fl.files[sf].voxel_i = static_cast<uint64_t>(fl.files[sf].display_i);
-                    fl.files[sf].voxel_j = static_cast<uint64_t>(fl.files[sf].display_j);
-                    fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
-                    fl.files[sf].voxel_t = static_cast<uint64_t>(fl.files[sf].display_t);
 
-                    fl.prepareRBGSlices(fl.files[sf]);
+            if (fl.files[sf].dim_t > 1) {
+                // ----------------------------------------------------------------------------------------------------
+                ImGui::SeparatorText("CORRELATIONS CONTROLS");
+                // ----------------------------------------------------------------------------------------------------
+                if (fl.files[sf].visualization_mode != 3) {
+                    if (ImGui::Button("Enable Correlations")) {
+                        show_voxel_inspector = true;
+                        fl.files[sf].voxel_i = static_cast<uint64_t>(fl.files[sf].display_i);
+                        fl.files[sf].voxel_j = static_cast<uint64_t>(fl.files[sf].display_j);
+                        fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
+                        fl.files[sf].voxel_t = static_cast<uint64_t>(fl.files[sf].display_t);
 
-                    // Prepare data to hold correlation maps
-                    free(fl.files[sf].p_sliceK_float_corr);
-                    free(fl.files[sf].p_sliceJ_float_corr);
-                    free(fl.files[sf].p_sliceI_float_corr);
-                    fl.files[sf].p_sliceK_float_corr = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
-                    fl.files[sf].p_sliceJ_float_corr = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
-                    fl.files[sf].p_sliceI_float_corr = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
+                        fl.prepareRBGSlices(fl.files[sf]);
 
-                    // Prepare corelations images
-                    fl.loadSliceK_Correlations_uint8(fl.files[sf]);
-                    fl.loadSliceJ_Correlations_uint8(fl.files[sf]);
-                    fl.loadSliceI_Correlations_uint8(fl.files[sf]);
+                        // Prepare data to hold correlation maps
+                        free(fl.files[sf].p_sliceK_float_corr);
+                        free(fl.files[sf].p_sliceJ_float_corr);
+                        free(fl.files[sf].p_sliceI_float_corr);
+                        fl.files[sf].p_sliceK_float_corr = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
+                        fl.files[sf].p_sliceJ_float_corr = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
+                        fl.files[sf].p_sliceI_float_corr = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
 
-                    // Prepare corelations textures
-                    fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_j, 
-                                                     fl.files[sf].textureIDk_RGB, fl.files[sf].p_sliceK_RGB_uint8);
-                    fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_k, 
-                                                     fl.files[sf].textureIDj_RGB, fl.files[sf].p_sliceJ_RGB_uint8);
-                    fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_j, fl.files[sf].dim_k, 
-                                                     fl.files[sf].textureIDi_RGB, fl.files[sf].p_sliceI_RGB_uint8);
+                        // Prepare corelations images
+                        fl.loadSliceK_Correlations_uint8(fl.files[sf]);
+                        fl.loadSliceJ_Correlations_uint8(fl.files[sf]);
+                        fl.loadSliceI_Correlations_uint8(fl.files[sf]);
 
-                    fl.files[sf].visualization_mode = 3;
-                    request_image_data_update = true;
+                        // Prepare corelations textures
+                        fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_j, 
+                                                         fl.files[sf].textureIDk_RGB, fl.files[sf].p_sliceK_RGB_uint8);
+                        fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_k, 
+                                                         fl.files[sf].textureIDj_RGB, fl.files[sf].p_sliceJ_RGB_uint8);
+                        fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_j, fl.files[sf].dim_k, 
+                                                         fl.files[sf].textureIDi_RGB, fl.files[sf].p_sliceI_RGB_uint8);
+
+                        fl.files[sf].visualization_mode = 3;
+                        request_image_data_update = true;
+                    }
+                } else {
+                    if (ImGui::Button("Disable Correlations")) {
+                        request_image_data_update = true;
+                        fl.files[sf].visualization_mode = 0;
+                    }
                 }
-            } else {
-                if (ImGui::Button("Disable Correlations")) {
-                    request_image_data_update = true;
-                    fl.files[sf].visualization_mode = 0;
-                }
-            }
 
-            if (fl.files[sf].visualization_mode == 3) {
-                if ( ImGui::SliderInt("Time Course Onset ", &fl.files[sf].time_course_onset , 0, fl.files[sf].dim_t, "%i") ) {
-                    request_image_data_update = true;
-                }
-                if ( ImGui::SliderInt("Time Course Offset", &fl.files[sf].time_course_offset, 0, fl.files[sf].dim_t, "%i") ) {
-                    request_image_data_update = true;
-                }
-                if ( ImGui::SliderInt("Time Course Shift", &fl.files[sf].time_course_shift, -fl.files[sf].dim_t, fl.files[sf].dim_t, "%i") ) {
-                    request_image_data_update = true;
+                if (fl.files[sf].visualization_mode == 3) {
+                    if ( ImGui::SliderInt("Time Course Onset ", &fl.files[sf].time_course_onset , 0, fl.files[sf].dim_t, "%i") ) {
+                        request_image_data_update = true;
+                    }
+                    if ( ImGui::SliderInt("Time Course Offset", &fl.files[sf].time_course_offset, 0, fl.files[sf].dim_t, "%i") ) {
+                        request_image_data_update = true;
+                    }
+                    if ( ImGui::SliderInt("Time Course Shift", &fl.files[sf].time_course_shift, -fl.files[sf].dim_t, fl.files[sf].dim_t, "%i") ) {
+                        request_image_data_update = true;
+                    }
                 }
             }
         }

@@ -3,6 +3,40 @@
 #include "imgui.h"
 
 // ====================================================================================================================
+// Procedure to sample voxel time course
+// ====================================================================================================================
+void SampleVoxelTimeCourse(IDA_IO::FileInfo& fi) {
+    uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+    uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+    uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+    uint64_t i = static_cast<uint64_t>(fi.voxel_i);
+    uint64_t j = static_cast<uint64_t>(fi.voxel_j);
+    uint64_t k = static_cast<uint64_t>(fi.voxel_k);
+
+    // Load voxel data
+    for (uint64_t t = 0; t < nt; ++t) {
+        uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+        fi.p_time_course_float[t] = fi.p_data_float[index4D];
+    }
+
+    // Adjust min max for better visualizing the timecourse
+    // NOTE: I might make a separate function for finding mix max in arbitrary data
+    // NOTE: I can implement percent normalization etc here as well
+    float max_val = std::numeric_limits<float>::min();
+    float min_val = std::numeric_limits<float>::max();
+    for (uint64_t t = fi.time_course_onset; t < fi.time_course_offset; ++t) {
+        if (fi.p_time_course_float[t] < min_val) {
+            min_val = fi.p_time_course_float[t];
+        }
+        if (fi.p_time_course_float[t] > max_val) {
+            max_val = fi.p_time_course_float[t];
+        }
+    }
+    fi.time_course_min = min_val;
+    fi.time_course_max = max_val;
+}
+
+// ====================================================================================================================
 // Procedure to draw voxel inspector
 // ====================================================================================================================
 void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_screen_pos, int& visualization_mode,
@@ -16,7 +50,6 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
     uint64_t ni = static_cast<uint64_t>(fi.dim_i);
     uint64_t nj = static_cast<uint64_t>(fi.dim_j);
     uint64_t nk = static_cast<uint64_t>(fi.dim_k);
-    uint64_t nt = static_cast<uint64_t>(fi.dim_t);
 
     if ( ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone) && ImGui::BeginTooltip() ) {
         // ------------------------------------------------------------------------------------------------------------
@@ -51,31 +84,6 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
         // ------------------------------------------------------------------------------------------------------------
         if ( fi.voxel_index4D != index4D ) {
             fi.voxel_index4D = index4D;
-
-            // Load voxel data
-            for (uint64_t t = 0; t < nt; ++t) {
-                uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
-                fi.p_time_course_float[t] = fi.p_data_float[index4D];
-            }
-
-            if ( show_voxel_time_course ) {
-                // Adjust min max for better visualizing the timecourse
-                // NOTE: I might make a separate function for finding mix max in arbitrary data
-                // NOTE: I can implement percent normalization etc here as well
-                float max_val = std::numeric_limits<float>::min();
-                float min_val = std::numeric_limits<float>::max();
-                for (uint64_t t = fi.time_course_onset; t < fi.time_course_offset; ++t) {
-                    if (fi.p_time_course_float[t] < min_val) {
-                        min_val = fi.p_time_course_float[t];
-                    }
-                    if (fi.p_time_course_float[t] > max_val) {
-                        max_val = fi.p_time_course_float[t];
-                    }
-                }
-                fi.time_course_min = min_val;
-                fi.time_course_max = max_val;                
-            }
-
             if ( fi.visualization_mode == 3) {
                 request_image_data_update = true;
             }
@@ -116,7 +124,7 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
 void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, float dim2_sli, 
                  float& display_scale, float& display_offset_x, float& display_offset_y,
                  int& disp_idx_1, int& disp_idx_2, int& disp_idx_3, int& disp_idx_4,
-                 int& visualization_mode, bool& show_slice_crosshair, bool& show_mouse_crosshair,
+                 int& visualization_mode, bool& show_focused_voxel, bool& show_mouse_crosshair,
                  bool& request_image_data_update, 
                  bool& show_voxel_inspector, bool& show_voxel_value, bool& show_voxel_indices, bool& show_voxel_time_course,
                  GLuint& textureID, GLuint& textureID_RGB, int slice_window, IDA_IO::FileInfo& fi) {
@@ -126,7 +134,6 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
     ImVec2 cursor_screen_pos;
     ImDrawList* drawList;
     ImU32 cross_mouse_color = IM_COL32(81, 113, 217, 255);  // RGBA
-    ImU32 cross_slice_color = IM_COL32(222, 181, 61, 255);  // RGBA
     float cross_thickness = 1.0f;  // Pixels
 
     // ----------------------------------------------------------------------------------------------------------------
@@ -193,22 +200,12 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
     // ----------------------------------------------------------------------------------------------------------------
     // Draw crosshair at mouse position
     // ----------------------------------------------------------------------------------------------------------------
-    if ( show_slice_crosshair ) {
+    if ( show_focused_voxel ) {
         drawList = ImGui::GetWindowDrawList();
 
-        // Slice crosshair
-        // TODO: Cross moves in the wrong direction due to OpenGL flip (lower left corner is 0 0)
-        float offset_hori = cursor_screen_pos.y + disp_idx_2;
-        // Horizontal
-        drawList->AddLine(ImVec2(cursor_screen_pos.x        , offset_hori),
-                          ImVec2(cursor_screen_pos.x + img_w, offset_hori),
-                          cross_slice_color,
-                          cross_thickness);
-        // Vertical
-        drawList->AddLine(ImVec2(cursor_screen_pos.x + disp_idx_1, cursor_screen_pos.y        ),
-                          ImVec2(cursor_screen_pos.x + disp_idx_1, cursor_screen_pos.y + img_h),
-                          cross_slice_color,
-                          cross_thickness);
+        ImVec2 top_left = ImVec2(io.MousePos.x-10, io.MousePos.y-10);
+        ImVec2 bottom_right = ImVec2(top_left.x+20, top_left.y+20);
+        drawList->AddRectFilled(top_left, bottom_right, IM_COL32(255, 255, 0, 100));
     }
 
     // ----------------------------------------------------------------------------------------------------------------
