@@ -6,17 +6,9 @@ namespace IDA
 {
 	void RenderUI(bool& show_demo_window, bool& show_file_window, IDA_IO::FileList& fl)
 	{
-	    // ============================================================================================================
-		// Enable Docking
-	    // ============================================================================================================
-        ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
-
-        // ------------------------------------------------------------------------------------------------------------
-        // Input/Output Menu
-        // ------------------------------------------------------------------------------------------------------------
-        ImGui::Begin("File Menu");
-
+        // ============================================================================================================
         // Variables
+        // ============================================================================================================
         // static char str_input[4096] = "Enter nifti path";
         static char str_input[4096] = "/Users/faruk/Git/LayNii/test_data/lo_BOLD_intemp.nii.gz";
         // static char str_input[4096] = "/Users/faruk/Documents/test-LN3_IDA/test.nii.gz";
@@ -36,12 +28,32 @@ namespace IDA
 
         static int sf = -1;  // Selected file
 
-        ImVec2 cursor_screen_pos;
-
         int nr_files = fl.files.size();
         float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
         ImGuiIO& io = ImGui::GetIO();
 
+	    // ============================================================================================================
+		// Enable Docking
+	    // ============================================================================================================
+        ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+
+        // ============================================================================================================
+        // Keyboard and Mouse Controls Menu
+        // ============================================================================================================
+        ImGui::Begin("Keyboard & Mouse Controls + Debug"); 
+        if (loaded_file)
+        {
+            ImGui::Text("Image controls:");
+            ImGui::Text("  Move         : Focus + CRTL + Move");
+            ImGui::Text("  Zoom         : Hover + CRTL + Wheel");
+            ImGui::Text("  Slice Scroll : Hover + Wheel");
+        }
+        ImGui::End();
+
+        // ------------------------------------------------------------------------------------------------------------
+        // Input/Output Menu
+        // ------------------------------------------------------------------------------------------------------------
+        ImGui::Begin("File Menu");
         ImGui::Text("FPS %.0f ", ImGui::GetIO().Framerate);
         ImGui::SameLine();
         ImGui::Checkbox("Demo Window", &show_demo_window);  // NOTE: This checkbox is here for development.
@@ -125,6 +137,74 @@ namespace IDA
         }
 
         ImGui::End();
+        // --------------------------------------------------------------------------------------------------------
+        // Keyboard controls
+        // --------------------------------------------------------------------------------------------------------
+        if (loaded_file) {
+            // k axis nativation
+            if (ImGui::IsKeyPressed(ImGuiKey_E, true)) {
+                fl.files[sf].display_k = (fl.files[sf].display_k + 1) % fl.files[sf].dim_k;
+                fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
+                request_image_data_update = true;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_Q, true)) {
+                if (fl.files[sf].display_k > 0) {
+                    fl.files[sf].display_k--;
+                } else {
+                    fl.files[sf].display_k = fl.files[sf].dim_k - 1;
+                }
+                fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
+                request_image_data_update = true;
+            }
+
+            // j axis nativation
+            if (ImGui::IsKeyPressed(ImGuiKey_W, true)) {
+                fl.files[sf].display_j = (fl.files[sf].display_j + 1) % fl.files[sf].dim_j;
+                fl.files[sf].voxel_j = static_cast<uint64_t>(fl.files[sf].display_j);
+                request_image_data_update = true;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_S, true)) {
+                if (fl.files[sf].display_j > 0) {
+                    fl.files[sf].display_j--;
+                } else {
+                    fl.files[sf].display_j = fl.files[sf].dim_j - 1;
+                }
+                fl.files[sf].voxel_j = static_cast<uint64_t>(fl.files[sf].display_j);
+                request_image_data_update = true;
+            }
+
+            // i axis nativation
+            if (ImGui::IsKeyPressed(ImGuiKey_A, true)) {
+                fl.files[sf].display_i = (fl.files[sf].display_i + 1) % fl.files[sf].dim_i;
+                fl.files[sf].voxel_i = static_cast<uint64_t>(fl.files[sf].display_i);
+                request_image_data_update = true;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_D, true)) {
+                if (fl.files[sf].display_i > 0) {
+                    fl.files[sf].display_i--;
+                } else {
+                    fl.files[sf].display_i = fl.files[sf].dim_i - 1;
+                }
+                fl.files[sf].voxel_i = static_cast<uint64_t>(fl.files[sf].display_i);
+                request_image_data_update = true;
+            }
+
+            // 4th axis nativation
+            if (ImGui::IsKeyPressed(ImGuiKey_X, true)) {
+                fl.files[sf].display_t = (fl.files[sf].display_t + 1) % fl.files[sf].dim_t;
+                fl.files[sf].voxel_t = static_cast<uint64_t>(fl.files[sf].display_t);
+                request_image_data_update = true;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_Z, true)) {
+                if (fl.files[sf].display_t > 0) {
+                    fl.files[sf].display_t--;
+                } else {
+                    fl.files[sf].display_t = fl.files[sf].dim_t - 1;
+                }
+                fl.files[sf].voxel_t = static_cast<uint64_t>(fl.files[sf].display_t);
+                request_image_data_update = true;
+            }
+        }
 
         // ============================================================================================================
         // Image Views
@@ -324,7 +404,7 @@ namespace IDA
             ImGui::SeparatorText("MASK CONTROLS");
             // ========================================================================================================
             if ( fl.files[sf].visualization_mode != 1 ) {
-                if (ImGui::Button("Enable Overlay") || ImGui::IsKeyPressed(ImGuiKey_S, false)) {
+                if (ImGui::Button("Enable Overlay")) {
                     fl.prepareRBGSlices(fl.files[sf]);
 
                     fl.loadSliceK_uint8(fl.files[sf]);
@@ -345,7 +425,7 @@ namespace IDA
                     fl.files[sf].visualization_mode = 1;
                 }
             } else if ( fl.files[sf].visualization_mode == 1 ) {
-                if (ImGui::Button("Disable Overlay") || ImGui::IsKeyPressed(ImGuiKey_S, false)) {
+                if (ImGui::Button("Disable Overlay")) {
                     request_image_data_update = true;
                     fl.files[sf].visualization_mode = 0;
                 }
@@ -401,8 +481,13 @@ namespace IDA
             ImGui::SeparatorText("CORRELATIONS CONTROLS");
             // --------------------------------------------------------------------------------------------------------
             if (fl.files[sf].visualization_mode != 3) {
-                if (ImGui::Button("Enable Correlations") || ImGui::IsKeyPressed(ImGuiKey_S, false)) {
+                if (ImGui::Button("Enable Correlations")) {
                     show_voxel_inspector = true;
+                    fl.files[sf].voxel_i = static_cast<uint64_t>(fl.files[sf].display_i);
+                    fl.files[sf].voxel_j = static_cast<uint64_t>(fl.files[sf].display_j);
+                    fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
+                    fl.files[sf].voxel_t = static_cast<uint64_t>(fl.files[sf].display_t);
+
                     fl.prepareRBGSlices(fl.files[sf]);
 
                     // Prepare data to hold correlation maps
@@ -430,7 +515,7 @@ namespace IDA
                     request_image_data_update = true;
                 }
             } else {
-                if (ImGui::Button("Disable Correlations") || ImGui::IsKeyPressed(ImGuiKey_S, false)) {
+                if (ImGui::Button("Disable Correlations")) {
                     request_image_data_update = true;
                     fl.files[sf].visualization_mode = 0;
                 }
@@ -444,34 +529,6 @@ namespace IDA
                     request_image_data_update = true;
                 }
             }
-        }
-        ImGui::End();
-
-
-        // ============================================================================================================
-        // Keyboard and Mouse Controls Menu
-        // ============================================================================================================
-        ImGui::Begin("Keyboard & Mouse Controls + Debug"); 
-        if (loaded_file)
-        {
-            ImGui::Text("Image controls:");
-            ImGui::Text("  Move         : Focus + CRTL + Move");
-            ImGui::Text("  Zoom         : Hover + CRTL + Wheel");
-            ImGui::Text("  Slice Scroll : Hover + Wheel");
-            ImGui::Text("");
-            ImGui::Text("Positioning parameters:");
-            ImGui::Text("  MousePos                 : [%.3f x, %.3f y]", io.MousePos.x, io.MousePos.y);
-            ImGui::Text("  CursorScreenPos          : [%.3f x, %.3f y]", cursor_screen_pos.x, cursor_screen_pos.y);
-            // ImGui::Text("  CursorScreenPos Magnifier: [%.3f x, %.3f y]", cursor_pos_winmag.x, cursor_pos_winmag.y);
-            ImGui::Text("");
-            ImGui::Text("Move parameters:");
-            ImGui::Text("  K offset: [%.3f x, %.3f y]", fl.files[sf].display_k_offset_x, fl.files[sf].display_k_offset_y);
-            ImGui::Text("  J offset: [%.3f x, %.3f y]", fl.files[sf].display_j_offset_x, fl.files[sf].display_j_offset_y);
-            ImGui::Text("  I offset: [%.3f x, %.3f y]", fl.files[sf].display_i_offset_x, fl.files[sf].display_i_offset_y);
-            ImGui::Text("");
-            ImGui::Text("Crosshair inspector: (WIP)");
-            ImGui::Text("  Value : (WIP)");
-            ImGui::Text("  Index : (WIP)");
         }
         ImGui::End();
 

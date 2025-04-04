@@ -64,7 +64,7 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
                 // NOTE: I can implement percent normalization etc here as well
                 float max_val = std::numeric_limits<float>::min();
                 float min_val = std::numeric_limits<float>::max();
-                for (int t = 0; t < nt; ++t) {
+                for (uint64_t t = fi.time_course_onset; t < fi.time_course_offset; ++t) {
                     if (fi.p_time_course_float[t] < min_val) {
                         min_val = fi.p_time_course_float[t];
                     }
@@ -101,7 +101,7 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
                 NULL,                                          // Overlay Text
                 fi.time_course_min,                            // Scale min (FLT_MIN for auto)
                 fi.time_course_max,                            // Scale max (FLT_MAX for auto)
-                ImVec2(0, 100.0f)                              // Plot Size
+                ImVec2(0, 75.0f)                              // Plot Size
                 );
             ImGui::Text("[y: min-max scaled]");
         }
