@@ -19,21 +19,9 @@ void SampleVoxelTimeCourse(IDA_IO::FileInfo& fi) {
         fi.p_time_course_float[t] = fi.p_data_float[index4D];
     }
 
-    // Adjust min max for better visualizing the timecourse
-    // NOTE: I might make a separate function for finding mix max in arbitrary data
-    // NOTE: I can implement percent normalization etc here as well
-    float max_val = std::numeric_limits<float>::min();
-    float min_val = std::numeric_limits<float>::max();
-    for (uint64_t t = fi.time_course_onset; t < fi.time_course_offset; ++t) {
-        if (fi.p_time_course_float[t] < min_val) {
-            min_val = fi.p_time_course_float[t];
-        }
-        if (fi.p_time_course_float[t] > max_val) {
-            max_val = fi.p_time_course_float[t];
-        }
-    }
-    fi.time_course_min = min_val;
-    fi.time_course_max = max_val;
+    // // Adjust min max for better visualizing the timecourse
+    fi.time_course_min = *std::min_element(fi.p_time_course_float, fi.p_time_course_float + nt);
+    fi.time_course_max = *std::max_element(fi.p_time_course_float, fi.p_time_course_float + nt);
 }
 
 // ====================================================================================================================
