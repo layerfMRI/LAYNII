@@ -146,6 +146,9 @@ namespace IDA
             // k axis nativation
             if (ImGui::IsKeyPressed(ImGuiKey_E, true)) {
                 fl.files[sf].display_k = (fl.files[sf].display_k + 1) % fl.files[sf].dim_k;
+
+                fl.files[sf].voxel_i = static_cast<uint64_t>(fl.files[sf].display_i);
+                fl.files[sf].voxel_j = static_cast<uint64_t>(fl.files[sf].display_j);
                 fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
                 request_image_data_update = true;
             }
@@ -155,6 +158,9 @@ namespace IDA
                 } else {
                     fl.files[sf].display_k = fl.files[sf].dim_k - 1;
                 }
+
+                fl.files[sf].voxel_i = static_cast<uint64_t>(fl.files[sf].display_i);
+                fl.files[sf].voxel_j = static_cast<uint64_t>(fl.files[sf].display_j);
                 fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
                 request_image_data_update = true;
             }
@@ -162,7 +168,10 @@ namespace IDA
             // j axis nativation
             if (ImGui::IsKeyPressed(ImGuiKey_W, true)) {
                 fl.files[sf].display_j = (fl.files[sf].display_j + 1) % fl.files[sf].dim_j;
+
+                fl.files[sf].voxel_i = static_cast<uint64_t>(fl.files[sf].display_i);
                 fl.files[sf].voxel_j = static_cast<uint64_t>(fl.files[sf].display_j);
+                fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
                 request_image_data_update = true;
             }
             if (ImGui::IsKeyPressed(ImGuiKey_S, true)) {
@@ -171,14 +180,20 @@ namespace IDA
                 } else {
                     fl.files[sf].display_j = fl.files[sf].dim_j - 1;
                 }
+
+                fl.files[sf].voxel_i = static_cast<uint64_t>(fl.files[sf].display_i);
                 fl.files[sf].voxel_j = static_cast<uint64_t>(fl.files[sf].display_j);
+                fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
                 request_image_data_update = true;
             }
 
             // i axis nativation
             if (ImGui::IsKeyPressed(ImGuiKey_A, true)) {
                 fl.files[sf].display_i = (fl.files[sf].display_i + 1) % fl.files[sf].dim_i;
+
                 fl.files[sf].voxel_i = static_cast<uint64_t>(fl.files[sf].display_i);
+                fl.files[sf].voxel_j = static_cast<uint64_t>(fl.files[sf].display_j);
+                fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
                 request_image_data_update = true;
             }
             if (ImGui::IsKeyPressed(ImGuiKey_D, true)) {
@@ -187,7 +202,10 @@ namespace IDA
                 } else {
                     fl.files[sf].display_i = fl.files[sf].dim_i - 1;
                 }
+
                 fl.files[sf].voxel_i = static_cast<uint64_t>(fl.files[sf].display_i);
+                fl.files[sf].voxel_j = static_cast<uint64_t>(fl.files[sf].display_j);
+                fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
                 request_image_data_update = true;
             }
 
@@ -297,6 +315,8 @@ namespace IDA
         ImGui::Begin("Chronovisor"); 
         if (loaded_data && fl.files[sf].dim_t > 1)
         {
+            ImGui::Text("Voxel : [%llu i, %llu j, %llu k]", fl.files[sf].voxel_i, fl.files[sf].voxel_j, fl.files[sf].voxel_k);
+
             SampleVoxelTimeCourse(fl.files[sf]);
 
             ImVec2 plot_size = ImGui::GetContentRegionAvail();
