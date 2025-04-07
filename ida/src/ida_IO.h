@@ -68,43 +68,47 @@ namespace IDA_IO
         std::string path;
         NiftiInfo   header;
         bool        loaded_data;
-        int         dim_k;              // File format independent image dimension
-        int         dim_j;              // File format independent image dimension
-        int         dim_i;              // File format independent image dimension
-        int         dim_t;              // File format independent image dimension
-        uint64_t    nr_voxels;          // Useful in general
-        float       pixdim_i;           // File format independent image dimension
-        float       pixdim_j;           // File format independent image dimension
-        float       pixdim_k;           // File format independent image dimension
-        float       voxel_volume;       // I often need to compute this
-        float*      p_data_float;       // holds image data (voxels)
-        int         display_k;          // Display slice number
-        int         display_j;          // Display slice number
-        int         display_i;          // Display slice number
-        int         display_t;          // Display slice number
-        float*      p_sliceK_float;     // Data slice that holds high precision data
-        float*      p_sliceJ_float;     // Data slice that holds high precision data
-        float*      p_sliceI_float;     // Data slice that holds high precision data
-        uint8_t*    p_sliceK_uint8;     // Data slice that holds display data
-        uint8_t*    p_sliceJ_uint8;     // Data slice that holds display data
-        uint8_t*    p_sliceI_uint8;     // Data slice that holds display data
-        GLuint      textureIDk;         // OpenGL needs this
-        GLuint      textureIDj;         // OpenGL needs this
-        GLuint      textureIDi;         // OpenGL needs this
+        int         dim_k;               // File format independent image dimension
+        int         dim_j;               // File format independent image dimension
+        int         dim_i;               // File format independent image dimension
+        int         dim_t;               // File format independent image dimension
+        uint64_t    nr_voxels;           // Useful in general
+        float       pixdim_i;            // File format independent image dimension
+        float       pixdim_j;            // File format independent image dimension
+        float       pixdim_k;            // File format independent image dimension
+        float       voxel_volume;        // I often need to compute this
+        float*      p_data_float;        // holds image data (voxels)
+        int         display_k;           // Display slice number
+        int         display_j;           // Display slice number
+        int         display_i;           // Display slice number
+        int         display_t;           // Display slice number
+        float*      p_sliceK_float;      // Data slice that holds high precision data
+        float*      p_sliceJ_float;      // Data slice that holds high precision data
+        float*      p_sliceI_float;      // Data slice that holds high precision data
+        uint8_t*    p_sliceK_uint8;      // Data slice that holds display data
+        uint8_t*    p_sliceJ_uint8;      // Data slice that holds display data
+        uint8_t*    p_sliceI_uint8;      // Data slice that holds display data
+        GLuint      textureIDk;          // OpenGL needs this
+        GLuint      textureIDj;          // OpenGL needs this
+        GLuint      textureIDi;          // OpenGL needs this
         float*      p_time_course_float; // One voxel's time course
         float       time_course_min;     // Minimum of voxel's time course data
         float       time_course_max;     // Maximum of voxel's time course data
-        float       data_min;           // Minimum data value
-        float       data_max;           // Maximum data value
-        float       display_min;        // Minimum displayed value
-        float       display_max;        // Maximum displayed value
-        float       display_scale;      // Scaling factor for zooming in or out
-        float       display_k_offset_x; // Offset displayed image area
-        float       display_k_offset_y; // Offset displayed image area
-        float       display_j_offset_x; // Offset displayed image area
-        float       display_j_offset_y; // Offset displayed image area
-        float       display_i_offset_x; // Offset displayed image area
-        float       display_i_offset_y; // Offset displayed image area
+        float       data_min;            // Minimum data value
+        float       data_max;            // Maximum data value
+        float       display_min;         // Minimum displayed value
+        float       display_max;         // Maximum displayed value
+        float       display_scale;       // Scaling factor for zooming in or out
+        float       display_k_offset_x;  // Offset displayed image area
+        float       display_k_offset_y;  // Offset displayed image area
+        float       display_j_offset_x;  // Offset displayed image area
+        float       display_j_offset_y;  // Offset displayed image area
+        float       display_i_offset_x;  // Offset displayed image area
+        float       display_i_offset_y;  // Offset displayed image area
+        uint64_t    voxel_i;             // A selected/focused/hovered voxel index
+        uint64_t    voxel_j;             // A selected/focused/hovered voxel index
+        uint64_t    voxel_k;             // A selected/focused/hovered voxel index
+        uint64_t    voxel_t;             // A selected/focused/hovered voxel index
         // Overlay related --------------------------------------------------------------------------------------------
         float       overlay_min;            // Minimum data value for masking
         float       overlay_max;            // Maximum data value for masking
@@ -114,15 +118,16 @@ namespace IDA_IO
         GLuint      textureIDk_RGB;         // OpenGL needs this
         GLuint      textureIDj_RGB;         // OpenGL needs this
         GLuint      textureIDi_RGB;         // OpenGL needs this
+        // Time course related ----------------------------------------------------------------------------------------
+        uint64_t    focus_voxel_index4D;  // Focused voxel 4D index
+        uint8_t     time_course_nr;            // Number of selected time course voxels
+        uint64_t    time_course_voxel_i[255];  // Selectec voxel index i
+        uint64_t    time_course_voxel_j[255];  // Selectec voxel index j
+        uint64_t    time_course_voxel_k[255];  // Selectec voxel index k
+        int         time_course_onset;         // Omit volumes from start until this number
+        int         time_course_offset;        // Omit volumes from end until this number
+        int         time_course_shift;         // Shift time course data by this amount
         // Correlation related ----------------------------------------------------------------------------------------
-        uint64_t    voxel_k;               // A selected or hovered over voxel index
-        uint64_t    voxel_j;               // A selected or hovered over voxel index
-        uint64_t    voxel_i;               // A selected or hovered over voxel index
-        uint64_t    voxel_t;               // A selected or hovered over voxel index
-        uint64_t    voxel_index4D;         // A selected or hovered over voxel index
-        int         time_course_onset;     // Omit volumes from start until this number
-        int         time_course_offset;    // Omit volumes from end until this number
-        int         time_course_shift;     // Shift time course data by this amount
         float*      p_sliceK_float_corr;   // Holds correlation data
         float*      p_sliceJ_float_corr;   // Holds correlation data
         float*      p_sliceI_float_corr;   // Holds correlation data

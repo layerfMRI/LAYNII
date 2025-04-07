@@ -107,6 +107,8 @@ namespace IDA
                 fl.files[sf].overlay_min = fl.files[sf].display_min;
                 fl.files[sf].overlay_max = fl.files[sf].display_max;
 
+                fl.files[sf].time_course_nr = 0;
+
                 fl.files[sf].loaded_data = true;
                 loaded_data = fl.files[sf].loaded_data;
             }
@@ -144,7 +146,7 @@ namespace IDA
         // --------------------------------------------------------------------------------------------------------
         if (loaded_data) {
             // k axis nativation
-            if (ImGui::IsKeyPressed(ImGuiKey_E, true)) {
+            if ( ImGui::IsKeyPressed(ImGuiKey_E, true) ) {
                 fl.files[sf].display_k = (fl.files[sf].display_k + 1) % fl.files[sf].dim_k;
 
                 fl.files[sf].voxel_i = static_cast<uint64_t>(fl.files[sf].display_i);
@@ -152,7 +154,7 @@ namespace IDA
                 fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
                 request_image_data_update = true;
             }
-            if (ImGui::IsKeyPressed(ImGuiKey_Q, true)) {
+            if ( ImGui::IsKeyPressed(ImGuiKey_Q, true) ) {
                 if (fl.files[sf].display_k > 0) {
                     fl.files[sf].display_k--;
                 } else {
@@ -166,7 +168,7 @@ namespace IDA
             }
 
             // j axis nativation
-            if (ImGui::IsKeyPressed(ImGuiKey_W, true)) {
+            if ( ImGui::IsKeyPressed(ImGuiKey_W, true) ) {
                 fl.files[sf].display_j = (fl.files[sf].display_j + 1) % fl.files[sf].dim_j;
 
                 fl.files[sf].voxel_i = static_cast<uint64_t>(fl.files[sf].display_i);
@@ -174,7 +176,7 @@ namespace IDA
                 fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
                 request_image_data_update = true;
             }
-            if (ImGui::IsKeyPressed(ImGuiKey_S, true)) {
+            if ( ImGui::IsKeyPressed(ImGuiKey_S, true) ) {
                 if (fl.files[sf].display_j > 0) {
                     fl.files[sf].display_j--;
                 } else {
@@ -188,7 +190,7 @@ namespace IDA
             }
 
             // i axis nativation
-            if (ImGui::IsKeyPressed(ImGuiKey_A, true)) {
+            if ( ImGui::IsKeyPressed(ImGuiKey_A, true) ) {
                 fl.files[sf].display_i = (fl.files[sf].display_i + 1) % fl.files[sf].dim_i;
 
                 fl.files[sf].voxel_i = static_cast<uint64_t>(fl.files[sf].display_i);
@@ -196,7 +198,7 @@ namespace IDA
                 fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
                 request_image_data_update = true;
             }
-            if (ImGui::IsKeyPressed(ImGuiKey_D, true)) {
+            if ( ImGui::IsKeyPressed(ImGuiKey_D, true) ) {
                 if (fl.files[sf].display_i > 0) {
                     fl.files[sf].display_i--;
                 } else {
@@ -210,18 +212,34 @@ namespace IDA
             }
 
             // 4th axis nativation
-            if (ImGui::IsKeyPressed(ImGuiKey_X, true)) {
+            if ( ImGui::IsKeyPressed(ImGuiKey_X, true) ) {
                 fl.files[sf].display_t = (fl.files[sf].display_t + 1) % fl.files[sf].dim_t;
                 fl.files[sf].voxel_t = static_cast<uint64_t>(fl.files[sf].display_t);
                 request_image_data_update = true;
             }
-            if (ImGui::IsKeyPressed(ImGuiKey_Z, true)) {
+            if ( ImGui::IsKeyPressed(ImGuiKey_Z, true) ) {
                 if (fl.files[sf].display_t > 0) {
                     fl.files[sf].display_t--;
                 } else {
                     fl.files[sf].display_t = fl.files[sf].dim_t - 1;
                 }
                 fl.files[sf].voxel_t = static_cast<uint64_t>(fl.files[sf].display_t);
+                request_image_data_update = true;
+            }
+
+            if ( ImGui::IsMouseClicked(ImGuiMouseButton_Left, true) ) {
+                fl.files[sf].display_i = static_cast<int>(fl.files[sf].voxel_i);
+                fl.files[sf].display_j = static_cast<int>(fl.files[sf].voxel_j);
+                fl.files[sf].display_k = static_cast<int>(fl.files[sf].voxel_k);
+
+                // Remember each clicked time course voxel up to a maximum
+                fl.files[sf].time_course_voxel_i[fl.files[sf].time_course_nr] = fl.files[sf].voxel_i;
+                fl.files[sf].time_course_voxel_j[fl.files[sf].time_course_nr] = fl.files[sf].voxel_j;
+                fl.files[sf].time_course_voxel_k[fl.files[sf].time_course_nr] = fl.files[sf].voxel_k;
+                fl.files[sf].time_course_nr += 1;
+                if ( fl.files[sf].time_course_nr >= 5 ) {
+                    fl.files[sf].time_course_nr = 1;
+                }
                 request_image_data_update = true;
             }
 
@@ -315,43 +333,46 @@ namespace IDA
         ImGui::Begin("Chronovisor"); 
         if (loaded_data && fl.files[sf].dim_t > 1)
         {
-            ImGui::Text("Voxel : [%llu i, %llu j, %llu k]", fl.files[sf].voxel_i, fl.files[sf].voxel_j, fl.files[sf].voxel_k);
+            // ImGui::Text("Voxel : [%llu i, %llu j, %llu k]", fl.files[sf].voxel_i, fl.files[sf].voxel_j, fl.files[sf].voxel_k);
 
-            SampleVoxelTimeCourse(fl.files[sf]);
+            for (uint8_t i_tc = 0; i_tc < fl.files[sf].time_course_nr; i_tc++) {
 
-            ImVec2 plot_size = ImGui::GetContentRegionAvail();
-            plot_size.y = 75.0f;
-            ImVec2 pos = ImGui::GetCursorScreenPos();
-            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+                SampleVoxelTimeCourse(fl.files[sf], i_tc);
 
-            // Background
-            draw_list->AddRectFilled(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y), IM_COL32(0, 0, 0, 255));
-            draw_list->AddRect(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y),
-                               IM_COL32(125, 125, 125, 255), 0.0f, 0, 3.0f);
+                ImVec2 plot_size = ImGui::GetContentRegionAvail();
+                plot_size.y = 75.0f;
+                ImVec2 pos = ImGui::GetCursorScreenPos();
+                pos.y += 75.0f*i_tc;
+                ImDrawList* draw_list = ImGui::GetWindowDrawList();
+                // Background
+                draw_list->AddRectFilled(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y), IM_COL32(0, 0, 0, 255));
+                draw_list->AddRect(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y),
+                                   IM_COL32(125, 125, 125, 255), 0.0f, 0, 3.0f);
 
-            // Helper: scale Y values
-            float max_y = fl.files[sf].time_course_max;
-            float min_y = fl.files[sf].time_course_min;
+                // Helper: scale Y values
+                float max_y = fl.files[sf].time_course_max;
+                float min_y = fl.files[sf].time_course_min;
 
-            auto get_screen_point = [&](int i, float* data) {
-                float x = pos.x + (i / float(fl.files[sf].dim_t - 1)) * plot_size.x;
-                float y = pos.y + (1.0f - (data[i] - min_y) / (max_y - min_y)) * plot_size.y;
-                return ImVec2(x, y);
-            };
+                auto get_screen_point = [&](int i, float* data) {
+                    float x = pos.x + (i / float(fl.files[sf].dim_t - 1)) * plot_size.x;
+                    float y = pos.y + (1.0f - (data[i] - min_y) / (max_y - min_y)) * plot_size.y;
+                    return ImVec2(x, y);
+                };
 
-            // Draw first plot (white)
-            for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
-                draw_list->AddLine(get_screen_point(i, fl.files[sf].p_time_course_float),
-                                   get_screen_point(i + 1, fl.files[sf].p_time_course_float),
-                                   IM_COL32(255, 255, 255, 255), 1.0f);
+                // Draw first plot
+                for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
+                    draw_list->AddLine(get_screen_point(i, fl.files[sf].p_time_course_float),
+                                       get_screen_point(i + 1, fl.files[sf].p_time_course_float),
+                                       IM_COL32(80, 131, 217, 255), 1.0f);
+                }
+
+                // // Draw second plot
+                // for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
+                //     draw_list->AddLine(get_screen_point(i, fl.files[sf].p_time_course_float),
+                //                        get_screen_point(i + 1, fl.files[sf].p_time_course_float),
+                //                        IM_COL32(255, 255, 255, 255), 1.0f);
+                // }
             }
-
-            // // Draw second plot (red)
-            // for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
-            //     draw_list->AddLine(get_screen_point(i, fl.files[sf].p_time_course_float),
-            //                        get_screen_point(i + 1, fl.files[sf].p_time_course_float),
-            //                        IM_COL32(255, 100, 100, 255), 1.0f);
-            // }
         }
         ImGui::End();
 

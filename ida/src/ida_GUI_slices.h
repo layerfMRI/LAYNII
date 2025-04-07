@@ -5,13 +5,13 @@
 // ====================================================================================================================
 // Procedure to sample voxel time course
 // ====================================================================================================================
-void SampleVoxelTimeCourse(IDA_IO::FileInfo& fi) {
+void SampleVoxelTimeCourse(IDA_IO::FileInfo& fi, uint8_t idx) {
     uint64_t ni = static_cast<uint64_t>(fi.dim_i);
     uint64_t nj = static_cast<uint64_t>(fi.dim_j);
     uint64_t nt = static_cast<uint64_t>(fi.dim_t);
-    uint64_t i = static_cast<uint64_t>(fi.voxel_i);
-    uint64_t j = static_cast<uint64_t>(fi.voxel_j);
-    uint64_t k = static_cast<uint64_t>(fi.voxel_k);
+    uint64_t i = static_cast<uint64_t>(fi.time_course_voxel_i[idx]);
+    uint64_t j = static_cast<uint64_t>(fi.time_course_voxel_j[idx]);
+    uint64_t k = static_cast<uint64_t>(fi.time_course_voxel_k[idx]);
 
     // Load voxel data
     for (uint64_t t = 0; t < nt; ++t) {
@@ -73,8 +73,8 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
         // ------------------------------------------------------------------------------------------------------------
         // Pull voxel data from 4D into 1D memory, only if the hovered over voxel changes
         // ------------------------------------------------------------------------------------------------------------
-        if ( fi.voxel_index4D != index4D ) {
-            fi.voxel_index4D = index4D;
+        if ( fi.focus_voxel_index4D != index4D ) {
+            fi.focus_voxel_index4D = index4D;
             if ( fi.visualization_mode == 3) {
                 request_image_data_update = true;
             }
@@ -91,6 +91,7 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
         }
 
         if ( show_voxel_time_course ) {
+            SampleVoxelTimeCourse(fi, fi.time_course_nr);
             ImGui::Text("Time Course:");
             ImGui::PlotLines(
                 "",                                            // Label
@@ -200,7 +201,7 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
         int intensity = static_cast<int>(alpha * 255);
         ImU32 color = IM_COL32(intensity, intensity, intensity, 255);
 
-        if (slice_window == 3) {
+        if ( slice_window == 3 && fi.display_k == fi.voxel_k ) {
             // Compute focused voxel's position on slice
             float pixscl_w = fi.pixdim_i / fi.pixdim_j * fi.display_scale;
             float pixscl_h = fi.display_scale;
@@ -210,8 +211,8 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
             ImVec2 bottom_right = ImVec2(x + pixscl_w/2, y + pixscl_h/2);
 
             drawList = ImGui::GetWindowDrawList();
-            drawList->AddRect(top_left, bottom_right, color, 0.0f, 0, 2.0f);
-        } else if (slice_window == 2) {
+            drawList->AddRect(top_left, bottom_right, color, 0.0f, 0, 2.0f);                
+        } else if ( slice_window == 2 && fi.display_j == fi.voxel_j ) {
             // Compute focused voxel's position on slice
             float pixscl_w = fi.pixdim_i / fi.pixdim_k * fi.display_scale;
             float pixscl_h = fi.display_scale;
@@ -222,7 +223,7 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
 
             drawList = ImGui::GetWindowDrawList();
             drawList->AddRect(top_left, bottom_right, color, 0.0f, 0, 2.0f);
-        } else if (slice_window == 1) {
+        } else if ( slice_window == 1 && fi.display_i == fi.voxel_i ) {
             // Compute focused voxel's position on slice
             float pixscl_w = fi.pixdim_j / fi.pixdim_k * fi.display_scale;
             float pixscl_h = fi.display_scale;
