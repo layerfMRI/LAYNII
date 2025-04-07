@@ -67,6 +67,7 @@ namespace IDA_IO
         std::string name;
         std::string path;
         NiftiInfo   header;
+        bool        loaded_data;
         int         dim_k;              // File format independent image dimension
         int         dim_j;              // File format independent image dimension
         int         dim_i;              // File format independent image dimension
@@ -172,7 +173,7 @@ namespace IDA_IO
             fi.voxel_volume = fi.header.pixdim[1] * fi.header.pixdim[2] * fi.header.pixdim[3];
             fi.display_scale = 1.0;
             fi.visualization_mode = 0;
-
+            fi.loaded_data = false;
         }
 
         // ============================================================================================================

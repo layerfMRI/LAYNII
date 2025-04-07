@@ -14,9 +14,9 @@ namespace IDA
         // static char str_input[4096] = "/Users/faruk/Documents/test-LN3_IDA/test.nii.gz";
         // static char str_input[4096] = "/Users/faruk/data/data-alard/75um/sub-99_75um_crop.nii.gz";
 
-        static bool loaded_file          = false;
+        static bool loaded_data          = false;
         static bool show_header_info     = false;
-        static bool show_focused_voxel = false;
+        static bool show_focused_voxel   = true;
         static bool show_mouse_crosshair = true;
         static bool show_voxel_inspector = false;
         static bool show_voxel_indices   = true;
@@ -41,7 +41,7 @@ namespace IDA
         // Keyboard and Mouse Controls Menu
         // ============================================================================================================
         ImGui::Begin("Keyboard & Mouse Controls + Debug"); 
-        if (loaded_file)
+        if (loaded_data)
         {
             ImGui::Text("Image controls:");
             ImGui::Text("  Move         : Focus + CRTL + Move");
@@ -107,7 +107,8 @@ namespace IDA
                 fl.files[sf].overlay_min = fl.files[sf].display_min;
                 fl.files[sf].overlay_max = fl.files[sf].display_max;
 
-                loaded_file = true;
+                fl.files[sf].loaded_data = true;
+                loaded_data = fl.files[sf].loaded_data;
             }
         }
 
@@ -118,6 +119,7 @@ namespace IDA
             snprintf(buf, sizeof(buf), "%d: %s", n, fl.files[n].name.c_str());
             if (ImGui::Selectable(buf, sf == n)) {
                 sf = n;
+                loaded_data = fl.files[sf].loaded_data;
             }
         }
 
@@ -140,7 +142,7 @@ namespace IDA
         // --------------------------------------------------------------------------------------------------------
         // Keyboard controls
         // --------------------------------------------------------------------------------------------------------
-        if (loaded_file) {
+        if (loaded_data) {
             // k axis nativation
             if (ImGui::IsKeyPressed(ImGuiKey_E, true)) {
                 fl.files[sf].display_k = (fl.files[sf].display_k + 1) % fl.files[sf].dim_k;
@@ -241,7 +243,7 @@ namespace IDA
         // ============================================================================================================
         ImGui::Begin("Slice Z axis", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
-        if (loaded_file)  // Slice K window
+        if (loaded_data)  // Slice K window
         {
             RenderSlice(
                 fl.files[sf].dim_i, fl.files[sf].dim_j, fl.files[sf].dim_k,
@@ -257,7 +259,7 @@ namespace IDA
         ImGui::End();
 
         ImGui::Begin("Slice Y axis", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-        if (loaded_file)  // Slice J window
+        if (loaded_data)  // Slice J window
         {
             RenderSlice(
                 fl.files[sf].dim_i, fl.files[sf].dim_k, fl.files[sf].dim_j,
@@ -274,7 +276,7 @@ namespace IDA
         ImGui::End();
 
         ImGui::Begin("Slice X axis", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-        if (loaded_file)  // Slice I window
+        if (loaded_data)  // Slice I window
         {
             RenderSlice(
                 fl.files[sf].dim_j, fl.files[sf].dim_k, fl.files[sf].dim_i,
@@ -289,20 +291,47 @@ namespace IDA
         }
         ImGui::End();
 
-        ImGui::Begin("Time Course View"); 
-        if (loaded_file && fl.files[sf].dim_t > 1)
+        // ============================================================================================================
+        // Time course view
+        // ============================================================================================================
+        ImGui::Begin("Chronovisor"); 
+        if (loaded_data && fl.files[sf].dim_t > 1)
         {
             SampleVoxelTimeCourse(fl.files[sf]);
-            ImGui::PlotLines(
-                "",                                                                // Label
-                fl.files[sf].p_time_course_float,                                  // Values
-                fl.files[sf].time_course_offset - fl.files[sf].time_course_onset,  // Values count
-                0,                                                                 // Values offset
-                NULL,                                                              // Overlay Text
-                fl.files[sf].time_course_min,                                      // Scale min (FLT_MIN for auto)
-                fl.files[sf].time_course_max,                                      // Scale max (FLT_MAX for auto)
-                ImVec2(0, 75.0f)                                                   // Plot Size
-                );
+
+            ImVec2 plot_size = ImGui::GetContentRegionAvail();
+            plot_size.y = 75.0f;
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+            // Background
+            draw_list->AddRectFilled(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y), IM_COL32(0, 0, 0, 255));
+            draw_list->AddRect(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y),
+                               IM_COL32(125, 125, 125, 255), 0.0f, 0, 3.0f);
+
+            // Helper: scale Y values
+            float max_y = fl.files[sf].time_course_max;
+            float min_y = fl.files[sf].time_course_min;
+
+            auto get_screen_point = [&](int i, float* data) {
+                float x = pos.x + (i / float(fl.files[sf].dim_t - 1)) * plot_size.x;
+                float y = pos.y + (1.0f - (data[i] - min_y) / (max_y - min_y)) * plot_size.y;
+                return ImVec2(x, y);
+            };
+
+            // Draw first plot (white)
+            for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
+                draw_list->AddLine(get_screen_point(i, fl.files[sf].p_time_course_float),
+                                   get_screen_point(i + 1, fl.files[sf].p_time_course_float),
+                                   IM_COL32(255, 255, 255, 255), 1.0f);
+            }
+
+            // // Draw second plot (red)
+            // for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
+            //     draw_list->AddLine(get_screen_point(i, fl.files[sf].p_time_course_float),
+            //                        get_screen_point(i + 1, fl.files[sf].p_time_course_float),
+            //                        IM_COL32(255, 100, 100, 255), 1.0f);
+            // }
         }
         ImGui::End();
 
@@ -311,7 +340,7 @@ namespace IDA
         // ============================================================================================================
         ImGui::Begin("Navigation");
 
-        if (loaded_file)
+        if (loaded_data)
         {
             // --------------------------------------------------------------------------------------------------------
             ImGui::SeparatorText("SLICE BROWSER CONTROLS");
@@ -643,7 +672,7 @@ namespace IDA
         // ============================================================================================================
         // Update opengl textures based on the GUI interaction
         // ============================================================================================================
-        if (loaded_file) {
+        if (loaded_data) {
 
             // --------------------------------------------------------------------------------------------------------
             // Grayscale mode
