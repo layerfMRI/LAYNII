@@ -227,22 +227,6 @@ namespace IDA
                 request_image_data_update = true;
             }
 
-            if ( ImGui::IsMouseClicked(ImGuiMouseButton_Left, true) ) {
-                fl.files[sf].display_i = static_cast<int>(fl.files[sf].voxel_i);
-                fl.files[sf].display_j = static_cast<int>(fl.files[sf].voxel_j);
-                fl.files[sf].display_k = static_cast<int>(fl.files[sf].voxel_k);
-
-                // Remember each clicked time course voxel up to a maximum
-                fl.files[sf].time_course_voxel_i[fl.files[sf].time_course_nr] = fl.files[sf].voxel_i;
-                fl.files[sf].time_course_voxel_j[fl.files[sf].time_course_nr] = fl.files[sf].voxel_j;
-                fl.files[sf].time_course_voxel_k[fl.files[sf].time_course_nr] = fl.files[sf].voxel_k;
-                fl.files[sf].time_course_nr += 1;
-                if ( fl.files[sf].time_course_nr >= 5 ) {
-                    fl.files[sf].time_course_nr = 1;
-                }
-                request_image_data_update = true;
-            }
-
             // --------------------------------------------------------------------------------------------------------
             // Center on focused voxel
             // TODO: Center on slice windows as well

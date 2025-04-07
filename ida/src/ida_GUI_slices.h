@@ -260,6 +260,23 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
                             5.0f, cross_mouse_color, 45, 1.0f);
     }
 
+
+    if ( ImGui::IsMouseClicked(ImGuiMouseButton_Left, true) && ImGui::IsItemHovered() ) {
+        fi.display_i = static_cast<int>(fi.voxel_i);
+        fi.display_j = static_cast<int>(fi.voxel_j);
+        fi.display_k = static_cast<int>(fi.voxel_k);
+
+        // Remember each clicked time course voxel up to a maximum
+        fi.time_course_voxel_i[fi.time_course_nr] = fi.voxel_i;
+        fi.time_course_voxel_j[fi.time_course_nr] = fi.voxel_j;
+        fi.time_course_voxel_k[fi.time_course_nr] = fi.voxel_k;
+        fi.time_course_nr += 1;
+        if ( fi.time_course_nr >= 5 ) {
+            fi.time_course_nr = 1;
+        }
+        request_image_data_update = true;
+    }
+
     if ( show_voxel_inspector ) {
         RenderVoxelInspector(fi, slice_window, cursor_screen_pos, visualization_mode,
             show_voxel_value, show_voxel_indices, show_voxel_time_course,
