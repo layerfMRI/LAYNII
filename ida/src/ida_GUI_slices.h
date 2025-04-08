@@ -75,6 +75,11 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
         // ------------------------------------------------------------------------------------------------------------
         if ( fi.focus_voxel_index4D != index4D ) {
             fi.focus_voxel_index4D = index4D;
+            if (fi.dim_t > 0) {
+                fi.time_course_voxel_i[0] = fi.voxel_i;
+                fi.time_course_voxel_j[0] = fi.voxel_j;
+                fi.time_course_voxel_k[0] = fi.voxel_k;
+            }
             if ( fi.visualization_mode == 3) {
                 request_image_data_update = true;
             }
@@ -91,7 +96,7 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
         }
 
         if ( show_voxel_time_course ) {
-            SampleVoxelTimeCourse(fi, fi.time_course_nr);
+            SampleVoxelTimeCourse(fi, 0);
             ImGui::Text("Time Course:");
             ImGui::PlotLines(
                 "",                                            // Label
@@ -262,19 +267,29 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
 
 
     if ( ImGui::IsMouseClicked(ImGuiMouseButton_Left, true) && ImGui::IsItemHovered() ) {
+        // Update the displayed slices based on clicked voxel
         fi.display_i = static_cast<int>(fi.voxel_i);
         fi.display_j = static_cast<int>(fi.voxel_j);
         fi.display_k = static_cast<int>(fi.voxel_k);
-
-        // Remember each clicked time course voxel up to a maximum
-        fi.time_course_voxel_i[fi.time_course_nr] = fi.voxel_i;
-        fi.time_course_voxel_j[fi.time_course_nr] = fi.voxel_j;
-        fi.time_course_voxel_k[fi.time_course_nr] = fi.voxel_k;
-        fi.time_course_nr += 1;
-        if ( fi.time_course_nr >= 5 ) {
-            fi.time_course_nr = 1;
-        }
         request_image_data_update = true;
+
+        // Shift already clicked voxels' indices further in the array
+        for (uint8_t i=0; i < fi.time_course_nr; i++) {
+            fi.time_course_voxel_i[i+1] = fi.time_course_voxel_i[i];
+            fi.time_course_voxel_j[i+1] = fi.time_course_voxel_j[i];
+            fi.time_course_voxel_k[i+1] = fi.time_course_voxel_k[i];
+        }
+
+        // Store newly clicked voxel's indices at the first element
+        fi.time_course_voxel_i[0] = fi.voxel_i;
+        fi.time_course_voxel_j[0] = fi.voxel_j;
+        fi.time_course_voxel_k[0] = fi.voxel_k;
+
+        // Increment number of time courses up to a maximum numer
+        // TODO: Make this work with more than 2 time courses
+        if ( fi.time_course_nr < 2 ) {
+            fi.time_course_nr += 1;
+        }
     }
 
     if ( show_voxel_inspector ) {

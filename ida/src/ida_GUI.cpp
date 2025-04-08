@@ -107,7 +107,7 @@ namespace IDA
                 fl.files[sf].overlay_min = fl.files[sf].display_min;
                 fl.files[sf].overlay_max = fl.files[sf].display_max;
 
-                fl.files[sf].time_course_nr = 0;
+                fl.files[sf].time_course_nr = 1;
 
                 fl.files[sf].loaded_data = true;
                 loaded_data = fl.files[sf].loaded_data;
@@ -326,12 +326,12 @@ namespace IDA
                 ImVec2 plot_size = ImGui::GetContentRegionAvail();
                 plot_size.y = 75.0f;
                 ImVec2 pos = ImGui::GetCursorScreenPos();
-                pos.y += 75.0f*i_tc;
+                pos.y += 80.0f*i_tc;
                 ImDrawList* draw_list = ImGui::GetWindowDrawList();
                 // Background
-                draw_list->AddRectFilled(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y), IM_COL32(0, 0, 0, 255));
+                draw_list->AddRectFilled(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y), IM_COL32(37, 50, 75, 255));
                 draw_list->AddRect(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y),
-                                   IM_COL32(125, 125, 125, 255), 0.0f, 0, 3.0f);
+                                   IM_COL32(255, 255, 255, 255), 0.0f, 0, 2.0f);
 
                 // Helper: scale Y values
                 float max_y = fl.files[sf].time_course_max;
@@ -347,7 +347,7 @@ namespace IDA
                 for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
                     draw_list->AddLine(get_screen_point(i, fl.files[sf].p_time_course_float),
                                        get_screen_point(i + 1, fl.files[sf].p_time_course_float),
-                                       IM_COL32(80, 131, 217, 255), 1.0f);
+                                       IM_COL32(255, 255, 255, 255), 1.0f);
                 }
 
                 // // Draw second plot
