@@ -567,19 +567,22 @@ namespace IDA
             // --------------------------------------------------------------------------------------------------------
             ImGui::Checkbox("Toggle voxel inspector", &show_voxel_inspector);
 
-            if (!show_voxel_inspector) {
+            if ( !show_voxel_inspector ) {
                 ImGui::BeginDisabled(true);
             }
             ImGui::Checkbox("Show value", &show_voxel_value); ImGui::SameLine();
             ImGui::Checkbox("Show indices", &show_voxel_indices); ImGui::SameLine();
-            ImGui::Checkbox("Show time course", &show_voxel_time_course);
+
+            if ( fl.files[sf].dim_t > 1 ) {
+                ImGui::Checkbox("Show time course", &show_voxel_time_course);
+            }
 
             if (!show_voxel_inspector) {
                 ImGui::EndDisabled();
             }
 
 
-            if (fl.files[sf].dim_t > 1) {
+            if ( fl.files[sf].dim_t > 1 ) {
                 // ----------------------------------------------------------------------------------------------------
                 ImGui::SeparatorText("CORRELATIONS CONTROLS");
                 // ----------------------------------------------------------------------------------------------------
