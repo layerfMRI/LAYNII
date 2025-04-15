@@ -674,9 +674,29 @@ namespace IDA_IO
         void saveNiftiDataFloat(FileInfo& fi, float* p_data)
         {
             printf("\rSaving...\n"); 
+
+            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // size_t last_slash = fi.path.find_last_of("/\\");
+            size_t dot_pos = fi.path.find_last_of('.');
+
+            // Handle .nii.gz double extension
+            if (fi.path.substr(dot_pos) == ".gz" && fi.path.substr(dot_pos - 4, 4) == ".nii") {
+                dot_pos -= 4;
+            }
+
+            std::string path_out = fi.path.substr(0, dot_pos) + "_voxel_corr" + 
+                   "_x-" + std::to_string(fi.voxel_i) +
+                   "_y-" + std::to_string(fi.voxel_j) +
+                   "_z-" + std::to_string(fi.voxel_k) +
+                   fi.path.substr(dot_pos);
+
+            std::cout << fi.path << std::endl;
+            std::cout << path_out << std::endl;
+            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
             printf("\r  Writing header...\n"); 
             // Open gzipped file for writing
-            gzFile file = gzopen("/Users/faruk/Documents/test-LN3_IDA/TEST-save.nii.gz", "wb");
+            gzFile file = gzopen(path_out.c_str(), "wb");
             if (!file) {
                 std::cerr << "Failed to open output.nii.gz\n";
             }
