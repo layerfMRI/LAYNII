@@ -669,6 +669,127 @@ namespace IDA_IO
         }
 
         // ============================================================================================================
+        // Procedure to save nifti
+        // ============================================================================================================
+        void saveNiftiDataTest(FileInfo& fi)
+        {
+            printf("\rSaving...\n"); 
+            printf("\r  Writing header...\n"); 
+            // Open gzipped file for writing
+            gzFile file = gzopen("/Users/faruk/Documents/test-LN3_IDA/TEST-save.nii.gz", "wb");
+            if (!file) {
+                std::cerr << "Failed to open output.nii.gz\n";
+            }
+
+            // --------------------------------------------------------------------------------------------------------
+            // Write into the structure byte by byte
+            // --------------------------------------------------------------------------------------------------------
+            gzwrite(file, &fi.header.sizeof_hdr, 4);            
+
+            // Unused fields
+            gzwrite(file, &fi.header.data_type, 10);     // unused
+            gzwrite(file, &fi.header.db_name, 18);       // unused
+            gzwrite(file, &fi.header.extents, 4);        // unused
+            gzwrite(file, &fi.header.session_error, 2);  // unused
+            gzwrite(file, &fi.header.regular, 1);        // unused
+
+            // 1-byte
+            gzwrite(file, &fi.header.dim_info, 1);
+
+            // 2-bytes
+            gzwrite(file, &fi.header.dim, 16);  // 2*8
+
+            // Unused fields
+            gzwrite(file, &fi.header.intent_p1, 4);  // unused
+            gzwrite(file, &fi.header.intent_p2, 4);  // unused
+            gzwrite(file, &fi.header.intent_p3, 4);  // unused
+
+            // 2-bytes
+            gzwrite(file, &fi.header.intent_code, 2);
+            gzwrite(file, &fi.header.datatype, 2);
+            gzwrite(file, &fi.header.bitpix, 2);
+            gzwrite(file, &fi.header.slice_start, 2);
+
+            // 4-bytes
+            gzwrite(file, &fi.header.pixdim, 32);  // 4*8
+            gzwrite(file, &fi.header.vox_offset, 4);
+            gzwrite(file, &fi.header.scl_slope, 4);
+            gzwrite(file, &fi.header.scl_inter, 4);
+
+            // 2-bytes
+            gzwrite(file, &fi.header.slice_end, 2);
+
+            // 1-byte
+            gzwrite(file, &fi.header.slice_code, 1);
+            gzwrite(file, &fi.header.xyzt_units, 1);
+
+            // 4-bytes
+            gzwrite(file, &fi.header.cal_max, 4);
+            gzwrite(file, &fi.header.cal_min, 4);
+            gzwrite(file, &fi.header.slice_duration, 4);
+            gzwrite(file, &fi.header.toffset, 4);
+            gzwrite(file, &fi.header.glmax, 4);
+            gzwrite(file, &fi.header.glmin, 4);
+
+            // 1-byte
+            gzwrite(file, &fi.header.descrip, 80);  // 1*80
+            gzwrite(file, &fi.header.aux_file, 24);  // 1*24
+
+            // 2-bytes
+            gzwrite(file, &fi.header.qform_code, 2);
+            gzwrite(file, &fi.header.sform_code, 2);
+
+            // 4-bytes
+            gzwrite(file, &fi.header.quatern_b, 4);
+            gzwrite(file, &fi.header.quatern_c, 4);
+            gzwrite(file, &fi.header.quatern_d, 4);
+            gzwrite(file, &fi.header.qoffset_x, 4);
+            gzwrite(file, &fi.header.qoffset_y, 4);
+            gzwrite(file, &fi.header.qoffset_z, 4);
+            gzwrite(file, &fi.header.srow_x, 16);  // 4*4
+            gzwrite(file, &fi.header.srow_y, 16);  // 4*4
+            gzwrite(file, &fi.header.srow_z, 16);  // 4*4
+
+            // 1-byte
+            gzwrite(file, &fi.header.intent_name, 16);  // 1*16
+            gzwrite(file, &fi.header.magic, 4);  // 1*4
+
+            // NOTE[taken from nifti-1 documentation]: After the end of the 348 byte header (after the magic field),
+            // the next 4 bytes are a char array field named "extension". By default, all 4 bytes of this array should 
+            // be set to zero. In a .nii file, these 4 bytes will always be present, since the earliest start point for 
+            // the image data is byte #352.
+            gzwrite(file, &fi.header.extension, 4);  // 1*4
+
+            // --------------------------------------------------------------------------------------------------------
+            // Pad with zeros until the voxel offser
+            // --------------------------------------------------------------------------------------------------------
+            char zero_byte = 0;
+            const int offset = fi.header.vox_offset - 352;
+            for (int i = 0; i < offset; ++i) {
+                gzwrite(file, &zero_byte, sizeof(zero_byte));
+            }
+
+            // --------------------------------------------------------------------------------------------------------
+            // Write voxel data
+            // --------------------------------------------------------------------------------------------------------
+            printf("\r  Writing voxel data...\n"); 
+            // Compute number of voxels
+            const uint64_t nr_data_points = fi.nr_voxels * fi.header.dim[4];
+
+            // Cast voxels to desired output data data type
+            int16_t* buffer = (int16_t*)malloc(nr_data_points * sizeof(int16_t));
+            for (uint64_t i = 0; i < nr_data_points; ++i) {
+                buffer[i] = static_cast<int16_t>(fi.p_data_float[i]);
+            }
+
+            // Cast voxels to desired output data data type
+            gzwrite(file, buffer, nr_data_points * sizeof(int16_t));
+            gzclose(file);
+            free(buffer);
+            printf("\r  Saved.\n"); 
+        }
+
+        // ============================================================================================================
         // Procedures to load slices into memory as float
         // ============================================================================================================
         void loadSliceK_float(FileInfo& fi)

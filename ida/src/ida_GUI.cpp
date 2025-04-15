@@ -114,6 +114,20 @@ namespace IDA
             }
         }
 
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        if (sf >= 0)
+        {
+            if (fl.files[sf].loaded_data)
+            {
+                ImGui::SameLine();
+                if (ImGui::Button("[TEST] Save Nifti"))
+                {
+                    fl.saveNiftiDataTest(fl.files[sf]);
+                }            
+            }
+        }
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
         // Display list of selectable file names
         for (int n = 0; n < nr_files; n++)
         {
