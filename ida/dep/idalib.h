@@ -49,10 +49,3 @@ void jv_compute_gradients_3D_over_z(const float* data, float* data_out,
 
 void jv_compute_hessian_3D(const float* data, float* data_shorthessian,
                            const int nx, const int ny, const int nz, const int nt);
-
-void jv_compute_eigen_values_3D(const float* data_shorthessian, float* data_eigvals,
-                                const int nx, const int ny, const int nz, const int nt);
-
-void jv_compute_vesselness_3D_v2(const float* data_eigvals, float* data_out, const int data_size,
-                                 const float A, const float B, const float C,
-                                 const bool include_dark, const bool include_bright);
