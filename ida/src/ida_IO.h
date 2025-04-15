@@ -671,7 +671,7 @@ namespace IDA_IO
         // ============================================================================================================
         // Procedure to save nifti
         // ============================================================================================================
-        void saveNiftiDataTest(FileInfo& fi)
+        void saveNiftiDataFloat(FileInfo& fi, float* p_data)
         {
             printf("\rSaving...\n"); 
             printf("\r  Writing header...\n"); 
@@ -706,8 +706,10 @@ namespace IDA_IO
 
             // 2-bytes
             gzwrite(file, &fi.header.intent_code, 2);
-            gzwrite(file, &fi.header.datatype, 2);
-            gzwrite(file, &fi.header.bitpix, 2);
+            short temp_dtype = 16;  // Float
+            gzwrite(file, &temp_dtype, 2);
+            short temp_bitpix = 32;
+            gzwrite(file, &temp_bitpix, 2);
             gzwrite(file, &fi.header.slice_start, 2);
 
             // 4-bytes
@@ -777,13 +779,13 @@ namespace IDA_IO
             const uint64_t nr_data_points = fi.nr_voxels * fi.header.dim[4];
 
             // Cast voxels to desired output data data type
-            int16_t* buffer = (int16_t*)malloc(nr_data_points * sizeof(int16_t));
+            float* buffer = (float*)malloc(nr_data_points * sizeof(float));
             for (uint64_t i = 0; i < nr_data_points; ++i) {
-                buffer[i] = static_cast<int16_t>(fi.p_data_float[i]);
+                buffer[i] = static_cast<float>(p_data[i]);
             }
 
             // Cast voxels to desired output data data type
-            gzwrite(file, buffer, nr_data_points * sizeof(int16_t));
+            gzwrite(file, buffer, nr_data_points * sizeof(float));
             gzclose(file);
             free(buffer);
             printf("\r  Saved.\n"); 
@@ -1231,6 +1233,72 @@ namespace IDA_IO
                     fi.p_sliceI_float_corr[index2D] = r;
                 }
             }
+        }
+
+        void computeCorrelationsForVolume_float(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.time_course_offset) - fi.time_course_onset;
+
+            // Prepare volume output
+            float* temp_vol_map = (float*)malloc(fi.nr_voxels * sizeof(float));
+
+            // Prepare 1D arrays buffers that will be used to compute correlations
+            float* x_arr = (float*)malloc(fi.dim_t * sizeof(float));
+            float* y_arr = (float*)malloc(fi.dim_t * sizeof(float));
+
+            // Prepare x array (selected voxel's data)
+            for (uint64_t t = 0; t < nt; ++t) {
+                uint64_t index4D = fi.voxel_i + fi.voxel_j*ni + fi.voxel_k*ni*nj + fi.nr_voxels*t;
+                uint64_t tt = (t + fi.time_course_shift) % nt;
+                *(x_arr + tt) = fi.p_data_float[index4D];
+            }
+
+            // Compute correlations for the whole volume
+            for (uint64_t i = 0; i < ni; ++i) {
+                for (uint64_t j = 0; j < nj; ++j) {
+                    for (uint64_t k = 0; k < nk; ++k) {
+
+                        // Prepare y array
+                        for (uint64_t t = 0; t < nt; ++t) {
+                            uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+                            *(y_arr + t) = fi.p_data_float[index4D];
+                        }
+
+                        // Compute sums for covariance and variances
+                        double sum_X = 0, sum_Y = 0, sum_XY = 0;
+                        double sum_X2 = 0, sum_Y2 = 0;
+                        for (uint64_t t = 0; t < nt; t++) {
+                            sum_X += x_arr[t];
+                            sum_Y += y_arr[t];
+                            sum_XY += x_arr[t] * y_arr[t];
+                            sum_X2 += x_arr[t] * x_arr[t];
+                            sum_Y2 += y_arr[t] * y_arr[t];
+                        }
+
+                        // Compute covariance and variances
+                        double numerator = sum_XY - (sum_X * sum_Y / nt);
+                        double denominator = sqrt((sum_X2 - (sum_X * sum_X / nt)) * (sum_Y2 - (sum_Y * sum_Y / nt)));
+
+                        // Handle edge cases where denominator might be zero
+                        float r;
+                        if (denominator == 0) {
+                            r = 0.0f; // No correlation if variance is zero
+                        }
+
+                        // Compute the Pearson correlation coefficient
+                        r = static_cast<float>(numerator / denominator);
+                        uint64_t index3D = i + j*ni + k*ni*nj;
+                        temp_vol_map[index3D] = r;
+                    }
+                }
+            }
+
+            // Save the output map
+            saveNiftiDataFloat(fi, temp_vol_map);
+            free(temp_vol_map);
         }
 
         // ============================================================================================================

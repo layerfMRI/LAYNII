@@ -114,20 +114,6 @@ namespace IDA
             }
         }
 
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        if (sf >= 0)
-        {
-            if (fl.files[sf].loaded_data)
-            {
-                ImGui::SameLine();
-                if (ImGui::Button("[TEST] Save Nifti"))
-                {
-                    fl.saveNiftiDataTest(fl.files[sf]);
-                }            
-            }
-        }
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
         // Display list of selectable file names
         for (int n = 0; n < nr_files; n++)
         {
@@ -600,8 +586,8 @@ namespace IDA
                 // ----------------------------------------------------------------------------------------------------
                 ImGui::SeparatorText("CORRELATIONS CONTROLS");
                 // ----------------------------------------------------------------------------------------------------
-                if (fl.files[sf].visualization_mode != 3) {
-                    if (ImGui::Button("Enable Correlations")) {
+                if ( fl.files[sf].visualization_mode != 3 ) {
+                    if ( ImGui::Button("Enable Correlations") ) {
                         show_voxel_inspector = true;
                         fl.files[sf].voxel_i = static_cast<uint64_t>(fl.files[sf].display_i);
                         fl.files[sf].voxel_j = static_cast<uint64_t>(fl.files[sf].display_j);
@@ -635,13 +621,16 @@ namespace IDA
                         request_image_data_update = true;
                     }
                 } else {
-                    if (ImGui::Button("Disable Correlations")) {
+                    if ( ImGui::Button("Disable Correlations") ) {
                         request_image_data_update = true;
                         fl.files[sf].visualization_mode = 0;
                     }
-                }
 
-                if (fl.files[sf].visualization_mode == 3) {
+                    ImGui::SameLine();
+                    if ( ImGui::Button("Save Map") ) {
+                        fl.computeCorrelationsForVolume_float(fl.files[sf]);
+                    }
+
                     if ( ImGui::SliderInt("Time Course Onset ", &fl.files[sf].time_course_onset , 0, fl.files[sf].dim_t, "%i") ) {
                         request_image_data_update = true;
                     }
