@@ -119,7 +119,7 @@ namespace IDA_IO
         GLuint      textureIDj_RGB;         // OpenGL needs this
         GLuint      textureIDi_RGB;         // OpenGL needs this
         // Time course related ----------------------------------------------------------------------------------------
-        uint64_t    focus_voxel_index4D;  // Focused voxel 4D index
+        uint64_t    focus_voxel_index4D;       // Focused voxel 4D index
         uint8_t     time_course_nr;            // Number of selected time course voxels
         uint64_t    time_course_voxel_i[255];  // Selectec voxel index i
         uint64_t    time_course_voxel_j[255];  // Selectec voxel index j

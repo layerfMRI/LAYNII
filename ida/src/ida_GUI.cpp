@@ -645,13 +645,84 @@ namespace IDA
                         fl.computeCorrelationsForVolume_float(fl.files[sf]);
                     }
 
-                    if ( ImGui::SliderInt("Time Course Onset ", &fl.files[sf].time_course_onset , 0, fl.files[sf].dim_t, "%i") ) {
+                    // ------------------------------------------------------------------------------------------------
+                    // Time course onset adjustments
+                    // ------------------------------------------------------------------------------------------------
+                    ImGui::PushButtonRepeat(true);
+                    if (ImGui::ArrowButton("##TC_onset_decrease", ImGuiDir_Left)) {
+                        fl.files[sf].time_course_onset -= 1;
+                        if ( fl.files[sf].time_course_onset < 0 ) {
+                            fl.files[sf].time_course_onset = 0;
+                        }
                         request_image_data_update = true;
                     }
-                    if ( ImGui::SliderInt("Time Course Offset", &fl.files[sf].time_course_offset, 0, fl.files[sf].dim_t, "%i") ) {
+                    ImGui::SameLine(0.0f, spacing);
+                    if (ImGui::ArrowButton("##TC_onset_increase", ImGuiDir_Right)) {
+                        fl.files[sf].time_course_onset += 1;
+                        if ( fl.files[sf].time_course_onset == fl.files[sf].time_course_offset ) {
+                            fl.files[sf].time_course_onset = fl.files[sf].time_course_offset - 1;
+                        }
                         request_image_data_update = true;
                     }
-                    if ( ImGui::SliderInt("Time Course Shift", &fl.files[sf].time_course_shift, -fl.files[sf].dim_t, fl.files[sf].dim_t, "%i") ) {
+                    ImGui::PopButtonRepeat();
+                    ImGui::SameLine();
+                    if ( ImGui::SliderInt("Onset ", &fl.files[sf].time_course_onset , 0, fl.files[sf].dim_t, "%i") ) {
+                        if ( fl.files[sf].time_course_onset >= fl.files[sf].time_course_offset ) {
+                            fl.files[sf].time_course_onset = fl.files[sf].time_course_offset - 1;
+                        }
+                        request_image_data_update = true;
+                    }
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Time course offset adjustments
+                    // ------------------------------------------------------------------------------------------------
+                    ImGui::PushButtonRepeat(true);
+                    if (ImGui::ArrowButton("##TC_offset_decrease", ImGuiDir_Left)) {
+                        fl.files[sf].time_course_offset -= 1;
+                        if ( fl.files[sf].time_course_offset == fl.files[sf].time_course_onset ) {
+                            fl.files[sf].time_course_offset = fl.files[sf].time_course_onset + 1;
+                        }
+                        request_image_data_update = true;
+                    }
+                    ImGui::SameLine(0.0f, spacing);
+                    if (ImGui::ArrowButton("##TC_offset_increase", ImGuiDir_Right)) {
+                        fl.files[sf].time_course_offset += 1;
+                        if ( fl.files[sf].time_course_offset > fl.files[sf].dim_t ) {
+                            fl.files[sf].time_course_offset = fl.files[sf].dim_t;
+                        }
+                        request_image_data_update = true;
+                    }
+                    ImGui::PopButtonRepeat();
+                    ImGui::SameLine();
+                    if ( ImGui::SliderInt("Offset", &fl.files[sf].time_course_offset, 0, fl.files[sf].dim_t, "%i") ) {
+                        if ( fl.files[sf].time_course_offset <= fl.files[sf].time_course_onset ) {
+                            fl.files[sf].time_course_offset = fl.files[sf].time_course_onset + 1;
+                        }
+                        request_image_data_update = true;
+                    }
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Time course shift/lag adjustments
+                    // ------------------------------------------------------------------------------------------------
+                    ImGui::PushButtonRepeat(true);
+                    if ( ImGui::ArrowButton("##TC_shift_decrease", ImGuiDir_Left) ) {
+                        fl.files[sf].time_course_shift -= 1;
+                        if ( fl.files[sf].time_course_shift < -fl.files[sf].dim_t ) {
+                            fl.files[sf].time_course_shift = -fl.files[sf].dim_t;
+                        }
+                        request_image_data_update = true;
+                    }
+                    ImGui::SameLine(0.0f, spacing);
+                    if ( ImGui::ArrowButton("##TC_shift_increase", ImGuiDir_Right) ) {
+                        fl.files[sf].time_course_shift += 1;
+                        if ( fl.files[sf].time_course_shift > fl.files[sf].dim_t ) {
+                            fl.files[sf].time_course_shift = fl.files[sf].dim_t;
+                        }
+                        request_image_data_update = true;
+                    }
+                    ImGui::PopButtonRepeat();
+                    ImGui::SameLine();
+                    if ( ImGui::SliderInt("Shift", &fl.files[sf].time_course_shift, -fl.files[sf].dim_t, fl.files[sf].dim_t, "%i") ) {
                         request_image_data_update = true;
                     }
                 }

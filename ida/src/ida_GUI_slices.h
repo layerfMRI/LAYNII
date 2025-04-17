@@ -84,10 +84,10 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
                     fi.time_course_voxel_i[0] = fi.voxel_i;
                     fi.time_course_voxel_j[0] = fi.voxel_j;
                     fi.time_course_voxel_k[0] = fi.voxel_k;
+                    if ( fi.visualization_mode == 3) {
+                        request_image_data_update = true;
+                    }
                 }
-                if ( fi.visualization_mode == 3) {
-                    request_image_data_update = true;
-                }                
             }
         }
 
