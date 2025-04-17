@@ -1129,7 +1129,7 @@ namespace IDA_IO
 
             // Prepare x array (selected voxel's data)
             for (uint64_t t = 0; t < nt; ++t) {
-                uint64_t index4D = fi.voxel_i + fi.voxel_j*ni + fi.voxel_k*ni*nj + fi.nr_voxels*t;
+                uint64_t index4D = fi.time_course_voxel_i[0] + fi.time_course_voxel_j[0]*ni + fi.time_course_voxel_k[0]*ni*nj + fi.nr_voxels*t;
                 uint64_t tt = (t + fi.time_course_shift) % nt;
                 *(x_arr + tt) = fi.p_data_float[index4D];
             }

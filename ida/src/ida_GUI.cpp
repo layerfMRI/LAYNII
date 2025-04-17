@@ -18,10 +18,11 @@ namespace IDA
         static bool show_header_info     = false;
         static bool show_focused_voxel   = true;
         static bool show_mouse_crosshair = true;
-        static bool show_voxel_inspector = false;
-        static bool show_voxel_indices   = true;
+        static bool show_voxel_inspector = true;
+        static bool show_voxel_indices   = false;
         static bool show_voxel_value     = true;
-        static bool show_voxel_time_course  = false;
+        static bool show_voxel_time_course = false;
+        static bool lock_voxel_time_course = false; 
 
         static bool request_image_data_update = false;
         static bool request_image_update      = false;
@@ -43,10 +44,19 @@ namespace IDA
         ImGui::Begin("Keyboard & Mouse Controls + Debug"); 
         if (loaded_data)
         {
-            ImGui::Text("Image controls:");
-            ImGui::Text("  Move         : Focus + CRTL + Move");
-            ImGui::Text("  Zoom         : Hover + CRTL + Wheel");
-            ImGui::Text("  Slice Scroll : Hover + Wheel");
+            ImGui::Text("Image controls");
+            ImGui::Text("  Move             : Focus + CRTL + Move");
+            ImGui::Text("  Zoom             : Hover + CRTL + Wheel");
+            ImGui::Text("  Slice Scroll     : Hover + Wheel");
+            ImGui::Text("  Move focus voxel : W, A, S, D, Q, E, Z, X");
+
+            ImGui::Text("Time course controls");
+            ImGui::Text("  Update reference : Right click on slice");
+
+            ImGui::Text("Correlations controls");
+            ImGui::Text("  Freeze correlations : Left click on slice");
+            ImGui::Text("  Lag +1 : .");
+            ImGui::Text("  Lag -1 : ,");
         }
         ImGui::End();
 
@@ -271,7 +281,7 @@ namespace IDA
                 fl.files[sf].display_scale, fl.files[sf].display_k_offset_x, fl.files[sf].display_k_offset_y,
                 fl.files[sf].display_i, fl.files[sf].display_j, fl.files[sf].display_k, fl.files[sf].display_t,
                 fl.files[sf].visualization_mode, show_focused_voxel, show_mouse_crosshair,
-                request_image_data_update,
+                request_image_data_update, lock_voxel_time_course,
                 show_voxel_inspector, show_voxel_value, show_voxel_indices, show_voxel_time_course,
                 fl.files[sf].textureIDk, fl.files[sf].textureIDk_RGB, 3, fl.files[sf]
                 );
@@ -287,7 +297,7 @@ namespace IDA
                 fl.files[sf].display_scale, fl.files[sf].display_j_offset_x, fl.files[sf].display_j_offset_y,
                 fl.files[sf].display_i, fl.files[sf].display_k, fl.files[sf].display_j, fl.files[sf].display_t,
                 fl.files[sf].visualization_mode, show_focused_voxel, show_mouse_crosshair,
-                request_image_data_update,
+                request_image_data_update, lock_voxel_time_course,
                 show_voxel_inspector, show_voxel_value, show_voxel_indices, show_voxel_time_course,
                 fl.files[sf].textureIDj, fl.files[sf].textureIDj_RGB, 2, fl.files[sf]
                 );
@@ -304,7 +314,7 @@ namespace IDA
                 fl.files[sf].display_scale, fl.files[sf].display_i_offset_x, fl.files[sf].display_i_offset_y,
                 fl.files[sf].display_j, fl.files[sf].display_k, fl.files[sf].display_i,  fl.files[sf].display_t,
                 fl.files[sf].visualization_mode, show_focused_voxel, show_mouse_crosshair,
-                request_image_data_update,
+                request_image_data_update, lock_voxel_time_course,
                 show_voxel_inspector, show_voxel_value, show_voxel_indices, show_voxel_time_course,
                 fl.files[sf].textureIDi, fl.files[sf].textureIDi_RGB, 1, fl.files[sf]
                 );
@@ -314,7 +324,7 @@ namespace IDA
         // ============================================================================================================
         // Time course view
         // ============================================================================================================
-        ImGui::Begin("Chronovisor"); 
+        ImGui::Begin("Time course [WIP]"); 
         if (loaded_data && fl.files[sf].dim_t > 1)
         {
             // ImGui::Text("Voxel : [%llu i, %llu j, %llu k]", fl.files[sf].voxel_i, fl.files[sf].voxel_j, fl.files[sf].voxel_k);
@@ -594,6 +604,10 @@ namespace IDA
                         fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
                         fl.files[sf].voxel_t = static_cast<uint64_t>(fl.files[sf].display_t);
 
+                        fl.files[sf].time_course_voxel_i[0] = fl.files[sf].voxel_i;
+                        fl.files[sf].time_course_voxel_j[0] = fl.files[sf].voxel_j;
+                        fl.files[sf].time_course_voxel_k[0] = fl.files[sf].voxel_k;
+
                         fl.prepareRBGSlices(fl.files[sf]);
 
                         // Prepare data to hold correlation maps
@@ -765,7 +779,7 @@ namespace IDA
                     request_image_update = true;
                 }
 
-                if ( request_image_update) {
+                if ( request_image_update ) {
                     fl.computeCorrelationsForSlices_float(fl.files[sf]);
 
                     fl.loadSliceK_uint8(fl.files[sf]);

@@ -29,7 +29,7 @@ void SampleVoxelTimeCourse(IDA_IO::FileInfo& fi, uint8_t idx) {
 // ====================================================================================================================
 void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_screen_pos, int& visualization_mode,
                           bool& show_voxel_value, bool& show_voxel_indices, bool& show_voxel_time_course,
-                          bool& request_image_data_update) {
+                          bool& request_image_data_update, bool& lock_voxel_time_course) {
 
     // Definitions
     ImGuiIO& io = ImGui::GetIO();
@@ -73,15 +73,21 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
         // ------------------------------------------------------------------------------------------------------------
         // Pull voxel data from 4D into 1D memory, only if the hovered over voxel changes
         // ------------------------------------------------------------------------------------------------------------
+        if (ImGui::IsMouseClicked(1)) {  // 0 = left mouse button, 
+            lock_voxel_time_course = !lock_voxel_time_course;
+        }
+
         if ( fi.focus_voxel_index4D != index4D ) {
             fi.focus_voxel_index4D = index4D;
-            if (fi.dim_t > 0) {
-                fi.time_course_voxel_i[0] = fi.voxel_i;
-                fi.time_course_voxel_j[0] = fi.voxel_j;
-                fi.time_course_voxel_k[0] = fi.voxel_k;
-            }
-            if ( fi.visualization_mode == 3) {
-                request_image_data_update = true;
+            if ( lock_voxel_time_course == false ) {
+                if (fi.dim_t > 0) {
+                    fi.time_course_voxel_i[0] = fi.voxel_i;
+                    fi.time_course_voxel_j[0] = fi.voxel_j;
+                    fi.time_course_voxel_k[0] = fi.voxel_k;
+                }
+                if ( fi.visualization_mode == 3) {
+                    request_image_data_update = true;
+                }                
             }
         }
 
@@ -89,10 +95,14 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
         // Render inspector fields
         // ------------------------------------------------------------------------------------------------------------
         if ( show_voxel_value ) {
-            ImGui::Text("Value : %.6f", fi.p_time_course_float[fi.voxel_t]);                        
+            ImGui::Text("Value : %.3f", fi.p_data_float[fi.focus_voxel_index4D]);
+            if ( visualization_mode == 3 ) {
+                ImGui::SameLine();
+                ImGui::Text("| Corr : [WIP]");
+            }
         }
         if ( show_voxel_indices ) {
-            ImGui::Text("Index : [%llu i, %llu j, %llu k, %llu t]", fi.voxel_i, fi.voxel_j, fi.voxel_k, fi.voxel_t);                        
+            ImGui::Text("Index : [%llu i, %llu j, %llu k, %llu t]", fi.voxel_i, fi.voxel_j, fi.voxel_k, fi.voxel_t);
         }
 
         if ( show_voxel_time_course ) {
@@ -122,7 +132,7 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
                  float& display_scale, float& display_offset_x, float& display_offset_y,
                  int& disp_idx_1, int& disp_idx_2, int& disp_idx_3, int& disp_idx_4,
                  int& visualization_mode, bool& show_focused_voxel, bool& show_mouse_crosshair,
-                 bool& request_image_data_update, 
+                 bool& request_image_data_update, bool& lock_voxel_time_course,
                  bool& show_voxel_inspector, bool& show_voxel_value, bool& show_voxel_indices, bool& show_voxel_time_course,
                  GLuint& textureID, GLuint& textureID_RGB, int slice_window, IDA_IO::FileInfo& fi) {
 
@@ -240,7 +250,6 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
             drawList = ImGui::GetWindowDrawList();
             drawList->AddRect(top_left, bottom_right, color, 0.0f, 0, 2.0f);
         }
-
     }
 
     // ----------------------------------------------------------------------------------------------------------------
@@ -273,29 +282,31 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
         fi.display_k = static_cast<int>(fi.voxel_k);
         request_image_data_update = true;
 
-        // Shift already clicked voxels' indices further in the array
-        for (uint8_t i=0; i < fi.time_course_nr; i++) {
-            fi.time_course_voxel_i[i+1] = fi.time_course_voxel_i[i];
-            fi.time_course_voxel_j[i+1] = fi.time_course_voxel_j[i];
-            fi.time_course_voxel_k[i+1] = fi.time_course_voxel_k[i];
-        }
+        if ( lock_voxel_time_course == false ) {
+            // Shift already clicked voxels' indices further in the array
+            for (uint8_t i=0; i < fi.time_course_nr; i++) {
+                fi.time_course_voxel_i[i+1] = fi.time_course_voxel_i[i];
+                fi.time_course_voxel_j[i+1] = fi.time_course_voxel_j[i];
+                fi.time_course_voxel_k[i+1] = fi.time_course_voxel_k[i];
+            }
 
-        // Store newly clicked voxel's indices at the first element
-        fi.time_course_voxel_i[0] = fi.voxel_i;
-        fi.time_course_voxel_j[0] = fi.voxel_j;
-        fi.time_course_voxel_k[0] = fi.voxel_k;
+            // Store newly clicked voxel's indices at the first element
+            fi.time_course_voxel_i[0] = fi.voxel_i;
+            fi.time_course_voxel_j[0] = fi.voxel_j;
+            fi.time_course_voxel_k[0] = fi.voxel_k;
 
-        // Increment number of time courses up to a maximum numer
-        // TODO: Make this work with more than 2 time courses
-        if ( fi.time_course_nr < 2 ) {
-            fi.time_course_nr += 1;
+            // Increment number of time courses up to a maximum numer
+            // TODO: Make this work with more than 2 time courses
+            if ( fi.time_course_nr < 2 ) {
+                fi.time_course_nr += 1;
+            }            
         }
     }
 
     if ( show_voxel_inspector ) {
         RenderVoxelInspector(fi, slice_window, cursor_screen_pos, visualization_mode,
             show_voxel_value, show_voxel_indices, show_voxel_time_course,
-            request_image_data_update
+            request_image_data_update, lock_voxel_time_course
             );
     };
 
