@@ -1149,7 +1149,7 @@ namespace IDA_IO
                     // Compute sums for covariance and variances
                     double sum_X = 0, sum_Y = 0, sum_XY = 0;
                     double sum_X2 = 0, sum_Y2 = 0;
-                    for (int t = 0; t < nt; t++) {
+                    for (int t = 0; t < nt; ++t) {
                         sum_X += x_arr[t];
                         sum_Y += y_arr[t];
                         sum_XY += x_arr[t] * y_arr[t];
