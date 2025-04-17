@@ -117,7 +117,7 @@ namespace IDA
                 fl.files[sf].overlay_min = fl.files[sf].display_min;
                 fl.files[sf].overlay_max = fl.files[sf].display_max;
 
-                fl.files[sf].time_course_nr = 1;
+                fl.files[sf].tc_nr = 1;
 
                 fl.files[sf].loaded_data = true;
                 loaded_data = fl.files[sf].loaded_data;
@@ -251,18 +251,18 @@ namespace IDA
             // --------------------------------------------------------------------------------------------------------
             // Shift/lag (forward-backwad) the focused voxel's timepoints
             if (ImGui::IsKeyPressed(ImGuiKey_Comma, true)) {
-                if (fl.files[sf].time_course_shift < -fl.files[sf].dim_t + 1) {
-                    fl.files[sf].time_course_shift = fl.files[sf].dim_t;
+                if (fl.files[sf].tc_shift < -fl.files[sf].dim_t + 1) {
+                    fl.files[sf].tc_shift = fl.files[sf].dim_t;
                 } else {
-                    fl.files[sf].time_course_shift = fl.files[sf].time_course_shift - 1;
+                    fl.files[sf].tc_shift = fl.files[sf].tc_shift - 1;
                 }
                 request_image_data_update = true;
             }
             if (ImGui::IsKeyPressed(ImGuiKey_Period, true)) {
-                if (fl.files[sf].time_course_shift > fl.files[sf].dim_t - 1) {
-                    fl.files[sf].time_course_shift = -fl.files[sf].dim_t;
+                if (fl.files[sf].tc_shift > fl.files[sf].dim_t - 1) {
+                    fl.files[sf].tc_shift = -fl.files[sf].dim_t;
                 } else {
-                    fl.files[sf].time_course_shift = fl.files[sf].time_course_shift + 1; 
+                    fl.files[sf].tc_shift = fl.files[sf].tc_shift + 1; 
                 }
                 request_image_data_update = true;
             }
@@ -329,7 +329,7 @@ namespace IDA
         {
             // ImGui::Text("Voxel : [%llu i, %llu j, %llu k]", fl.files[sf].voxel_i, fl.files[sf].voxel_j, fl.files[sf].voxel_k);
 
-            for (uint8_t i_tc = 0; i_tc < fl.files[sf].time_course_nr; i_tc++) {
+            for (uint8_t i_tc = 0; i_tc < fl.files[sf].tc_nr; i_tc++) {
 
                 SampleVoxelTimeCourse(fl.files[sf], i_tc);
 
@@ -344,8 +344,8 @@ namespace IDA
                                    IM_COL32(255, 255, 255, 255), 0.0f, 0, 2.0f);
 
                 // Helper: scale Y values
-                float max_y = fl.files[sf].time_course_max;
-                float min_y = fl.files[sf].time_course_min;
+                float max_y = fl.files[sf].tc_max;
+                float min_y = fl.files[sf].tc_min;
 
                 auto get_screen_point = [&](int i, float* data) {
                     float x = pos.x + (i / float(fl.files[sf].dim_t - 1)) * plot_size.x;
@@ -355,15 +355,15 @@ namespace IDA
 
                 // Draw first plot
                 for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
-                    draw_list->AddLine(get_screen_point(i, fl.files[sf].p_time_course_float),
-                                       get_screen_point(i + 1, fl.files[sf].p_time_course_float),
+                    draw_list->AddLine(get_screen_point(i, fl.files[sf].p_tc_float),
+                                       get_screen_point(i + 1, fl.files[sf].p_tc_float),
                                        IM_COL32(255, 255, 255, 255), 1.0f);
                 }
 
                 // // Draw second plot
                 // for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
-                //     draw_list->AddLine(get_screen_point(i, fl.files[sf].p_time_course_float),
-                //                        get_screen_point(i + 1, fl.files[sf].p_time_course_float),
+                //     draw_list->AddLine(get_screen_point(i, fl.files[sf].p_tc_float),
+                //                        get_screen_point(i + 1, fl.files[sf].p_tc_float),
                 //                        IM_COL32(255, 255, 255, 255), 1.0f);
                 // }
             }
@@ -604,9 +604,9 @@ namespace IDA
                         fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
                         fl.files[sf].voxel_t = static_cast<uint64_t>(fl.files[sf].display_t);
 
-                        fl.files[sf].time_course_voxel_i[0] = fl.files[sf].voxel_i;
-                        fl.files[sf].time_course_voxel_j[0] = fl.files[sf].voxel_j;
-                        fl.files[sf].time_course_voxel_k[0] = fl.files[sf].voxel_k;
+                        fl.files[sf].tc_voxel_i[0] = fl.files[sf].voxel_i;
+                        fl.files[sf].tc_voxel_j[0] = fl.files[sf].voxel_j;
+                        fl.files[sf].tc_voxel_k[0] = fl.files[sf].voxel_k;
 
                         fl.prepareRBGSlices(fl.files[sf]);
 
@@ -650,25 +650,25 @@ namespace IDA
                     // ------------------------------------------------------------------------------------------------
                     ImGui::PushButtonRepeat(true);
                     if (ImGui::ArrowButton("##TC_onset_decrease", ImGuiDir_Left)) {
-                        fl.files[sf].time_course_onset -= 1;
-                        if ( fl.files[sf].time_course_onset < 0 ) {
-                            fl.files[sf].time_course_onset = 0;
+                        fl.files[sf].tc_onset -= 1;
+                        if ( fl.files[sf].tc_onset < 0 ) {
+                            fl.files[sf].tc_onset = 0;
                         }
                         request_image_data_update = true;
                     }
                     ImGui::SameLine(0.0f, spacing);
                     if (ImGui::ArrowButton("##TC_onset_increase", ImGuiDir_Right)) {
-                        fl.files[sf].time_course_onset += 1;
-                        if ( fl.files[sf].time_course_onset == fl.files[sf].time_course_offset ) {
-                            fl.files[sf].time_course_onset = fl.files[sf].time_course_offset - 1;
+                        fl.files[sf].tc_onset += 1;
+                        if ( fl.files[sf].tc_onset == fl.files[sf].tc_offset ) {
+                            fl.files[sf].tc_onset = fl.files[sf].tc_offset - 1;
                         }
                         request_image_data_update = true;
                     }
                     ImGui::PopButtonRepeat();
                     ImGui::SameLine();
-                    if ( ImGui::SliderInt("Onset ", &fl.files[sf].time_course_onset , 0, fl.files[sf].dim_t, "%i") ) {
-                        if ( fl.files[sf].time_course_onset >= fl.files[sf].time_course_offset ) {
-                            fl.files[sf].time_course_onset = fl.files[sf].time_course_offset - 1;
+                    if ( ImGui::SliderInt("Onset ", &fl.files[sf].tc_onset , 0, fl.files[sf].dim_t, "%i") ) {
+                        if ( fl.files[sf].tc_onset >= fl.files[sf].tc_offset ) {
+                            fl.files[sf].tc_onset = fl.files[sf].tc_offset - 1;
                         }
                         request_image_data_update = true;
                     }
@@ -678,25 +678,25 @@ namespace IDA
                     // ------------------------------------------------------------------------------------------------
                     ImGui::PushButtonRepeat(true);
                     if (ImGui::ArrowButton("##TC_offset_decrease", ImGuiDir_Left)) {
-                        fl.files[sf].time_course_offset -= 1;
-                        if ( fl.files[sf].time_course_offset == fl.files[sf].time_course_onset ) {
-                            fl.files[sf].time_course_offset = fl.files[sf].time_course_onset + 1;
+                        fl.files[sf].tc_offset -= 1;
+                        if ( fl.files[sf].tc_offset == fl.files[sf].tc_onset ) {
+                            fl.files[sf].tc_offset = fl.files[sf].tc_onset + 1;
                         }
                         request_image_data_update = true;
                     }
                     ImGui::SameLine(0.0f, spacing);
                     if (ImGui::ArrowButton("##TC_offset_increase", ImGuiDir_Right)) {
-                        fl.files[sf].time_course_offset += 1;
-                        if ( fl.files[sf].time_course_offset > fl.files[sf].dim_t ) {
-                            fl.files[sf].time_course_offset = fl.files[sf].dim_t;
+                        fl.files[sf].tc_offset += 1;
+                        if ( fl.files[sf].tc_offset > fl.files[sf].dim_t ) {
+                            fl.files[sf].tc_offset = fl.files[sf].dim_t;
                         }
                         request_image_data_update = true;
                     }
                     ImGui::PopButtonRepeat();
                     ImGui::SameLine();
-                    if ( ImGui::SliderInt("Offset", &fl.files[sf].time_course_offset, 0, fl.files[sf].dim_t, "%i") ) {
-                        if ( fl.files[sf].time_course_offset <= fl.files[sf].time_course_onset ) {
-                            fl.files[sf].time_course_offset = fl.files[sf].time_course_onset + 1;
+                    if ( ImGui::SliderInt("Offset", &fl.files[sf].tc_offset, 0, fl.files[sf].dim_t, "%i") ) {
+                        if ( fl.files[sf].tc_offset <= fl.files[sf].tc_onset ) {
+                            fl.files[sf].tc_offset = fl.files[sf].tc_onset + 1;
                         }
                         request_image_data_update = true;
                     }
@@ -706,23 +706,23 @@ namespace IDA
                     // ------------------------------------------------------------------------------------------------
                     ImGui::PushButtonRepeat(true);
                     if ( ImGui::ArrowButton("##TC_shift_decrease", ImGuiDir_Left) ) {
-                        fl.files[sf].time_course_shift -= 1;
-                        if ( fl.files[sf].time_course_shift < -fl.files[sf].dim_t ) {
-                            fl.files[sf].time_course_shift = -fl.files[sf].dim_t;
+                        fl.files[sf].tc_shift -= 1;
+                        if ( fl.files[sf].tc_shift < -fl.files[sf].dim_t ) {
+                            fl.files[sf].tc_shift = -fl.files[sf].dim_t;
                         }
                         request_image_data_update = true;
                     }
                     ImGui::SameLine(0.0f, spacing);
                     if ( ImGui::ArrowButton("##TC_shift_increase", ImGuiDir_Right) ) {
-                        fl.files[sf].time_course_shift += 1;
-                        if ( fl.files[sf].time_course_shift > fl.files[sf].dim_t ) {
-                            fl.files[sf].time_course_shift = fl.files[sf].dim_t;
+                        fl.files[sf].tc_shift += 1;
+                        if ( fl.files[sf].tc_shift > fl.files[sf].dim_t ) {
+                            fl.files[sf].tc_shift = fl.files[sf].dim_t;
                         }
                         request_image_data_update = true;
                     }
                     ImGui::PopButtonRepeat();
                     ImGui::SameLine();
-                    if ( ImGui::SliderInt("Shift", &fl.files[sf].time_course_shift, -fl.files[sf].dim_t, fl.files[sf].dim_t, "%i") ) {
+                    if ( ImGui::SliderInt("Shift", &fl.files[sf].tc_shift, -fl.files[sf].dim_t, fl.files[sf].dim_t, "%i") ) {
                         request_image_data_update = true;
                     }
                 }

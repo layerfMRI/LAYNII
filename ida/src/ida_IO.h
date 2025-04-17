@@ -68,47 +68,47 @@ namespace IDA_IO
         std::string path;
         NiftiInfo   header;
         bool        loaded_data;
-        int         dim_k;               // File format independent image dimension
-        int         dim_j;               // File format independent image dimension
-        int         dim_i;               // File format independent image dimension
-        int         dim_t;               // File format independent image dimension
-        uint64_t    nr_voxels;           // Useful in general
-        float       pixdim_i;            // File format independent image dimension
-        float       pixdim_j;            // File format independent image dimension
-        float       pixdim_k;            // File format independent image dimension
-        float       voxel_volume;        // I often need to compute this
-        float*      p_data_float;        // holds image data (voxels)
-        int         display_k;           // Display slice number
-        int         display_j;           // Display slice number
-        int         display_i;           // Display slice number
-        int         display_t;           // Display slice number
-        float*      p_sliceK_float;      // Data slice that holds high precision data
-        float*      p_sliceJ_float;      // Data slice that holds high precision data
-        float*      p_sliceI_float;      // Data slice that holds high precision data
-        uint8_t*    p_sliceK_uint8;      // Data slice that holds display data
-        uint8_t*    p_sliceJ_uint8;      // Data slice that holds display data
-        uint8_t*    p_sliceI_uint8;      // Data slice that holds display data
-        GLuint      textureIDk;          // OpenGL needs this
-        GLuint      textureIDj;          // OpenGL needs this
-        GLuint      textureIDi;          // OpenGL needs this
-        float*      p_time_course_float; // One voxel's time course
-        float       time_course_min;     // Minimum of voxel's time course data
-        float       time_course_max;     // Maximum of voxel's time course data
-        float       data_min;            // Minimum data value
-        float       data_max;            // Maximum data value
-        float       display_min;         // Minimum displayed value
-        float       display_max;         // Maximum displayed value
-        float       display_scale;       // Scaling factor for zooming in or out
-        float       display_k_offset_x;  // Offset displayed image area
-        float       display_k_offset_y;  // Offset displayed image area
-        float       display_j_offset_x;  // Offset displayed image area
-        float       display_j_offset_y;  // Offset displayed image area
-        float       display_i_offset_x;  // Offset displayed image area
-        float       display_i_offset_y;  // Offset displayed image area
-        uint64_t    voxel_i;             // A selected/focused/hovered voxel index
-        uint64_t    voxel_j;             // A selected/focused/hovered voxel index
-        uint64_t    voxel_k;             // A selected/focused/hovered voxel index
-        uint64_t    voxel_t;             // A selected/focused/hovered voxel index
+        int         dim_k;                  // File format independent image dimension
+        int         dim_j;                  // File format independent image dimension
+        int         dim_i;                  // File format independent image dimension
+        int         dim_t;                  // File format independent image dimension
+        uint64_t    nr_voxels;              // Useful in general
+        float       pixdim_i;               // File format independent image dimension
+        float       pixdim_j;               // File format independent image dimension
+        float       pixdim_k;               // File format independent image dimension
+        float       voxel_volume;           // I often need to compute this
+        float*      p_data_float;           // holds image data (voxels)
+        int         display_k;              // Display slice number
+        int         display_j;              // Display slice number
+        int         display_i;              // Display slice number
+        int         display_t;              // Display slice number
+        float*      p_sliceK_float;         // Data slice that holds high precision data
+        float*      p_sliceJ_float;         // Data slice that holds high precision data
+        float*      p_sliceI_float;         // Data slice that holds high precision data
+        uint8_t*    p_sliceK_uint8;         // Data slice that holds display data
+        uint8_t*    p_sliceJ_uint8;         // Data slice that holds display data
+        uint8_t*    p_sliceI_uint8;         // Data slice that holds display data
+        GLuint      textureIDk;             // OpenGL needs this
+        GLuint      textureIDj;             // OpenGL needs this
+        GLuint      textureIDi;             // OpenGL needs this
+        float*      p_tc_float;             // One voxel's time course
+        float       tc_min;                 // Minimum of voxel's time course data
+        float       tc_max;                 // Maximum of voxel's time course data
+        float       data_min;               // Minimum data value
+        float       data_max;               // Maximum data value
+        float       display_min;            // Minimum displayed value
+        float       display_max;            // Maximum displayed value
+        float       display_scale;          // Scaling factor for zooming in or out
+        float       display_k_offset_x;     // Offset displayed image area
+        float       display_k_offset_y;     // Offset displayed image area
+        float       display_j_offset_x;     // Offset displayed image area
+        float       display_j_offset_y;     // Offset displayed image area
+        float       display_i_offset_x;     // Offset displayed image area
+        float       display_i_offset_y;     // Offset displayed image area
+        uint64_t    voxel_i;                // A selected/focused/hovered voxel index
+        uint64_t    voxel_j;                // A selected/focused/hovered voxel index
+        uint64_t    voxel_k;                // A selected/focused/hovered voxel index
+        uint64_t    voxel_t;                // A selected/focused/hovered voxel index
         // Overlay related --------------------------------------------------------------------------------------------
         float       overlay_min;            // Minimum data value for masking
         float       overlay_max;            // Maximum data value for masking
@@ -119,19 +119,19 @@ namespace IDA_IO
         GLuint      textureIDj_RGB;         // OpenGL needs this
         GLuint      textureIDi_RGB;         // OpenGL needs this
         // Time course related ----------------------------------------------------------------------------------------
-        uint64_t    focus_voxel_index4D;       // Focused voxel 4D index
-        uint8_t     time_course_nr;            // Number of selected time course voxels
-        uint64_t    time_course_voxel_i[255];  // Selectec voxel index i
-        uint64_t    time_course_voxel_j[255];  // Selectec voxel index j
-        uint64_t    time_course_voxel_k[255];  // Selectec voxel index k
-        int         time_course_onset;         // Omit volumes from start until this number
-        int         time_course_offset;        // Omit volumes from end until this number
-        int         time_course_shift;         // Shift time course data by this amount
+        uint64_t    focus_voxel_index4D;    // Focused voxel 4D index
+        uint8_t     tc_nr;                  // Number of selected time course voxels
+        uint64_t    tc_voxel_i[255];        // Selectec voxel index i
+        uint64_t    tc_voxel_j[255];        // Selectec voxel index j
+        uint64_t    tc_voxel_k[255];        // Selectec voxel index k
+        int         tc_onset;               // Omit volumes from start until this number
+        int         tc_offset;              // Omit volumes from end until this number
+        int         tc_shift;               // Shift time course data by this amount
         // Correlation related ----------------------------------------------------------------------------------------
-        float*      p_sliceK_float_corr;   // Holds correlation data
-        float*      p_sliceJ_float_corr;   // Holds correlation data
-        float*      p_sliceI_float_corr;   // Holds correlation data
-        int         visualization_mode;    // 0: grayscale, 1: RGB red overlay, 3: RGB correlation overlay
+        float*      p_sliceK_float_corr;    // Holds correlation data
+        float*      p_sliceJ_float_corr;    // Holds correlation data
+        float*      p_sliceI_float_corr;    // Holds correlation data
+        int         visualization_mode;     // 0: grayscale, 1: RGB red overlay, 3: RGB correlation overlay
         // Add more file-related information as needed
     };
 
@@ -357,7 +357,7 @@ namespace IDA_IO
             free(fi.p_sliceK_uint8);
             free(fi.p_sliceJ_uint8);
             free(fi.p_sliceI_uint8);
-            free(fi.p_time_course_float);
+            free(fi.p_tc_float);
 
             // Open the gzip-compressed file using zlib
             const char* cString = fi.path.c_str();
@@ -654,7 +654,7 @@ namespace IDA_IO
             fi.p_sliceI_uint8 = (uint8_t*)malloc(fi.dim_j*fi.dim_k * sizeof(uint8_t));
 
             // Initialize the voxel data for timecourse visualizations;
-            fi.p_time_course_float = (float*)malloc(fi.dim_t * sizeof(float));
+            fi.p_tc_float = (float*)malloc(fi.dim_t * sizeof(float));
 
             // Initialize hovered over or selected voxel index
             fi.voxel_i = static_cast<uint64_t>(fi.display_i);
@@ -663,9 +663,9 @@ namespace IDA_IO
             fi.voxel_t = static_cast<uint64_t>(fi.display_t);
 
             // Initialize time course parameters
-            fi.time_course_onset  = 0;
-            fi.time_course_offset = fi.header.dim[4];
-            fi.time_course_shift = 0;
+            fi.tc_onset  = 0;
+            fi.tc_offset = fi.header.dim[4];
+            fi.tc_shift = 0;
         }
 
         // ============================================================================================================
@@ -1121,7 +1121,7 @@ namespace IDA_IO
             uint64_t ni = static_cast<uint64_t>(fi.dim_i);
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
-            uint64_t nt = static_cast<uint64_t>(fi.time_course_offset) - fi.time_course_onset;
+            uint64_t nt = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
 
             // Prepare 1D arrays buffers that will be used to compute correlations
             float* x_arr = (float*)malloc(fi.dim_t * sizeof(float));
@@ -1129,8 +1129,8 @@ namespace IDA_IO
 
             // Prepare x array (selected voxel's data)
             for (uint64_t t = 0; t < nt; ++t) {
-                uint64_t index4D = fi.time_course_voxel_i[0] + fi.time_course_voxel_j[0]*ni + fi.time_course_voxel_k[0]*ni*nj + fi.nr_voxels*t;
-                uint64_t tt = (t + fi.time_course_shift) % nt;
+                uint64_t index4D = fi.tc_voxel_i[0] + fi.tc_voxel_j[0]*ni + fi.tc_voxel_k[0]*ni*nj + fi.nr_voxels*t;
+                uint64_t tt = (t + fi.tc_shift) % nt;
                 *(x_arr + tt) = fi.p_data_float[index4D];
             }
 
@@ -1260,7 +1260,7 @@ namespace IDA_IO
             uint64_t ni = static_cast<uint64_t>(fi.dim_i);
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
-            uint64_t nt = static_cast<uint64_t>(fi.time_course_offset) - fi.time_course_onset;
+            uint64_t nt = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
 
             // Prepare volume output
             float* temp_vol_map = (float*)malloc(fi.nr_voxels * sizeof(float));
@@ -1272,7 +1272,7 @@ namespace IDA_IO
             // Prepare x array (selected voxel's data)
             for (uint64_t t = 0; t < nt; ++t) {
                 uint64_t index4D = fi.voxel_i + fi.voxel_j*ni + fi.voxel_k*ni*nj + fi.nr_voxels*t;
-                uint64_t tt = (t + fi.time_course_shift) % nt;
+                uint64_t tt = (t + fi.tc_shift) % nt;
                 *(x_arr + tt) = fi.p_data_float[index4D];
             }
 

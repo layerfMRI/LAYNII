@@ -9,19 +9,19 @@ void SampleVoxelTimeCourse(IDA_IO::FileInfo& fi, uint8_t idx) {
     uint64_t ni = static_cast<uint64_t>(fi.dim_i);
     uint64_t nj = static_cast<uint64_t>(fi.dim_j);
     uint64_t nt = static_cast<uint64_t>(fi.dim_t);
-    uint64_t i = static_cast<uint64_t>(fi.time_course_voxel_i[idx]);
-    uint64_t j = static_cast<uint64_t>(fi.time_course_voxel_j[idx]);
-    uint64_t k = static_cast<uint64_t>(fi.time_course_voxel_k[idx]);
+    uint64_t i = static_cast<uint64_t>(fi.tc_voxel_i[idx]);
+    uint64_t j = static_cast<uint64_t>(fi.tc_voxel_j[idx]);
+    uint64_t k = static_cast<uint64_t>(fi.tc_voxel_k[idx]);
 
     // Load voxel data
     for (uint64_t t = 0; t < nt; ++t) {
         uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
-        fi.p_time_course_float[t] = fi.p_data_float[index4D];
+        fi.p_tc_float[t] = fi.p_data_float[index4D];
     }
 
     // // Adjust min max for better visualizing the timecourse
-    fi.time_course_min = *std::min_element(fi.p_time_course_float, fi.p_time_course_float + nt);
-    fi.time_course_max = *std::max_element(fi.p_time_course_float, fi.p_time_course_float + nt);
+    fi.tc_min = *std::min_element(fi.p_tc_float, fi.p_tc_float + nt);
+    fi.tc_max = *std::max_element(fi.p_tc_float, fi.p_tc_float + nt);
 }
 
 // ====================================================================================================================
@@ -81,9 +81,9 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
             fi.focus_voxel_index4D = index4D;
             if ( lock_voxel_time_course == false ) {
                 if (fi.dim_t > 0) {
-                    fi.time_course_voxel_i[0] = fi.voxel_i;
-                    fi.time_course_voxel_j[0] = fi.voxel_j;
-                    fi.time_course_voxel_k[0] = fi.voxel_k;
+                    fi.tc_voxel_i[0] = fi.voxel_i;
+                    fi.tc_voxel_j[0] = fi.voxel_j;
+                    fi.tc_voxel_k[0] = fi.voxel_k;
                     if ( fi.visualization_mode == 3) {
                         request_image_data_update = true;
                     }
@@ -109,14 +109,14 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
             SampleVoxelTimeCourse(fi, 0);
             ImGui::Text("Time Course:");
             ImGui::PlotLines(
-                "",                                            // Label
-                fi.p_time_course_float,                        // Values
-                fi.time_course_offset - fi.time_course_onset,  // Values count
-                0,                                             // Values offset
-                NULL,                                          // Overlay Text
-                fi.time_course_min,                            // Scale min (FLT_MIN for auto)
-                fi.time_course_max,                            // Scale max (FLT_MAX for auto)
-                ImVec2(0, 75.0f)                              // Plot Size
+                "",                          // Label
+                fi.p_tc_float,               // Values
+                fi.tc_offset - fi.tc_onset,  // Values count
+                0,                           // Values offset
+                NULL,                        // Overlay Text
+                fi.tc_min,                   // Scale min (FLT_MIN for auto)
+                fi.tc_max,                   // Scale max (FLT_MAX for auto)
+                ImVec2(0, 50.0f)             // Plot Size
                 );
             ImGui::Text("[y: min-max scaled]");
         }
@@ -284,21 +284,21 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
 
         if ( lock_voxel_time_course == false ) {
             // Shift already clicked voxels' indices further in the array
-            for (uint8_t i=0; i < fi.time_course_nr; i++) {
-                fi.time_course_voxel_i[i+1] = fi.time_course_voxel_i[i];
-                fi.time_course_voxel_j[i+1] = fi.time_course_voxel_j[i];
-                fi.time_course_voxel_k[i+1] = fi.time_course_voxel_k[i];
+            for (uint8_t i=0; i < fi.tc_nr; i++) {
+                fi.tc_voxel_i[i+1] = fi.tc_voxel_i[i];
+                fi.tc_voxel_j[i+1] = fi.tc_voxel_j[i];
+                fi.tc_voxel_k[i+1] = fi.tc_voxel_k[i];
             }
 
             // Store newly clicked voxel's indices at the first element
-            fi.time_course_voxel_i[0] = fi.voxel_i;
-            fi.time_course_voxel_j[0] = fi.voxel_j;
-            fi.time_course_voxel_k[0] = fi.voxel_k;
+            fi.tc_voxel_i[0] = fi.voxel_i;
+            fi.tc_voxel_j[0] = fi.voxel_j;
+            fi.tc_voxel_k[0] = fi.voxel_k;
 
             // Increment number of time courses up to a maximum numer
             // TODO: Make this work with more than 2 time courses
-            if ( fi.time_course_nr < 2 ) {
-                fi.time_course_nr += 1;
+            if ( fi.tc_nr < 2 ) {
+                fi.tc_nr += 1;
             }            
         }
     }
