@@ -36,16 +36,16 @@ int show_help(void) {
     "\n"
     "Notes:\n"
     "    - [On lambda parameter]: If you assume your cerebral blood flow (CBF) is exceptionally low,\n"
-    "        use 0.3. If you assume your CBV is exceptionally high, use 0.2. If you use 3T instead of\n"
-    "        7T, use 20 percent larger values. Larger values will result in stronger deconvolution.\n"
-    "        These variations will not affect the resulting profiles too much. Therefore only change\n"
-    "        this parameter if it is absolutely needed.\n"
+    "       use 0.3. If you assume your CBV is exceptionally high, use 0.2. If you use 3T instead of\n"
+    "       7T, use 20 percent larger values. Larger values will result in stronger deconvolution.\n"
+    "       These variations will not affect the resulting profiles too much. Therefore only change\n"
+    "       this parameter if it is absolutely needed.\n"
     "    - This program is described in more depth in this blog post:\n"
-    "        <https://layerfmri.com/devein> \n"
-    "    - The leakage model is described in:
-              Markuerkiaga et al. (2016) <https://doi.org/10.1016/j.neuroimage.2016.02.073>\n"
-    "         Havlicek and Uludag (2019) <https://doi.org/10.1016/j.neuroimage.2019.116209>\n"
-    "         Heinzle et al. (2016) <http://dx.doi.org/10.1016/j.neuroimage.2015.10.025>\n"
+    "       <https://layerfmri.com/devein> \n"
+    "    - The leakage model is described in:\n"
+    "       Markuerkiaga et al. (2016) <<https://doi.org/10.1016/j.neuroimage.2016.02.073>>\n"
+    "       Havlicek and Uludag (2019) <<https://doi.org/10.1016/j.neuroimage.2019.116209>>\n"
+    "       Heinzle et al. (2016) <<http://dx.doi.org/10.1016/j.neuroimage.2015.10.025>>\n"
     "\n");
     return 0;
 }
@@ -312,8 +312,14 @@ int main(int argc, char* argv[]) {
         // ====================================================================
         // Do deconvolution column by column. First, I allocate all.
         // ====================================================================
-        float vec1[nr_layers][size_time], vec2[nr_layers][size_time], vecALF[nr_layers];
-        int vec_nr_voxels[nr_layers];
+        // float vec1[nr_layers][size_time]
+        // float vec2[nr_layers][size_time]
+        // float vecALF[nr_layers];
+        // int vec_nr_voxels[nr_layers];
+        std::vector<std::vector<float>> vec1( nr_layers, std::vector<float>( size_time ) );
+        std::vector<std::vector<float>> vec2( nr_layers, std::vector<float>( size_time ) );
+        std::vector<float> vecALF(nr_layers);
+        std::vector<int> vec_nr_voxels(nr_layers);
 
         for (int i = 0; i < nr_layers; ++i) {
             for (int t = 0; t < size_time; t++) {
