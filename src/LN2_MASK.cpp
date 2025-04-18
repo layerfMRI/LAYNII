@@ -1,13 +1,13 @@
 #include "../dep/laynii_lib.h"
 
+
 int show_help(void) {
     printf(
     "LN2_MASK: This program is intended to help with voxels section for layer-profile extraction\n"
-    "          It generatees binary masks that span across all cortical depths.\n"
-    "          This is done to minimize circularity of only extracting layer signals.\n"
-    "          from voxels that exceed a significant detection threshold. \n"
-    "          Instead, if a voxel in a column is activated, the signal of\n"
-    "          the entire column can be extracted \n"
+    "          It generatees binary masks that span across all cortical depths. This is done to\n"
+    "          minimize circularity of only extracting layer signals from voxels that exceed a\n"
+    "          significant detection threshold. Instead, if a voxel in a column is activated,\n"
+    "          the signal of the entire column can be extracted.\n"
     "\n"
     "Usage:\n"
     "    LN2_MASK -scores activation.nii -columns columns.nii -min_thr 2.3 -output column_mask.nii \n"
@@ -16,10 +16,9 @@ int show_help(void) {
     "\n"
     "Options:\n"
     "    -help     : Show this help.\n"
-    "    -scores   : 3D Nifti image functional activation scores that will \n"
-    "                be transformed into layer dimensions. It can be z-score\n"
-    "                or beta maps. The default is to exclusively consider positive\n"
-    "                scores.\n"
+    "    -scores   : 3D Nifti image functional activation scores that will be transformed\n"
+    "                into layer dimensions. It can be z-score or beta maps. The default is\n"
+    "                to exclusively consider positive scores.\n"
     "    -columns  : A 3D nifti file that contains columns as intager masks.\n"
     "                R.g. output of LN2_COLUMNS or LN2_MULTILATERATE.\n"
     "    -min_thr  : (Optional) Threshold of activation score. If any voxel in\n"
@@ -47,7 +46,7 @@ int main(int argc, char*  argv[]) {
     char *fin1 = NULL, *fout = NULL, *fin2=NULL;
     int ac;
     bool mode_max = true, mode_mean = false, mode_abs = false, use_outpath = false;
-    float thresh = 1.0 ;
+    float thresh = 1.0;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -136,6 +135,7 @@ int main(int argc, char*  argv[]) {
 
     // ========================================================================
     // Fix input datatype issues
+    // ========================================================================
     nifti_image* nii_input = copy_nifti_as_float32(nii1);
     float* nii_input_data = static_cast<float*>(nii_input->data);
     nifti_image* columns = copy_nifti_as_int16(nii2);
@@ -156,23 +156,23 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     int nr_columns = 0;
     for (int i = 0; i != nr_voxels; ++i) {
-        if (*(columns_data + i) >= nr_columns){
+        if (*(columns_data + i) >= nr_columns) {
             nr_columns = *(columns_data + i);
         }
     }
     cout << "    There are " << nr_columns<< " columns, total. " << endl << endl;
 
-    double numb_voxels[nr_columns] ;
-    bool  thresh_exeed[nr_columns] ;
-    double mean_val[nr_columns] ;
+    std::vector<double> numb_voxels(nr_columns);
+    std::vector<bool> thr_exceed(nr_columns);
+    std::vector<double> mean_val(nr_columns);
     for (int j = 0; j < nr_columns; j++) {
         mean_val   [j] = 0.;
         numb_voxels[j] = 0.;
-        thresh_exeed[j] = false;
+        thr_exceed[j] = false;
     }
 
     // ========================================================================
-    // considering necative activation too
+    // Consider negative activation
     // ========================================================================
     if (mode_abs) {
         for (int i = 0; i != nr_voxels; ++i) {
@@ -181,12 +181,12 @@ int main(int argc, char*  argv[]) {
     }
 
     // ========================================================================
-    // Thresholding each column based on its maximally activated voxel
+    // Threshold each column based on its maximally activated voxel
     // ========================================================================
     if (mode_max) {
         for (int i = 0; i != nr_voxels; ++i) {
-            if (*(nii_input_data + i) * nii_input->scl_slope  >= thresh){
-                thresh_exeed [*(columns_data + i)-1] = true ;
+            if (*(nii_input_data + i) * nii_input->scl_slope  >= thresh) {
+                thr_exceed [*(columns_data + i)-1] = true;
             }
         }
     }
@@ -196,24 +196,21 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     if (mode_mean) {
 
-        // ====================================================================
-        // average within columns and see if average is above threshold
-        // ====================================================================
+        // Average within columns and see if average is above threshold
         for (int i = 0; i != nr_voxels; ++i) {
-            if ( *(columns_data + i) > 0 ){
-                mean_val   [ *(columns_data + i) -1 ] += *(nii_input_data + i) ;
+            if ( *(columns_data + i) > 0 ) {
+                mean_val   [ *(columns_data + i) -1 ] += *(nii_input_data + i);
                 numb_voxels[ *(columns_data + i) -1 ] += 1;
             }
         }
 
         for (int j = 0; j < nr_columns; j++) {
-            if (numb_voxels[j] != 0){
-                mean_val[j] /= (float)numb_voxels[j] ;
-                // cout << "layer " << i+1 << " and column " << j+1 << " has value " << mean_val[i][j] << endl;
+            if (numb_voxels[j] != 0) {
+                mean_val[j] /= (float)numb_voxels[j];
             }
 
-            if (mean_val[j] >= thresh){
-                thresh_exeed [j] = true ;
+            if (mean_val[j] >= thresh) {
+                thr_exceed [j] = true;
             }
         }
     }
@@ -222,13 +219,13 @@ int main(int argc, char*  argv[]) {
     // Prepare outputs
     nifti_image* mask = copy_nifti_as_int16(columns);
     int16_t* mask_data = static_cast<int16_t*>(mask->data);
-    for (int voxi = 0; voxi <  nr_voxels; voxi++) *(mask_data + voxi) = 0.0 ;
+    for (int voxi = 0; voxi <  nr_voxels; voxi++) *(mask_data + voxi) = 0.0;
 
     // ========================================================================
     // Set all voxels in columns that have been selected
     // ========================================================================
     for (int i = 0; i < nr_voxels; ++i) {
-        if ( (thresh_exeed [*(columns_data + i) - 1] == true ) && *(columns_data + i) > 0 ){
+        if ( (thr_exceed [*(columns_data + i) - 1] == true ) && *(columns_data + i) > 0 ) {
            *(mask_data + i) =  1;
        } else {
            *(columns_data + i) = 0;  // Also provide masked columns
