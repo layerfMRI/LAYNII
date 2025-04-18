@@ -91,9 +91,6 @@ namespace IDA_IO
         GLuint      textureIDk;             // OpenGL needs this
         GLuint      textureIDj;             // OpenGL needs this
         GLuint      textureIDi;             // OpenGL needs this
-        float*      p_tc_float;             // One voxel's time course
-        float       tc_min;                 // Minimum of voxel's time course data
-        float       tc_max;                 // Maximum of voxel's time course data
         float       data_min;               // Minimum data value
         float       data_max;               // Maximum data value
         float       display_min;            // Minimum displayed value
@@ -121,9 +118,18 @@ namespace IDA_IO
         // Time course related ----------------------------------------------------------------------------------------
         uint64_t    focus_voxel_index4D;    // Focused voxel 4D index
         uint8_t     tc_nr;                  // Number of selected time course voxels
-        uint64_t    tc_voxel_i[255];        // Selectec voxel index i
-        uint64_t    tc_voxel_j[255];        // Selectec voxel index j
-        uint64_t    tc_voxel_k[255];        // Selectec voxel index k
+        uint64_t    tc_focus_voxel_i;       // Focused voxel index i
+        uint64_t    tc_focus_voxel_j;       // Focused voxel index j
+        uint64_t    tc_focus_voxel_k;       // Focused voxel index k
+        float       tc_focus_min;           // Minimum of voxel's time course data
+        float       tc_focus_max;           // Maximum of voxel's time course data
+        float*      p_tc_focus_float;       // One voxel's time course
+        uint64_t    tc_refer_voxel_i;       // Reference voxel index i
+        uint64_t    tc_refer_voxel_j;       // Reference voxel index j
+        uint64_t    tc_refer_voxel_k;       // Reference voxel index k
+        float       tc_refer_min;           // Minimum of voxel's time course data
+        float       tc_refer_max;           // Maximum of voxel's time course data
+        float*      p_tc_refer_float;       // One voxel's time course
         int         tc_onset;               // Omit volumes from start until this number
         int         tc_offset;              // Omit volumes from end until this number
         int         tc_shift;               // Shift time course data by this amount
@@ -357,7 +363,8 @@ namespace IDA_IO
             free(fi.p_sliceK_uint8);
             free(fi.p_sliceJ_uint8);
             free(fi.p_sliceI_uint8);
-            free(fi.p_tc_float);
+            free(fi.p_tc_focus_float);
+            free(fi.p_tc_refer_float);
 
             // Open the gzip-compressed file using zlib
             const char* cString = fi.path.c_str();
@@ -654,7 +661,8 @@ namespace IDA_IO
             fi.p_sliceI_uint8 = (uint8_t*)malloc(fi.dim_j*fi.dim_k * sizeof(uint8_t));
 
             // Initialize the voxel data for timecourse visualizations;
-            fi.p_tc_float = (float*)malloc(fi.dim_t * sizeof(float));
+            fi.p_tc_focus_float = (float*)malloc(fi.dim_t * sizeof(float));
+            fi.p_tc_refer_float = (float*)malloc(fi.dim_t * sizeof(float));
 
             // Initialize hovered over or selected voxel index
             fi.voxel_i = static_cast<uint64_t>(fi.display_i);
@@ -1129,7 +1137,7 @@ namespace IDA_IO
 
             // Prepare x array (selected voxel's data)
             for (uint64_t t = 0; t < nt; ++t) {
-                uint64_t index4D = fi.tc_voxel_i[0] + fi.tc_voxel_j[0]*ni + fi.tc_voxel_k[0]*ni*nj + fi.nr_voxels*t;
+                uint64_t index4D = fi.tc_focus_voxel_i + fi.tc_focus_voxel_j*ni + fi.tc_focus_voxel_k*ni*nj + fi.nr_voxels*t;
                 uint64_t tt = (t + fi.tc_shift) % nt;
                 *(x_arr + tt) = fi.p_data_float[index4D];
             }

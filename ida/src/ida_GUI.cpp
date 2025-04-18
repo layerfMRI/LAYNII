@@ -31,7 +31,6 @@ namespace IDA
 
         int nr_files = fl.files.size();
         float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
-        ImGuiIO& io = ImGui::GetIO();
 
 	    // ============================================================================================================
 		// Enable Docking
@@ -324,48 +323,55 @@ namespace IDA
         // ============================================================================================================
         // Time course view
         // ============================================================================================================
-        ImGui::Begin("Time course [WIP]"); 
+        ImGui::Begin("Time Course View"); 
         if (loaded_data && fl.files[sf].dim_t > 1)
         {
-            // ImGui::Text("Voxel : [%llu i, %llu j, %llu k]", fl.files[sf].voxel_i, fl.files[sf].voxel_j, fl.files[sf].voxel_k);
+            ImVec2 plot_size = ImGui::GetContentRegionAvail();
+            plot_size.y = 75.0f;
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            pos.y += 80.0f*0;
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
-            for (uint8_t i_tc = 0; i_tc < fl.files[sf].tc_nr; i_tc++) {
+            // --------------------------------------------------------------------------------------------------------
+            // Draw plot background
+            // --------------------------------------------------------------------------------------------------------
+            draw_list->AddRectFilled(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y),
+                                     IM_COL32(37, 50, 75, 255));
+            draw_list->AddRect(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y),
+                               IM_COL32(42, 55, 80, 255), 0.0f, 0, 2.0f);
 
-                SampleVoxelTimeCourse(fl.files[sf], i_tc);
+            // --------------------------------------------------------------------------------------------------------
+            // Draw reference time course
+            // --------------------------------------------------------------------------------------------------------
+            float max_y = fl.files[sf].tc_refer_max;
+            float min_y = fl.files[sf].tc_refer_min;
+            auto get_screen_point1 = [&](int i, float* data) {
+                float x = pos.x + (i / float(fl.files[sf].dim_t - 1)) * plot_size.x;
+                float y = pos.y + (1.0f - (data[i] - min_y) / (max_y - min_y)) * plot_size.y;
+                return ImVec2(x, y);
+            };
 
-                ImVec2 plot_size = ImGui::GetContentRegionAvail();
-                plot_size.y = 75.0f;
-                ImVec2 pos = ImGui::GetCursorScreenPos();
-                pos.y += 80.0f*i_tc;
-                ImDrawList* draw_list = ImGui::GetWindowDrawList();
-                // Background
-                draw_list->AddRectFilled(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y), IM_COL32(37, 50, 75, 255));
-                draw_list->AddRect(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y),
-                                   IM_COL32(255, 255, 255, 255), 0.0f, 0, 2.0f);
+            for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
+                draw_list->AddLine(get_screen_point1(i  , fl.files[sf].p_tc_refer_float),
+                                   get_screen_point1(i+1, fl.files[sf].p_tc_refer_float),
+                                   IM_COL32(255, 0, 0, 255), 1.0f);
+            }
 
-                // Helper: scale Y values
-                float max_y = fl.files[sf].tc_max;
-                float min_y = fl.files[sf].tc_min;
+            // --------------------------------------------------------------------------------------------------------
+            // Draw focus time course
+            // --------------------------------------------------------------------------------------------------------
+            max_y = fl.files[sf].tc_focus_max;
+            min_y = fl.files[sf].tc_focus_min;
+            auto get_screen_point2 = [&](int i, float* data) {
+                float x = pos.x + (i / float(fl.files[sf].dim_t - 1)) * plot_size.x;
+                float y = pos.y + (1.0f - (data[i] - min_y) / (max_y - min_y)) * plot_size.y;
+                return ImVec2(x, y);
+            };
 
-                auto get_screen_point = [&](int i, float* data) {
-                    float x = pos.x + (i / float(fl.files[sf].dim_t - 1)) * plot_size.x;
-                    float y = pos.y + (1.0f - (data[i] - min_y) / (max_y - min_y)) * plot_size.y;
-                    return ImVec2(x, y);
-                };
-
-                // Draw first plot
-                for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
-                    draw_list->AddLine(get_screen_point(i, fl.files[sf].p_tc_float),
-                                       get_screen_point(i + 1, fl.files[sf].p_tc_float),
-                                       IM_COL32(255, 255, 255, 255), 1.0f);
-                }
-
-                // // Draw second plot
-                // for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
-                //     draw_list->AddLine(get_screen_point(i, fl.files[sf].p_tc_float),
-                //                        get_screen_point(i + 1, fl.files[sf].p_tc_float),
-                //                        IM_COL32(255, 255, 255, 255), 1.0f);
-                // }
+            for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
+                draw_list->AddLine(get_screen_point2(i  , fl.files[sf].p_tc_focus_float),
+                                   get_screen_point2(i+1, fl.files[sf].p_tc_focus_float),
+                                   IM_COL32(255, 255, 255, 255), 1.0f);
             }
         }
         ImGui::End();
@@ -604,9 +610,12 @@ namespace IDA
                         fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
                         fl.files[sf].voxel_t = static_cast<uint64_t>(fl.files[sf].display_t);
 
-                        fl.files[sf].tc_voxel_i[0] = fl.files[sf].voxel_i;
-                        fl.files[sf].tc_voxel_j[0] = fl.files[sf].voxel_j;
-                        fl.files[sf].tc_voxel_k[0] = fl.files[sf].voxel_k;
+                        fl.files[sf].tc_focus_voxel_i = fl.files[sf].voxel_i;
+                        fl.files[sf].tc_focus_voxel_j = fl.files[sf].voxel_j;
+                        fl.files[sf].tc_focus_voxel_k = fl.files[sf].voxel_k;
+                        fl.files[sf].tc_refer_voxel_i = fl.files[sf].voxel_i;
+                        fl.files[sf].tc_refer_voxel_j = fl.files[sf].voxel_j;
+                        fl.files[sf].tc_refer_voxel_k = fl.files[sf].voxel_k;
 
                         fl.prepareRBGSlices(fl.files[sf]);
 
