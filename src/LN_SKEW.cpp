@@ -1,17 +1,11 @@
-
-
 #include "../dep/laynii_lib.h"
+
 
 int show_help(void) {
     printf(
     "LN_SKEW: Calculates mean, standard deviation, tSNR, skew, kurtosis, \n"
-    "         and autocorrelation of timeseries. This is helpful for\n"
+    "         autocorrelation of timeseries and more. This is helpful for\n"
     "         artifact hunting (e.g. ghosting).\n"
-    "\n"
-    "         It also claculates image SNR (Glover and Lai 1998 and Feinberg 2013).\n"
-    "           The even- and odd-numbered time points of a fMRI time series are separately averaged, \n"
-    "           and the sum and difference of these two images were calculated.\n"
-    "           The spatial STDEV can be used as a proxy for thermal noise. \n"
     "\n"
     "Usage:\n"
     "    LN_SKEW -input Nulled_intemp.nii \n"
@@ -20,19 +14,23 @@ int show_help(void) {
     "Options:\n"
     "    -help   : Show this help.\n"
     "    -input  : Nifti (.nii or nii.gz) time series.\n"
-    "    -output : (Optional) Output filename, including .nii or\n"
-    "              .nii.gz, and path if needed. Overwrites existing files.\n"    
+    "    -output : (Optional) Output filename, including .nii or .nii.gz\n"
+    "              and path if needed. Overwrites existing files.\n"    
     "\n"
     "Notes:\n"
-    "    Applications of this program are described in this blog post: \n"
-    "    <http://layerfmri.com/QA>\n"
+    "    - Applications of this program are described in this blog post:\n"
+    "      <http://layerfmri.com/QA>\n"
+    "    - It also calculates image SNR (Glover and Lai 1998 and Feinberg 2013).\n"
+    "    - The even and odd time points are separately averaged. The sum and\n"
+    "      difference of these two images are calculated.\n"
+    "    - The spatial STDEV can be used as a proxy for thermal noise.\n"
     "\n");
     return 0;
 }
 
 int main(int argc, char * argv[]) {
-    bool use_outpath = false ;
-    char  *fout = NULL ;
+    bool use_outpath = false;
+    char  *fout = NULL;
     char *fin = NULL;
     int ac;
     if (argc < 2) return show_help();
@@ -76,13 +74,13 @@ int main(int argc, char * argv[]) {
     log_nifti_descriptives(nii_input);
 
     // Get dimensions of input
-    int size_x = nii_input->nx;
-    int size_y = nii_input->ny;
-    int size_z = nii_input->nz;
-    int size_time = nii_input->nt;
-    int nx = nii_input->nx;
-    int nxy = nii_input->nx * nii_input->ny;
-    int nxyz = nii_input->nx * nii_input->ny * nii_input->nz;
+    const uint64_t size_x = nii_input->nx;
+    const uint64_t size_y = nii_input->ny;
+    const uint64_t size_z = nii_input->nz;
+    uint64_t size_time = nii_input->nt;
+    const uint64_t nx = nii_input->nx;
+    const uint64_t nxy = nii_input->nx * nii_input->ny;
+    const uint64_t nxyz = nii_input->nx * nii_input->ny * nii_input->nz;
 
     // ========================================================================
     // Fix data type issues
@@ -126,34 +124,37 @@ int main(int argc, char * argv[]) {
     float* nii_NOISESTDEV_data = static_cast<float*>(nii_NOISESTDEV->data);
 
     // ========================================================================
-    cout << "  Calculating skew, kurtosis, and autocorrelation..." << endl;
+    cout << "    Calculating skew, kurtosis, and autocorrelation..." << endl;
 
-    double vec1[size_time];
-    double vecl[27]; // local vector for spatial gradient (number of voxel's noigbour)
-    double vec2[size_time];
-    int voxel_i = 0; 
+    std::vector<double> vec1(size_time);
+    std::vector<double> vec2(size_time);
+    std::vector<double> vecl(27);  // Vector for spatial gradient (number of voxel neighbours)
 
-    for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_y; ++iy) {
-            for (int ix = 0; ix < size_x; ++ix) {
+    uint64_t voxel_i = 0; 
+    for (uint64_t iz = 0; iz < size_z; ++iz) {
+        for (uint64_t iy = 0; iy < size_y; ++iy) {
+            for (uint64_t ix = 0; ix < size_x; ++ix) {
                 voxel_i = nxy * iz + nx * iy + ix;
-                for (int it = 0; it < size_time; ++it) {
-                    vec1[it] =
-                        static_cast<double>(*(nii_data + nxyz * it + voxel_i));
+                for (uint64_t it = 0; it < size_time; ++it) {
+                    vec1[it] = static_cast<double>(*(nii_data + nxyz * it + voxel_i));
                 }
-                *(nii_skew_data + voxel_i) = ren_skew(vec1, size_time);
-                *(nii_kurt_data + voxel_i) = ren_kurt(vec1, size_time);
-                *(nii_autocorr_data + voxel_i) = ren_autocor(vec1, size_time);
-                *(nii_mean_data + voxel_i) =  ren_average(vec1, size_time);
-                *(nii_stdev_data + voxel_i) = ren_stdev(vec1, size_time);
-                *(nii_tSNR_data + voxel_i) = ren_average(vec1, size_time)/ren_stdev(vec1, size_time);
+                *(nii_skew_data + voxel_i) = ren_skew(vec1.data(), size_time);
+                *(nii_kurt_data + voxel_i) = ren_kurt(vec1.data(), size_time);
+                *(nii_autocorr_data + voxel_i) = ren_autocor(vec1.data(), size_time);
+                *(nii_mean_data + voxel_i) =  ren_average(vec1.data(), size_time);
+                *(nii_stdev_data + voxel_i) = ren_stdev(vec1.data(), size_time);
+                *(nii_tSNR_data + voxel_i) = ren_average(vec1.data(), size_time) / ren_stdev(vec1.data(), size_time);
             }
         }
     }
 
-    for (int voxel_i = 0; voxel_i < nxyz ; voxel_i++) {
-      if ((nii_tSNR->scl_slope) != 0)  *(nii_tSNR_data + voxel_i) /=  (nii_tSNR->scl_slope) ; 
-      if ( *(nii_tSNR_data + voxel_i) != *(nii_tSNR_data + voxel_i) ) *(nii_tSNR_data + voxel_i) = 0; // filtering NaNs
+    for (uint64_t voxel_i = 0; voxel_i < nxyz; voxel_i++) {
+        if ( (nii_tSNR->scl_slope) != 0 ) {
+            *(nii_tSNR_data + voxel_i) /=  (nii_tSNR->scl_slope); 
+        }
+        if ( *(nii_tSNR_data + voxel_i) != *(nii_tSNR_data + voxel_i) ) {
+            *(nii_tSNR_data + voxel_i) = 0; // filtering NaNs
+        }
     }
 
     if (!use_outpath) fout = fin;
@@ -164,129 +165,118 @@ int main(int argc, char * argv[]) {
     save_output_nifti(fout, "mean", nii_mean, true);
     save_output_nifti(fout, "stdev", nii_stdev, true);
     save_output_nifti(fout, "tSNR", nii_tSNR, true);
-    // ========================================================================
-    cout << "  Calculating correlation with everything..." << endl;
 
-    for (int it = 0; it < size_time; ++it) {
+    // ========================================================================
+    cout << "    Calculating correlation with everything..." << endl;
+
+    for (uint64_t it = 0; it < size_time; ++it) {
         vec1[it] = 0;
         vec2[it] = 0;
     }
 
     // Mean time course of everything
-    for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_y; ++iy) {
-            for (int ix = 0; ix < size_x; ++ix) {
+    for (uint64_t iz = 0; iz < size_z; ++iz) {
+        for (uint64_t iy = 0; iy < size_y; ++iy) {
+            for (uint64_t ix = 0; ix < size_x; ++ix) {
                 voxel_i = nxy * iz + nx * iy + ix;
-                for (int it = 0; it < size_time; ++it) {
-                    vec1[it] +=
-                        static_cast<double>(*(nii_data + nxyz * it + voxel_i)
-                                            / nxyz);
+                for (uint64_t it = 0; it < size_time; ++it) {
+                    vec1[it] += static_cast<double>(*(nii_data + nxyz * it + voxel_i) / nxyz);
                 }
             }
         }
     }
 
     // Voxel-wise corelation to mean of everything
-    for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_y; ++iy) {
-            for (int ix = 0; ix <size_x; ++ix) {
+    for (uint64_t iz = 0; iz < size_z; ++iz) {
+        for (uint64_t iy = 0; iy < size_y; ++iy) {
+            for (uint64_t ix = 0; ix <size_x; ++ix) {
                 voxel_i = nxy * iz + nx * iy + ix;
-                for (int it = 0; it < size_time; ++it)   {
-                    vec2[it] =
-                        static_cast<double>(*(nii_data + nxyz * it + voxel_i));
+                for (uint64_t it = 0; it < size_time; ++it)   {
+                    vec2[it] = static_cast<double>(*(nii_data + nxyz * it + voxel_i));
                 }
-                *(nii_conc_data + voxel_i) = ren_correl(vec1, vec2, size_time);
+                *(nii_conc_data + voxel_i) = ren_correl(vec1.data(), vec2.data(), size_time);
             }
         }
     }
     save_output_nifti(fout, "overall_correl", nii_conc, true);
-    
-    
-    
-    
+
     // ========================================================================
-    cout << "  Calculating image SNR ..." << endl;
-    //size_time = 20;
-    if (size_time%2 == 1) size_time = size_time -1  ;  // make sure its and odd number of time points 
-    
-    for (int it = 0; it < size_time-1 ; it = it + 2 )   {
-        for (int voxel_i = 0; voxel_i < nxyz ; voxel_i++) {
-                    //vec2[it] =  static_cast<double>(*(nii_data + nxyz * it + voxel_i));
-                *(nii_NOISE_data + voxel_i) += static_cast<double>(*(nii_data + nxyz * it     + voxel_i)) ;
-                *(nii_NOISE_data + voxel_i) -= static_cast<double>(*(nii_data + nxyz * (it+1) + voxel_i)) ;
+    cout << "    Calculating image SNR ..." << endl;
+    if (size_time%2 == 1) {
+        size_time = size_time - 1;  // Make sure it has even number of time points 
+    }
+
+    for (uint64_t it = 0; it < size_time-1; it = it + 2 )   {
+        for (uint64_t voxel_i = 0; voxel_i < nxyz; voxel_i++) {
+            *(nii_NOISE_data + voxel_i) += static_cast<double>(*(nii_data + nxyz * it     + voxel_i));
+            *(nii_NOISE_data + voxel_i) -= static_cast<double>(*(nii_data + nxyz * (it+1) + voxel_i));
         }
     }
   
-  // normalicing to time course duration
-    for (int voxel_i = 0; voxel_i < nxyz ; voxel_i++) {
-                *(nii_NOISE_data + voxel_i) = *(nii_NOISE_data + voxel_i) / sqrt((double) (size_time)/2 ) ;
+    // Normalizing to time course duration
+    for (uint64_t voxel_i = 0; voxel_i < nxyz; ++voxel_i) {
+        *(nii_NOISE_data + voxel_i) = *(nii_NOISE_data + voxel_i) / sqrt((double) (size_time)/2 );
     }
-    
-    
+
     save_output_nifti(fout, "noise", nii_NOISE, true);
 
-//-------------------------------------
-    // estimating local gradient of mean  
-    
-    int vinc_counter = 0 ;
-    int vinc_x = 0 , vinc_y = 0 , vinc_z = 0;
-    int vic = 1 ; // this will result in 26 neighbors (27 voxels) and is sufficient for decent STDEV estimation
-    
-     
-    for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_y; ++iy) {
-            for (int ix = 0; ix <size_x; ++ix) {
-                vinc_counter = 0; 
-                
-
-                for (int iz_i=max(0, iz-vic); iz_i<=min(iz+vic, size_z-1); ++iz_i) {
-                    for (int iy_i=max(0, iy-vic); iy_i<=min(iy+vic, size_y-1); ++iy_i) {
-                        for (int ix_i=max(0, ix-vic); ix_i<=min(ix+vic, size_x-1); ++ix_i) {
-							 // cout << "iz_i ... iy_i  ....ix_i  " << iz_i << "  " << iy_i <<"  " << ix_i  << endl;
-                                vecl[vinc_counter] = *(nii_mean_data + nxy * iz_i + nx * iy_i + ix_i) ;  
-                                vinc_counter++;
+    // ------------------------------------------------------------------------
+    // Estimating local gradient of mean  
+    int64_t vic_counter = 0;  // Vicinity counter
+    int64_t vic = 1;  // This will result in 26 neighbors (27 voxels) and is sufficient for decent STDEV estimation
+    int64_t sx = static_cast<int64_t>(size_x);
+    int64_t sy = static_cast<int64_t>(size_y);
+    int64_t sz = static_cast<int64_t>(size_z);
+    for (int64_t iz = 0; iz < sz; ++iz) {
+        for (int64_t iy = 0; iy < sy; ++iy) {
+            for (int64_t ix = 0; ix <sx; ++ix) {
+                vic_counter = 0; 
+                for (int64_t iz_i = std::max(0LL, iz-vic); iz_i <= std::min(iz+vic, sz-1LL); ++iz_i) {
+                    for (int64_t iy_i = std::max(0LL, iy-vic); iy_i <= std::min(iy+vic, sy-1LL); ++iy_i) {
+                        for (int64_t ix_i = std::max(0LL, ix-vic); ix_i <= std::min(ix+vic, sx-1LL); ++ix_i) {
+                            vecl[vic_counter] = *(nii_mean_data + nxy * iz_i + nx * iy_i + ix_i);  
+                            vic_counter++;
                         }
                     }
                 }
-                *(nii_GRAD_data + nxy * iz + nx * iy + ix) = ren_stdev(vecl, vinc_counter); 
+                *(nii_GRAD_data + nxy * iz + nx * iy + ix) = ren_stdev(vecl.data(), vic_counter); 
             }
         }
     }
     save_output_nifti(fout, "local_gradient", nii_GRAD, true);
+    cout << "    Estimating local image SNR ..." << endl;
 
-       cout << " estimateing local image SNR  ..." << endl;
-
-
-    //-------------------------------------
-    // estimating local image SNR  
-
-
-    for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_y; ++iy) {
-            for (int ix = 0; ix <size_x; ++ix) {
-                vinc_counter = 0; 
-                
-                for (int iz_i=max(0, iz-vic); iz_i<=min(iz+vic, size_z-1); ++iz_i) {
-                    for (int iy_i=max(0, iy-vic); iy_i<=min(iy+vic, size_y-1); ++iy_i) {
-                        for (int ix_i=max(0, ix-vic); ix_i<=min(ix+vic, size_x-1); ++ix_i) {
-                                vecl[vinc_counter] = *(nii_NOISE_data + nxy * iz_i + nx * iy_i + ix_i) ;  
-                                vinc_counter++;
+    //-------------------------------------------------------------------------
+    // Estimating local image SNR
+    for (int64_t iz = 0; iz < sz; ++iz) {
+        for (int64_t iy = 0; iy < sy; ++iy) {
+            for (int64_t ix = 0; ix <sx; ++ix) {
+                vic_counter = 0; 
+                for (int64_t iz_i = std::max(0LL, iz-vic); iz_i <= std::min(iz+vic, sz-1LL); ++iz_i) {
+                    for (int64_t iy_i = std::max(0LL, iy-vic); iy_i <= std::min(iy+vic, sy-1LL); ++iy_i) {
+                        for (int64_t ix_i = std::max(0LL, ix-vic); ix_i <= std::min(ix+vic, sx-1LL); ++ix_i) {
+                            vecl[vic_counter] = *(nii_NOISE_data + nxy * iz_i + nx * iy_i + ix_i);  
+                            vic_counter++;
                         }
                     }
                 }
-               // *(nii_NOISESTDEV_data + nxy * iz + nx * iy + ix) =  ren_stdev(vec1, vinc_counter); 
-                *(nii_NOISESTDEV_data + nxy * iz + nx * iy + ix) = *(nii_mean_data + nxy * iz + nx * iy + ix) / ren_stdev(vecl, vinc_counter) ;
+                // *(nii_NOISESTDEV_data + nxy * iz + nx * iy + ix) =  ren_stdev(vec1.data(), vic_counter); 
+                *(nii_NOISESTDEV_data + nxy * iz + nx * iy + ix) = *(nii_mean_data + nxy * iz + nx * iy + ix) / ren_stdev(vecl.data(), vic_counter);
             }
         }
     }
-    
-    for (int voxel_i = 0; voxel_i < nxyz ; voxel_i++) {
-        if ((nii_NOISESTDEV->scl_slope) != 0) *(nii_NOISESTDEV_data + voxel_i) /=  (nii_NOISESTDEV->scl_slope) ; 
-        if ( *(nii_NOISESTDEV_data + voxel_i) != *(nii_NOISESTDEV_data + voxel_i) ) *(nii_NOISESTDEV_data + voxel_i) = 0; 
+
+    for (uint64_t voxel_i = 0; voxel_i < nxyz; voxel_i++) {
+        if ( (nii_NOISESTDEV->scl_slope) != 0 ) {
+            *(nii_NOISESTDEV_data + voxel_i) /= (nii_NOISESTDEV->scl_slope);
+        } 
+        if ( *(nii_NOISESTDEV_data + voxel_i) != *(nii_NOISESTDEV_data + voxel_i) ) {
+            *(nii_NOISESTDEV_data + voxel_i) = 0;
+        }
     }
 
     save_output_nifti(fout, "imageSNR", nii_NOISESTDEV, true);
 
-    cout << "  Finished." << endl;
+    cout << "Finished." << endl;
     return 0;
 }
