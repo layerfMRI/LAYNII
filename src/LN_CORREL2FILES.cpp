@@ -1,7 +1,5 @@
-
-
-
 #include "../dep/laynii_lib.h"
+
 
 int show_help(void) {
     printf(
@@ -20,32 +18,30 @@ int show_help(void) {
     "              .nii.gz, and path if needed. Overwrites existing files.\n"
     "\n"
     "Notes:\n"
-    "    - This program is motivated by Eli Merriam comparing in hunting down \n"
-    "    voxels that out of phase for VASO and BOLD."
+    "    - This program is used for hunting voxels that are out of phase in\n"
+    "      nulled and BOLD time series.\n"
     "    - An example application is mentioned in the blog post here:\n"
-    "    <http://layerfmri.com/QA> \n"
+    "      <http://layerfmri.com/QA> \n"
     "\n");
     return 0;
 }
 
 int main(int argc, char *argv[]) {
-    bool use_outpath = false ;
-    char  *fout = NULL ;
-    char *fin_1 = NULL, *fin_2 = NULL;
+    char *fout = NULL, *fin_1 = NULL, *fin_2 = NULL;
     int ac;
-    if (argc < 2) return show_help();
 
     // Process user options
+    if (argc < 2) return show_help();
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
         } else if (!strcmp(argv[ac], "-file1")) {
-            cout << "Hello " << endl;
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -file1\n");
                 return 1;
             }
             fin_1 = argv[ac];
+            fout = argv[ac];
         } else if (!strcmp(argv[ac], "-file2")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -file2\n");
@@ -57,7 +53,6 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "** missing argument for -output\n");
                 return 1;
             }
-            use_outpath = true;
             fout = argv[ac];
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
@@ -91,13 +86,11 @@ int main(int argc, char *argv[]) {
     log_nifti_descriptives(nii2);
 
     // Get dimensions of input
-    int size_z = nii1->nz;
-    int size_x = nii1->nx;
-    int size_y = nii1->ny;
-    int size_time = nii1->nt;
-    int nx = nii1->nx;
-    int nxy = nii1->nx * nii1->ny;
-    int nxyz = nii1->nx * nii1->ny * nii1->nz;
+    int64_t size_z = nii1->nz;
+    int64_t size_x = nii1->nx;
+    int64_t size_y = nii1->ny;
+    int64_t size_time = nii1->nt;
+    int64_t nr_voxels = size_z * size_y * size_x;
 
     // ========================================================================
     // Fix datatype issues
@@ -112,26 +105,22 @@ int main(int argc, char *argv[]) {
     correl_file->nvox = size_x * size_y * size_z;
     correl_file->data = calloc(correl_file->nvox, correl_file->nbyper);
     float *correl_file_data = static_cast<float*>(correl_file->data);
-    // ========================================================================
 
-    double vec1[size_time], vec2[size_time];
-    for (int iz = 0; iz < size_z; ++iz) {
-        for (int iy = 0; iy < size_y; ++iy) {
-            for (int ix = 0; ix < size_x; ++ix) {
-                int voxel_i = nxy * iz + nx * iy + ix;
-                for (int it = 0; it < size_time; ++it) {
-                    int voxel_j = nxyz * it + nxy * iz + nx * iy + ix;
-                    vec1[it] = *(nii1_temp_data + voxel_j);
-                    vec2[it] = *(nii2_temp_data + voxel_j);
-                }
-                *(correl_file_data + voxel_i) =
-                    static_cast<float>(ren_correl(vec1, vec2, size_time));
-            }
+    // ========================================================================
+    std::vector<double> vec1(size_time);
+    std::vector<double> vec2(size_time);
+    int64_t ix, iy, iz;
+    for (int64_t i = 0; i < nr_voxels; ++i) {
+        tie(ix, iy, iz) = ind2sub_3D_64(i, size_x, size_y);
+        for (int64_t it = 0; it < size_time; ++it) {
+            int64_t j = nr_voxels*it + size_x*size_y*iz + size_x*iy + ix;
+            vec1[it] = *(nii1_temp_data + j);
+            vec2[it] = *(nii2_temp_data + j);
         }
+        *(correl_file_data + i) = static_cast<float>(ren_correl(vec1.data(), vec2.data(), size_time));
     }
 
-    if (!use_outpath) fout = fin_1;
-    save_output_nifti(fout, "correlated", correl_file, true, use_outpath);
+    save_output_nifti(fout, "correlated", correl_file, true);
 
     cout << "  Finished." << endl;
     return 0;
