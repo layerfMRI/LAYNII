@@ -69,6 +69,7 @@ LAYNII2		= 	LN2_LAYERS \
 				LN2_RIM_BORDERIZE \
 				LN2_SENSITIVITY \
 				LN2_SPECIFICITY \
+				LN2_INTPRO \
 				
 DERIVATIVES	=	LN2_GRADIENTS \
 				LN2_GRAMAG \
@@ -268,6 +269,9 @@ LN2_SENSITIVITY:
 
 LN2_SPECIFICITY:
 	$(CC) $(CFLAGS) -o LN2_SPECIFICITY src/LN2_SPECIFICITY.cpp $(LIBRARIES) $(LFLAGS)
+
+LN2_INTPRO:
+	$(CC) $(CFLAGS) -o LN2_INTPRO src/LN2_INTPRO.cpp $(LIBRARIES) $(LFLAGS)
 
 # =============================================================================
 # Work in progress programs

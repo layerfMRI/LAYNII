@@ -125,14 +125,6 @@ double ren_autocor(double arr[], int size) {
     return autocorr;
 }
 
-
-//int ren_add_if_new(int arr[], int size){
-//	bool is_new = false :
-//	for (i = 1; i < size; ++i) {
-//        sum1 += (arr[i]-mean)*(arr[i-1]-mean);
-//    }
-//}
-
 int ren_most_occurred_number(int nums[], int size){
 		int returnvalue = 0;
 		int max_count = 0;
@@ -895,6 +887,46 @@ uint32_t sub2ind_4D(const uint32_t x, const uint32_t y, const uint32_t z, const 
     return size_x * size_y * size_z * t + size_x * size_y * z + size_x * y + x;
 }
 
+std::tuple<int64_t, int64_t, int64_t> ind2sub_3D_64(
+    const int64_t linear_index,
+    const int64_t size_x,
+    const int64_t size_y) {
+
+    int64_t z = linear_index / (size_x * size_y);
+    int64_t temp = linear_index % (size_x * size_y);
+    int64_t y = temp / size_x;
+    int64_t x = temp % size_x;
+
+    return std::make_tuple(x, y, z);
+}
+
+std::tuple<int64_t, int64_t, int64_t, int64_t> ind2sub_4D_64(
+    const int64_t linear_index,
+    const int64_t size_x,
+    const int64_t size_y,
+    const int64_t size_z) {
+
+    int64_t t = linear_index / (size_x * size_y * size_z);
+    int64_t temp = linear_index % (size_x * size_y * size_z);
+    int64_t z = temp / (size_x * size_y);
+    temp = linear_index % (size_x * size_y);
+    int64_t y = temp / size_x;
+    int64_t x = temp % size_x;
+
+    return std::make_tuple(x, y, z, t);
+}
+
+
+int64_t sub2ind_3D_64(const int64_t x, const int64_t y, const int64_t z,
+                      const int64_t size_x, const int64_t size_y) {
+    return size_x * size_y * z + size_x * y + x;
+}
+
+int64_t sub2ind_4D_64(const int64_t x, const int64_t y, const int64_t z, const int64_t t,
+                      const int64_t size_x, const int64_t size_y, const int64_t size_z) {
+    return size_x * size_y * size_z * t + size_x * size_y * z + size_x * y + x;
+}
+
 
 std::tuple<float, float> simplex_closure_2D(float x, float y) {
     float component_sum = x + y;
@@ -934,7 +966,7 @@ nifti_image* iterative_smoothing(nifti_image* nii_in, int iter_smooth,
     const uint32_t size_x = temp1->nx;
     const uint32_t size_y = temp1->ny;
     const uint32_t size_z = temp1->nz;
-    const uint32_t size_t = temp1->nt;
+    const uint32_t size_time = temp1->nt;
     const uint32_t end_x = size_x - 1;
     const uint32_t end_y = size_y - 1;
     const uint32_t end_z = size_z - 1;
@@ -989,7 +1021,7 @@ nifti_image* iterative_smoothing(nifti_image* nii_in, int iter_smooth,
     float w_dZ = gaus(dZ, FWHM_val);
 
     uint32_t ix, iy, iz, j;
-    for (uint16_t t = 0; t != size_t; ++t) {  // Over 4th dim (e.g. timepoints)
+    for (uint16_t t = 0; t != size_time; ++t) {  // Over 4th dim (e.g. timepoints)
         for (uint16_t n = 0; n != iter_smooth; ++n) {
             cout << "\r    Iteration: " << n+1 << "/" << iter_smooth << flush;
             for (uint32_t ii = 0; ii != nr_voi; ++ii) {
@@ -1062,7 +1094,7 @@ nifti_image* iterative_smoothing(nifti_image* nii_in, int iter_smooth,
                 }
             }
             // Swap image data for the next iteration
-            for (uint32_t i = 0; i != nr_voxels * size_t; ++i) {
+            for (uint32_t i = 0; i != nr_voxels * size_time; ++i) {
                 *(nii_in_data + i) = *(nii_smooth_data + i);
             }
         }
