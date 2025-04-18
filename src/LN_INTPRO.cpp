@@ -144,8 +144,6 @@ int main(int argc, char * argv[]) {
     nii_collapse->data = calloc(nii_collapse->nvox, nii_collapse->nbyper);
     float* nii_collapse_data = static_cast<float*>(nii_collapse->data);
 
-    double vec_file1[size_time];
-
     // ========================================================================
     cout << "  Starting with dimensionality collapse = " << endl;
 
