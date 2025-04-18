@@ -1,4 +1,3 @@
-
 // WORK in PROGRESS
 // TODO(Renzo): Think about what to do with time series data.
 // E.g. carpet plot: https://github.com/layerfMRI/repository/tree/master/Layer_me
@@ -13,10 +12,10 @@ int show_help(void) {
     "LN2_PROFILE: Generates layer profiles from 3D nii file based on layer masks.\n"
     "             It averages all the signal intensities of each layer and write it\n"
     "             out as a 2d-plot. The output is a text file (table).\n"
-    "                 - Column 1 is the layer number.\n"
-    "                 - Column 2 is the mean signal in this layer.\n"
-    "                 - Column 3 is the STDEV of the signal variance across all voxels in this layer.\n"
-    "                 - Column 4 is the number of voxels per layer.\n"
+    "               - Column 1 is the layer number.\n"
+    "               - Column 2 is the mean signal in this layer.\n"
+    "               - Column 3 is the STDEV of the signal variance across all voxels in this layer.\n"
+    "               - Column 4 is the number of voxels per layer.\n"
     "\n"
     "Usage:\n"
     "    LN2_PROFILE -input activitymap.nii -layers layers.nii -plot \n"
@@ -85,7 +84,7 @@ int main(int argc, char*  argv[]) {
                 fprintf(stderr, "** missing argument for -mask\n");
                 return 1;
             }
-            use_mask = true ; 
+            use_mask = true; 
             finm = argv[ac];
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
@@ -154,7 +153,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Make sure that there is nothing weird with the slope of the nii header
     // ========================================================================
-    if(mode_debug){
+    if(mode_debug) {
        cout << "   Layer file has slope " << niil->scl_slope  << endl;
        cout << "   Act  file has slope  " << nii1->scl_slope  << endl;
        if (use_mask == true)  cout << "   Mask file has slope  " << niim->scl_slope  << endl;
@@ -176,7 +175,7 @@ int main(int argc, char*  argv[]) {
       
 	  for (int j = 0; j != nr_voxels; ++j) {
             if (*(mask_data + j) == 0  ) {
-                *(layers_data + j) = 0 ;
+                *(layers_data + j) = 0;
             }
         }
     }
@@ -187,15 +186,19 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     int nr_layers = 0;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(layers_data + i) >= nr_layers){
+        if (*(layers_data + i) >= nr_layers) {
             nr_layers = *(layers_data + i);
         }
     }
     cout << "    There are " << nr_layers<< " layers. " << endl << endl;
 
-    double numb_voxels[nr_layers] ;
-    double mean_layers[nr_layers] ;
-    double std_layers [nr_layers] ;
+    // double numb_voxels[nr_layers];
+    // double mean_layers[nr_layers];
+    // double std_layers [nr_layers];
+    std::vector<double> numb_voxels(nr_layers);
+    std::vector<double> mean_layers(nr_layers);
+    std::vector<double> std_layers (nr_layers);
+
     for (int i = 0; i < nr_layers; i++) {
         mean_layers[i] = 0.;
         std_layers[i] = 0.;
@@ -214,45 +217,42 @@ int main(int argc, char*  argv[]) {
     }
 
     //-------------- finding layer with maximal number of voxels
-    int max_layer_number = 0 ;
-    int max_layer_number_layer = 0 ;
-        for(int i = 0; i < nr_layers; i++) {
-            if (numb_voxels[i] >= max_layer_number ){
-                max_layer_number =  numb_voxels[i];
-                max_layer_number_layer = i;
-            }
+    int max_layer_number = 0;
+    int max_layer_number_layer = 0;
+    for(int i = 0; i < nr_layers; i++) {
+        if (numb_voxels[i] >= max_layer_number ) {
+            max_layer_number =  numb_voxels[i];
+            max_layer_number_layer = i;
         }
+    }
 
     if(mode_debug) cout << "   Layer  " <<   max_layer_number_layer+1 << " has the most voxels: " <<  max_layer_number << endl;
 
     // ========================================================================
     // Go through layers MAIN loop
     // ========================================================================
-    double vec1[max_layer_number];
+    // double vec1[max_layer_number];
+    std::vector<double> vec1(max_layer_number);
     int dummy_index = 0;
 
     for(int i = 0; i < nr_layers; i++) {
         for (int j = 0; j != nr_voxels; ++j) {
             if (*(layers_data + j) == i+1 ) {
-                vec1[dummy_index] = *(act_data + j) ;
+                vec1[dummy_index] = *(act_data + j);
                 dummy_index ++;
             }
         }
         dummy_index = 0;
-        mean_layers[i] = ren_average(vec1, numb_voxels[i])*act->scl_slope;
-        std_layers[i]  = ren_stdev  (vec1, numb_voxels[i])*act->scl_slope;
+        mean_layers[i] = ren_average(vec1.data(), numb_voxels[i])*act->scl_slope;
+        std_layers[i]  = ren_stdev  (vec1.data(), numb_voxels[i])*act->scl_slope;
     }
-    
-    
-    
-    
 
     // ========================================================================
     // Write layer profiles to terminal
     // ========================================================================
-    if (mode_debug){
+    if (mode_debug) {
         for(int i = 0; i < nr_layers; i++) {
-            cout << "In layer " << i+1 << " with a mean signal of "<<  mean_layers[i] ;
+            cout << "In layer " << i+1 << " with a mean signal of "<<  mean_layers[i];
             cout <<  " +/-  " << std_layers[i] << " with  " <<  numb_voxels[i] <<  " are voxels " << endl;
         }
     }
@@ -262,7 +262,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Managing file name, path and extension
     string path_out;
-    const string path = fout ;
+    const string path = fout;
 
     if (use_outpath) {
         path_out = path;
@@ -316,7 +316,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Plot in terminal, use ASCII to avoid issues with terminal types
     // ========================================================================
-    if (mode_plot){
+    if (mode_plot) {
         double max_val = -3.4028234664e+38;
         double min_val = 3.4028234664e+38;
 
@@ -332,9 +332,11 @@ int main(int argc, char*  argv[]) {
     // will get dependencies of operating system
     int termwdth = 80;
     int termhght = 20;  // terminal height
-    int matrix[termwdth][termhght] ;
-    for (int w =0 ; w < termwdth ; w++){
-        for (int h =0 ; h < termhght ;h++){
+    // int matrix[termwdth][termhght];
+    std::vector<std::vector<double>> matrix( termwdth, std::vector<double>( termhght ) );
+
+    for (int w =0; w < termwdth; w++) {
+        for (int h =0; h < termhght;h++) {
             matrix [w][h] = 0;
         }
     }
@@ -347,11 +349,11 @@ int main(int argc, char*  argv[]) {
     double x_lay = 0.;
     double y_val = 0.;
 
-    for (int w =0 ; w < termwdth ; w++){
-        for (int h =0 ; h < termhght ;h++){
+    for (int w =0; w < termwdth; w++) {
+        for (int h =0; h < termhght;h++) {
 
             x_lay = (double) w / (double) termwdth * (double) nr_layers;
-            y_val = (mean_layers[(int)x_lay] - min_valp) / (max_valp-min_valp) * termhght ;
+            y_val = (mean_layers[(int)x_lay] - min_valp) / (max_valp-min_valp) * termhght;
 
             if ( ( h - (int)y_val ) < 1 ) {
                 matrix [w][h] = 1;
@@ -360,29 +362,29 @@ int main(int argc, char*  argv[]) {
     }
 
     // top bar // two lines
-    cout << "       +-" ;
-    for (int w =0 ; w < termwdth ; w++) cout << "-" ;
-    cout << "-+" << endl ;
-    cout << "       | " ;
-    for (int w =0 ; w < termwdth ; w++) cout << " " ;
-    cout << " |" << endl ;
-    for (int h = termhght-1 ; h >= 0 ; h--){
+    cout << "       +-";
+    for (int w =0; w < termwdth; w++) cout << "-";
+    cout << "-+" << endl;
+    cout << "       | ";
+    for (int w =0; w < termwdth; w++) cout << " ";
+    cout << " |" << endl;
+    for (int h = termhght-1; h >= 0; h--) {
         if (h == termhght-1 ) {
             cout << setw(6) << max_val <<  " | ";
         }
-        else if (h == termhght/2 ){
-            cout  << setw(6)<< (max_val+min_val)/2. <<  " | " ;
+        else if (h == termhght/2 ) {
+            cout  << setw(6)<< (max_val+min_val)/2. <<  " | ";
         }
-        else if (h == 0 ){
+        else if (h == 0 ) {
             cout << setw(6) << min_val <<  " | ";
         }
         else {
             cout << "       | ";
         }
 
-        for (int w = termwdth-1 ; w >= 0 ; w--){
-            if (matrix [w][h]==1) cout << "@" ;
-            else if (matrix [w][h]==2) cout << ":" ;
+        for (int w = termwdth-1; w >= 0; w--) {
+            if (matrix [w][h]==1) cout << "@";
+            else if (matrix [w][h]==2) cout << ":";
             else cout << " ";
         }
 
@@ -391,15 +393,15 @@ int main(int argc, char*  argv[]) {
 
 
     // bottom bar
-    cout << "       | " ;
-    for (int w =0 ; w < termwdth ; w++) cout << " " ;
-    cout << " |" << endl ;
+    cout << "       | ";
+    for (int w =0; w < termwdth; w++) cout << " ";
+    cout << " |" << endl;
 
-    cout << "       +-" ;
-    for (int w =0 ; w < termwdth ; w++) cout << "-" ;
-    cout << "-+" << endl ;
-    cout << "                                                                                           " << endl ;
-    cout << "      CSF                                 cortical depth ->                              WM" << endl ;
+    cout << "       +-";
+    for (int w =0; w < termwdth; w++) cout << "-";
+    cout << "-+" << endl;
+    cout << "                                                                                           " << endl;
+    cout << "      CSF                                 cortical depth ->                              WM" << endl;
 
     cout << endl;
 }
