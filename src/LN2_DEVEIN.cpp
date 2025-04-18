@@ -1,14 +1,13 @@
-
 #include "../dep/laynii_lib.h"
 #include <limits>
+
 
 int show_help(void) {
     printf(
     "LN2_DEVEIN : Mitigates venous signal in one of three different ways.\n"
     "\n"
-    "    1. Estimates microvascular component in layer-fMRI GE-BOLD. It does\n"
-    "        so by using an estimate of the local macrovascular blood volume\n"
-    "        amplitude of lod frequencies (ALF).\n"
+    "    1. Estimates microvascular component in layer-fMRI GE-BOLD. It does so by using an estimate\n"
+    "       of the local macrovascular blood volume amplitude of lod frequencies (ALF).\n"
     "    2. Linearly scales back input values using layers information.\n"
     "    3. Scales input values following CBV.\n"
     "\n"
@@ -19,9 +18,8 @@ int show_help(void) {
     "\n"
     "Options:\n"
     "    -help        : Show this help.\n"
-    "    -input       : BOLD file that should be corrected from macrovascular\n"
-    "                   contaminations. This means that there will be no\n"
-    "                   deconvolution, just scaling of the baseline venous CBV.\n"
+    "    -input       : BOLD file that should be corrected from macrovascular contaminations. This means\n"
+    "                   that there will be no deconvolution, just scaling of the baseline venous CBV.\n"
     "                   This can be a time series or an activity map (not z-scores though). \n"
     "    -layer_file  : Nifti (.nii) file that contains layers. Layers close to white matter\n"
     "                   should be denoted by smaller numbers.\n"
@@ -37,18 +35,17 @@ int show_help(void) {
     "                   .nii.gz, and path if needed. Overwrites existing files.\n"
     "\n"
     "Notes:\n"
-    "    - [On lambda parameter]: If you assume your cerebral blood flow (CBF)\n"
-    "        is exceptionally low, use 0.3. If you assume your CBV is exceptionally\n"
-    "        high, use 0.2. If you use 3T instead of 7T, use 20 percent larger\n"
-    "        values. Larger values will result in stronger deconvolution.\n"
-    "        These variations will not affect the resulting profiles too much.\n"
-    "        Therefore only change this parameter if it is absolutely needed.\n"
+    "    - [On lambda parameter]: If you assume your cerebral blood flow (CBF) is exceptionally low,\n"
+    "        use 0.3. If you assume your CBV is exceptionally high, use 0.2. If you use 3T instead of\n"
+    "        7T, use 20 percent larger values. Larger values will result in stronger deconvolution.\n"
+    "        These variations will not affect the resulting profiles too much. Therefore only change\n"
+    "        this parameter if it is absolutely needed.\n"
     "    - This program is described in more depth in this blog post:\n"
-    "    <https://layerfmri.com/devein> \n"
-    "    - the leakage model is desceidbed in (Markuerkiaga et al. 2016) \n"
-    "                            https://doi.org/10.1016/j.neuroimage.2016.02.073 \n"
-    "        in Havlicek and Uludag 2019 https://doi.org/10.1016/j.neuroimage.2019.116209 \n"
-    "        and in Heinzle et al. 2016 http://dx.doi.org/10.1016/j.neuroimage.2015.10.025 \n"
+    "        <https://layerfmri.com/devein> \n"
+    "    - The leakage model is described in:
+              Markuerkiaga et al. (2016) <https://doi.org/10.1016/j.neuroimage.2016.02.073>\n"
+    "         Havlicek and Uludag (2019) <https://doi.org/10.1016/j.neuroimage.2019.116209>\n"
+    "         Heinzle et al. (2016) <http://dx.doi.org/10.1016/j.neuroimage.2015.10.025>\n"
     "\n");
     return 0;
 }
@@ -162,7 +159,7 @@ int main(int argc, char* argv[]) {
 
     if (mode_linear && mode_CBV) {
         cout << "  You selected both: Linear and CBV scaling. So I am confused. " << endl;
-        cout << "  I will only use only use linear scaling then. \n" << endl;
+        cout << "    Using only use linear scaling. \n" << endl;
          tag = "deveinLinear";
          mode_CBV = true;
     }
@@ -171,7 +168,7 @@ int main(int argc, char* argv[]) {
     const int size_x = nii->nx;
     const int size_y = nii->ny;
     const int size_z = nii->nz;
-    const int size_t = nii->nt;
+    const int size_time = nii->nt;
     const int nr_voxels = size_z * size_y * size_x;
 
     // ========================================================================
@@ -184,7 +181,7 @@ int main(int argc, char* argv[]) {
     // Allocate new niftis
     nifti_image *nii_output = copy_nifti_as_float32(nii_input);
     float *nii_output_data = static_cast<float*>(nii_output->data);
-    for (int i = 0; i < nr_voxels * size_t; ++i) {
+    for (int i = 0; i < nr_voxels * size_time; ++i) {
         *(nii_output_data + i) = 0;
     }
 
@@ -241,7 +238,7 @@ int main(int argc, char* argv[]) {
     // Main chunk
     // ========================================================================
     if (mode_linear) {  // Handle linear case straightforwardly
-        for (int t=0; t<size_t; ++t) {
+        for (int t=0; t<size_time; ++t) {
             for (int i=0; i<nr_voxels; ++i) {
                 int j = t * nr_voxels + i;
                 if (*(nii_layer_data + i) > 0) {
@@ -315,11 +312,11 @@ int main(int argc, char* argv[]) {
         // ====================================================================
         // Do deconvolution column by column. First, I allocate all.
         // ====================================================================
-        float vec1[nr_layers][size_t], vec2[nr_layers][size_t], vecALF[nr_layers];
+        float vec1[nr_layers][size_time], vec2[nr_layers][size_time], vecALF[nr_layers];
         int vec_nr_voxels[nr_layers];
 
         for (int i = 0; i < nr_layers; ++i) {
-            for (int t = 0; t < size_t; t++) {
+            for (int t = 0; t < size_time; t++) {
                 vec1[i][t] = 0.;
                 vec2[i][t] = 0.;
             }
@@ -334,7 +331,7 @@ int main(int argc, char* argv[]) {
 
             // Reset vector
             for (int i = 0; i < nr_layers; ++i) {
-                for (int t = 0; t < size_t; t++){
+                for (int t = 0; t < size_time; t++){
                     vec1[i][t] = 0.;
                     vec2[i][t] = 0.;
                 }
@@ -353,7 +350,7 @@ int main(int argc, char* argv[]) {
 
                     vec_nr_voxels[i] += 1;
 
-                    for (int t = 0; t < size_t; t++) {
+                    for (int t = 0; t < size_time; t++) {
                         vec1[i][t] += *(nii_input_data + t * nr_voxels + ivox);
                     }
                 }
@@ -361,7 +358,7 @@ int main(int argc, char* argv[]) {
 
             // Get mean of values within column vector
             for (int i = 0; i < nr_layers; ++i) {
-                for (int t = 0; t < size_t; t++) {
+                for (int t = 0; t < size_time; t++) {
                     vec1[i][t] /= (float)vec_nr_voxels[i];
                 }
                 vecALF[i] /= (float)vec_nr_voxels[i];
@@ -384,7 +381,7 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            for (int t = 0; t < size_t; t++){
+            for (int t = 0; t < size_time; t++){
 
                 for (int i = 0; i < nr_layers; ++i) {
                     if (mode_CBV) {  // Just CBV normalization
@@ -414,7 +411,7 @@ int main(int argc, char* argv[]) {
             for (int ivox = 0; ivox < nr_voxels; ++ivox) {
                 if (icol == *(nii_column_data + ivox)) {
                     int i = *(nii_layer_data + ivox) - 1;
-                    for (int t = 0; t < size_t; t++) {
+                    for (int t = 0; t < size_time; t++) {
                         *(nii_output_data + t * nr_voxels + ivox ) = vec2[i][t];
                     }
                 }
