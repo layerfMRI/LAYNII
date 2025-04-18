@@ -3,9 +3,11 @@
 //#include <math.h>
 #include <cmath>
 #include <stdlib.h>
+#include <vector>
 #include <iostream>
 #include <string>
 #include <tuple>
+#include <algorithm>
 #include "./nifti2_io.h"
 
 using namespace std;
