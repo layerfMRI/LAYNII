@@ -3,8 +3,8 @@
 
 int show_help(void) {
     printf(
-    "LN_NOISE_KERNEL: Estimates functional point spread function by looking\n"
-    "                 at shared sources of variance across different directions.\n"
+    "LN_NOISE_KERNEL: Estimates functional point spread function by looking at\n"
+    "                 shared sources of variance across different directions.\n"
     "\n"
     "Usage:\n"
     "    LN_NOISE_KERNEL -input timeseries.nii -kernel_size 11 \n"
@@ -28,14 +28,17 @@ int show_help(void) {
 }
 
 int main(int argc, char * argv[]) {
-    bool use_outpath = false ;
-    char  *fout = NULL ;
+    bool use_outpath = false;
+    char  *fout = NULL;
     char *fin = NULL;
     int ac;
-    int kernel_size = 11; // This is the maximal number of layers. I don't know how to allocate it dynamically. this should be an odd number. That is smaller than half of the shortest matrix size to make sense
-    if (argc < 2) return show_help();
+    
+    // NOTE(Renzo) This is the maximal number of layers. I don't know how to allocate it dynamically. This should be an 
+    // odd number. That is smaller than half of the shortest matrix size to make sense
+    int kernel_size = 11;
 
     // Process user options
+    if (argc < 2) return show_help();
     for (ac = 1; ac < argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
@@ -44,7 +47,7 @@ int main(int argc, char * argv[]) {
                 fprintf(stderr, "** missing argument for -kernel_size\n");
                 return 1;
             }
-            kernel_size = atoi(argv[ac]);  // No string copy, pointer assignment
+            kernel_size = atof(argv[ac]);
         } else if (!strcmp(argv[ac], "-input")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -input\n");
@@ -64,8 +67,6 @@ int main(int argc, char * argv[]) {
         fprintf(stderr, "** missing option '-input'\n");
         return 1;
     }
-
-
 
     // Read input dataset
     nifti_image * nii_input = nifti_image_read(fin, 1);
@@ -92,40 +93,49 @@ int main(int argc, char * argv[]) {
     float* nii_data = static_cast<float*>(nii->data);
 
 
-if (kernel_size%2==0) {
-    cout << " you chose a kernel size of " << kernel_size << " even though I tols you to use an odd value... SHAME ON YOU" ;
-    kernel_size = kernel_size -1 ;
-    cout << "    I am using " << kernel_size << " instead" << endl;
-}
+    if (kernel_size%2==0) {
+        cout << " you chose a kernel size of " << kernel_size << " even though I tols you to use an odd value... SHAME ON YOU";
+        kernel_size = kernel_size -1;
+        cout << "    I am using " << kernel_size << " instead" << endl;
+    }
 
-    int kernel_vol = kernel_size * kernel_size* kernel_size ;
-    double Nkernel[kernel_size][kernel_size][kernel_size] ;
+    int kernel_vol = kernel_size * kernel_size* kernel_size;
+    std::vector<std::vector<std::vector<double>>> Nkernel(
+        kernel_size,
+        std::vector<std::vector<double>>(
+            kernel_size,
+            std::vector<double>(kernel_size)
+        )
+    );
+
     int Number_of_averages = 0;
-    double Number_AVERAG[kernel_size][kernel_size][kernel_size] ;
+    std::vector<std::vector<std::vector<double>>> Number_AVERAG(
+        kernel_size,
+        std::vector<std::vector<double>>(
+            kernel_size,
+            std::vector<double>(kernel_size)
+        )
+    );
 
-/////////////////////////////////
-////////allokate and se zero ////
-/////////////////////////////////
-
-double vec1[size_time] ;
-double vec2[size_time] ;
-double dummy = 0;
-
-    for(int timestep = 0; timestep < size_time ; timestep++) {
+    // ============================================================================
+    // Allocate and set to zero
+    // ============================================================================
+    std::vector<double> vec1(size_time);
+    std::vector<double> vec2(size_time);
+    double dummy = 0;
+    for(int timestep = 0; timestep < size_time; timestep++) {
         vec1[timestep] = 0;
         vec2[timestep] = 0;
     }
 
-
-for(int i = 0; i < kernel_size; i++) {
-    for(int j = 0; j < kernel_size ; j++) {
-        for(int k = 0; k < kernel_size ; k++) {
-            Nkernel[i][j][k] = 0;
-            Number_AVERAG[i][j][k] = 0;
+    for(int i = 0; i < kernel_size; i++) {
+        for(int j = 0; j < kernel_size; j++) {
+            for(int k = 0; k < kernel_size; k++) {
+                Nkernel[i][j][k] = 0;
+                Number_AVERAG[i][j][k] = 0;
+            }
         }
     }
-}
-
 
     // Allocate new nifti
     nifti_image* nii_kernel = nifti_copy_nim_info(nii);
@@ -144,96 +154,74 @@ for(int i = 0; i < kernel_size; i++) {
     int knxy = nii_kernel->nx * nii_kernel->ny;
     int knxyz = nii_kernel->nx * nii_kernel->ny * nii_kernel->nz;
 
-
     // ========================================================================
+    cout << " Kernel size = " << kernel_size << endl;
+    cout << " Kernel size/2 = " << kernel_size/2 << endl;
 
-cout << " Kernel size = " << kernel_size << endl;
-cout << " Kernel size/2 = " << kernel_size/2 << endl;
-
-//cout << " float = " << sizeof(float32_t) << endl;
-//cout << " double = " << sizeof(double) << endl;
-
-if ( size_x < kernel_size*2 || size_y < kernel_size*2 || size_z < kernel_size*2) {
-    cout << "####################################################" << endl;
-    cout << "#### WARNING your Kernel might be too big ##########" << endl;
-    cout << "####################################################" << endl;
-}
-
-int vinc_x = 0 , vinc_y = 0 , vinc_z = 0;
-int kern_ix, kern_iy, kern_iz ;
-
-
-// four time estimate
-int all_loops = size_y * size_x ;
-int loop_counter = 0;
-
-for(int iy=0; iy<size_y; ++iy){
-    for(int ix=0; ix<size_x; ++ix){
-       cout << "\r"<<  loop_counter*100/all_loops  << "    % done "  << flush ;
-       loop_counter++ ;
-       for(int iz=0; iz<size_z; ++iz){
-
-          for(int it = 0 ; it < size_time  ; it++) {
-               //cout  << "  it=" << it << "   ix="  <<ix << "   iy="  <<iy << "   iz="  <<iz<<   endl;
-               vec1[it] =  (double)*(nii_data  + nxyz *it +  nxy*iz + nx*iy + ix) ;
-
-
-          }
-
-          // going trhough vicinity of every voxel
-        for(int kernely= -1*kernel_size/2; kernely<=kernel_size/2; ++kernely){
-             for(int kernelx= -1*kernel_size/2; kernelx<=kernel_size/2; ++kernelx){
-                 for(int kernelz= -1*kernel_size/2; kernelz<=kernel_size/2; ++kernelz){
-
-                    vinc_x = ix + kernelx ;
-                    vinc_y = iy + kernely ;
-                    vinc_z = iz + kernelz ;
-                    kern_ix = kernelx+kernel_size/2;
-                    kern_iy = kernely+kernel_size/2;
-                    kern_iz = kernelz+kernel_size/2;
-
-                    if (vinc_x >= 0 && vinc_x < size_x && vinc_y >= 0 && vinc_y < size_y && vinc_z >= 0 && vinc_z < size_z) {
-
-                        for(int it = 0 ; it < size_time  ; it++) {
-                           vec2[it] = (double) *(nii_data  + nxyz *it +  nxy*vinc_z + nx*vinc_y + vinc_x) ;
-                        }
-                        dummy  = ren_correl(vec1, vec2, size_time) ;
-
-                        //dummy = kernely ;
-                        if (isfinite(dummy) && dummy != 0 ) {
-                          //*(nii_kernel_data + knxy*kern_iz + knx*kern_iy + kern_ix) += dummy;
-                           Nkernel[kern_iz][kern_iy][kern_ix] = Nkernel[kern_iz][kern_iy][kern_ix] +  dummy ;
-                           Number_AVERAG[kern_iz][kern_iy][kern_ix]++ ;
-
-                        }
-                    }
-
-                 }
-              }
-          }
-
-
-
-       }
+    if ( size_x < kernel_size*2 || size_y < kernel_size*2 || size_z < kernel_size*2) {
+        cout << "####################################################" << endl;
+        cout << "#### WARNING your Kernel might be too big ##########" << endl;
+        cout << "####################################################" << endl;
     }
-}
 
+    int vic_x = 0 , vic_y = 0 , vic_z = 0;
+    int kern_ix, kern_iy, kern_iz;
 
-cout << endl;
+    // for time estimate
+    int all_loops = size_y * size_x;
+    int loop_counter = 0;
 
+    for(int iy=0; iy<size_y; ++iy) {
+        for(int ix=0; ix<size_x; ++ix) {
+            cout << "\r"<<  loop_counter*100/all_loops  << "    % done "  << flush;
+            loop_counter++;
+            for(int iz=0; iz<size_z; ++iz) {
+                for(int it = 0; it < size_time ; it++) {
+                    vec1[it] =  (double)*(nii_data  + nxyz *it +  nxy*iz + nx*iy + ix);
+                }
 
-        for(int kernely= 0; kernely<kernel_size; ++kernely){
-             for(int kernelx= 0; kernelx<kernel_size; ++kernelx){
-                 for(int kernelz= 0; kernelz<kernel_size; ++kernelz){
+                // Going though vicinity of every voxel
+                for(int kernely=-1*kernel_size/2; kernely <= kernel_size/2; ++kernely) {
+                    for(int kernelx=-1*kernel_size/2; kernelx <= kernel_size/2; ++kernelx) {
+                        for(int kernelz=-1*kernel_size/2; kernelz <= kernel_size/2; ++kernelz) {
+                            vic_x = ix + kernelx;
+                            vic_y = iy + kernely;
+                            vic_z = iz + kernelz;
+                            kern_ix = kernelx+kernel_size/2;
+                            kern_iy = kernely+kernel_size/2;
+                            kern_iz = kernelz+kernel_size/2;
 
-                    if (Number_AVERAG[kernelz][kernely][kernelx] > 0 ){
-                       *(nii_kernel_data + knxy*kernelz + knx*kernely + kernelx) = (float) (Nkernel[kernelz][kernely][kernelx] / Number_AVERAG[kernelz][kernely][kernelx]); //dummy;
+                            if (vic_x >= 0 && vic_x < size_x && vic_y >= 0 && vic_y < size_y && vic_z >= 0 && vic_z < size_z) {
+                                for(int it = 0; it < size_time ; it++) {
+                                   vec2[it] = (double) *(nii_data  + nxyz *it +  nxy*vic_z + nx*vic_y + vic_x);
+                                }
+                                dummy  = ren_correl(vec1.data(), vec2.data(), size_time);
+
+                                if (isfinite(dummy) && dummy != 0 ) {
+                                    Nkernel[kern_iz][kern_iy][kern_ix] = Nkernel[kern_iz][kern_iy][kern_ix] +  dummy;
+                                    Number_AVERAG[kern_iz][kern_iy][kern_ix]++;
+                                }
+                            }
+                        }
                     }
-                    else *(nii_kernel_data + knxy*kernelz + knx*kernely + kernelx) =  0;
-                 }
-              }
-          }
+                }
+            }
+        }
+    }
+    cout << endl;
 
+
+    for(int kernely=0; kernely < kernel_size; ++kernely) {
+        for(int kernelx=0; kernelx < kernel_size; ++kernelx) {
+            for(int kernelz=0; kernelz < kernel_size; ++kernelz) {
+                if (Number_AVERAG[kernelz][kernely][kernelx] > 0 ) {
+                    *(nii_kernel_data + knxy*kernelz + knx*kernely + kernelx) = (float) (Nkernel[kernelz][kernely][kernelx] / Number_AVERAG[kernelz][kernely][kernelx]);
+                } else {
+                    *(nii_kernel_data + knxy*kernelz + knx*kernely + kernelx) = 0;
+                }
+            }
+        }
+    }
 
     if (!use_outpath) fout = fin;
     save_output_nifti(fout, "fPSF", nii_kernel, true, use_outpath);
