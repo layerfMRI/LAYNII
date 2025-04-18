@@ -5,10 +5,9 @@
 int show_help(void) {
     printf(
     "LN2_LAYERDIMENSION: This program switches the layer dimensions into nifti time dimension.\n"
-    "                    This can be useful to browse layer profiles using the time course\n"
-    "                    viewers of FSLEYES, AFNI, or miview.\n"
-    "                    Furthermore, this is useful to execute time course analyses.\n"
-    "                    in the layer domain (e.g., ICA across layer profiles).\n"
+    "                    This can be useful to browse layer profiles using the time course viewers\n"
+    "                    of FSLEYES, AFNI, or miview. Furthermore, this is useful to execute\n"
+    "                    time course analyses in the layer domain (e.g., ICA across layer profiles).\n"
     "\n"
     "Usage:\n"
     "    LN2_LAYERDIMENSION -values activation.nii -columns columns.nii -layers layers_equidist.nii -singleTR\n"
@@ -30,18 +29,18 @@ int show_help(void) {
     "\n"
     "Notes:\n"
     "    - This does not refer to Dr. Strange's dimensions.\n"
-    "           +-----------+   \n"
-    "          /           /|   \n"
-    "         /           / |   \n"
-    "        /           /  |   \n"
-    "       +-----------+   |   \n"
-    "     L |           |   |   \n"
-    "     A |           |   +   \n"
-    "     Y |           |  / E  \n"
-    "     E |           | / M   \n"
-    "     R |           |/ I    \n"
-    "       +-----------+ T     \n"
-    "       SPACE               \n"
+    "           +-----------+ \n"
+    "          /           /| \n"
+    "         /           / | \n"
+    "        /           /  | \n"
+    "       +-----------+   | \n"
+    "     L |           |   | \n"
+    "     A |           |   + \n"
+    "     Y |           |  / E\n"
+    "     E |           | / M \n"
+    "     R |           |/ I  \n"
+    "       +-----------+ T   \n"
+    "       SPACE             \n"
     "\n");
     return 0;
 }
@@ -170,11 +169,14 @@ int main(int argc, char*  argv[]) {
             nr_columns = *(columns_data + i);
         }
     }
-    cout << "    There are " << nr_layers<< " layers. " << endl ;
-    cout << "    There are " << nr_columns<< " columns. " << endl << endl;
+    cout << "    There are " << nr_layers << " layers. " << endl;
+    cout << "    There are " << nr_columns << " columns. " << endl << endl;
 
-    double numb_voxels[nr_layers][nr_columns] ;
-    double mean_val[nr_layers][nr_columns] ;
+    // double numb_voxels[nr_layers][nr_columns];
+    // double mean_val[nr_layers][nr_columns];
+    std::vector<std::vector<double>> numb_voxels( nr_layers, std::vector<double>(nr_columns) );
+    std::vector<std::vector<double>> mean_val( nr_layers,std::vector<double>(nr_columns) );
+
     for (int i = 0; i < nr_layers; i++) {
         for (int j = 0; j < nr_columns; j++) {
             mean_val   [i][j] = 0.;
@@ -197,22 +199,21 @@ int main(int argc, char*  argv[]) {
     layerdim->nt = nr_layers;
     nifti_update_dims_from_array(layerdim);
 
-    layerdim->nvox = nii_input->nvox * nr_layers ;
+    layerdim->nvox = nii_input->nvox * nr_layers;
     layerdim->nbyper = sizeof(float);
     layerdim->data = calloc(layerdim->nvox, layerdim->nbyper);
     layerdim->scl_slope = nii_input->scl_slope;
     layerdim->scl_inter = 0;
     float* layerdim_data = static_cast<float*>(layerdim->data);
 
-
-    for (int voxi = 0; voxi < nr_voxels * nr_layers; voxi++) *(layerdim_data + voxi) = 0.0 ;
+    for (int voxi = 0; voxi < nr_voxels * nr_layers; voxi++) *(layerdim_data + voxi) = 0.0;
 
     // ========================================================================
     // Average within columns and layers
     // ========================================================================
     for (int i = 0; i != nr_voxels; ++i) {
         if ( *(columns_data + i) !=0 && *(layers_data + i) != 0 ){
-            mean_val   [*(layers_data + i) -1 ][ *(columns_data + i) -1 ] += *(nii_input_data + i) ;
+            mean_val   [*(layers_data + i) -1 ][ *(columns_data + i) -1 ] += *(nii_input_data + i);
             numb_voxels[*(layers_data + i) -1 ][ *(columns_data + i) -1 ] += 1;
         }
     }
@@ -220,7 +221,7 @@ int main(int argc, char*  argv[]) {
     for (int i = 0; i < nr_layers; i++) {
         for (int j = 0; j < nr_columns; j++) {
             if (numb_voxels[i][j] != 0){
-                mean_val[i][j] /= (float)numb_voxels[i][j] ;
+                mean_val[i][j] /= (float)numb_voxels[i][j];
                // cout << "layer " << i+1 << " and column " << j+1 << " has value " << mean_val[i][j] << endl;
             }
         }
@@ -232,7 +233,7 @@ int main(int argc, char*  argv[]) {
     for (int voxi = 0; voxi < nr_voxels; voxi++) {
         if ( *(columns_data + voxi) !=0 && *(layers_data + voxi) != 0){
             for (int l = 0; l < nr_layers; ++l) {
-                *(layerdim_data + nr_voxels * l + voxi) = mean_val[ l ][ *(columns_data + voxi) - 1 ] ;
+                *(layerdim_data + nr_voxels * l + voxi) = mean_val[ l ][ *(columns_data + voxi) - 1 ];
             }
             // *(layerdim_data + nr_voxels * 0 + voxi) = voxi;
         }
