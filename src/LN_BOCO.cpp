@@ -1,10 +1,11 @@
-
+#include <vector>
 #include "../dep/laynii_lib.h"
+
 
 int show_help(void) {
     printf(
     "LN_BOCO: This program does BOLD correction in SS-SI VASO. It does\n"
-    "         the division of nulled and not nulled imaged.\n"
+    "         the division of nulled and BOLD (not nulled) images.\n"
     "\n"
     "Usage:\n"
     "    LN_BOCO -Nulled Nulled_intemp.nii -BOLD BOLD_intemp.nii\n"
@@ -16,9 +17,8 @@ int show_help(void) {
     "\n"
     "Options:\n"
     "    -help      : Show this help.\n"
-    "    -Nulled    : Nulled (VASO) time series that needs to be BOLD\n"
-    "               : corrected.\n"
-    "    -BOLD      : Reference BOLD time series without a VASO contrast.\n"
+    "    -Nulled    : Nulled time series that needs to be BOLD corrected.\n"
+    "    -BOLD      : BOLD time series.\n"
     "    -shift     : (Optional) Estimate the correlation of BOLD and VASO\n"
     "                 for temporal shifts.\n"
     "    -trialBOCO : First average trials and then do the BOLD correction.\n"
@@ -27,7 +27,7 @@ int show_help(void) {
     "                 Guaranteed to give values within 0-1 range.\n"
     "    -output    : (Optional) Output basename, including .nii or\n"
     "                 .nii.gz, and path if needed. Overwrites existing files.\n"
-    "                 Note different to other LayNii programs in LN_COCO \n"
+    "                 Note that different to other LayNii programs in LN_BOCO \n"
     "                 if no output file name is specified, the output file \n"
     "                 name is VASO_LN.nii in the current folder.\n"
     "\n"
@@ -113,14 +113,14 @@ int main(int argc, char * argv[]) {
     log_nifti_descriptives(nii2);
 
     // Get dimensions of input
-    const int size_x = nii1->nx;
-    const int size_y = nii1->ny;
-    const int size_z = nii1->nz;
-    const int size_time = nii1->nt;
-    const int nx = nii1->nx;
-    const int nxy = nii1->nx * nii1->ny;
-    const int nxyz = nii1->nx * nii1->ny * nii1->nz;
-    const int nr_voxels = size_time * size_z * size_y * size_x;
+    const uint64_t size_x = nii1->nx;
+    const uint64_t size_y = nii1->ny;
+    const uint64_t size_z = nii1->nz;
+    const uint64_t size_time = nii1->nt;
+    const uint64_t nx = nii1->nx;
+    const uint64_t nxy = nii1->nx * nii1->ny;
+    const uint64_t nxyz = nii1->nx * nii1->ny * nii1->nz;
+    const uint64_t nr_voxels = size_time * size_z * size_y * size_x;
 
     // ========================================================================
     // Fix datatype issues
@@ -132,14 +132,9 @@ int main(int argc, char * argv[]) {
     // Allocate new nifti
     nifti_image *nii_boco_vaso = copy_nifti_as_float32(nii1);
     float *nii_boco_vaso_data = static_cast<float*>(nii_boco_vaso->data);
-    
-    
-
 
     // ========================================================================
-    // Handle scaling factor effects
-    // TODO(Faruk): I am not sure we need this part anymore. Need to check.
-    
+    // Handle scaling factor effects    
     float scl_slope1=nii_nulled->scl_slope, scl_slope2=nii_bold->scl_slope;
     if (scl_slope2 != 0 || scl_slope1 != 0 ) { 
         cout << "    !!!Warning!!! Input nifti header contains scl_scale !=0.\n"
@@ -160,13 +155,13 @@ int main(int argc, char * argv[]) {
     nii_nulled->scl_slope = 1.;
     nii_bold->scl_slope = 1.;
     nii_boco_vaso->scl_slope = 1.;
-    
+
     // ========================================================================
     // BOLD correction
     // ========================================================================
     if (mode_alt) {
-        int nr_invalid_voxels = 0, nr_zero_voxels = 0;
-        for (int i = 0; i != nr_voxels; ++i) {
+        uint64_t nr_invalid_voxels = 0, nr_zero_voxels = 0;
+        for (uint64_t i = 0; i != nr_voxels; ++i) {
             float nc = *(nii_nulled_data + i);  // Nulled condition
             float nn = (*(nii_bold_data + i));  // Not nulled condition (a.k.a BOLD)
 
@@ -194,8 +189,7 @@ int main(int argc, char * argv[]) {
             << nr_invalid_voxels << "/" << nr_voxels - nr_zero_voxels
             << "\n    " << (term1 / term2) * 100 << "%\n" << endl;
     } else {
-
-        for (int i = 0; i != nr_voxels; ++i) {
+        for (uint64_t i = 0; i != nr_voxels; ++i) {
             float nc = *(nii_nulled_data + i);  // Nulled condition
             float nn = *(nii_bold_data + i);  // Not nulled condition (a.k.a BOLD)
 
@@ -206,7 +200,7 @@ int main(int argc, char * argv[]) {
             }
         }
         // Clip VASO values that are unrealistic
-        for (int i = 0; i != nr_voxels; ++i) {
+        for (uint64_t i = 0; i != nr_voxels; ++i) {
             if (*(nii_boco_vaso_data + i) <= 0) {
                 *(nii_boco_vaso_data + i) = 0;
             }
@@ -228,33 +222,30 @@ int main(int argc, char * argv[]) {
         correl_file->data = calloc(correl_file->nvox, correl_file->nbyper);
         float* correl_file_data = static_cast<float*>(correl_file->data);
 
-        double vec_file1[size_time];
-        double vec_file2[size_time];
+        std::vector<double> vec_file1(size_time);
+        std::vector<double> vec_file2(size_time);
 
         for (int shift = -3; shift <= 3; ++shift) {
             cout << "  Calculating shift = " << shift << endl;
-            for (int j = 0; j != size_z * size_y * size_x; ++j) {
-                for (int t = 3; t < size_time-3; ++t) {
-                    *(nii_boco_vaso_data + nxyz * t + j)  =      *(nii_nulled_data + nxyz * t + j)  / *(nii_bold_data + nxyz * (t + shift) + j);
+            for (uint64_t j = 0; j != size_z * size_y * size_x; ++j) {
+                for (uint64_t t = 3; t < size_time - 3; ++t) {
+                    *(nii_boco_vaso_data + nxyz * t + j) = *(nii_nulled_data + nxyz * t + j) / *(nii_bold_data + nxyz * (t + shift) + j);
                 }
-                for (int t = 0; t < size_time; ++t) {
+                for (uint64_t t = 0; t < size_time; ++t) {
                     vec_file1[t] = *(nii_boco_vaso_data + nxyz * t + j);
                     vec_file2[t] = *(nii_bold_data + nxyz * t + j);
                 }
-                *(correl_file_data + nxyz * (shift + 3) + j) =  ren_correl(vec_file1, vec_file2, size_time);
+                *(correl_file_data + nxyz * (shift + 3) + j) = ren_correl(vec_file1.data(), vec_file2.data(), size_time);
             }
         }
 
-
-
         // Get back to default
-        for (int i = 0; i != nr_voxels; ++i) {
-            *(nii_boco_vaso_data + i) = *(nii_nulled_data + i)
-                                        / *(nii_bold_data + i);
+        for (uint64_t i = 0; i != nr_voxels; ++i) {
+            *(nii_boco_vaso_data + i) = *(nii_nulled_data + i) / *(nii_bold_data + i);
         }
 
         // Clean VASO values that are unrealistic
-        for (int i = 0; i != nr_voxels; ++i) {
+        for (uint64_t i = 0; i != nr_voxels; ++i) {
            if (*(nii_boco_vaso_data + i) <= 0) {
                 *(nii_boco_vaso_data + i) = 0;
             }
@@ -263,8 +254,8 @@ int main(int argc, char * argv[]) {
             }
         }
 
-            // Replace nans with zeros
-        for (int i = 0; i < nr_voxels; ++i) {
+        // Replace nans with zeros
+        for (uint64_t i = 0; i < nr_voxels; ++i) {
             if (*(correl_file_data + i)!= *(correl_file_data + i)) {
                *(correl_file_data + i) = 0;
             }
@@ -283,7 +274,8 @@ int main(int argc, char * argv[]) {
              <<  " trials recorded here." << endl;
 
         int nr_trials = size_time / trialdur;
-        // Trial averave file
+
+        // Trial average file
         nifti_image *nii_avg1 = nifti_copy_nim_info(nii1);
         nii_avg1->nt = trialdur;
         nii_avg1->nvox = nii1->nvox / size_time * trialdur;
@@ -300,27 +292,25 @@ int main(int argc, char * argv[]) {
         nii_avg2->data = calloc(nii_avg2->nvox, nii_avg2->nbyper);
         float  *nii_avg1_B_data  = static_cast<float*>(nii_avg2->data);
 
-        float avg_Nulled[trialdur];
-        float avg_BOLD[trialdur];
+        std::vector<double> avg_Nulled(trialdur);
+        std::vector<double> avg_BOLD(trialdur);
 
-        for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_y; ++iy) {
-                for (int ix = 0; ix < size_x; ++ix) {
-                    for (int it = 0; it < trialdur; ++it) {
+        for (uint64_t iz = 0; iz < size_z; ++iz) {
+            for (uint64_t iy = 0; iy < size_y; ++iy) {
+                for (uint64_t ix = 0; ix < size_x; ++ix) {
+                    for (uint64_t it = 0; it < trialdur; ++it) {
                         avg_Nulled[it] = 0;
                         avg_BOLD[it] = 0;
                     }
-                    for (int it = 0; it < trialdur * nr_trials; ++it) {
-                        int voxel_i = nxyz * it + nxy * iz + nx * iy + ix;
-                        avg_Nulled[it % trialdur] +=
-                            *(nii_nulled_data + voxel_i) / nr_trials;
-                        avg_BOLD[it % trialdur] +=
-                            *(nii_bold_data + voxel_i) / nr_trials;
+                    for (uint64_t it = 0; it < trialdur * nr_trials; ++it) {
+                        uint64_t voxel_i = nxyz * it + nxy * iz + nx * iy + ix;
+                        avg_Nulled[it % trialdur] += *(nii_nulled_data + voxel_i) / nr_trials;
+                        avg_BOLD[it % trialdur]   += *(nii_bold_data + voxel_i) / nr_trials;
                     }
 
-                    for (int it = 0; it < trialdur; ++it) {
-                        int voxel_i = nxyz * it + nxy * iz + nx * iy + ix;
-                        *(nii_avg1_data + voxel_i) = avg_Nulled[it] / avg_BOLD[it];
+                    for (uint64_t it = 0; it < trialdur; ++it) {
+                        uint64_t voxel_i = nxyz * it + nxy * iz + nx * iy + ix;
+                        *(nii_avg1_data + voxel_i)   = avg_Nulled[it] / avg_BOLD[it];
                         *(nii_avg1_B_data + voxel_i) = avg_BOLD[it];
 
                     }
@@ -329,12 +319,11 @@ int main(int argc, char * argv[]) {
         }
 
         // Clean VASO values that are unrealistic
-        for (int iz = 0; iz < size_z; ++iz) {
-            for (int iy = 0; iy < size_y; ++iy) {
-                for (int ix = 0; ix < size_x; ++ix) {
-                    for (int it = 0; it < trialdur; ++it) {
-                        int voxel_i = nxyz * it + nxy * iz + nx * iy + ix;
-
+        for (uint64_t iz = 0; iz < size_z; ++iz) {
+            for (uint64_t iy = 0; iy < size_y; ++iy) {
+                for (uint64_t ix = 0; ix < size_x; ++ix) {
+                    for (uint64_t it = 0; it < trialdur; ++it) {
+                        uint64_t voxel_i = nxyz * it + nxy * iz + nx * iy + ix;
                         if (*(nii_avg1_data + voxel_i) <= 0) {
                             *(nii_avg1_data + voxel_i) = 0;
                         }
@@ -354,9 +343,8 @@ int main(int argc, char * argv[]) {
         }
     }
 
-
     // Replace nans with zeros
-    for (int i = 0; i < nr_voxels; ++i) {
+    for (uint64_t i = 0; i < nr_voxels; ++i) {
         if (*(nii_boco_vaso_data + i)!= *(nii_boco_vaso_data + i)) {
            *(nii_boco_vaso_data + i) = 0;
         }
