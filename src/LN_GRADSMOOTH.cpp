@@ -259,7 +259,7 @@ int main(int argc, char * argv[])
     // Values that I need to characterize the local signals in the vicinity.
     float local_val = 0;
     int NvoxInVinc = (2*vic+1)*(2*vic+1)*(2*vic+1);
-    double vec1[NvoxInVinc];
+    std::vector<double> vec1(NvoxInVinc);
     for(int it = 0; it < NvoxInVinc; it++) vec1[it] = 0;
     float grad_stdev = 0;
     float value_dist = 0;
@@ -328,7 +328,7 @@ int main(int argc, char * argv[])
                     // vicinity. This is necessary to normalize how many voxels
                     // are contributing to the local smoothing.
                     // grad_stdev = (float)gsl_stats_sd(vec1, 1, NvoxInVinc);
-                    grad_stdev = (float ) ren_stdev (vec1, NvoxInVinc);
+                    grad_stdev = (float ) ren_stdev(vec1.data(), NvoxInVinc);
 
                     for(int iz_i=max(0, iz-vic); iz_i<=min(iz+vic, size_z-1); ++iz_i) {
                         for(int iy_i=max(0, iy-vic); iy_i<=min(iy+vic, size_x-1); ++iy_i) {
