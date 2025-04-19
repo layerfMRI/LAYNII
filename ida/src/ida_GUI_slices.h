@@ -181,12 +181,12 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
     // TODO: Smoother zooming for the inspector can be achieved centering to the mouse position
     // ----------------------------------------------------------------------------------------------------------------
     if ( ImGui::IsWindowHovered() && io.KeyCtrl && io.MouseWheel < 0 ) {
-        display_scale -= 1;
-        if (display_scale < 1) {
-            display_scale = 1;
+        display_scale -= 0.5;
+        if (display_scale < 0.5) {
+            display_scale = 0.5;
         }
     } else if ( ImGui::IsWindowHovered() && io.KeyCtrl && io.MouseWheel > 0 ) {
-        display_scale += 1;
+        display_scale += 0.5;
     }
 
     // ----------------------------------------------------------------------------------------------------------------
@@ -297,7 +297,7 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
         // ------------------------------------------------------------------------------------------------------------
         // Reference voxel highlighter
         // ------------------------------------------------------------------------------------------------------------
-        color = IM_COL32(intensity, 0, 0, 255);
+        color = IM_COL32(0, intensity, 0, 255);
 
         idx_i = static_cast<float>(fi.tc_refer_voxel_i);
         idx_j = static_cast<float>(fi.tc_refer_voxel_j);
