@@ -108,7 +108,7 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
                 fi.tc_focus_voxel_j = fi.voxel_j;
                 fi.tc_focus_voxel_k = fi.voxel_k;
                 SampleVoxelTimeCourseFocus(fi);
-                if ( fi.visualization_mode == 3) {
+                if ( fi.visualization_mode == 3 && fi.tc_lock == false ) {
                     request_image_data_update = true;
                 }
             }
