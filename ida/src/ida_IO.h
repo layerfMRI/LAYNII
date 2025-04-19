@@ -106,6 +106,7 @@ namespace IDA_IO
         uint64_t    voxel_j;                // A selected/focused/hovered voxel index
         uint64_t    voxel_k;                // A selected/focused/hovered voxel index
         uint64_t    voxel_t;                // A selected/focused/hovered voxel index
+        uint64_t    focus_voxel_index4D;    // Focused voxel index
         // Overlay related --------------------------------------------------------------------------------------------
         float       overlay_min;            // Minimum data value for masking
         float       overlay_max;            // Maximum data value for masking
@@ -116,7 +117,7 @@ namespace IDA_IO
         GLuint      textureIDj_RGB;         // OpenGL needs this
         GLuint      textureIDi_RGB;         // OpenGL needs this
         // Time course related ----------------------------------------------------------------------------------------
-        uint64_t    focus_voxel_index4D;    // Focused voxel 4D index
+        bool        tc_lock;                // Lock/freeze to reference time course
         uint8_t     tc_nr;                  // Number of selected time course voxels
         uint64_t    tc_focus_voxel_i;       // Focused voxel index i
         uint64_t    tc_focus_voxel_j;       // Focused voxel index j
@@ -661,6 +662,7 @@ namespace IDA_IO
             fi.p_sliceI_uint8 = (uint8_t*)malloc(fi.dim_j*fi.dim_k * sizeof(uint8_t));
 
             // Initialize the voxel data for timecourse visualizations;
+            fi.tc_lock = false;
             fi.p_tc_focus_float = (float*)malloc(fi.dim_t * sizeof(float));
             fi.p_tc_refer_float = (float*)malloc(fi.dim_t * sizeof(float));
 
@@ -828,9 +830,10 @@ namespace IDA_IO
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t k = static_cast<uint64_t>(fi.display_k);
             uint64_t t = static_cast<uint64_t>(fi.display_t);
+            uint64_t nij = ni*nj;
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t j = 0; j < nj; ++j) {
-                    uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+                    uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
                     uint64_t index2D = i + j*ni;
                     fi.p_sliceK_float[index2D] = fi.p_data_float[index4D];
                 }
@@ -844,9 +847,10 @@ namespace IDA_IO
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t j = static_cast<uint64_t>(fi.display_j);
             uint64_t t = static_cast<uint64_t>(fi.display_t);
+            uint64_t nij = ni*nj;
             for (uint64_t i = 0; i < ni; i++) {
                 for (uint64_t k = 0; k < nk; k++) {
-                    uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+                    uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
                     uint64_t index2D = i + k*ni;
                     fi.p_sliceJ_float[index2D] = fi.p_data_float[index4D];
                 }
@@ -860,9 +864,10 @@ namespace IDA_IO
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t i = static_cast<uint64_t>(fi.display_i);
             uint64_t t = static_cast<uint64_t>(fi.display_t);
+            uint64_t nij = ni*nj;
             for (uint64_t j = 0; j < nj; j++) {
                 for (uint64_t k = 0; k < nk; k++) {
-                    uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+                    uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
                     uint64_t index2D = j + k*nj;
                     fi.p_sliceI_float[index2D] = fi.p_data_float[index4D];
                 }
@@ -1130,6 +1135,7 @@ namespace IDA_IO
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t nij = ni*nj;
 
             // Prepare 1D arrays buffers that will be used to compute correlations
             float* x_arr = (float*)malloc(fi.dim_t * sizeof(float));
@@ -1137,10 +1143,19 @@ namespace IDA_IO
 
             // Prepare x array (selected voxel's data)
             for (uint64_t t = 0; t < nt; ++t) {
-                uint64_t index4D = fi.tc_focus_voxel_i + fi.tc_focus_voxel_j*ni + fi.tc_focus_voxel_k*ni*nj + fi.nr_voxels*t;
-                uint64_t tt = (t + fi.tc_shift) % nt;
-                *(x_arr + tt) = fi.p_data_float[index4D];
+                if ( fi.tc_lock == false ) {
+                    *(x_arr + t) = *(fi.p_tc_focus_float + t);
+                } else {
+                    *(x_arr + t) = *(fi.p_tc_refer_float + t);
+                }
             }
+
+            // NOTE: Old code with shift implemented here
+            // for (uint64_t t = 0; t < nt; ++t) {
+            //     uint64_t index4D = fi.tc_focus_voxel_i + fi.tc_focus_voxel_j*ni + fi.tc_focus_voxel_k*nij + fi.nr_voxels*t;
+            //     uint64_t tt = (t + fi.tc_shift) % nt;
+            //     *(x_arr + tt) = fi.p_data_float[index4D];
+            // }
 
             // --------------------------------------------------------------------------------------------------------
             // Compute correlations for slice k
@@ -1148,9 +1163,10 @@ namespace IDA_IO
             uint64_t k = static_cast<uint64_t>(fi.display_k);
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t j = 0; j < nj; ++j) {
+
                     // Prepare y array
                     for (uint64_t t = 0; t < nt; ++t) {
-                        uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+                        uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
                         *(y_arr + t)= fi.p_data_float[index4D];
                     }
 
@@ -1188,9 +1204,10 @@ namespace IDA_IO
             uint64_t j = static_cast<uint64_t>(fi.display_j);
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t k = 0; k < nk; ++k) {
+
                     // Prepare y array
                     for (uint64_t t = 0; t < nt; ++t) {
-                        uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+                        uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
                         *(y_arr + t)= fi.p_data_float[index4D];
                     }
 
@@ -1228,9 +1245,10 @@ namespace IDA_IO
             uint64_t i = static_cast<uint64_t>(fi.display_i);
             for (uint64_t j = 0; j < nj; ++j) {
                 for (uint64_t k = 0; k < nk; ++k) {
+
                     // Prepare y array
                     for (uint64_t t = 0; t < nt; ++t) {
-                        uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+                        uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
                         *(y_arr + t)= fi.p_data_float[index4D];
                     }
 
@@ -1269,6 +1287,7 @@ namespace IDA_IO
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t nij = ni*nj;
 
             // Prepare volume output
             float* temp_vol_map = (float*)malloc(fi.nr_voxels * sizeof(float));
@@ -1279,9 +1298,11 @@ namespace IDA_IO
 
             // Prepare x array (selected voxel's data)
             for (uint64_t t = 0; t < nt; ++t) {
-                uint64_t index4D = fi.voxel_i + fi.voxel_j*ni + fi.voxel_k*ni*nj + fi.nr_voxels*t;
-                uint64_t tt = (t + fi.tc_shift) % nt;
-                *(x_arr + tt) = fi.p_data_float[index4D];
+                if ( fi.tc_lock == false ) {
+                    *(x_arr + t) = *(fi.p_tc_focus_float + t);
+                } else {
+                    *(x_arr + t) = *(fi.p_tc_refer_float + t);
+                }
             }
 
             // Compute correlations for the whole volume
@@ -1291,7 +1312,7 @@ namespace IDA_IO
 
                         // Prepare y array
                         for (uint64_t t = 0; t < nt; ++t) {
-                            uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+                            uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
                             *(y_arr + t) = fi.p_data_float[index4D];
                         }
 
@@ -1318,7 +1339,7 @@ namespace IDA_IO
 
                         // Compute the Pearson correlation coefficient
                         r = static_cast<float>(numerator / denominator);
-                        uint64_t index3D = i + j*ni + k*ni*nj;
+                        uint64_t index3D = i + j*ni + k*nij;
                         temp_vol_map[index3D] = r;
                     }
                 }

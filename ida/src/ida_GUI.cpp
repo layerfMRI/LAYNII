@@ -22,7 +22,6 @@ namespace IDA
         static bool show_voxel_indices   = false;
         static bool show_voxel_value     = true;
         static bool show_voxel_time_course = false;
-        static bool lock_voxel_time_course = false; 
 
         static bool request_image_data_update = false;
         static bool request_image_update      = false;
@@ -280,7 +279,7 @@ namespace IDA
                 fl.files[sf].display_scale, fl.files[sf].display_k_offset_x, fl.files[sf].display_k_offset_y,
                 fl.files[sf].display_i, fl.files[sf].display_j, fl.files[sf].display_k, fl.files[sf].display_t,
                 fl.files[sf].visualization_mode, show_slice_crosshair, show_mouse_crosshair,
-                request_image_data_update, lock_voxel_time_course,
+                request_image_data_update,
                 show_voxel_inspector, show_voxel_value, show_voxel_indices, show_voxel_time_course,
                 fl.files[sf].textureIDk, fl.files[sf].textureIDk_RGB, 3, fl.files[sf]
                 );
@@ -296,7 +295,7 @@ namespace IDA
                 fl.files[sf].display_scale, fl.files[sf].display_j_offset_x, fl.files[sf].display_j_offset_y,
                 fl.files[sf].display_i, fl.files[sf].display_k, fl.files[sf].display_j, fl.files[sf].display_t,
                 fl.files[sf].visualization_mode, show_slice_crosshair, show_mouse_crosshair,
-                request_image_data_update, lock_voxel_time_course,
+                request_image_data_update,
                 show_voxel_inspector, show_voxel_value, show_voxel_indices, show_voxel_time_course,
                 fl.files[sf].textureIDj, fl.files[sf].textureIDj_RGB, 2, fl.files[sf]
                 );
@@ -313,7 +312,7 @@ namespace IDA
                 fl.files[sf].display_scale, fl.files[sf].display_i_offset_x, fl.files[sf].display_i_offset_y,
                 fl.files[sf].display_j, fl.files[sf].display_k, fl.files[sf].display_i,  fl.files[sf].display_t,
                 fl.files[sf].visualization_mode, show_slice_crosshair, show_mouse_crosshair,
-                request_image_data_update, lock_voxel_time_course,
+                request_image_data_update,
                 show_voxel_inspector, show_voxel_value, show_voxel_indices, show_voxel_time_course,
                 fl.files[sf].textureIDi, fl.files[sf].textureIDi_RGB, 1, fl.files[sf]
                 );
@@ -606,12 +605,11 @@ namespace IDA
                         fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
                         fl.files[sf].voxel_t = static_cast<uint64_t>(fl.files[sf].display_t);
 
+                        fl.files[sf].tc_lock = false; 
                         fl.files[sf].tc_focus_voxel_i = fl.files[sf].voxel_i;
                         fl.files[sf].tc_focus_voxel_j = fl.files[sf].voxel_j;
                         fl.files[sf].tc_focus_voxel_k = fl.files[sf].voxel_k;
-                        fl.files[sf].tc_refer_voxel_i = fl.files[sf].voxel_i;
-                        fl.files[sf].tc_refer_voxel_j = fl.files[sf].voxel_j;
-                        fl.files[sf].tc_refer_voxel_k = fl.files[sf].voxel_k;
+                        SampleVoxelTimeCourseFocus(fl.files[sf]);
 
                         fl.prepareRBGSlices(fl.files[sf]);
 

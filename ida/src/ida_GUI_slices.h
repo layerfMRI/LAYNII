@@ -48,7 +48,7 @@ void SampleVoxelTimeCourseReference(IDA_IO::FileInfo& fi) {
 // ====================================================================================================================
 void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_screen_pos, int& visualization_mode,
                           bool& show_voxel_value, bool& show_voxel_indices, bool& show_voxel_time_course,
-                          bool& request_image_data_update, bool& lock_voxel_time_course) {
+                          bool& request_image_data_update) {
 
     // Definitions
     ImGuiIO& io = ImGui::GetIO();
@@ -92,22 +92,24 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
         // ------------------------------------------------------------------------------------------------------------
         // Pull voxel data from 4D into 1D memory, only if the hovered over voxel changes
         // ------------------------------------------------------------------------------------------------------------
-        if (ImGui::IsMouseClicked(1)) {  // 0 = left mouse button, 
-            lock_voxel_time_course = !lock_voxel_time_course;
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Right, true)) {  // 0 = left mouse button, 
+            fi.tc_lock = !fi.tc_lock;
+            if ( fi.visualization_mode == 3) {
+                request_image_data_update = true;
+            }
         }
 
         if ( fi.focus_voxel_index4D != index4D ) {
             fi.focus_voxel_index4D = index4D;
-            if ( lock_voxel_time_course == false ) {
-                if (fi.dim_t > 1) {
-                    // Update focus voxel indices and sample the time series
-                    fi.tc_focus_voxel_i = fi.voxel_i;
-                    fi.tc_focus_voxel_j = fi.voxel_j;
-                    fi.tc_focus_voxel_k = fi.voxel_k;
-                    SampleVoxelTimeCourseFocus(fi);
-                    if ( fi.visualization_mode == 3) {
-                        request_image_data_update = true;
-                    }
+
+            if ( fi.dim_t > 1 ) {
+                // Update focus voxel indices and sample the time series
+                fi.tc_focus_voxel_i = fi.voxel_i;
+                fi.tc_focus_voxel_j = fi.voxel_j;
+                fi.tc_focus_voxel_k = fi.voxel_k;
+                SampleVoxelTimeCourseFocus(fi);
+                if ( fi.visualization_mode == 3) {
+                    request_image_data_update = true;
                 }
             }
         }
@@ -124,6 +126,14 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
         }
         if ( show_voxel_indices ) {
             ImGui::Text("Index : [%llu i, %llu j, %llu k, %llu t]", fi.voxel_i, fi.voxel_j, fi.voxel_k, fi.voxel_t);
+        }
+
+        if ( fi.visualization_mode == 3) {
+            if ( fi.tc_lock == false ) {
+                ImGui::Text("'Right Click' to freeze map");
+            } else {
+                ImGui::Text("'Left Click' to unfreeze");
+            }
         }
 
         if ( show_voxel_time_course ) {
@@ -152,7 +162,7 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
                  float& display_scale, float& display_offset_x, float& display_offset_y,
                  int& disp_idx_1, int& disp_idx_2, int& disp_idx_3, int& disp_idx_4,
                  int& visualization_mode, bool& show_slice_crosshair, bool& show_mouse_crosshair,
-                 bool& request_image_data_update, bool& lock_voxel_time_course,
+                 bool& request_image_data_update,
                  bool& show_voxel_inspector, bool& show_voxel_value, bool& show_voxel_indices, bool& show_voxel_time_course,
                  GLuint& textureID, GLuint& textureID_RGB, int slice_window, IDA_IO::FileInfo& fi) {
 
@@ -363,8 +373,11 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
         fi.tc_refer_voxel_j = static_cast<uint64_t>(fi.voxel_j);
         fi.tc_refer_voxel_k = static_cast<uint64_t>(fi.voxel_k);
 
-        if (fi.dim_t > 1) {
+        if (fi.dim_t > 1 ) {
             SampleVoxelTimeCourseReference(fi);
+            if ( fi.tc_lock == false ) {
+                fi.tc_lock = !fi.tc_lock;
+            } 
         }
     }
 
@@ -433,7 +446,7 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
     if ( show_voxel_inspector ) {
         RenderVoxelInspector(fi, slice_window, cursor_screen_pos, visualization_mode,
             show_voxel_value, show_voxel_indices, show_voxel_time_course,
-            request_image_data_update, lock_voxel_time_course
+            request_image_data_update
             );
     };
 
