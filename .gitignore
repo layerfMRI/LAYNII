@@ -54,7 +54,7 @@ test_data/*.nii*
 output
 
 # Ignore LayNii IDA compiled files
-/ida/*/LN3_IDA
+/ida/*/LayNii_IDA
 
 # Ignore this unless if you are intentionallyc hanging the default window placings
 /ida/src/imgui.ini

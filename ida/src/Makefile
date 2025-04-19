@@ -14,7 +14,7 @@
 #CXX = g++
 #CXX = clang++
 
-EXE = LN3_IDA
+EXE = LayNii_IDA
 IMGUI_DIR = ../imgui
 DEP1_DIR = ../../dep
 DEP2_DIR = ../dep
