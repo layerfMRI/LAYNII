@@ -332,17 +332,13 @@ namespace IDA
             pos.y += 80.0f*0;
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
-            // --------------------------------------------------------------------------------------------------------
             // Draw plot background
-            // --------------------------------------------------------------------------------------------------------
             draw_list->AddRectFilled(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y),
                                      IM_COL32(37, 50, 75, 255));
             draw_list->AddRect(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y),
                                IM_COL32(42, 55, 80, 255), 0.0f, 0, 2.0f);
 
-            // --------------------------------------------------------------------------------------------------------
             // Draw reference time course
-            // --------------------------------------------------------------------------------------------------------
             float max_y = fl.files[sf].tc_refer_max;
             float min_y = fl.files[sf].tc_refer_min;
             auto get_screen_point1 = [&](int i, float* data) {
@@ -357,9 +353,7 @@ namespace IDA
                                    IM_COL32(255, 0, 0, 255), 1.0f);
             }
 
-            // --------------------------------------------------------------------------------------------------------
             // Draw focus time course
-            // --------------------------------------------------------------------------------------------------------
             max_y = fl.files[sf].tc_focus_max;
             min_y = fl.files[sf].tc_focus_min;
             auto get_screen_point2 = [&](int i, float* data) {
