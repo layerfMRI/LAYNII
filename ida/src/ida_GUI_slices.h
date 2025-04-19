@@ -181,9 +181,12 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
     // TODO: Smoother zooming for the inspector can be achieved centering to the mouse position
     // ----------------------------------------------------------------------------------------------------------------
     if ( ImGui::IsWindowHovered() && io.KeyCtrl && io.MouseWheel < 0 ) {
-        display_scale -= 0.1;
+        display_scale -= 1;
+        if (display_scale < 1) {
+            display_scale = 1;
+        }
     } else if ( ImGui::IsWindowHovered() && io.KeyCtrl && io.MouseWheel > 0 ) {
-        display_scale += 0.1;
+        display_scale += 1;
     }
 
     // ----------------------------------------------------------------------------------------------------------------
