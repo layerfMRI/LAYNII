@@ -225,45 +225,96 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
     }
 
     // ----------------------------------------------------------------------------------------------------------------
-    // Draw crosshair at mouse position
+    // Draw voxel highlighters
     // ----------------------------------------------------------------------------------------------------------------
-    if ( show_focused_voxel) {
+    if ( show_focused_voxel && fi.dim_i > 1 ) {
         // Use timing for flashing effect
         float t = ImGui::GetTime();
-        float alpha = 0.5f * (std::sin(2 * 3.14159 * 1.0f * t) + 1.0f); // Range: 0 to 1
+        float alpha = 0.5f * (std::sin(2 * 3.14159 * 1.0f * t) + 1.0f);  // Range: 0 to 1
 
         // Interpolate between black and white
         int intensity = static_cast<int>(alpha * 255);
         ImU32 color = IM_COL32(intensity, intensity, intensity, 255);
 
-        if ( slice_window == 3 && fi.display_k == fi.voxel_k ) {
+        // ------------------------------------------------------------------------------------------------------------
+        // Focus voxel highlighter
+        // ------------------------------------------------------------------------------------------------------------
+        float idx_i = static_cast<float>(fi.tc_focus_voxel_i);
+        float idx_j = static_cast<float>(fi.tc_focus_voxel_j);
+        float idx_k = static_cast<float>(fi.tc_focus_voxel_k);
+
+        if ( slice_window == 3 && fi.display_k == fi.tc_focus_voxel_k ) {
             // Compute focused voxel's position on slice
             float pixscl_w = fi.pixdim_i / fi.pixdim_j * fi.display_scale;
             float pixscl_h = fi.display_scale;
-            float x = cursor_screen_pos.x - pixscl_w/2 + (static_cast<float>(fi.dim_i) - static_cast<float>(fi.voxel_i)) * pixscl_w;
-            float y = cursor_screen_pos.y - pixscl_h/2 + (static_cast<float>(fi.dim_j) - static_cast<float>(fi.voxel_j)) * pixscl_h;
+            float x = cursor_screen_pos.x - pixscl_w/2 + (static_cast<float>(fi.dim_i) - idx_i) * pixscl_w;
+            float y = cursor_screen_pos.y - pixscl_h/2 + (static_cast<float>(fi.dim_j) - idx_j) * pixscl_h;
             ImVec2 top_left = ImVec2(x - pixscl_w/2, y - pixscl_h/2);
             ImVec2 bottom_right = ImVec2(x + pixscl_w/2, y + pixscl_h/2);
 
             drawList = ImGui::GetWindowDrawList();
             drawList->AddRect(top_left, bottom_right, color, 0.0f, 0, 2.0f);                
-        } else if ( slice_window == 2 && fi.display_j == fi.voxel_j ) {
+        } else if ( slice_window == 2 && fi.display_j == fi.tc_focus_voxel_j ) {
             // Compute focused voxel's position on slice
             float pixscl_w = fi.pixdim_i / fi.pixdim_k * fi.display_scale;
             float pixscl_h = fi.display_scale;
-            float x = cursor_screen_pos.x - pixscl_w/2 + (static_cast<float>(fi.dim_i) - static_cast<float>(fi.voxel_i)) * pixscl_w;
-            float y = cursor_screen_pos.y - pixscl_h/2 + (static_cast<float>(fi.dim_k) - static_cast<float>(fi.voxel_k)) * pixscl_h;
+            float x = cursor_screen_pos.x - pixscl_w/2 + (static_cast<float>(fi.dim_i) - idx_i) * pixscl_w;
+            float y = cursor_screen_pos.y - pixscl_h/2 + (static_cast<float>(fi.dim_k) - idx_k) * pixscl_h;
             ImVec2 top_left = ImVec2(x - pixscl_w/2, y - pixscl_h/2);
             ImVec2 bottom_right = ImVec2(x + pixscl_w/2, y + pixscl_h/2);
 
             drawList = ImGui::GetWindowDrawList();
             drawList->AddRect(top_left, bottom_right, color, 0.0f, 0, 2.0f);
-        } else if ( slice_window == 1 && fi.display_i == fi.voxel_i ) {
+        } else if ( slice_window == 1 && fi.display_i == fi.tc_focus_voxel_i ) {
             // Compute focused voxel's position on slice
             float pixscl_w = fi.pixdim_j / fi.pixdim_k * fi.display_scale;
             float pixscl_h = fi.display_scale;
-            float x = cursor_screen_pos.x - pixscl_w/2 + (static_cast<float>(fi.dim_j) - static_cast<float>(fi.voxel_j)) * pixscl_w;
-            float y = cursor_screen_pos.y - pixscl_h/2 + (static_cast<float>(fi.dim_k) - static_cast<float>(fi.voxel_k)) * pixscl_h;
+            float x = cursor_screen_pos.x - pixscl_w/2 + (static_cast<float>(fi.dim_j) - idx_j) * pixscl_w;
+            float y = cursor_screen_pos.y - pixscl_h/2 + (static_cast<float>(fi.dim_k) - idx_k) * pixscl_h;
+            ImVec2 top_left = ImVec2(x - pixscl_w/2, y - pixscl_h/2);
+            ImVec2 bottom_right = ImVec2(x + pixscl_w/2, y + pixscl_h/2);
+
+            drawList = ImGui::GetWindowDrawList();
+            drawList->AddRect(top_left, bottom_right, color, 0.0f, 0, 2.0f);
+        }
+ 
+        // ------------------------------------------------------------------------------------------------------------
+        // Reference voxel highlighter
+        // ------------------------------------------------------------------------------------------------------------
+        color = IM_COL32(intensity, 0, 0, 255);
+
+        idx_i = static_cast<float>(fi.tc_refer_voxel_i);
+        idx_j = static_cast<float>(fi.tc_refer_voxel_j);
+        idx_k = static_cast<float>(fi.tc_refer_voxel_k);
+
+        if ( slice_window == 3 && fi.display_k == fi.tc_refer_voxel_k ) {
+            // Compute focused voxel's position on slice
+            float pixscl_w = fi.pixdim_i / fi.pixdim_j * fi.display_scale;
+            float pixscl_h = fi.display_scale;
+            float x = cursor_screen_pos.x - pixscl_w/2 + (static_cast<float>(fi.dim_i) - idx_i) * pixscl_w;
+            float y = cursor_screen_pos.y - pixscl_h/2 + (static_cast<float>(fi.dim_j) - idx_j) * pixscl_h;
+            ImVec2 top_left = ImVec2(x - pixscl_w/2, y - pixscl_h/2);
+            ImVec2 bottom_right = ImVec2(x + pixscl_w/2, y + pixscl_h/2);
+
+            drawList = ImGui::GetWindowDrawList();
+            drawList->AddRect(top_left, bottom_right, color, 0.0f, 0, 2.0f);                
+        } else if ( slice_window == 2 && fi.display_j == fi.tc_refer_voxel_j ) {
+            // Compute focused voxel's position on slice
+            float pixscl_w = fi.pixdim_i / fi.pixdim_k * fi.display_scale;
+            float pixscl_h = fi.display_scale;
+            float x = cursor_screen_pos.x - pixscl_w/2 + (static_cast<float>(fi.dim_i) - idx_i) * pixscl_w;
+            float y = cursor_screen_pos.y - pixscl_h/2 + (static_cast<float>(fi.dim_k) - idx_k) * pixscl_h;
+            ImVec2 top_left = ImVec2(x - pixscl_w/2, y - pixscl_h/2);
+            ImVec2 bottom_right = ImVec2(x + pixscl_w/2, y + pixscl_h/2);
+
+            drawList = ImGui::GetWindowDrawList();
+            drawList->AddRect(top_left, bottom_right, color, 0.0f, 0, 2.0f);
+        } else if ( slice_window == 1 && fi.display_i == fi.tc_refer_voxel_i ) {
+            // Compute focused voxel's position on slice
+            float pixscl_w = fi.pixdim_j / fi.pixdim_k * fi.display_scale;
+            float pixscl_h = fi.display_scale;
+            float x = cursor_screen_pos.x - pixscl_w/2 + (static_cast<float>(fi.dim_j) - idx_j) * pixscl_w;
+            float y = cursor_screen_pos.y - pixscl_h/2 + (static_cast<float>(fi.dim_k) - idx_k) * pixscl_h;
             ImVec2 top_left = ImVec2(x - pixscl_w/2, y - pixscl_h/2);
             ImVec2 bottom_right = ImVec2(x + pixscl_w/2, y + pixscl_h/2);
 
