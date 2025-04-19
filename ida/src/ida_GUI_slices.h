@@ -127,7 +127,7 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
         }
 
         if ( show_voxel_time_course ) {
-            ImGui::Text("Time Course:");
+            // ImGui::Text("Time Course:");
             ImGui::PlotLines(
                 "",                          // Label
                 fi.p_tc_focus_float,         // Values
@@ -138,7 +138,7 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
                 fi.tc_focus_max,             // Scale max (FLT_MAX for auto)
                 ImVec2(0, 50.0f)             // Plot Size
                 );
-            ImGui::Text("[y: min-max scaled]");
+            // ImGui::Text("[y: min-max scaled]");
         }
     ImGui::EndTooltip();
     }
@@ -151,7 +151,7 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
 void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, float dim2_sli, 
                  float& display_scale, float& display_offset_x, float& display_offset_y,
                  int& disp_idx_1, int& disp_idx_2, int& disp_idx_3, int& disp_idx_4,
-                 int& visualization_mode, bool& show_focused_voxel, bool& show_mouse_crosshair,
+                 int& visualization_mode, bool& show_slice_crosshair, bool& show_mouse_crosshair,
                  bool& request_image_data_update, bool& lock_voxel_time_course,
                  bool& show_voxel_inspector, bool& show_voxel_value, bool& show_voxel_indices, bool& show_voxel_time_course,
                  GLuint& textureID, GLuint& textureID_RGB, int slice_window, IDA_IO::FileInfo& fi) {
@@ -160,8 +160,11 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
     ImGuiIO& io = ImGui::GetIO();
     ImVec2 cursor_screen_pos;
     ImDrawList* drawList;
-    ImU32 cross_mouse_color = IM_COL32(81, 113, 217, 255);  // RGBA
-    float cross_thickness = 1.0f;  // Pixels
+    ImU32 mouse_crosshair_color = IM_COL32(81, 113, 217, 255);  // RGBA
+    float mouse_crosshair_thickness = 1.0f;  // Pixels
+    ImU32 slice_crosshair_color = IM_COL32(255, 255, 255, 75);  // RGBA
+    float slice_crosshair_thickness = 1.0f;  // Pixels
+
 
     // ----------------------------------------------------------------------------------------------------------------
     // Zoom image
@@ -227,7 +230,7 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
     // ----------------------------------------------------------------------------------------------------------------
     // Draw voxel highlighters
     // ----------------------------------------------------------------------------------------------------------------
-    if ( show_focused_voxel && fi.dim_i > 1 ) {
+    if ( fi.dim_t > 1 ) {
         // Use timing for flashing effect
         float t = ImGui::GetTime();
         float alpha = 0.5f * (std::sin(2 * 3.14159 * 1.0f * t) + 1.0f);  // Range: 0 to 1
@@ -330,22 +333,24 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
         drawList = ImGui::GetWindowDrawList();
 
         // Horizontal
-        drawList->AddLine(ImVec2(cursor_screen_pos.x - 0.5f  , io.MousePos.y - 0.5f),
+        drawList->AddLine(ImVec2(cursor_screen_pos.x - 0.5f        , io.MousePos.y - 0.5f),
                           ImVec2(cursor_screen_pos.x - 0.5f + img_w, io.MousePos.y - 0.5f),
-                          cross_mouse_color,
-                          cross_thickness);
+                          mouse_crosshair_color,
+                          mouse_crosshair_thickness);
         // Vertical
-        drawList->AddLine(ImVec2(io.MousePos.x - 0.5f, cursor_screen_pos.y - 0.5f),
+        drawList->AddLine(ImVec2(io.MousePos.x - 0.5f, cursor_screen_pos.y - 0.5f        ),
                           ImVec2(io.MousePos.x - 0.5f, cursor_screen_pos.y - 0.5f + img_h),
-                          cross_mouse_color,
-                          cross_thickness);
+                          mouse_crosshair_color,
+                          mouse_crosshair_thickness);
 
         // Draw the circle using ImDrawList
         drawList->AddCircle(ImVec2(io.MousePos.x, io.MousePos.y),
-                            5.0f, cross_mouse_color, 45, 1.0f);
+                            5.0f, mouse_crosshair_color, 45, 1.0f);
     }
 
-
+    // ----------------------------------------------------------------------------------------------------------------
+    // Mouse click
+    // ----------------------------------------------------------------------------------------------------------------
     if ( ImGui::IsMouseClicked(ImGuiMouseButton_Left, true) && ImGui::IsItemHovered() ) {
         // Update the displayed slices based on clicked voxel
         fi.display_i = static_cast<int>(fi.voxel_i);
@@ -363,6 +368,68 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
         }
     }
 
+    // ----------------------------------------------------------------------------------------------------------------
+    // Slice crosshair
+    // ----------------------------------------------------------------------------------------------------------------
+    if ( show_slice_crosshair ) {
+        drawList = ImGui::GetWindowDrawList();
+
+        float scl = fi.display_scale;
+        float scl_i = fi.pixdim_j / fi.pixdim_k * scl;
+        float scl_j = fi.pixdim_i / fi.pixdim_k * scl;
+        float scl_k = fi.pixdim_i / fi.pixdim_j * scl;
+
+        float start_x = cursor_screen_pos.x;
+        float start_y = cursor_screen_pos.y;
+
+        if ( slice_window == 3 ) {
+            // Vertical
+            drawList->AddLine(ImVec2(start_x + (fi.dim_i - fi.display_i - 0.5f) * scl_k, start_y-0.5        ),
+                              ImVec2(start_x + (fi.dim_i - fi.display_i - 0.5f) * scl_k, start_y-0.5 + img_h),
+                              slice_crosshair_color,
+                              slice_crosshair_thickness);            
+
+            // Horizontal
+            drawList->AddLine(ImVec2(start_x-0.5f        , start_y + (fi.dim_j - fi.display_j - 0.5f) * scl),
+                              ImVec2(start_x-0.5f + img_w, start_y + (fi.dim_j - fi.display_j - 0.5f) * scl),
+                              slice_crosshair_color,
+                              slice_crosshair_thickness);
+        }
+
+        if ( slice_window == 2 ) {
+            // Vertical
+            drawList->AddLine(ImVec2(start_x + (fi.dim_i - fi.display_i - 0.5f) * scl_j, start_y-0.5        ),
+                              ImVec2(start_x + (fi.dim_i - fi.display_i - 0.5f) * scl_j, start_y-0.5 + img_h),
+                              slice_crosshair_color,
+                              slice_crosshair_thickness);            
+
+            // Horizontal
+            drawList->AddLine(ImVec2(start_x-0.5f        , start_y + (fi.dim_k - fi.display_k - 0.5f) * scl),
+                              ImVec2(start_x-0.5f + img_w, start_y + (fi.dim_k - fi.display_k - 0.5f) * scl),
+                              slice_crosshair_color,
+                              slice_crosshair_thickness);
+        }
+
+        if ( slice_window == 1 ) {
+            // Vertical
+            drawList->AddLine(ImVec2(start_x + (fi.dim_j - fi.display_j - 0.5f) * scl_i, start_y-0.5        ),
+                              ImVec2(start_x + (fi.dim_j - fi.display_j - 0.5f) * scl_i, start_y-0.5 + img_h),
+                              slice_crosshair_color,
+                              slice_crosshair_thickness);            
+
+            // Horizontal
+            drawList->AddLine(ImVec2(start_x-0.5f        , start_y + (fi.dim_k - fi.display_k - 0.5f) * scl),
+                              ImVec2(start_x-0.5f + img_w, start_y + (fi.dim_k - fi.display_k - 0.5f) * scl),
+                              slice_crosshair_color,
+                              slice_crosshair_thickness);
+        }
+
+
+    }
+
+    // ----------------------------------------------------------------------------------------------------------------
+    // Voxel inspector
+    // ----------------------------------------------------------------------------------------------------------------
     if ( show_voxel_inspector ) {
         RenderVoxelInspector(fi, slice_window, cursor_screen_pos, visualization_mode,
             show_voxel_value, show_voxel_indices, show_voxel_time_course,

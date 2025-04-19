@@ -16,8 +16,8 @@ namespace IDA
 
         static bool loaded_data          = false;
         static bool show_header_info     = false;
-        static bool show_focused_voxel   = true;
         static bool show_mouse_crosshair = true;
+        static bool show_slice_crosshair   = true;
         static bool show_voxel_inspector = true;
         static bool show_voxel_indices   = false;
         static bool show_voxel_value     = true;
@@ -279,7 +279,7 @@ namespace IDA
                 fl.files[sf].pixdim_j, fl.files[sf].pixdim_j, 
                 fl.files[sf].display_scale, fl.files[sf].display_k_offset_x, fl.files[sf].display_k_offset_y,
                 fl.files[sf].display_i, fl.files[sf].display_j, fl.files[sf].display_k, fl.files[sf].display_t,
-                fl.files[sf].visualization_mode, show_focused_voxel, show_mouse_crosshair,
+                fl.files[sf].visualization_mode, show_slice_crosshair, show_mouse_crosshair,
                 request_image_data_update, lock_voxel_time_course,
                 show_voxel_inspector, show_voxel_value, show_voxel_indices, show_voxel_time_course,
                 fl.files[sf].textureIDk, fl.files[sf].textureIDk_RGB, 3, fl.files[sf]
@@ -295,7 +295,7 @@ namespace IDA
                 fl.files[sf].pixdim_i, fl.files[sf].pixdim_k, 
                 fl.files[sf].display_scale, fl.files[sf].display_j_offset_x, fl.files[sf].display_j_offset_y,
                 fl.files[sf].display_i, fl.files[sf].display_k, fl.files[sf].display_j, fl.files[sf].display_t,
-                fl.files[sf].visualization_mode, show_focused_voxel, show_mouse_crosshair,
+                fl.files[sf].visualization_mode, show_slice_crosshair, show_mouse_crosshair,
                 request_image_data_update, lock_voxel_time_course,
                 show_voxel_inspector, show_voxel_value, show_voxel_indices, show_voxel_time_course,
                 fl.files[sf].textureIDj, fl.files[sf].textureIDj_RGB, 2, fl.files[sf]
@@ -312,7 +312,7 @@ namespace IDA
                 fl.files[sf].pixdim_j, fl.files[sf].pixdim_k, 
                 fl.files[sf].display_scale, fl.files[sf].display_i_offset_x, fl.files[sf].display_i_offset_y,
                 fl.files[sf].display_j, fl.files[sf].display_k, fl.files[sf].display_i,  fl.files[sf].display_t,
-                fl.files[sf].visualization_mode, show_focused_voxel, show_mouse_crosshair,
+                fl.files[sf].visualization_mode, show_slice_crosshair, show_mouse_crosshair,
                 request_image_data_update, lock_voxel_time_course,
                 show_voxel_inspector, show_voxel_value, show_voxel_indices, show_voxel_time_course,
                 fl.files[sf].textureIDi, fl.files[sf].textureIDi_RGB, 1, fl.files[sf]
@@ -323,9 +323,10 @@ namespace IDA
         // ============================================================================================================
         // Time course view
         // ============================================================================================================
-        ImGui::Begin("Time Course View"); 
         if (loaded_data && fl.files[sf].dim_t > 1)
         {
+            ImGui::Begin("Time Course View"); 
+
             ImVec2 plot_size = ImGui::GetContentRegionAvail();
             plot_size.y = 75.0f;
             ImVec2 pos = ImGui::GetCursorScreenPos();
@@ -367,8 +368,9 @@ namespace IDA
                                    get_screen_point2(i+1, fl.files[sf].p_tc_focus_float),
                                    IM_COL32(255, 255, 255, 255), 1.0f);
             }
+
+            ImGui::End();
         }
-        ImGui::End();
 
         // ============================================================================================================
         // Navigation Control Menu
@@ -478,7 +480,7 @@ namespace IDA
             }
             ImGui::PopButtonRepeat();
             ImGui::SameLine();
-            ImGui::SliderFloat("##Zoom", &fl.files[sf].display_scale, 0, 10, "%f");
+            ImGui::SliderFloat("##Zoom", &fl.files[sf].display_scale, 0.1, 20, "%f");
             ImGui::SameLine();
             ImGui::Text("  %.3fX", fl.files[sf].display_scale);
 
@@ -570,7 +572,7 @@ namespace IDA
             ImGui::SeparatorText("CROSSHAIR CONTROLS");
             // --------------------------------------------------------------------------------------------------------
             ImGui::Checkbox("Show mouse crosshair", &show_mouse_crosshair);
-            ImGui::Checkbox("Show focused voxel", &show_focused_voxel);
+            ImGui::Checkbox("Show slice crosshair", &show_slice_crosshair);
 
             // --------------------------------------------------------------------------------------------------------
             ImGui::SeparatorText("VOXEL INSPECTOR CONTROLS");
