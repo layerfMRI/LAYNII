@@ -139,15 +139,15 @@ namespace IDA
         if (sf >= 0) {
             ImGui::Text("");
             ImGui::Text("Selected File:");
-            ImGui::Text("  Number of voxels    : %llu", fl.files[sf].nr_voxels);
-            ImGui::Text("  Voxel volume        : %.3f", fl.files[sf].voxel_volume);
+            ImGui::Text("  Voxel volume        : %.6f", fl.files[sf].voxel_volume);
+            ImGui::Text("  1st Voxel Dimension : %.3f", fl.files[sf].pixdim_i);
+            ImGui::Text("  2nd Voxel Dimension : %.3f", fl.files[sf].pixdim_j);
+            ImGui::Text("  3rd Voxel Dimension : %.3f", fl.files[sf].pixdim_k);
             ImGui::Text("  1st Data Axis       : %d"  , fl.files[sf].dim_i);
             ImGui::Text("  2nd Data Axis       : %d"  , fl.files[sf].dim_j);
             ImGui::Text("  3rd Data Axis       : %d"  , fl.files[sf].dim_k);
             ImGui::Text("  4th Data Axis       : %d"  , fl.files[sf].dim_t);
-            ImGui::Text("  1st Voxel Dimension : %.3f", fl.files[sf].pixdim_i);
-            ImGui::Text("  2nd Voxel Dimension : %.3f", fl.files[sf].pixdim_j);
-            ImGui::Text("  3rd Voxel Dimension : %.3f", fl.files[sf].pixdim_k);
+            ImGui::Text("  Number of voxels    : %llu", fl.files[sf].nr_voxels * fl.files[sf].dim_t);
             ImGui::TextWrapped("Complete Path: \n%s" , fl.files[sf].path.c_str());
         }
 
@@ -631,7 +631,7 @@ namespace IDA
             // --------------------------------------------------------------------------------------------------------
             ImGui::SeparatorText("CROSSHAIR CONTROLS");
             // --------------------------------------------------------------------------------------------------------
-            ImGui::Checkbox("Show mouse crosshair", &show_mouse_crosshair);
+            ImGui::Checkbox("Show mouse crosshair", &show_mouse_crosshair); ImGui::SameLine();
             ImGui::Checkbox("Show slice crosshair", &show_slice_crosshair);
 
             // --------------------------------------------------------------------------------------------------------
