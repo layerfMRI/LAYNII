@@ -23,7 +23,7 @@ namespace IDA
         static bool show_voxel_value     = true;
         static bool show_voxel_time_course = false;
 
-        static bool show_tc_normalized1 = false;
+        static bool show_tc_normalized1 = true;
         static bool show_tc_normalized2 = false;
 
         static bool request_image_data_update = false;
@@ -328,8 +328,10 @@ namespace IDA
         if (loaded_data && fl.files[sf].dim_t > 1)
         {
             ImGui::Begin("Time Course View"); 
+
             ImGui::Checkbox("Normalization 1", &show_tc_normalized1); ImGui::SameLine();
-            ImGui::Checkbox("Normalization 2", &show_tc_normalized2); 
+            ImGui::Checkbox("Normalization 2", &show_tc_normalized2);
+            ImGui::Checkbox("Show Reference", &fl.files[sf].tc_show_reference);
 
             ImVec2 plot_size, pos;
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
@@ -337,31 +339,37 @@ namespace IDA
             plot_size = ImGui::GetContentRegionAvail();
             plot_size.y = 75.0f;
 
-            if ( show_tc_normalized1 ) {
+            ImU32 color_background = IM_COL32( 15,  15,  15, 255);
+            ImU32 color_frame      = IM_COL32( 33,  47,  71, 255);
+            ImU32 color_line1      = IM_COL32(255, 140,   0, 255);
+            ImU32 color_line2      = IM_COL32(255, 255, 255, 255);
+            float line_thickness   = 1.0f;
+
+            if ( show_tc_normalized1) {
                 // ----------------------------------------------------------------------------------------------------
-                ImGui::Text("Normalize each time course:");
+                ImGui::Text("Min-Max normalize each time course:");
                 // ----------------------------------------------------------------------------------------------------
                 pos = ImGui::GetCursorScreenPos();
 
                 // Draw plot background
-                draw_list->AddRectFilled(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y),
-                                         IM_COL32(37, 50, 75, 255));
-                draw_list->AddRect(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y),
-                                   IM_COL32(42, 55, 80, 255), 0.0f, 0, 2.0f);
+                draw_list->AddRectFilled(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y), color_background);
+                draw_list->AddRect(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y), color_frame, 0.0f, 0, 2.0f);
 
-                // Draw reference time course
-                min_y = fl.files[sf].tc_refer_min;
-                max_y = fl.files[sf].tc_refer_max;
-                auto get_screen_point1 = [&](int i, float* data) {
-                    float x = pos.x + (i / float(fl.files[sf].dim_t - 1)) * plot_size.x;
-                    float y = pos.y + (1.0f - (data[i] - min_y) / (max_y - min_y)) * plot_size.y;
-                    return ImVec2(x, y);
-                };
+                if ( fl.files[sf].tc_show_reference ) {
+                    // Draw reference time course
+                    min_y = fl.files[sf].tc_refer_min;
+                    max_y = fl.files[sf].tc_refer_max;
+                    auto get_screen_point1 = [&](int i, float* data) {
+                        float x = pos.x + (i / float(fl.files[sf].dim_t - 1)) * plot_size.x;
+                        float y = pos.y + (1.0f - (data[i] - min_y) / (max_y - min_y)) * plot_size.y;
+                        return ImVec2(x, y);
+                    };
 
-                for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
-                    draw_list->AddLine(get_screen_point1(i  , fl.files[sf].p_tc_refer_float),
-                                       get_screen_point1(i+1, fl.files[sf].p_tc_refer_float),
-                                       IM_COL32(255, 0, 0, 255), 1.0f);
+                    for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
+                        draw_list->AddLine(get_screen_point1(i  , fl.files[sf].p_tc_refer_float),
+                                           get_screen_point1(i+1, fl.files[sf].p_tc_refer_float),
+                                           color_line1, line_thickness);
+                    }                    
                 }
 
                 // Draw focus time course
@@ -376,11 +384,9 @@ namespace IDA
                 for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
                     draw_list->AddLine(get_screen_point2(i  , fl.files[sf].p_tc_focus_float),
                                        get_screen_point2(i+1, fl.files[sf].p_tc_focus_float),
-                                       IM_COL32(255, 255, 255, 255), 1.0f);
+                                       color_line2, line_thickness);
                 }
-
                 ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 85.f);  // Move cursor down
-
             }
 
             if ( show_tc_normalized2 ) {
@@ -390,24 +396,24 @@ namespace IDA
                 pos = ImGui::GetCursorScreenPos();
 
                 // Draw plot background
-                draw_list->AddRectFilled(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y),
-                                         IM_COL32(37, 50, 75, 255));
-                draw_list->AddRect(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y),
-                                   IM_COL32(42, 55, 80, 255), 0.0f, 0, 2.0f);
+                draw_list->AddRectFilled(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y), color_background);
+                draw_list->AddRect(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y), color_frame, 0.0f, 0, 2.0f);
 
-                // Draw reference time course
-                min_y = std::min(fl.files[sf].tc_focus_min, fl.files[sf].tc_refer_min);
-                max_y = std::max(fl.files[sf].tc_focus_max, fl.files[sf].tc_refer_max);
-                auto get_screen_point3 = [&](int i, float* data) {
-                    float x = pos.x + (i / float(fl.files[sf].dim_t - 1)) * plot_size.x;
-                    float y = pos.y + (1.0f - (data[i] - min_y) / (max_y - min_y)) * plot_size.y;
-                    return ImVec2(x, y);
-                };
+                if ( fl.files[sf].tc_show_reference ) {
+                    // Draw reference time course
+                    min_y = std::min(fl.files[sf].tc_focus_min, fl.files[sf].tc_refer_min);
+                    max_y = std::max(fl.files[sf].tc_focus_max, fl.files[sf].tc_refer_max);
+                    auto get_screen_point3 = [&](int i, float* data) {
+                        float x = pos.x + (i / float(fl.files[sf].dim_t - 1)) * plot_size.x;
+                        float y = pos.y + (1.0f - (data[i] - min_y) / (max_y - min_y)) * plot_size.y;
+                        return ImVec2(x, y);
+                    };
 
-                for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
-                    draw_list->AddLine(get_screen_point3(i  , fl.files[sf].p_tc_refer_float),
-                                       get_screen_point3(i+1, fl.files[sf].p_tc_refer_float),
-                                       IM_COL32(255, 0, 0, 255), 1.0f);
+                    for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
+                        draw_list->AddLine(get_screen_point3(i  , fl.files[sf].p_tc_refer_float),
+                                           get_screen_point3(i+1, fl.files[sf].p_tc_refer_float),
+                                           color_line1, line_thickness);
+                    }
                 }
 
                 // Draw focus time course
@@ -420,10 +426,9 @@ namespace IDA
                 for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
                     draw_list->AddLine(get_screen_point4(i  , fl.files[sf].p_tc_focus_float),
                                        get_screen_point4(i+1, fl.files[sf].p_tc_focus_float),
-                                       IM_COL32(255, 255, 255, 255), 1.0f);
+                                       color_line2, line_thickness);
                 }
             }
-
             ImGui::End();
         }
 

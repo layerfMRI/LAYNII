@@ -118,6 +118,8 @@ namespace IDA_IO
         GLuint      textureIDi_RGB;         // OpenGL needs this
         // Time course related ----------------------------------------------------------------------------------------
         bool        tc_lock;                // Lock/freeze to reference time course
+        bool        tc_show_reference;      // Determine if the time course is desired to be visualized
+        bool        tc_show_focus;          // Determine if the time course is desired to be visualized
         uint8_t     tc_nr;                  // Number of selected time course voxels
         uint64_t    tc_focus_voxel_i;       // Focused voxel index i
         uint64_t    tc_focus_voxel_j;       // Focused voxel index j
@@ -663,6 +665,8 @@ namespace IDA_IO
 
             // Initialize the voxel data for timecourse visualizations;
             fi.tc_lock = false;
+            fi.tc_show_reference = false;
+            fi.tc_show_focus = true;
             fi.p_tc_focus_float = (float*)malloc(fi.dim_t * sizeof(float));
             fi.p_tc_refer_float = (float*)malloc(fi.dim_t * sizeof(float));
 
