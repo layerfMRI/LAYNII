@@ -901,13 +901,16 @@ namespace IDA_IO
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t j = 0; j < nj; ++j) {
                     uint64_t index2D = i + j*ni;
-                    fi.p_sliceK_float[index2D] = 0;
+                    fi.p_sliceK_float_Tmean[index2D] = 0;
                     for (uint64_t t = 0; t < nt; ++t) {
                         uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
-                        fi.p_sliceK_float[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
+                        fi.p_sliceK_float_Tmean[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
                     }
-                    fi.p_sliceK_float_Tmean[index2D] = fi.p_sliceK_float[index2D];
                 }
+            }
+            // Copy to visualization slice
+            for (uint64_t i = 0; i < ni*nj; ++i) {  
+                fi.p_sliceK_float[i] = fi.p_sliceK_float_Tmean[i];
             }
         }
 
@@ -922,13 +925,16 @@ namespace IDA_IO
             for (uint64_t i = 0; i < ni; i++) {
                 for (uint64_t k = 0; k < nk; k++) {
                     uint64_t index2D = i + k*ni;
-                    fi.p_sliceJ_float[index2D] = 0;
+                    fi.p_sliceJ_float_Tmean[index2D] = 0;
                     for (uint64_t t = 0; t < nt; ++t) {
                         uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
-                        fi.p_sliceJ_float[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
+                        fi.p_sliceJ_float_Tmean[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
                     }
-                    fi.p_sliceJ_float_Tmean[index2D] = fi.p_sliceJ_float[index2D];
                 }
+            }
+            // Copy to visualization slice
+            for (uint64_t i = 0; i < ni*nk; ++i) {  
+                fi.p_sliceJ_float[i] = fi.p_sliceJ_float_Tmean[i];
             }
         }
 
@@ -943,13 +949,16 @@ namespace IDA_IO
             for (uint64_t j = 0; j < nj; j++) {
                 for (uint64_t k = 0; k < nk; k++) {
                     uint64_t index2D = j + k*nj;
-                    fi.p_sliceI_float[index2D] = 0;
+                    fi.p_sliceI_float_Tmean[index2D] = 0;
                     for (uint64_t t = 0; t < nt; ++t) {
                         uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
-                        fi.p_sliceI_float[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
+                        fi.p_sliceI_float_Tmean[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
                     }
-                    fi.p_sliceI_float_Tmean[index2D] = fi.p_sliceI_float[index2D];
                 }
+            }
+            // Copy to visualization slice
+            for (uint64_t i = 0; i < nj*nk; ++i) {  
+                fi.p_sliceI_float[i] = fi.p_sliceI_float_Tmean[i];
             }
         }
 
