@@ -666,45 +666,8 @@ namespace IDA
 
             if ( fl.files[sf].dim_t > 1 ) {
                 // ----------------------------------------------------------------------------------------------------
-                ImGui::SeparatorText("TIME SERIES CONTROLS");
+                ImGui::SeparatorText("CORRELATION CONTROLS");
                 // ----------------------------------------------------------------------------------------------------
-                if ( fl.files[sf].visualization_mode != 2 ) {
-                    if ( ImGui::Button("Enable Tmean") ) {
-
-                        // Prepare data to hold correlation maps
-                        free(fl.files[sf].p_sliceK_float_Tmean);
-                        free(fl.files[sf].p_sliceJ_float_Tmean);
-                        free(fl.files[sf].p_sliceI_float_Tmean);
-                        fl.files[sf].p_sliceK_float_Tmean = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
-                        fl.files[sf].p_sliceJ_float_Tmean = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
-                        fl.files[sf].p_sliceI_float_Tmean = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
-
-                        // Enable real time time mean
-                        fl.loadSliceK_Tmean_float(fl.files[sf]);
-                        fl.loadSliceJ_Tmean_float(fl.files[sf]);
-                        fl.loadSliceI_Tmean_float(fl.files[sf]);
-
-                        fl.loadSliceK_uint8(fl.files[sf]);
-                        fl.loadSliceJ_uint8(fl.files[sf]);
-                        fl.loadSliceI_uint8(fl.files[sf]);
-
-                        fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j,
-                                                     fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
-                        fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k,
-                                                     fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
-                        fl.uploadTextureDataToOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k,
-                                                     fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
-
-                        fl.files[sf].visualization_mode = 2;
-                        request_image_data_update = true;
-                    }
-                } else {
-                    if ( ImGui::Button("Disable Tmean") ) {
-                        request_image_data_update = true;
-                        fl.files[sf].visualization_mode = 0;
-                    }
-                }
-
                 if ( fl.files[sf].visualization_mode != 3 ) {
                     if ( ImGui::Button("Enable Correlations") ) {
                         show_voxel_inspector = true;
@@ -835,6 +798,46 @@ namespace IDA
                     ImGui::SameLine();
                     if ( ImGui::SliderInt("Shift", &fl.files[sf].tc_shift, -fl.files[sf].dim_t, fl.files[sf].dim_t, "%i") ) {
                         request_image_data_update = true;
+                    }
+                }
+
+                // ----------------------------------------------------------------------------------------------------
+                ImGui::SeparatorText("!!!WIP!!!");
+                // ----------------------------------------------------------------------------------------------------
+                if ( fl.files[sf].visualization_mode != 2 ) {
+                    if ( ImGui::Button("Enable Tmean") ) {
+
+                        // Prepare data to hold correlation maps
+                        free(fl.files[sf].p_sliceK_float_Tmean);
+                        free(fl.files[sf].p_sliceJ_float_Tmean);
+                        free(fl.files[sf].p_sliceI_float_Tmean);
+                        fl.files[sf].p_sliceK_float_Tmean = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
+                        fl.files[sf].p_sliceJ_float_Tmean = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
+                        fl.files[sf].p_sliceI_float_Tmean = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
+
+                        // Enable real time time mean
+                        fl.loadSliceK_Tmean_float(fl.files[sf]);
+                        fl.loadSliceJ_Tmean_float(fl.files[sf]);
+                        fl.loadSliceI_Tmean_float(fl.files[sf]);
+
+                        fl.loadSliceK_uint8(fl.files[sf]);
+                        fl.loadSliceJ_uint8(fl.files[sf]);
+                        fl.loadSliceI_uint8(fl.files[sf]);
+
+                        fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j,
+                                                     fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
+                        fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k,
+                                                     fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
+                        fl.uploadTextureDataToOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k,
+                                                     fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
+
+                        fl.files[sf].visualization_mode = 2;
+                        request_image_data_update = true;
+                    }
+                } else {
+                    if ( ImGui::Button("Disable Tmean") ) {
+                        request_image_data_update = true;
+                        fl.files[sf].visualization_mode = 0;
                     }
                 }
             }
