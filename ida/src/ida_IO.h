@@ -120,7 +120,6 @@ namespace IDA_IO
         bool        tc_lock;                // Lock/freeze to reference time course
         bool        tc_show_reference;      // Determine if the time course is desired to be visualized
         bool        tc_show_focus;          // Determine if the time course is desired to be visualized
-        uint8_t     tc_nr;                  // Number of selected time course voxels
         uint64_t    tc_focus_voxel_i;       // Focused voxel index i
         uint64_t    tc_focus_voxel_j;       // Focused voxel index j
         uint64_t    tc_focus_voxel_k;       // Focused voxel index k
@@ -137,6 +136,10 @@ namespace IDA_IO
         int         tc_offset;              // Omit volumes from end until this number
         int         tc_shift;               // Shift time course data by this amount
         // Correlation related ----------------------------------------------------------------------------------------
+        bool        tc_show_mean;           // Show time course mean
+        float*      p_sliceK_float_Tmean;   // Holds time average data
+        float*      p_sliceJ_float_Tmean;   // Holds time average data
+        float*      p_sliceI_float_Tmean;   // Holds time average data
         float*      p_sliceK_float_corr;    // Holds correlation data
         float*      p_sliceJ_float_corr;    // Holds correlation data
         float*      p_sliceI_float_corr;    // Holds correlation data
@@ -368,6 +371,12 @@ namespace IDA_IO
             free(fi.p_sliceI_uint8);
             free(fi.p_tc_focus_float);
             free(fi.p_tc_refer_float);
+            free(fi.p_sliceK_float_Tmean);
+            free(fi.p_sliceJ_float_Tmean);
+            free(fi.p_sliceI_float_Tmean);
+            free(fi.p_sliceK_float_corr);
+            free(fi.p_sliceJ_float_corr);
+            free(fi.p_sliceI_float_corr);
 
             // Open the gzip-compressed file using zlib
             const char* cString = fi.path.c_str();
@@ -680,6 +689,9 @@ namespace IDA_IO
             fi.tc_onset  = 0;
             fi.tc_offset = fi.header.dim[4];
             fi.tc_shift = 0;
+
+            // Time course descriptives related
+            fi.tc_show_mean = false;
         }
 
         // ============================================================================================================
@@ -874,6 +886,69 @@ namespace IDA_IO
                     uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
                     uint64_t index2D = j + k*nj;
                     fi.p_sliceI_float[index2D] = fi.p_data_float[index4D];
+                }
+            }
+        }
+
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        void loadSliceK_Tmean_float(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t k = static_cast<uint64_t>(fi.display_k);
+            uint64_t nij = ni*nj;
+            for (uint64_t i = 0; i < ni; ++i) {
+                for (uint64_t j = 0; j < nj; ++j) {
+                    uint64_t index2D = i + j*ni;
+                    fi.p_sliceK_float[index2D] = 0;
+                    for (uint64_t t = 0; t < nt; ++t) {
+                        uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
+                        fi.p_sliceK_float[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
+                    }
+                    fi.p_sliceK_float_Tmean[index2D] = fi.p_sliceK_float[index2D];
+                }
+            }
+        }
+
+        void loadSliceJ_Tmean_float(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t j = static_cast<uint64_t>(fi.display_j);
+            uint64_t nij = ni*nj;
+            for (uint64_t i = 0; i < ni; i++) {
+                for (uint64_t k = 0; k < nk; k++) {
+                    uint64_t index2D = i + k*ni;
+                    fi.p_sliceJ_float[index2D] = 0;
+                    for (uint64_t t = 0; t < nt; ++t) {
+                        uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
+                        fi.p_sliceJ_float[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
+                    }
+                    fi.p_sliceJ_float_Tmean[index2D] = fi.p_sliceJ_float[index2D];
+                }
+            }
+        }
+
+        void loadSliceI_Tmean_float(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t i = static_cast<uint64_t>(fi.display_i);
+            uint64_t nij = ni*nj;
+            for (uint64_t j = 0; j < nj; j++) {
+                for (uint64_t k = 0; k < nk; k++) {
+                    uint64_t index2D = j + k*nj;
+                    fi.p_sliceI_float[index2D] = 0;
+                    for (uint64_t t = 0; t < nt; ++t) {
+                        uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
+                        fi.p_sliceI_float[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
+                    }
+                    fi.p_sliceI_float_Tmean[index2D] = fi.p_sliceI_float[index2D];
                 }
             }
         }

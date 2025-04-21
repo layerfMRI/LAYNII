@@ -130,8 +130,6 @@ namespace IDA
                 fl.files[sf].overlay_min = fl.files[sf].display_min;
                 fl.files[sf].overlay_max = fl.files[sf].display_max;
 
-                fl.files[sf].tc_nr = 1;
-
                 fl.files[sf].loaded_data = true;
                 loaded_data = fl.files[sf].loaded_data;
             }
@@ -284,7 +282,7 @@ namespace IDA
         // ============================================================================================================
         // Image Views
         // ============================================================================================================
-        ImGui::Begin("Slice Z axis", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        ImGui::Begin("Slice Z Axis", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
         if (loaded_data)  // Slice K window
         {
@@ -301,7 +299,7 @@ namespace IDA
         }
         ImGui::End();
 
-        ImGui::Begin("Slice Y axis", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        ImGui::Begin("Slice Y Axis", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         if (loaded_data)  // Slice J window
         {
             RenderSlice(
@@ -318,7 +316,7 @@ namespace IDA
         }
         ImGui::End();
 
-        ImGui::Begin("Slice X axis", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        ImGui::Begin("Slice X Axis", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         if (loaded_data)  // Slice I window
         {
             RenderSlice(
@@ -668,8 +666,45 @@ namespace IDA
 
             if ( fl.files[sf].dim_t > 1 ) {
                 // ----------------------------------------------------------------------------------------------------
-                ImGui::SeparatorText("CORRELATIONS CONTROLS");
+                ImGui::SeparatorText("TIME SERIES CONTROLS");
                 // ----------------------------------------------------------------------------------------------------
+                if ( fl.files[sf].visualization_mode != 2 ) {
+                    if ( ImGui::Button("Enable Tmean") ) {
+
+                        // Prepare data to hold correlation maps
+                        free(fl.files[sf].p_sliceK_float_Tmean);
+                        free(fl.files[sf].p_sliceJ_float_Tmean);
+                        free(fl.files[sf].p_sliceI_float_Tmean);
+                        fl.files[sf].p_sliceK_float_Tmean = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
+                        fl.files[sf].p_sliceJ_float_Tmean = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
+                        fl.files[sf].p_sliceI_float_Tmean = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
+
+                        // Enable real time time mean
+                        fl.loadSliceK_Tmean_float(fl.files[sf]);
+                        fl.loadSliceJ_Tmean_float(fl.files[sf]);
+                        fl.loadSliceI_Tmean_float(fl.files[sf]);
+
+                        fl.loadSliceK_uint8(fl.files[sf]);
+                        fl.loadSliceJ_uint8(fl.files[sf]);
+                        fl.loadSliceI_uint8(fl.files[sf]);
+
+                        fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j,
+                                                     fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
+                        fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k,
+                                                     fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
+                        fl.uploadTextureDataToOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k,
+                                                     fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
+
+                        fl.files[sf].visualization_mode = 2;
+                        request_image_data_update = true;
+                    }
+                } else {
+                    if ( ImGui::Button("Disable Tmean") ) {
+                        request_image_data_update = true;
+                        fl.files[sf].visualization_mode = 0;
+                    }
+                }
+
                 if ( fl.files[sf].visualization_mode != 3 ) {
                     if ( ImGui::Button("Enable Correlations") ) {
                         show_voxel_inspector = true;
@@ -874,6 +909,29 @@ namespace IDA
                     fl.loadSliceK_float(fl.files[sf]);
                     fl.loadSliceJ_float(fl.files[sf]);
                     fl.loadSliceI_float(fl.files[sf]);
+                    request_image_update = true;
+                }
+                
+                if ( request_image_update ) {
+                    fl.loadSliceK_uint8(fl.files[sf]);
+                    fl.updateTextureDataInOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j, 
+                                                 fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
+                    fl.loadSliceJ_uint8(fl.files[sf]);
+                    fl.updateTextureDataInOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k, 
+                                                 fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
+                    fl.loadSliceI_uint8(fl.files[sf]);
+                    fl.updateTextureDataInOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k, 
+                                                 fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
+                }
+
+            // --------------------------------------------------------------------------------------------------------
+            // Time mean mode
+            // --------------------------------------------------------------------------------------------------------
+            } else if ( fl.files[sf].visualization_mode == 2 ) {
+                if ( request_image_data_update ) {
+                    fl.loadSliceK_Tmean_float(fl.files[sf]);
+                    fl.loadSliceJ_Tmean_float(fl.files[sf]);
+                    fl.loadSliceI_Tmean_float(fl.files[sf]);
                     request_image_update = true;
                 }
                 

@@ -175,7 +175,6 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
     ImU32 slice_crosshair_color = IM_COL32(255, 255, 255, 75);  // RGBA
     float slice_crosshair_thickness = 1.0f;  // Pixels
 
-
     // ----------------------------------------------------------------------------------------------------------------
     // Zoom image
     // TODO: Smoother zooming for the inspector can be achieved centering to the mouse position
@@ -234,7 +233,7 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
     ImVec2 uv_max = ImVec2(0.0f, 0.0f);  // Default (1.0f, 1.0f) is lower-right
 
     // Render texture
-    if (visualization_mode == 0) {
+    if (visualization_mode == 0 || visualization_mode == 2) {
         ImGui::Image((void*)(intptr_t)textureID, img_size, uv_min, uv_max);
     } else if (visualization_mode == 1 || visualization_mode == 3) {
         ImGui::Image((void*)(intptr_t)textureID_RGB, img_size, uv_min, uv_max);
