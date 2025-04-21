@@ -89,6 +89,18 @@ namespace IDA
         ImGui::SameLine();
         if (ImGui::Button("Remove"))
         {
+            loaded_data = false;
+            if ( fl.files[sf].loaded_data ) {
+                free(fl.files[sf].p_data_float);
+                free(fl.files[sf].p_sliceK_float);
+                free(fl.files[sf].p_sliceJ_float);
+                free(fl.files[sf].p_sliceI_float);
+                free(fl.files[sf].p_sliceK_uint8);
+                free(fl.files[sf].p_sliceJ_uint8);
+                free(fl.files[sf].p_sliceI_uint8);
+                free(fl.files[sf].p_tc_focus_float);
+                free(fl.files[sf].p_tc_refer_float);                
+            }
             fl.removeFile(sf);
         }
 
