@@ -1,5 +1,4 @@
 #include "../dep/laynii_lib.h"
-#include <limits>
 #include <sstream>
 
 int show_help(void) {

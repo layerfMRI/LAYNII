@@ -1,6 +1,5 @@
 
 #include "../dep/laynii_lib.h"
-#include <limits>
 
 int shoq_help(void) {
     printf(
