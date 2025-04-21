@@ -148,6 +148,7 @@ namespace IDA
 
         if (sf >= 0) {
             ImGui::Text("");
+            ImGui::Separator();
             ImGui::Text("Selected File:");
             ImGui::Text("  Voxel volume        : %.6f", fl.files[sf].voxel_volume);
             ImGui::Text("  1st Voxel Dimension : %.3f", fl.files[sf].pixdim_i);
@@ -801,19 +802,26 @@ namespace IDA
                     }
                 }
 
-                // ----------------------------------------------------------------------------------------------------
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 ImGui::SeparatorText("!!!WIP!!!");
-                // ----------------------------------------------------------------------------------------------------
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 if ( fl.files[sf].visualization_mode != 2 ) {
-                    if ( ImGui::Button("Enable Tmean") ) {
+                    if ( ImGui::Button("Enable Descriptives") ) {
 
                         // Prepare data to hold correlation maps
                         free(fl.files[sf].p_sliceK_float_Tmean);
                         free(fl.files[sf].p_sliceJ_float_Tmean);
                         free(fl.files[sf].p_sliceI_float_Tmean);
+                        free(fl.files[sf].p_sliceK_float_Tstd);
+                        free(fl.files[sf].p_sliceJ_float_Tstd);
+                        free(fl.files[sf].p_sliceI_float_Tstd);
+
                         fl.files[sf].p_sliceK_float_Tmean = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
                         fl.files[sf].p_sliceJ_float_Tmean = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
                         fl.files[sf].p_sliceI_float_Tmean = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
+                        fl.files[sf].p_sliceK_float_Tstd = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
+                        fl.files[sf].p_sliceJ_float_Tstd = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
+                        fl.files[sf].p_sliceI_float_Tstd = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
 
                         // Enable real time time mean
                         fl.loadSliceK_Tmean_float(fl.files[sf]);
@@ -839,6 +847,8 @@ namespace IDA
                         request_image_data_update = true;
                         fl.files[sf].visualization_mode = 0;
                     }
+                    ImGui::Checkbox("Time Mean", &fl.files[sf].tc_show_Tmean); ImGui::SameLine();
+                    ImGui::Checkbox("Time Std ", &fl.files[sf].tc_show_Tstd);
                 }
             }
         }

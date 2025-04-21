@@ -136,10 +136,14 @@ namespace IDA_IO
         int         tc_offset;              // Omit volumes from end until this number
         int         tc_shift;               // Shift time course data by this amount
         // Correlation related ----------------------------------------------------------------------------------------
-        bool        tc_show_mean;           // Show time course mean
-        float*      p_sliceK_float_Tmean;   // Holds time average data
-        float*      p_sliceJ_float_Tmean;   // Holds time average data
-        float*      p_sliceI_float_Tmean;   // Holds time average data
+        bool        tc_show_Tmean;          // Show time course mean
+        bool        tc_show_Tstd;           // Show time course standard deviation
+        float*      p_sliceK_float_Tmean;   // Holds time mean data
+        float*      p_sliceJ_float_Tmean;   // Holds time mean data
+        float*      p_sliceI_float_Tmean;   // Holds time mean data
+        float*      p_sliceK_float_Tstd;    // Holds time strandard deviation data
+        float*      p_sliceJ_float_Tstd;    // Holds time strandard deviation data
+        float*      p_sliceI_float_Tstd;    // Holds time strandard deviation data
         float*      p_sliceK_float_corr;    // Holds correlation data
         float*      p_sliceJ_float_corr;    // Holds correlation data
         float*      p_sliceI_float_corr;    // Holds correlation data
@@ -691,7 +695,8 @@ namespace IDA_IO
             fi.tc_shift = 0;
 
             // Time course descriptives related
-            fi.tc_show_mean = false;
+            fi.tc_show_Tmean = true;
+            fi.tc_show_Tstd  = false;
         }
 
         // ============================================================================================================
@@ -891,6 +896,8 @@ namespace IDA_IO
         }
 
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // Time mean and standard deviation computations
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         void loadSliceK_Tmean_float(FileInfo& fi)
         {
             uint64_t ni = static_cast<uint64_t>(fi.dim_i);
@@ -902,15 +909,31 @@ namespace IDA_IO
                 for (uint64_t j = 0; j < nj; ++j) {
                     uint64_t index2D = i + j*ni;
                     fi.p_sliceK_float_Tmean[index2D] = 0;
+                    fi.p_sliceK_float_Tstd[index2D] = 0;
+
+                    // Compute time mean
                     for (uint64_t t = 0; t < nt; ++t) {
                         uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
                         fi.p_sliceK_float_Tmean[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
                     }
+
+                    // Compute time standard deviation
+                    for (uint64_t t = 0; t < nt; ++t) {
+                        uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
+                        fi.p_sliceK_float_Tstd[index2D] = 
+                            (fi.p_data_float[index4D] - fi.p_sliceK_float_Tmean[index2D])
+                            * (fi.p_data_float[index4D] - fi.p_sliceK_float_Tmean[index2D]) / static_cast<float>(nt);
+                    }
+                    fi.p_sliceK_float_Tstd[index2D] = sqrt(fi.p_sliceK_float_Tstd[index2D]);
                 }
             }
             // Copy to visualization slice
-            for (uint64_t i = 0; i < ni*nj; ++i) {  
-                fi.p_sliceK_float[i] = fi.p_sliceK_float_Tmean[i];
+            for (uint64_t i = 0; i < ni*nj; ++i) {
+                if ( fi.tc_show_Tstd ) {
+                    fi.p_sliceK_float[i] = fi.p_sliceK_float_Tstd[i];
+                } else {
+                    fi.p_sliceK_float[i] = fi.p_sliceK_float_Tmean[i];                    
+                }
             }
         }
 
