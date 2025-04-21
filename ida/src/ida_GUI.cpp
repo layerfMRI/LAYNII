@@ -34,6 +34,12 @@ namespace IDA
         int nr_files = fl.files.size();
         float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
 
+        // Style collapsing headers
+        ImGuiStyle& style = ImGui::GetStyle();
+        style.Colors[ImGuiCol_Header]        = ImVec4(1.0f, 1.0f, 1.0f, 0.0f);
+        style.Colors[ImGuiCol_HeaderHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.1f);
+        style.Colors[ImGuiCol_HeaderActive]  = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);
+
 	    // ============================================================================================================
 		// Enable Docking
 	    // ============================================================================================================
@@ -342,7 +348,9 @@ namespace IDA
 
             ImGui::Checkbox("Normalization 1", &show_tc_normalized1); ImGui::SameLine();
             ImGui::Checkbox("Normalization 2", &show_tc_normalized2);
-            ImGui::Checkbox("Show Reference", &fl.files[sf].tc_show_reference);
+            ImGui::Checkbox("Show Reference ", &fl.files[sf].tc_show_reference); ImGui::SameLine();
+            ImGui::Checkbox("Show Focus     ", &fl.files[sf].tc_show_focus);
+            ImGui::Spacing();
 
             ImVec2 plot_size, pos;
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
@@ -366,8 +374,8 @@ namespace IDA
                 draw_list->AddRectFilled(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y), color_background);
                 draw_list->AddRect(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y), color_frame, 0.0f, 0, 2.0f);
 
+                // Draw reference time course
                 if ( fl.files[sf].tc_show_reference ) {
-                    // Draw reference time course
                     min_y = fl.files[sf].tc_refer_min;
                     max_y = fl.files[sf].tc_refer_max;
                     auto get_screen_point1 = [&](int i, float* data) {
@@ -384,18 +392,20 @@ namespace IDA
                 }
 
                 // Draw focus time course
-                min_y = fl.files[sf].tc_focus_min;
-                max_y = fl.files[sf].tc_focus_max;
-                auto get_screen_point2 = [&](int i, float* data) {
-                    float x = pos.x + (i / float(fl.files[sf].dim_t - 1)) * plot_size.x;
-                    float y = pos.y + (1.0f - (data[i] - min_y) / (max_y - min_y)) * plot_size.y;
-                    return ImVec2(x, y);
-                };
+                if ( fl.files[sf].tc_show_focus ) {
+                    min_y = fl.files[sf].tc_focus_min;
+                    max_y = fl.files[sf].tc_focus_max;
+                    auto get_screen_point2 = [&](int i, float* data) {
+                        float x = pos.x + (i / float(fl.files[sf].dim_t - 1)) * plot_size.x;
+                        float y = pos.y + (1.0f - (data[i] - min_y) / (max_y - min_y)) * plot_size.y;
+                        return ImVec2(x, y);
+                    };
 
-                for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
-                    draw_list->AddLine(get_screen_point2(i  , fl.files[sf].p_tc_focus_float),
-                                       get_screen_point2(i+1, fl.files[sf].p_tc_focus_float),
-                                       color_line2, line_thickness);
+                    for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
+                        draw_list->AddLine(get_screen_point2(i  , fl.files[sf].p_tc_focus_float),
+                                           get_screen_point2(i+1, fl.files[sf].p_tc_focus_float),
+                                           color_line2, line_thickness);
+                    }
                 }
                 ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 85.f);  // Move cursor down
             }
@@ -410,8 +420,8 @@ namespace IDA
                 draw_list->AddRectFilled(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y), color_background);
                 draw_list->AddRect(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y), color_frame, 0.0f, 0, 2.0f);
 
+                // Draw reference time course
                 if ( fl.files[sf].tc_show_reference ) {
-                    // Draw reference time course
                     min_y = std::min(fl.files[sf].tc_focus_min, fl.files[sf].tc_refer_min);
                     max_y = std::max(fl.files[sf].tc_focus_max, fl.files[sf].tc_refer_max);
                     auto get_screen_point3 = [&](int i, float* data) {
@@ -428,16 +438,18 @@ namespace IDA
                 }
 
                 // Draw focus time course
-                auto get_screen_point4 = [&](int i, float* data) {
-                    float x = pos.x + (i / float(fl.files[sf].dim_t - 1)) * plot_size.x;
-                    float y = pos.y + (1.0f - (data[i] - min_y) / (max_y - min_y)) * plot_size.y;
-                    return ImVec2(x, y);
-                };
+                if ( fl.files[sf].tc_show_focus ) {
+                    auto get_screen_point4 = [&](int i, float* data) {
+                        float x = pos.x + (i / float(fl.files[sf].dim_t - 1)) * plot_size.x;
+                        float y = pos.y + (1.0f - (data[i] - min_y) / (max_y - min_y)) * plot_size.y;
+                        return ImVec2(x, y);
+                    };
 
-                for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
-                    draw_list->AddLine(get_screen_point4(i  , fl.files[sf].p_tc_focus_float),
-                                       get_screen_point4(i+1, fl.files[sf].p_tc_focus_float),
-                                       color_line2, line_thickness);
+                    for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
+                        draw_list->AddLine(get_screen_point4(i  , fl.files[sf].p_tc_focus_float),
+                                           get_screen_point4(i+1, fl.files[sf].p_tc_focus_float),
+                                           color_line2, line_thickness);
+                    }
                 }
             }
             ImGui::End();
@@ -451,254 +463,170 @@ namespace IDA
         if (loaded_data)
         {
             // --------------------------------------------------------------------------------------------------------
-            ImGui::SeparatorText("SLICE BROWSER CONTROLS");
+            // SLICE BROWSER CONTROLS
             // --------------------------------------------------------------------------------------------------------
-            ImGui::Text("Visualization Mode: %u", fl.files[sf].visualization_mode);
+            if ( ImGui::CollapsingHeader("SLICE BROWSER CONTROLS", ImGuiTreeNodeFlags_DefaultOpen) ) {
 
-            // Slice k
-            ImGui::PushButtonRepeat(true);
-            if (ImGui::ArrowButton("##SliceK_decrease", ImGuiDir_Left)) {
-                fl.files[sf].display_k = ((fl.files[sf].display_k - 1) % fl.files[sf].dim_k
-                                          + fl.files[sf].dim_k) % fl.files[sf].dim_k;  // Always positive
-                request_image_data_update = true;
-            }
-            ImGui::SameLine(0.0f, spacing);
-            if (ImGui::ArrowButton("##SliceK_increase", ImGuiDir_Right)) {
-                fl.files[sf].display_k = (fl.files[sf].display_k + 1) % fl.files[sf].dim_k;
-                request_image_data_update = true;
-            }
-            ImGui::PopButtonRepeat();
-            ImGui::SameLine();
-            if (ImGui::SliderInt("##SliceK", &fl.files[sf].display_k, 0, fl.files[sf].dim_k-1, "%i")) {
-                request_image_data_update = true;
-            }     
-            ImGui::SameLine();
-            ImGui::Text("k [%u/%u]", fl.files[sf].display_k, fl.files[sf].dim_k-1);
+                ImGui::Text("Visualization Mode: %u", fl.files[sf].visualization_mode);
 
-            // Slice j
-            ImGui::PushButtonRepeat(true);
-            if (ImGui::ArrowButton("##SliceJ_decrease", ImGuiDir_Left)) {
-                fl.files[sf].display_j = ((fl.files[sf].display_j - 1) % fl.files[sf].dim_j
-                                          + fl.files[sf].dim_j) % fl.files[sf].dim_j;  // Always positive
-                request_image_data_update = true;
-            }
-            ImGui::SameLine(0.0f, spacing);
-            if (ImGui::ArrowButton("##SliceJ_increase", ImGuiDir_Right)) {
-                fl.files[sf].display_j = (fl.files[sf].display_j + 1) % fl.files[sf].dim_j;
-                request_image_data_update = true;
-            }
-            ImGui::PopButtonRepeat();
-            ImGui::SameLine();
-            if (ImGui::SliderInt("##SliceJ", &fl.files[sf].display_j, 0, fl.files[sf].dim_j-1, "%i")) {
-                request_image_data_update = true;
-            }     
-            ImGui::SameLine();
-            ImGui::Text("j [%u/%u]", fl.files[sf].display_j, fl.files[sf].dim_j-1);
-
-            // Slice i
-            ImGui::PushButtonRepeat(true);
-            if (ImGui::ArrowButton("##SliceI_decrease", ImGuiDir_Left)) {
-                fl.files[sf].display_i = ((fl.files[sf].display_i - 1) % fl.files[sf].dim_i
-                                          + fl.files[sf].dim_i) % fl.files[sf].dim_i;  // Always positive
-                request_image_data_update = true;
-            }
-            ImGui::SameLine(0.0f, spacing);
-            if (ImGui::ArrowButton("##SliceI_increase", ImGuiDir_Right)) {
-                fl.files[sf].display_i = (fl.files[sf].display_i + 1) % fl.files[sf].dim_i;
-                request_image_data_update = true;
-            }
-            ImGui::PopButtonRepeat();
-            ImGui::SameLine();
-            if (ImGui::SliderInt("##SliceI", &fl.files[sf].display_i, 0, fl.files[sf].dim_i-1, "%i")) {
-                request_image_data_update = true;
-            }     
-            ImGui::SameLine();
-            ImGui::Text("i [%u/%u]", fl.files[sf].display_i, fl.files[sf].dim_i-1);
-
-            // Slice t
-            if (fl.files[sf].dim_t > 1) {
+                // Slice k
                 ImGui::PushButtonRepeat(true);
-                if (ImGui::ArrowButton("##SliceT_decrease", ImGuiDir_Left)) {
-                    fl.files[sf].display_t = ((fl.files[sf].display_t - 1) % fl.files[sf].dim_t
-                                              + fl.files[sf].dim_t) % fl.files[sf].dim_t;  // Always positive
+                if (ImGui::ArrowButton("##SliceK_decrease", ImGuiDir_Left)) {
+                    fl.files[sf].display_k = ((fl.files[sf].display_k - 1) % fl.files[sf].dim_k
+                                              + fl.files[sf].dim_k) % fl.files[sf].dim_k;  // Always positive
                     request_image_data_update = true;
                 }
                 ImGui::SameLine(0.0f, spacing);
-                if (ImGui::ArrowButton("##SliceT_increase", ImGuiDir_Right)) {
-                    fl.files[sf].display_t = (fl.files[sf].display_t + 1) % fl.files[sf].dim_t;
+                if (ImGui::ArrowButton("##SliceK_increase", ImGuiDir_Right)) {
+                    fl.files[sf].display_k = (fl.files[sf].display_k + 1) % fl.files[sf].dim_k;
                     request_image_data_update = true;
                 }
                 ImGui::PopButtonRepeat();
                 ImGui::SameLine();
-                if (ImGui::SliderInt("##SliceT", &fl.files[sf].display_t, 0, fl.files[sf].dim_t-1, "%i")) {
+                if (ImGui::SliderInt("##SliceK", &fl.files[sf].display_k, 0, fl.files[sf].dim_k-1, "%i")) {
                     request_image_data_update = true;
                 }     
                 ImGui::SameLine();
-                ImGui::Text("t [%u/%u]", fl.files[sf].display_t, fl.files[sf].dim_t-1);
-            }
+                ImGui::Text("k [%u/%u]", fl.files[sf].display_k, fl.files[sf].dim_k-1);
 
-            // --------------------------------------------------------------------------------------------------------
-            ImGui::SeparatorText("ZOOM CONTROLS");
-            // --------------------------------------------------------------------------------------------------------
-
-            ImGui::PushButtonRepeat(true);
-            if (ImGui::ArrowButton("##Zoom_decrease", ImGuiDir_Left)) {
-                fl.files[sf].display_scale -= 1;
-            }
-            ImGui::SameLine(0.0f, spacing);
-            if (ImGui::ArrowButton("##Zoom_increase", ImGuiDir_Right)) {
-                fl.files[sf].display_scale += 1;
-            }
-            ImGui::PopButtonRepeat();
-            ImGui::SameLine();
-            ImGui::SliderFloat("##Zoom", &fl.files[sf].display_scale, 0.1, 20, "%f");
-            ImGui::SameLine();
-            ImGui::Text("  %.3fX", fl.files[sf].display_scale);
-
-            if (ImGui::Button("Reset")) {
-                fl.files[sf].display_scale = 1.f;
-                fl.files[sf].display_k_offset_x = 0.f;
-                fl.files[sf].display_k_offset_y = 0.f;
-                fl.files[sf].display_j_offset_x = 0.f;
-                fl.files[sf].display_j_offset_y = 0.f;
-                fl.files[sf].display_i_offset_x = 0.f;
-                fl.files[sf].display_i_offset_y = 0.f;
-            }
-
-            // --------------------------------------------------------------------------------------------------------
-            ImGui::SeparatorText("CONTRAST CONTROLS");
-            // --------------------------------------------------------------------------------------------------------
-            if ( ImGui::SliderFloat("Display Min.", &fl.files[sf].display_min, fl.files[sf].data_min, fl.files[sf].data_max, "%.2f") ) 
-            {
-                if (fl.files[sf].display_min > fl.files[sf].display_max) {
-                    fl.files[sf].display_min = fl.files[sf].display_max;
-                }
-                request_image_update = true;
-            }
-
-            if ( ImGui::SliderFloat("Display Max.", &fl.files[sf].display_max, fl.files[sf].data_min, fl.files[sf].data_max, "%.2f") ) 
-            {
-                if (fl.files[sf].display_max < fl.files[sf].display_min) {
-                    fl.files[sf].display_max = fl.files[sf].display_min;
-                }
-                request_image_update = true;
-            }
-
-            // ========================================================================================================
-            ImGui::SeparatorText("MASK CONTROLS");
-            // ========================================================================================================
-            if ( fl.files[sf].visualization_mode != 1 ) {
-                if (ImGui::Button("Enable Overlay")) {
-                    fl.prepareRBGSlices(fl.files[sf]);
-
-                    fl.loadSliceK_uint8(fl.files[sf]);
-                    fl.loadSliceJ_uint8(fl.files[sf]);
-                    fl.loadSliceI_uint8(fl.files[sf]);
-
-                    fl.loadSliceK_RGB_uint8(fl.files[sf]);
-                    fl.loadSliceJ_RGB_uint8(fl.files[sf]);
-                    fl.loadSliceI_RGB_uint8(fl.files[sf]);
-
-                    fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_j, 
-                                                     fl.files[sf].textureIDk_RGB, fl.files[sf].p_sliceK_RGB_uint8);
-                    fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_k, 
-                                                     fl.files[sf].textureIDj_RGB, fl.files[sf].p_sliceJ_RGB_uint8);
-                    fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_j, fl.files[sf].dim_k, 
-                                                     fl.files[sf].textureIDi_RGB, fl.files[sf].p_sliceI_RGB_uint8);
-
-                    fl.files[sf].visualization_mode = 1;
-                }
-            } else if ( fl.files[sf].visualization_mode == 1 ) {
-                if (ImGui::Button("Disable Overlay")) {
+                // Slice j
+                ImGui::PushButtonRepeat(true);
+                if (ImGui::ArrowButton("##SliceJ_decrease", ImGuiDir_Left)) {
+                    fl.files[sf].display_j = ((fl.files[sf].display_j - 1) % fl.files[sf].dim_j
+                                              + fl.files[sf].dim_j) % fl.files[sf].dim_j;  // Always positive
                     request_image_data_update = true;
-                    fl.files[sf].visualization_mode = 0;
+                }
+                ImGui::SameLine(0.0f, spacing);
+                if (ImGui::ArrowButton("##SliceJ_increase", ImGuiDir_Right)) {
+                    fl.files[sf].display_j = (fl.files[sf].display_j + 1) % fl.files[sf].dim_j;
+                    request_image_data_update = true;
+                }
+                ImGui::PopButtonRepeat();
+                ImGui::SameLine();
+                if (ImGui::SliderInt("##SliceJ", &fl.files[sf].display_j, 0, fl.files[sf].dim_j-1, "%i")) {
+                    request_image_data_update = true;
+                }     
+                ImGui::SameLine();
+                ImGui::Text("j [%u/%u]", fl.files[sf].display_j, fl.files[sf].dim_j-1);
+
+                // Slice i
+                ImGui::PushButtonRepeat(true);
+                if (ImGui::ArrowButton("##SliceI_decrease", ImGuiDir_Left)) {
+                    fl.files[sf].display_i = ((fl.files[sf].display_i - 1) % fl.files[sf].dim_i
+                                              + fl.files[sf].dim_i) % fl.files[sf].dim_i;  // Always positive
+                    request_image_data_update = true;
+                }
+                ImGui::SameLine(0.0f, spacing);
+                if (ImGui::ArrowButton("##SliceI_increase", ImGuiDir_Right)) {
+                    fl.files[sf].display_i = (fl.files[sf].display_i + 1) % fl.files[sf].dim_i;
+                    request_image_data_update = true;
+                }
+                ImGui::PopButtonRepeat();
+                ImGui::SameLine();
+                if (ImGui::SliderInt("##SliceI", &fl.files[sf].display_i, 0, fl.files[sf].dim_i-1, "%i")) {
+                    request_image_data_update = true;
+                }     
+                ImGui::SameLine();
+                ImGui::Text("i [%u/%u]", fl.files[sf].display_i, fl.files[sf].dim_i-1);
+
+                // Slice t
+                if (fl.files[sf].dim_t > 1) {
+                    ImGui::PushButtonRepeat(true);
+                    if (ImGui::ArrowButton("##SliceT_decrease", ImGuiDir_Left)) {
+                        fl.files[sf].display_t = ((fl.files[sf].display_t - 1) % fl.files[sf].dim_t
+                                                  + fl.files[sf].dim_t) % fl.files[sf].dim_t;  // Always positive
+                        request_image_data_update = true;
+                    }
+                    ImGui::SameLine(0.0f, spacing);
+                    if (ImGui::ArrowButton("##SliceT_increase", ImGuiDir_Right)) {
+                        fl.files[sf].display_t = (fl.files[sf].display_t + 1) % fl.files[sf].dim_t;
+                        request_image_data_update = true;
+                    }
+                    ImGui::PopButtonRepeat();
+                    ImGui::SameLine();
+                    if (ImGui::SliderInt("##SliceT", &fl.files[sf].display_t, 0, fl.files[sf].dim_t-1, "%i")) {
+                        request_image_data_update = true;
+                    }     
+                    ImGui::SameLine();
+                    ImGui::Text("t [%u/%u]", fl.files[sf].display_t, fl.files[sf].dim_t-1);
                 }
             }
 
-            if (fl.files[sf].visualization_mode != 1) {
-                ImGui::BeginDisabled(true);
-            }
+            // --------------------------------------------------------------------------------------------------------
+            // ZOOM CONTROLS
+            // --------------------------------------------------------------------------------------------------------
+            ImGui::Spacing();
+            ImGui::Separator();
+            if ( ImGui::CollapsingHeader("ZOOM CONTROLS", ImGuiTreeNodeFlags_DefaultOpen) ) {
 
-            if ( ImGui::SliderFloat("Mask Min.", &fl.files[sf].overlay_min, fl.files[sf].data_min, fl.files[sf].data_max, "%.2f") ) 
-            {
-                if (fl.files[sf].overlay_min > fl.files[sf].overlay_max) {
-                    fl.files[sf].overlay_min = fl.files[sf].overlay_max;
+                ImGui::PushButtonRepeat(true);
+                if (ImGui::ArrowButton("##Zoom_decrease", ImGuiDir_Left)) {
+                    fl.files[sf].display_scale -= 1;
                 }
-                request_image_update = true;
-            }
-
-            if ( ImGui::SliderFloat("Mask Max.", &fl.files[sf].overlay_max, fl.files[sf].data_min, fl.files[sf].data_max, "%.2f") ) 
-            {
-                if (fl.files[sf].overlay_max < fl.files[sf].overlay_min) {
-                    fl.files[sf].overlay_max = fl.files[sf].overlay_min;
+                ImGui::SameLine(0.0f, spacing);
+                if (ImGui::ArrowButton("##Zoom_increase", ImGuiDir_Right)) {
+                    fl.files[sf].display_scale += 1;
                 }
-                request_image_update = true;
-            }
+                ImGui::PopButtonRepeat();
+                ImGui::SameLine();
+                ImGui::SliderFloat("##Zoom", &fl.files[sf].display_scale, 0.1, 20, "%f");
+                ImGui::SameLine();
+                ImGui::Text("  %.3fX", fl.files[sf].display_scale);
 
-            if (fl.files[sf].visualization_mode != 1) {
-                ImGui::EndDisabled();
+                if (ImGui::Button("Reset")) {
+                    fl.files[sf].display_scale = 1.f;
+                    fl.files[sf].display_k_offset_x = 0.f;
+                    fl.files[sf].display_k_offset_y = 0.f;
+                    fl.files[sf].display_j_offset_x = 0.f;
+                    fl.files[sf].display_j_offset_y = 0.f;
+                    fl.files[sf].display_i_offset_x = 0.f;
+                    fl.files[sf].display_i_offset_y = 0.f;
+                }
             }
 
             // --------------------------------------------------------------------------------------------------------
-            ImGui::SeparatorText("CROSSHAIR CONTROLS");
+            // CONTRAST CONTROLS
             // --------------------------------------------------------------------------------------------------------
-            ImGui::Checkbox("Show mouse crosshair", &show_mouse_crosshair); ImGui::SameLine();
-            ImGui::Checkbox("Show slice crosshair", &show_slice_crosshair);
+            ImGui::Spacing();
+            ImGui::Separator();
+            if ( ImGui::CollapsingHeader("CONTRAST CONTROLS") ) {
 
-            // --------------------------------------------------------------------------------------------------------
-            ImGui::SeparatorText("VOXEL INSPECTOR CONTROLS");
-            // --------------------------------------------------------------------------------------------------------
-            ImGui::Checkbox("Toggle voxel inspector", &show_voxel_inspector);
+                if ( ImGui::SliderFloat("Display Min.", &fl.files[sf].display_min, fl.files[sf].data_min, fl.files[sf].data_max, "%.2f") ) 
+                {
+                    if (fl.files[sf].display_min > fl.files[sf].display_max) {
+                        fl.files[sf].display_min = fl.files[sf].display_max;
+                    }
+                    request_image_update = true;
+                }
 
-            if ( !show_voxel_inspector ) {
-                ImGui::BeginDisabled(true);
+                if ( ImGui::SliderFloat("Display Max.", &fl.files[sf].display_max, fl.files[sf].data_min, fl.files[sf].data_max, "%.2f") ) 
+                {
+                    if (fl.files[sf].display_max < fl.files[sf].display_min) {
+                        fl.files[sf].display_max = fl.files[sf].display_min;
+                    }
+                    request_image_update = true;
+                }
             }
-            ImGui::Checkbox("Show value", &show_voxel_value); ImGui::SameLine();
-            ImGui::Checkbox("Show indices", &show_voxel_indices); ImGui::SameLine();
 
-            if ( fl.files[sf].dim_t > 1 ) {
-                ImGui::Checkbox("Show time course", &show_voxel_time_course);
-            }
+            // ========================================================================================================
+            // MASK CONTROLS
+            // ========================================================================================================
+            ImGui::Spacing();
+            ImGui::Separator();
+            if ( ImGui::CollapsingHeader("MASK CONTROLS") ) {
 
-            if (!show_voxel_inspector) {
-                ImGui::EndDisabled();
-            }
-
-
-            if ( fl.files[sf].dim_t > 1 ) {
-                // ----------------------------------------------------------------------------------------------------
-                ImGui::SeparatorText("CORRELATION CONTROLS");
-                // ----------------------------------------------------------------------------------------------------
-                if ( fl.files[sf].visualization_mode != 3 ) {
-                    if ( ImGui::Button("Enable Correlations") ) {
-                        show_voxel_inspector = true;
-                        fl.files[sf].voxel_i = static_cast<uint64_t>(fl.files[sf].display_i);
-                        fl.files[sf].voxel_j = static_cast<uint64_t>(fl.files[sf].display_j);
-                        fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
-                        fl.files[sf].voxel_t = static_cast<uint64_t>(fl.files[sf].display_t);
-
-                        fl.files[sf].tc_lock = false; 
-                        fl.files[sf].tc_focus_voxel_i = fl.files[sf].voxel_i;
-                        fl.files[sf].tc_focus_voxel_j = fl.files[sf].voxel_j;
-                        fl.files[sf].tc_focus_voxel_k = fl.files[sf].voxel_k;
-                        SampleVoxelTimeCourseFocus(fl.files[sf]);
-
+                if ( fl.files[sf].visualization_mode != 1 ) {
+                    if (ImGui::Button("Enable Overlay")) {
                         fl.prepareRBGSlices(fl.files[sf]);
 
-                        // Prepare data to hold correlation maps
-                        free(fl.files[sf].p_sliceK_float_corr);
-                        free(fl.files[sf].p_sliceJ_float_corr);
-                        free(fl.files[sf].p_sliceI_float_corr);
-                        fl.files[sf].p_sliceK_float_corr = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
-                        fl.files[sf].p_sliceJ_float_corr = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
-                        fl.files[sf].p_sliceI_float_corr = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
+                        fl.loadSliceK_uint8(fl.files[sf]);
+                        fl.loadSliceJ_uint8(fl.files[sf]);
+                        fl.loadSliceI_uint8(fl.files[sf]);
 
-                        // Prepare corelations images
-                        fl.loadSliceK_Correlations_uint8(fl.files[sf]);
-                        fl.loadSliceJ_Correlations_uint8(fl.files[sf]);
-                        fl.loadSliceI_Correlations_uint8(fl.files[sf]);
+                        fl.loadSliceK_RGB_uint8(fl.files[sf]);
+                        fl.loadSliceJ_RGB_uint8(fl.files[sf]);
+                        fl.loadSliceI_RGB_uint8(fl.files[sf]);
 
-                        // Prepare corelations textures
                         fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_j, 
                                                          fl.files[sf].textureIDk_RGB, fl.files[sf].p_sliceK_RGB_uint8);
                         fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_k, 
@@ -706,99 +634,215 @@ namespace IDA
                         fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_j, fl.files[sf].dim_k, 
                                                          fl.files[sf].textureIDi_RGB, fl.files[sf].p_sliceI_RGB_uint8);
 
-                        fl.files[sf].visualization_mode = 3;
-                        request_image_data_update = true;
+                        fl.files[sf].visualization_mode = 1;
                     }
-                } else {
-                    if ( ImGui::Button("Disable Correlations") ) {
+                } else if ( fl.files[sf].visualization_mode == 1 ) {
+                    if (ImGui::Button("Disable Overlay")) {
                         request_image_data_update = true;
                         fl.files[sf].visualization_mode = 0;
                     }
+                }
 
-                    ImGui::SameLine();
-                    if ( ImGui::Button("Save Map") ) {
-                        fl.computeCorrelationsForVolume_float(fl.files[sf]);
-                    }
+                if (fl.files[sf].visualization_mode != 1) {
+                    ImGui::BeginDisabled(true);
+                }
 
-                    // ------------------------------------------------------------------------------------------------
-                    // Time course onset adjustments
-                    // ------------------------------------------------------------------------------------------------
-                    ImGui::PushButtonRepeat(true);
-                    if (ImGui::ArrowButton("##TC_onset_decrease", ImGuiDir_Left)) {
-                        fl.files[sf].tc_onset -= 1;
-                        if ( fl.files[sf].tc_onset < 0 ) {
-                            fl.files[sf].tc_onset = 0;
-                        }
-                        request_image_data_update = true;
+                if ( ImGui::SliderFloat("Mask Min.", &fl.files[sf].overlay_min, fl.files[sf].data_min, fl.files[sf].data_max, "%.2f") ) 
+                {
+                    if (fl.files[sf].overlay_min > fl.files[sf].overlay_max) {
+                        fl.files[sf].overlay_min = fl.files[sf].overlay_max;
                     }
-                    ImGui::SameLine(0.0f, spacing);
-                    if (ImGui::ArrowButton("##TC_onset_increase", ImGuiDir_Right)) {
-                        fl.files[sf].tc_onset += 1;
-                        if ( fl.files[sf].tc_onset == fl.files[sf].tc_offset ) {
-                            fl.files[sf].tc_onset = fl.files[sf].tc_offset - 1;
-                        }
-                        request_image_data_update = true;
-                    }
-                    ImGui::PopButtonRepeat();
-                    ImGui::SameLine();
-                    if ( ImGui::SliderInt("Onset ", &fl.files[sf].tc_onset , 0, fl.files[sf].dim_t, "%i") ) {
-                        if ( fl.files[sf].tc_onset >= fl.files[sf].tc_offset ) {
-                            fl.files[sf].tc_onset = fl.files[sf].tc_offset - 1;
-                        }
-                        request_image_data_update = true;
-                    }
+                    request_image_update = true;
+                }
 
-                    // ------------------------------------------------------------------------------------------------
-                    // Time course offset adjustments
-                    // ------------------------------------------------------------------------------------------------
-                    ImGui::PushButtonRepeat(true);
-                    if (ImGui::ArrowButton("##TC_offset_decrease", ImGuiDir_Left)) {
-                        fl.files[sf].tc_offset -= 1;
-                        if ( fl.files[sf].tc_offset == fl.files[sf].tc_onset ) {
-                            fl.files[sf].tc_offset = fl.files[sf].tc_onset + 1;
-                        }
-                        request_image_data_update = true;
+                if ( ImGui::SliderFloat("Mask Max.", &fl.files[sf].overlay_max, fl.files[sf].data_min, fl.files[sf].data_max, "%.2f") ) 
+                {
+                    if (fl.files[sf].overlay_max < fl.files[sf].overlay_min) {
+                        fl.files[sf].overlay_max = fl.files[sf].overlay_min;
                     }
-                    ImGui::SameLine(0.0f, spacing);
-                    if (ImGui::ArrowButton("##TC_offset_increase", ImGuiDir_Right)) {
-                        fl.files[sf].tc_offset += 1;
-                        if ( fl.files[sf].tc_offset > fl.files[sf].dim_t ) {
-                            fl.files[sf].tc_offset = fl.files[sf].dim_t;
-                        }
-                        request_image_data_update = true;
-                    }
-                    ImGui::PopButtonRepeat();
-                    ImGui::SameLine();
-                    if ( ImGui::SliderInt("Offset", &fl.files[sf].tc_offset, 0, fl.files[sf].dim_t, "%i") ) {
-                        if ( fl.files[sf].tc_offset <= fl.files[sf].tc_onset ) {
-                            fl.files[sf].tc_offset = fl.files[sf].tc_onset + 1;
-                        }
-                        request_image_data_update = true;
-                    }
+                    request_image_update = true;
+                }
 
-                    // ------------------------------------------------------------------------------------------------
-                    // Time course shift/lag adjustments
-                    // ------------------------------------------------------------------------------------------------
-                    ImGui::PushButtonRepeat(true);
-                    if ( ImGui::ArrowButton("##TC_shift_decrease", ImGuiDir_Left) ) {
-                        fl.files[sf].tc_shift -= 1;
-                        if ( fl.files[sf].tc_shift < -fl.files[sf].dim_t ) {
-                            fl.files[sf].tc_shift = -fl.files[sf].dim_t;
+                if (fl.files[sf].visualization_mode != 1) {
+                    ImGui::EndDisabled();
+                }
+            }
+
+            // --------------------------------------------------------------------------------------------------------
+            // CROSSHAIR CONTROLS
+            // --------------------------------------------------------------------------------------------------------
+            ImGui::Spacing();
+            ImGui::Separator();
+            if ( ImGui::CollapsingHeader("CROSSHAIR CONTROLS") ) {
+                ImGui::Checkbox("Show mouse crosshair", &show_mouse_crosshair); ImGui::SameLine();
+                ImGui::Checkbox("Show slice crosshair", &show_slice_crosshair);
+            }
+            // --------------------------------------------------------------------------------------------------------
+            // VOXEL INSPECTOR CONTROLS"
+            // --------------------------------------------------------------------------------------------------------
+            ImGui::Spacing();
+            ImGui::Separator();
+            if ( ImGui::CollapsingHeader("VOXEL INSPECTOR CONTROLS") ) {
+
+                ImGui::Checkbox("Toggle voxel inspector", &show_voxel_inspector);
+
+                if ( !show_voxel_inspector ) {
+                    ImGui::BeginDisabled(true);
+                }
+                ImGui::Checkbox("Show value", &show_voxel_value); ImGui::SameLine();
+                ImGui::Checkbox("Show indices", &show_voxel_indices); ImGui::SameLine();
+
+                if ( fl.files[sf].dim_t > 1 ) {
+                    ImGui::Checkbox("Show time course", &show_voxel_time_course);
+                }
+
+                if (!show_voxel_inspector) {
+                    ImGui::EndDisabled();
+                }
+            }
+
+            // ========================================================================================================
+            // 4D IMAGE CONTROLS
+            // ========================================================================================================
+            if ( fl.files[sf].dim_t > 1 ) {
+                // ----------------------------------------------------------------------------------------------------
+                // CORRELATION CONTROLS
+                // ----------------------------------------------------------------------------------------------------
+                ImGui::Spacing();
+                ImGui::Separator();
+                if ( ImGui::CollapsingHeader("CORRELATION CONTROLS", ImGuiTreeNodeFlags_DefaultOpen) ) {
+
+                    if ( fl.files[sf].visualization_mode != 3 ) {
+                        if ( ImGui::Button("Enable Correlations") ) {
+                            show_voxel_inspector = true;
+                            fl.files[sf].voxel_i = static_cast<uint64_t>(fl.files[sf].display_i);
+                            fl.files[sf].voxel_j = static_cast<uint64_t>(fl.files[sf].display_j);
+                            fl.files[sf].voxel_k = static_cast<uint64_t>(fl.files[sf].display_k);
+                            fl.files[sf].voxel_t = static_cast<uint64_t>(fl.files[sf].display_t);
+
+                            fl.files[sf].tc_lock = false; 
+                            fl.files[sf].tc_focus_voxel_i = fl.files[sf].voxel_i;
+                            fl.files[sf].tc_focus_voxel_j = fl.files[sf].voxel_j;
+                            fl.files[sf].tc_focus_voxel_k = fl.files[sf].voxel_k;
+                            SampleVoxelTimeCourseFocus(fl.files[sf]);
+
+                            fl.prepareRBGSlices(fl.files[sf]);
+
+                            // Prepare data to hold correlation maps
+                            free(fl.files[sf].p_sliceK_float_corr);
+                            free(fl.files[sf].p_sliceJ_float_corr);
+                            free(fl.files[sf].p_sliceI_float_corr);
+                            fl.files[sf].p_sliceK_float_corr = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
+                            fl.files[sf].p_sliceJ_float_corr = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
+                            fl.files[sf].p_sliceI_float_corr = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
+
+                            // Prepare corelations images
+                            fl.loadSliceK_Correlations_uint8(fl.files[sf]);
+                            fl.loadSliceJ_Correlations_uint8(fl.files[sf]);
+                            fl.loadSliceI_Correlations_uint8(fl.files[sf]);
+
+                            // Prepare corelations textures
+                            fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_j, 
+                                                             fl.files[sf].textureIDk_RGB, fl.files[sf].p_sliceK_RGB_uint8);
+                            fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_k, 
+                                                             fl.files[sf].textureIDj_RGB, fl.files[sf].p_sliceJ_RGB_uint8);
+                            fl.uploadTextureDataToOpenGL_RGB(fl.files[sf].dim_j, fl.files[sf].dim_k, 
+                                                             fl.files[sf].textureIDi_RGB, fl.files[sf].p_sliceI_RGB_uint8);
+
+                            fl.files[sf].visualization_mode = 3;
+                            request_image_data_update = true;
                         }
-                        request_image_data_update = true;
-                    }
-                    ImGui::SameLine(0.0f, spacing);
-                    if ( ImGui::ArrowButton("##TC_shift_increase", ImGuiDir_Right) ) {
-                        fl.files[sf].tc_shift += 1;
-                        if ( fl.files[sf].tc_shift > fl.files[sf].dim_t ) {
-                            fl.files[sf].tc_shift = fl.files[sf].dim_t;
+                    } else {
+                        if ( ImGui::Button("Disable Correlations") ) {
+                            request_image_data_update = true;
+                            fl.files[sf].visualization_mode = 0;
                         }
-                        request_image_data_update = true;
-                    }
-                    ImGui::PopButtonRepeat();
-                    ImGui::SameLine();
-                    if ( ImGui::SliderInt("Shift", &fl.files[sf].tc_shift, -fl.files[sf].dim_t, fl.files[sf].dim_t, "%i") ) {
-                        request_image_data_update = true;
+
+                        ImGui::SameLine();
+                        if ( ImGui::Button("Save Map") ) {
+                            fl.computeCorrelationsForVolume_float(fl.files[sf]);
+                        }
+
+                        // ------------------------------------------------------------------------------------------------
+                        // Time course onset adjustments
+                        // ------------------------------------------------------------------------------------------------
+                        ImGui::PushButtonRepeat(true);
+                        if (ImGui::ArrowButton("##TC_onset_decrease", ImGuiDir_Left)) {
+                            fl.files[sf].tc_onset -= 1;
+                            if ( fl.files[sf].tc_onset < 0 ) {
+                                fl.files[sf].tc_onset = 0;
+                            }
+                            request_image_data_update = true;
+                        }
+                        ImGui::SameLine(0.0f, spacing);
+                        if (ImGui::ArrowButton("##TC_onset_increase", ImGuiDir_Right)) {
+                            fl.files[sf].tc_onset += 1;
+                            if ( fl.files[sf].tc_onset == fl.files[sf].tc_offset ) {
+                                fl.files[sf].tc_onset = fl.files[sf].tc_offset - 1;
+                            }
+                            request_image_data_update = true;
+                        }
+                        ImGui::PopButtonRepeat();
+                        ImGui::SameLine();
+                        if ( ImGui::SliderInt("Onset ", &fl.files[sf].tc_onset , 0, fl.files[sf].dim_t, "%i") ) {
+                            if ( fl.files[sf].tc_onset >= fl.files[sf].tc_offset ) {
+                                fl.files[sf].tc_onset = fl.files[sf].tc_offset - 1;
+                            }
+                            request_image_data_update = true;
+                        }
+
+                        // ------------------------------------------------------------------------------------------------
+                        // Time course offset adjustments
+                        // ------------------------------------------------------------------------------------------------
+                        ImGui::PushButtonRepeat(true);
+                        if (ImGui::ArrowButton("##TC_offset_decrease", ImGuiDir_Left)) {
+                            fl.files[sf].tc_offset -= 1;
+                            if ( fl.files[sf].tc_offset == fl.files[sf].tc_onset ) {
+                                fl.files[sf].tc_offset = fl.files[sf].tc_onset + 1;
+                            }
+                            request_image_data_update = true;
+                        }
+                        ImGui::SameLine(0.0f, spacing);
+                        if (ImGui::ArrowButton("##TC_offset_increase", ImGuiDir_Right)) {
+                            fl.files[sf].tc_offset += 1;
+                            if ( fl.files[sf].tc_offset > fl.files[sf].dim_t ) {
+                                fl.files[sf].tc_offset = fl.files[sf].dim_t;
+                            }
+                            request_image_data_update = true;
+                        }
+                        ImGui::PopButtonRepeat();
+                        ImGui::SameLine();
+                        if ( ImGui::SliderInt("Offset", &fl.files[sf].tc_offset, 0, fl.files[sf].dim_t, "%i") ) {
+                            if ( fl.files[sf].tc_offset <= fl.files[sf].tc_onset ) {
+                                fl.files[sf].tc_offset = fl.files[sf].tc_onset + 1;
+                            }
+                            request_image_data_update = true;
+                        }
+
+                        // ------------------------------------------------------------------------------------------------
+                        // Time course shift/lag adjustments
+                        // ------------------------------------------------------------------------------------------------
+                        ImGui::PushButtonRepeat(true);
+                        if ( ImGui::ArrowButton("##TC_shift_decrease", ImGuiDir_Left) ) {
+                            fl.files[sf].tc_shift -= 1;
+                            if ( fl.files[sf].tc_shift < -fl.files[sf].dim_t ) {
+                                fl.files[sf].tc_shift = -fl.files[sf].dim_t;
+                            }
+                            request_image_data_update = true;
+                        }
+                        ImGui::SameLine(0.0f, spacing);
+                        if ( ImGui::ArrowButton("##TC_shift_increase", ImGuiDir_Right) ) {
+                            fl.files[sf].tc_shift += 1;
+                            if ( fl.files[sf].tc_shift > fl.files[sf].dim_t ) {
+                                fl.files[sf].tc_shift = fl.files[sf].dim_t;
+                            }
+                            request_image_data_update = true;
+                        }
+                        ImGui::PopButtonRepeat();
+                        ImGui::SameLine();
+                        if ( ImGui::SliderInt("Shift", &fl.files[sf].tc_shift, -fl.files[sf].dim_t, fl.files[sf].dim_t, "%i") ) {
+                            request_image_data_update = true;
+                        }
                     }
                 }
 
