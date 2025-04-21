@@ -20,8 +20,8 @@ void SampleVoxelTimeCourseFocus(IDA_IO::FileInfo& fi) {
     }
 
     // Adjust min max for better visualizing the timecourse
-    fi.tc_focus_min = *std::min_element(fi.p_tc_focus_float, fi.p_tc_focus_float + nt);
-    fi.tc_focus_max = *std::max_element(fi.p_tc_focus_float, fi.p_tc_focus_float + nt);
+    fi.tc_focus_min = *std::min_element(fi.p_tc_focus_float + fi.tc_onset, fi.p_tc_focus_float + fi.tc_offset);
+    fi.tc_focus_max = *std::max_element(fi.p_tc_focus_float + fi.tc_onset, fi.p_tc_focus_float + fi.tc_offset);
 }
 
 void SampleVoxelTimeCourseReference(IDA_IO::FileInfo& fi) {
@@ -35,12 +35,15 @@ void SampleVoxelTimeCourseReference(IDA_IO::FileInfo& fi) {
     // Load voxel data
     for (uint64_t t = 0; t < nt; ++t) {
         uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
-        fi.p_tc_refer_float[t] = fi.p_data_float[index4D];
+        // NOTE: Shift is implemented here. Modulus is implemented to work as in Python
+        int64_t raw_tt = static_cast<int64_t>(t + fi.tc_shift) % static_cast<int64_t>(nt);  // Can return negative
+        uint64_t tt = (static_cast<int64_t>(nt) + (raw_tt % static_cast<int64_t>(nt))) % static_cast<int64_t>(nt);
+        fi.p_tc_refer_float[tt] = fi.p_data_float[index4D];
     }
 
     // Adjust min max for better visualizing the timecourse
-    fi.tc_refer_min = *std::min_element(fi.p_tc_refer_float, fi.p_tc_refer_float + nt);
-    fi.tc_refer_max = *std::max_element(fi.p_tc_refer_float, fi.p_tc_refer_float + nt);
+    fi.tc_refer_min = *std::min_element(fi.p_tc_refer_float + fi.tc_onset, fi.p_tc_refer_float + fi.tc_offset);
+    fi.tc_refer_max = *std::max_element(fi.p_tc_refer_float + fi.tc_onset, fi.p_tc_refer_float + fi.tc_offset);
 }
 
 // ====================================================================================================================

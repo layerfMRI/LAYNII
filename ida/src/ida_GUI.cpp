@@ -274,7 +274,10 @@ namespace IDA
                 } else {
                     fl.files[sf].tc_shift = fl.files[sf].tc_shift - 1;
                 }
-                request_image_data_update = true;
+                SampleVoxelTimeCourseReference(fl.files[sf]);
+                if ( fl.files[sf].visualization_mode == 3 ) {
+                    request_image_data_update = true;                    
+                }
             }
             if (ImGui::IsKeyPressed(ImGuiKey_Period, true)) {
                 if (fl.files[sf].tc_shift > fl.files[sf].dim_t - 1) {
@@ -282,7 +285,10 @@ namespace IDA
                 } else {
                     fl.files[sf].tc_shift = fl.files[sf].tc_shift + 1; 
                 }
-                request_image_data_update = true;
+                SampleVoxelTimeCourseReference(fl.files[sf]);
+                if ( fl.files[sf].visualization_mode == 3 ) {
+                    request_image_data_update = true;                    
+                }
             }
         }
 
@@ -384,7 +390,7 @@ namespace IDA
                         return ImVec2(x, y);
                     };
 
-                    for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
+                    for (int i = fl.files[sf].tc_onset; i < fl.files[sf].tc_offset - 1; i++) {
                         draw_list->AddLine(get_screen_point1(i  , fl.files[sf].p_tc_refer_float),
                                            get_screen_point1(i+1, fl.files[sf].p_tc_refer_float),
                                            color_line1, line_thickness);
@@ -401,7 +407,7 @@ namespace IDA
                         return ImVec2(x, y);
                     };
 
-                    for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
+                    for (int i = fl.files[sf].tc_onset; i < fl.files[sf].tc_offset - 1; i++) {
                         draw_list->AddLine(get_screen_point2(i  , fl.files[sf].p_tc_focus_float),
                                            get_screen_point2(i+1, fl.files[sf].p_tc_focus_float),
                                            color_line2, line_thickness);
@@ -430,7 +436,7 @@ namespace IDA
                         return ImVec2(x, y);
                     };
 
-                    for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
+                    for (int i = fl.files[sf].tc_onset; i < fl.files[sf].tc_offset - 1; i++) {
                         draw_list->AddLine(get_screen_point3(i  , fl.files[sf].p_tc_refer_float),
                                            get_screen_point3(i+1, fl.files[sf].p_tc_refer_float),
                                            color_line1, line_thickness);
@@ -445,7 +451,7 @@ namespace IDA
                         return ImVec2(x, y);
                     };
 
-                    for (int i = 0; i < fl.files[sf].dim_t - 1; i++) {
+                    for (int i = fl.files[sf].tc_onset; i < fl.files[sf].tc_offset - 1; i++) {
                         draw_list->AddLine(get_screen_point4(i  , fl.files[sf].p_tc_focus_float),
                                            get_screen_point4(i+1, fl.files[sf].p_tc_focus_float),
                                            color_line2, line_thickness);
@@ -589,7 +595,7 @@ namespace IDA
             // --------------------------------------------------------------------------------------------------------
             ImGui::Spacing();
             ImGui::Separator();
-            if ( ImGui::CollapsingHeader("CONTRAST CONTROLS") ) {
+            if ( ImGui::CollapsingHeader("CONTRAST CONTROLS", ImGuiTreeNodeFlags_DefaultOpen) ) {
 
                 if ( ImGui::SliderFloat("Display Min.", &fl.files[sf].display_min, fl.files[sf].data_min, fl.files[sf].data_max, "%.2f") ) 
                 {
@@ -668,22 +674,18 @@ namespace IDA
                 }
             }
 
-            // --------------------------------------------------------------------------------------------------------
-            // CROSSHAIR CONTROLS
-            // --------------------------------------------------------------------------------------------------------
+            // ========================================================================================================
+            // VISUAL SETTINGS
+            // ========================================================================================================
             ImGui::Spacing();
             ImGui::Separator();
-            if ( ImGui::CollapsingHeader("CROSSHAIR CONTROLS") ) {
+            if ( ImGui::CollapsingHeader("VISUAL SETTINGS") ) {
                 ImGui::Checkbox("Show mouse crosshair", &show_mouse_crosshair); ImGui::SameLine();
                 ImGui::Checkbox("Show slice crosshair", &show_slice_crosshair);
-            }
-            // --------------------------------------------------------------------------------------------------------
-            // VOXEL INSPECTOR CONTROLS"
-            // --------------------------------------------------------------------------------------------------------
-            ImGui::Spacing();
-            ImGui::Separator();
-            if ( ImGui::CollapsingHeader("VOXEL INSPECTOR CONTROLS") ) {
 
+                // ----------------------------------------------------------------------------------------------------
+                // VOXEL INSPECTOR CONTROLS"
+                // ----------------------------------------------------------------------------------------------------
                 ImGui::Checkbox("Toggle voxel inspector", &show_voxel_inspector);
 
                 if ( !show_voxel_inspector ) {
@@ -705,13 +707,127 @@ namespace IDA
             // 4D IMAGE CONTROLS
             // ========================================================================================================
             if ( fl.files[sf].dim_t > 1 ) {
-                // ----------------------------------------------------------------------------------------------------
-                // CORRELATION CONTROLS
-                // ----------------------------------------------------------------------------------------------------
                 ImGui::Spacing();
                 ImGui::Separator();
-                if ( ImGui::CollapsingHeader("CORRELATION CONTROLS", ImGuiTreeNodeFlags_DefaultOpen) ) {
+                if ( ImGui::CollapsingHeader("TIME COURSE CONTROLS", ImGuiTreeNodeFlags_DefaultOpen) ) {
 
+                    // ------------------------------------------------------------------------------------------------
+                    // Time course onset adjustments
+                    // ------------------------------------------------------------------------------------------------
+                    ImGui::PushButtonRepeat(true);
+                    if (ImGui::ArrowButton("##TC_onset_decrease", ImGuiDir_Left)) {
+                        fl.files[sf].tc_onset -= 1;
+                        if ( fl.files[sf].tc_onset < 0 ) {
+                            fl.files[sf].tc_onset = 0;
+                        }
+                        SampleVoxelTimeCourseReference(fl.files[sf]);
+                        SampleVoxelTimeCourseFocus(fl.files[sf]);
+                        if ( fl.files[sf].visualization_mode == 3 ) {
+                            request_image_data_update = true;                            
+                        }
+                    }
+                    ImGui::SameLine(0.0f, spacing);
+                    if (ImGui::ArrowButton("##TC_onset_increase", ImGuiDir_Right)) {
+                        fl.files[sf].tc_onset += 1;
+                        if ( fl.files[sf].tc_onset == fl.files[sf].tc_offset ) {
+                            fl.files[sf].tc_onset = fl.files[sf].tc_offset - 1;
+                        }
+                        SampleVoxelTimeCourseReference(fl.files[sf]);
+                        SampleVoxelTimeCourseFocus(fl.files[sf]);
+                        if ( fl.files[sf].visualization_mode == 3 ) {
+                            request_image_data_update = true;                            
+                        }
+                    }
+                    ImGui::PopButtonRepeat();
+                    ImGui::SameLine();
+                    if ( ImGui::SliderInt("Onset ", &fl.files[sf].tc_onset , 0, fl.files[sf].dim_t, "%i") ) {
+                        if ( fl.files[sf].tc_onset >= fl.files[sf].tc_offset ) {
+                            fl.files[sf].tc_onset = fl.files[sf].tc_offset - 1;
+                        }
+                        SampleVoxelTimeCourseReference(fl.files[sf]);
+                        SampleVoxelTimeCourseFocus(fl.files[sf]);
+                        if ( fl.files[sf].visualization_mode == 3 ) {
+                            request_image_data_update = true;                            
+                        }
+                    }
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Time course offset adjustments
+                    // ------------------------------------------------------------------------------------------------
+                    ImGui::PushButtonRepeat(true);
+                    if (ImGui::ArrowButton("##TC_offset_decrease", ImGuiDir_Left)) {
+                        fl.files[sf].tc_offset -= 1;
+                        if ( fl.files[sf].tc_offset == fl.files[sf].tc_onset ) {
+                            fl.files[sf].tc_offset = fl.files[sf].tc_onset + 1;
+                        }
+                        SampleVoxelTimeCourseReference(fl.files[sf]);
+                        SampleVoxelTimeCourseFocus(fl.files[sf]);
+                        if ( fl.files[sf].visualization_mode == 3 ) {
+                            request_image_data_update = true;                            
+                        }
+                    }
+                    ImGui::SameLine(0.0f, spacing);
+                    if (ImGui::ArrowButton("##TC_offset_increase", ImGuiDir_Right)) {
+                        fl.files[sf].tc_offset += 1;
+                        if ( fl.files[sf].tc_offset > fl.files[sf].dim_t ) {
+                            fl.files[sf].tc_offset = fl.files[sf].dim_t;
+                        }
+                        SampleVoxelTimeCourseReference(fl.files[sf]);
+                        SampleVoxelTimeCourseFocus(fl.files[sf]);
+                        if ( fl.files[sf].visualization_mode == 3 ) {
+                            request_image_data_update = true;                            
+                        }
+                    }
+                    ImGui::PopButtonRepeat();
+                    ImGui::SameLine();
+                    if ( ImGui::SliderInt("Offset", &fl.files[sf].tc_offset, 0, fl.files[sf].dim_t, "%i") ) {
+                        if ( fl.files[sf].tc_offset <= fl.files[sf].tc_onset ) {
+                            fl.files[sf].tc_offset = fl.files[sf].tc_onset + 1;
+                        }
+                        SampleVoxelTimeCourseReference(fl.files[sf]);
+                        SampleVoxelTimeCourseFocus(fl.files[sf]);
+                        if ( fl.files[sf].visualization_mode == 3 ) {
+                            request_image_data_update = true;                            
+                        }
+                    }
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Time course shift/lag adjustments
+                    // ------------------------------------------------------------------------------------------------
+                    ImGui::PushButtonRepeat(true);
+                    if ( ImGui::ArrowButton("##TC_shift_decrease", ImGuiDir_Left) ) {
+                        fl.files[sf].tc_shift -= 1;
+                        if ( fl.files[sf].tc_shift < -fl.files[sf].dim_t ) {
+                            fl.files[sf].tc_shift = -fl.files[sf].dim_t;
+                        }
+                        SampleVoxelTimeCourseReference(fl.files[sf]);
+                        if ( fl.files[sf].visualization_mode == 3 ) {
+                            request_image_data_update = true;                            
+                        }
+                    }
+                    ImGui::SameLine(0.0f, spacing);
+                    if ( ImGui::ArrowButton("##TC_shift_increase", ImGuiDir_Right) ) {
+                        fl.files[sf].tc_shift += 1;
+                        if ( fl.files[sf].tc_shift > fl.files[sf].dim_t ) {
+                            fl.files[sf].tc_shift = fl.files[sf].dim_t;
+                        }
+                        SampleVoxelTimeCourseReference(fl.files[sf]);
+                        if ( fl.files[sf].visualization_mode == 3 ) {
+                            request_image_data_update = true;                            
+                        }
+                    }
+                    ImGui::PopButtonRepeat();
+                    ImGui::SameLine();
+                    if ( ImGui::SliderInt("Shift", &fl.files[sf].tc_shift, -fl.files[sf].dim_t, fl.files[sf].dim_t, "%i") ) {
+                        SampleVoxelTimeCourseReference(fl.files[sf]);
+                        if ( fl.files[sf].visualization_mode == 3 ) {
+                            request_image_data_update = true;                            
+                        }
+                    }
+
+                    // ------------------------------------------------------------------------------------------------
+                    // CORRELATION CONTROLS
+                    // ------------------------------------------------------------------------------------------------
                     if ( fl.files[sf].visualization_mode != 3 ) {
                         if ( ImGui::Button("Enable Correlations") ) {
                             show_voxel_inspector = true;
@@ -762,92 +878,11 @@ namespace IDA
                         if ( ImGui::Button("Save Map") ) {
                             fl.computeCorrelationsForVolume_float(fl.files[sf]);
                         }
-
-                        // ------------------------------------------------------------------------------------------------
-                        // Time course onset adjustments
-                        // ------------------------------------------------------------------------------------------------
-                        ImGui::PushButtonRepeat(true);
-                        if (ImGui::ArrowButton("##TC_onset_decrease", ImGuiDir_Left)) {
-                            fl.files[sf].tc_onset -= 1;
-                            if ( fl.files[sf].tc_onset < 0 ) {
-                                fl.files[sf].tc_onset = 0;
-                            }
-                            request_image_data_update = true;
-                        }
-                        ImGui::SameLine(0.0f, spacing);
-                        if (ImGui::ArrowButton("##TC_onset_increase", ImGuiDir_Right)) {
-                            fl.files[sf].tc_onset += 1;
-                            if ( fl.files[sf].tc_onset == fl.files[sf].tc_offset ) {
-                                fl.files[sf].tc_onset = fl.files[sf].tc_offset - 1;
-                            }
-                            request_image_data_update = true;
-                        }
-                        ImGui::PopButtonRepeat();
-                        ImGui::SameLine();
-                        if ( ImGui::SliderInt("Onset ", &fl.files[sf].tc_onset , 0, fl.files[sf].dim_t, "%i") ) {
-                            if ( fl.files[sf].tc_onset >= fl.files[sf].tc_offset ) {
-                                fl.files[sf].tc_onset = fl.files[sf].tc_offset - 1;
-                            }
-                            request_image_data_update = true;
-                        }
-
-                        // ------------------------------------------------------------------------------------------------
-                        // Time course offset adjustments
-                        // ------------------------------------------------------------------------------------------------
-                        ImGui::PushButtonRepeat(true);
-                        if (ImGui::ArrowButton("##TC_offset_decrease", ImGuiDir_Left)) {
-                            fl.files[sf].tc_offset -= 1;
-                            if ( fl.files[sf].tc_offset == fl.files[sf].tc_onset ) {
-                                fl.files[sf].tc_offset = fl.files[sf].tc_onset + 1;
-                            }
-                            request_image_data_update = true;
-                        }
-                        ImGui::SameLine(0.0f, spacing);
-                        if (ImGui::ArrowButton("##TC_offset_increase", ImGuiDir_Right)) {
-                            fl.files[sf].tc_offset += 1;
-                            if ( fl.files[sf].tc_offset > fl.files[sf].dim_t ) {
-                                fl.files[sf].tc_offset = fl.files[sf].dim_t;
-                            }
-                            request_image_data_update = true;
-                        }
-                        ImGui::PopButtonRepeat();
-                        ImGui::SameLine();
-                        if ( ImGui::SliderInt("Offset", &fl.files[sf].tc_offset, 0, fl.files[sf].dim_t, "%i") ) {
-                            if ( fl.files[sf].tc_offset <= fl.files[sf].tc_onset ) {
-                                fl.files[sf].tc_offset = fl.files[sf].tc_onset + 1;
-                            }
-                            request_image_data_update = true;
-                        }
-
-                        // ------------------------------------------------------------------------------------------------
-                        // Time course shift/lag adjustments
-                        // ------------------------------------------------------------------------------------------------
-                        ImGui::PushButtonRepeat(true);
-                        if ( ImGui::ArrowButton("##TC_shift_decrease", ImGuiDir_Left) ) {
-                            fl.files[sf].tc_shift -= 1;
-                            if ( fl.files[sf].tc_shift < -fl.files[sf].dim_t ) {
-                                fl.files[sf].tc_shift = -fl.files[sf].dim_t;
-                            }
-                            request_image_data_update = true;
-                        }
-                        ImGui::SameLine(0.0f, spacing);
-                        if ( ImGui::ArrowButton("##TC_shift_increase", ImGuiDir_Right) ) {
-                            fl.files[sf].tc_shift += 1;
-                            if ( fl.files[sf].tc_shift > fl.files[sf].dim_t ) {
-                                fl.files[sf].tc_shift = fl.files[sf].dim_t;
-                            }
-                            request_image_data_update = true;
-                        }
-                        ImGui::PopButtonRepeat();
-                        ImGui::SameLine();
-                        if ( ImGui::SliderInt("Shift", &fl.files[sf].tc_shift, -fl.files[sf].dim_t, fl.files[sf].dim_t, "%i") ) {
-                            request_image_data_update = true;
-                        }
                     }
                 }
 
                 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                ImGui::SeparatorText("!!!WIP!!!");
+                ImGui::SeparatorText("[WIP] QUALITY CONTROLS");
                 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 if ( fl.files[sf].visualization_mode != 2 ) {
                     if ( ImGui::Button("Enable Descriptives") ) {
