@@ -7,6 +7,7 @@
 #include <chrono>
 #include <vector>
 #include <SDL.h>
+#include <algorithm>
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include <SDL_opengles2.h>
 #else
