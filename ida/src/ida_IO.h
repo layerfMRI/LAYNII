@@ -749,6 +749,7 @@ namespace IDA_IO
             gzwrite(file, &fi.header.dim_info, 1);
 
             // 2-bytes
+            fi.header.dim[4] = 1.f;  // NOTE: Temporary fix to save correlation maps !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             gzwrite(file, &fi.header.dim, 16);  // 2*8
 
             // Unused fields
