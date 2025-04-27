@@ -34,7 +34,7 @@ LINUX_GL_LIBS = -lGL
 
 CXXFLAGS = -std=c++11 -DHAVE_ZLIB -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends -I$(IMGUI_DIR)/dep
 CXXFLAGS += -g -Wall -Wformat
-# CXXFLAGS += -O3
+CXXFLAGS += -O3
 LIBS = -lz
 
 ##---------------------------------------------------------------------
