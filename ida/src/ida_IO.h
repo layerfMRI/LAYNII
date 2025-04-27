@@ -1402,11 +1402,7 @@ namespace IDA_IO
 
             // Prepare x array (selected voxel's data)
             for (uint64_t t = 0; t < nt; ++t) {
-                if ( fi.tc_lock == false ) {
-                    *(x_arr + t) = *(fi.p_tc_focus_float + t + fi.tc_onset);
-                } else {
-                    *(x_arr + t) = *(fi.p_tc_refer_float + t + fi.tc_onset);
-                }
+                *(x_arr + t) = *(fi.p_tc_refer_float + t + fi.tc_onset);
             }
 
             // Compute correlations for the whole volume

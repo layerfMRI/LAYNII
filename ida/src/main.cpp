@@ -22,6 +22,19 @@
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #include "ida_GUI.h"
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#include "imgui_ini_embed.h"  // ⬅ your header with the embedded ini
+
+void InitImGui() {
+    ImGuiIO& io = ImGui::GetIO();
+    io.IniFilename = nullptr;  // Don't load/save from/to a file
+
+    ImGui::LoadIniSettingsFromMemory(embedded_imgui_ini);
+}
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 // Main code
@@ -132,6 +145,9 @@ int main(int, char**)
 
     // Customize typeface
     // ImGui::GetIO().Fonts->AddFontFromFileTTF("/path/to/custom_font.ttf", 1);
+
+    // Load your embedded layout
+    InitImGui();
 
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 

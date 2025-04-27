@@ -9,8 +9,8 @@ namespace IDA
         // ============================================================================================================
         // Variables
         // ============================================================================================================
-        // static char str_input[4096] = "Enter nifti path";
-        static char str_input[4096] = "/Users/faruk/Documents/test-LN3_IDA/lo_BOLD_intemp.nii.gz";
+        static char str_input[4096] = "Enter nifti path";
+        // static char str_input[4096] = "/Users/faruk/Documents/test-LN3_IDA/lo_BOLD_intemp.nii.gz";
         // static char str_input[4096] = "/Users/faruk/Documents/test-LN3_IDA/test.nii.gz";
         // static char str_input[4096] = "/Users/faruk/data/data-alard/75um/sub-99_75um_crop.nii.gz";
 
@@ -881,54 +881,54 @@ namespace IDA
                     }
                 }
 
-                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                ImGui::SeparatorText("[WIP] QUALITY CONTROLS");
-                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                if ( fl.files[sf].visualization_mode != 2 ) {
-                    if ( ImGui::Button("Enable Descriptives") ) {
+                // // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // ImGui::SeparatorText("[WIP] QUALITY CONTROLS");
+                // // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // if ( fl.files[sf].visualization_mode != 2 ) {
+                //     if ( ImGui::Button("Enable Descriptives") ) {
 
-                        // Prepare data to hold correlation maps
-                        free(fl.files[sf].p_sliceK_float_Tmean);
-                        free(fl.files[sf].p_sliceJ_float_Tmean);
-                        free(fl.files[sf].p_sliceI_float_Tmean);
-                        free(fl.files[sf].p_sliceK_float_Tstd);
-                        free(fl.files[sf].p_sliceJ_float_Tstd);
-                        free(fl.files[sf].p_sliceI_float_Tstd);
+                //         // Prepare data to hold correlation maps
+                //         free(fl.files[sf].p_sliceK_float_Tmean);
+                //         free(fl.files[sf].p_sliceJ_float_Tmean);
+                //         free(fl.files[sf].p_sliceI_float_Tmean);
+                //         free(fl.files[sf].p_sliceK_float_Tstd);
+                //         free(fl.files[sf].p_sliceJ_float_Tstd);
+                //         free(fl.files[sf].p_sliceI_float_Tstd);
 
-                        fl.files[sf].p_sliceK_float_Tmean = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
-                        fl.files[sf].p_sliceJ_float_Tmean = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
-                        fl.files[sf].p_sliceI_float_Tmean = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
-                        fl.files[sf].p_sliceK_float_Tstd = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
-                        fl.files[sf].p_sliceJ_float_Tstd = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
-                        fl.files[sf].p_sliceI_float_Tstd = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
+                //         fl.files[sf].p_sliceK_float_Tmean = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
+                //         fl.files[sf].p_sliceJ_float_Tmean = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
+                //         fl.files[sf].p_sliceI_float_Tmean = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
+                //         fl.files[sf].p_sliceK_float_Tstd = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
+                //         fl.files[sf].p_sliceJ_float_Tstd = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
+                //         fl.files[sf].p_sliceI_float_Tstd = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
 
-                        // Enable real time time mean
-                        fl.loadSliceK_Tmean_float(fl.files[sf]);
-                        fl.loadSliceJ_Tmean_float(fl.files[sf]);
-                        fl.loadSliceI_Tmean_float(fl.files[sf]);
+                //         // Enable real time time mean
+                //         fl.loadSliceK_Tmean_float(fl.files[sf]);
+                //         fl.loadSliceJ_Tmean_float(fl.files[sf]);
+                //         fl.loadSliceI_Tmean_float(fl.files[sf]);
 
-                        fl.loadSliceK_uint8(fl.files[sf]);
-                        fl.loadSliceJ_uint8(fl.files[sf]);
-                        fl.loadSliceI_uint8(fl.files[sf]);
+                //         fl.loadSliceK_uint8(fl.files[sf]);
+                //         fl.loadSliceJ_uint8(fl.files[sf]);
+                //         fl.loadSliceI_uint8(fl.files[sf]);
 
-                        fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j,
-                                                     fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
-                        fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k,
-                                                     fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
-                        fl.uploadTextureDataToOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k,
-                                                     fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
+                //         fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j,
+                //                                      fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
+                //         fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k,
+                //                                      fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
+                //         fl.uploadTextureDataToOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k,
+                //                                      fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
 
-                        fl.files[sf].visualization_mode = 2;
-                        request_image_data_update = true;
-                    }
-                } else {
-                    if ( ImGui::Button("Disable Tmean") ) {
-                        request_image_data_update = true;
-                        fl.files[sf].visualization_mode = 0;
-                    }
-                    ImGui::Checkbox("Time Mean", &fl.files[sf].tc_show_Tmean); ImGui::SameLine();
-                    ImGui::Checkbox("Time Std ", &fl.files[sf].tc_show_Tstd);
-                }
+                //         fl.files[sf].visualization_mode = 2;
+                //         request_image_data_update = true;
+                //     }
+                // } else {
+                //     if ( ImGui::Button("Disable Tmean") ) {
+                //         request_image_data_update = true;
+                //         fl.files[sf].visualization_mode = 0;
+                //     }
+                //     ImGui::Checkbox("Time Mean", &fl.files[sf].tc_show_Tmean); ImGui::SameLine();
+                //     ImGui::Checkbox("Time Std ", &fl.files[sf].tc_show_Tstd);
+                // }
             }
         }
         ImGui::End();
@@ -1104,17 +1104,17 @@ namespace IDA
         // WIP
         // ============================================================================================================
         // Demo window
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
+        // if (show_demo_window)
+        //     ImGui::ShowDemoWindow(&show_demo_window);
 
-        // Show file selection window
-        if (show_file_window)
-        {
-            ImGui::Begin("Another Window", &show_file_window);  // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_file_window = false;
-            ImGui::End();
-        }
+        // // Show file selection window
+        // if (show_file_window)
+        // {
+        //     ImGui::Begin("Another Window", &show_file_window);  // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+        //     ImGui::Text("Hello from another window!");
+        //     if (ImGui::Button("Close Me"))
+        //         show_file_window = false;
+        //     ImGui::End();
+        // }
 	}
 }
