@@ -218,7 +218,7 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
     float center_y = -(img_h - ImGui::GetWindowSize()[1]) / 2;
 
     // Move image (important to have it before image render for correct mouse inspector indexing)
-    if ( ImGui::IsWindowHovered() || ImGui::IsWindowFocused() ) {
+    if ( ImGui::IsWindowHovered() ) {
         if ( io.KeyCtrl ) {
             display_offset_x += io.MouseDelta.x / scl;
             display_offset_y += io.MouseDelta.y / scl;
