@@ -17,7 +17,7 @@ namespace IDA
         static bool loaded_data          = false;
         static bool show_header_info     = false;
         static bool show_mouse_crosshair = true;
-        static bool show_slice_crosshair   = true;
+        static bool show_slice_crosshair = true;
         static bool show_voxel_inspector = true;
         static bool show_voxel_indices   = false;
         static bool show_voxel_value     = true;
