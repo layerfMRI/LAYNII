@@ -77,6 +77,7 @@ namespace IDA_IO
         float       pixdim_i;               // File format independent image dimension
         float       pixdim_j;               // File format independent image dimension
         float       pixdim_k;               // File format independent image dimension
+        float       pixdim_t;               // File format independent image dimension
         float       voxel_volume;           // I often need to compute this
         float*      p_data_float;           // holds image data (voxels)
         int         display_k;              // Display slice number
@@ -191,6 +192,7 @@ namespace IDA_IO
             fi.pixdim_i = fi.header.pixdim[1];
             fi.pixdim_j = fi.header.pixdim[2];
             fi.pixdim_k = fi.header.pixdim[3];
+            fi.pixdim_t = fi.header.pixdim[4];
             fi.nr_voxels = static_cast<uint64_t>(fi.header.dim[1]) * fi.header.dim[2] * fi.header.dim[3];
             fi.voxel_volume = fi.header.pixdim[1] * fi.header.pixdim[2] * fi.header.pixdim[3];
             fi.display_scale = 1.0;

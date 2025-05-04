@@ -52,13 +52,14 @@ namespace IDA
         if (loaded_data)
         {
             ImGui::Text("Image controls");
-            ImGui::Text("  Move             : Shift + Move");
-            ImGui::Text("  Zoom             : Shift + Wheel");
-            ImGui::Text("  Slice Scroll     : Wheel");
-            ImGui::Text("  Move slice X : W, A");
-            ImGui::Text("  Move slice Y : S, D");
-            ImGui::Text("  Move slice Z : Q, E");
-            ImGui::Text("  Move time    : Z, X");
+            ImGui::Text("  Shift slice               : Shift + Move");
+            ImGui::Text("  Scroll slice              : Wheel");
+            ImGui::Text("  Zoom                      : Shift + Wheel");
+            ImGui::Text("  Move across 1st data axis : W, A");
+            ImGui::Text("  Move across 2nd data axis : S, D");
+            ImGui::Text("  Move across 3rd data axis : Q, E");
+            ImGui::Text("  Move across time          : Z, X");
+            ImGui::Text("  Move across files         : [, ]");
 
             ImGui::Text("Correlations controls");
             ImGui::Text("  Update reference : Ctrl + Right click on slice");
@@ -74,9 +75,11 @@ namespace IDA
         ImGui::Begin("File Menu");
         ImGui::Text("FPS %.0f ", ImGui::GetIO().Framerate);
         ImGui::SameLine();
-        ImGui::Checkbox("Demo Window", &show_demo_window);  // NOTE: This checkbox is here for development.
-        ImGui::SameLine();
         ImGui::Checkbox("Show Full Header", &show_header_info);
+
+        // NOTE: This checkbox is here for development.
+        ImGui::SameLine();
+        ImGui::Checkbox("Demo Window", &show_demo_window);  
 
         // Enter file path as text
         ImGui::InputText("Input path", str_input, IM_ARRAYSIZE(str_input));
@@ -157,15 +160,16 @@ namespace IDA
             ImGui::Text("");
             ImGui::Separator();
             ImGui::Text("Selected File:");
-            ImGui::Text("  Voxel volume        : %.6f", fl.files[sf].voxel_volume);
-            ImGui::Text("  1st Voxel Dimension : %.3f", fl.files[sf].pixdim_i);
-            ImGui::Text("  2nd Voxel Dimension : %.3f", fl.files[sf].pixdim_j);
-            ImGui::Text("  3rd Voxel Dimension : %.3f", fl.files[sf].pixdim_k);
-            ImGui::Text("  1st Data Axis       : %d"  , fl.files[sf].dim_i);
-            ImGui::Text("  2nd Data Axis       : %d"  , fl.files[sf].dim_j);
-            ImGui::Text("  3rd Data Axis       : %d"  , fl.files[sf].dim_k);
-            ImGui::Text("  4th Data Axis       : %d"  , fl.files[sf].dim_t);
-            ImGui::Text("  Number of voxels    : %llu", fl.files[sf].nr_voxels * fl.files[sf].dim_t);
+            ImGui::Text("  Voxel Volume (X×Y×Z)           : %.6f", fl.files[sf].voxel_volume);
+            ImGui::Text("    1st Voxel Dimension (X)      : %.3f", fl.files[sf].pixdim_i);
+            ImGui::Text("    2nd Voxel Dimension (Y)      : %.3f", fl.files[sf].pixdim_j);
+            ImGui::Text("    3rd Voxel Dimension (Z)      : %.3f", fl.files[sf].pixdim_k);
+            ImGui::Text("    4th Voxel Dimension (T)      : %.3f", fl.files[sf].pixdim_t);
+            ImGui::Text("  Nr. voxels (Nx × Ny × Nz × Nt) : %llu", fl.files[sf].nr_voxels * fl.files[sf].dim_t);
+            ImGui::Text("    1st Data Axis Elements (Nx)  : %d"  , fl.files[sf].dim_i);
+            ImGui::Text("    2nd Data Axis Elements (Ny)  : %d"  , fl.files[sf].dim_j);
+            ImGui::Text("    3rd Data Axis Elements (Nz)  : %d"  , fl.files[sf].dim_k);
+            ImGui::Text("    4th Data Axis Elements (Nt)  : %d"  , fl.files[sf].dim_t);
             ImGui::TextWrapped("Complete Path: \n%s" , fl.files[sf].path.c_str());
         }
 
@@ -1105,8 +1109,8 @@ namespace IDA
         // WIP
         // ============================================================================================================
         // Demo window
-        // if (show_demo_window)
-        //     ImGui::ShowDemoWindow(&show_demo_window);
+        if (show_demo_window)
+            ImGui::ShowDemoWindow(&show_demo_window);
 
         // // Show file selection window
         // if (show_file_window)
