@@ -122,6 +122,7 @@ namespace IDA_IO
         bool        tc_lock;                // Lock/freeze to reference time course
         bool        tc_show_focus;          // Determine if the time course is desired to be visualized
         bool        tc_show_reference;      // Determine if the time course is desired to be visualized
+        bool        tc_show_model;          // Determine if the time course is desired to be visualized
         uint64_t    tc_focus_voxel_i;       // Focused voxel index i
         uint64_t    tc_focus_voxel_j;       // Focused voxel index j
         uint64_t    tc_focus_voxel_k;       // Focused voxel index k
@@ -138,6 +139,7 @@ namespace IDA_IO
         int         tc_offset;              // Omit volumes from end until this number
         int         tc_shift;               // Shift time course data by this amount
         bool        tc_model_accordion;     // Determine if the time model course is desired to be visualized
+        float*      p_tc_model_float;       // Model time course
         int         tc_model_period;        // Period of the accordion model
         int         tc_model_shift;         // Shift accordion model
         // Correlation related ----------------------------------------------------------------------------------------
@@ -381,6 +383,7 @@ namespace IDA_IO
             free(fi.p_sliceI_uint8);
             free(fi.p_tc_focus_float);
             free(fi.p_tc_refer_float);
+            free(fi.p_tc_model_float);
             free(fi.p_sliceK_float_Tmean);
             free(fi.p_sliceJ_float_Tmean);
             free(fi.p_sliceI_float_Tmean);
@@ -689,6 +692,7 @@ namespace IDA_IO
             fi.tc_model_accordion = false;
             fi.p_tc_focus_float = (float*)malloc(fi.dim_t * sizeof(float));
             fi.p_tc_refer_float = (float*)malloc(fi.dim_t * sizeof(float));
+            fi.p_tc_model_float = (float*)malloc(fi.dim_t * sizeof(float));
 
             // Initialize hovered over or selected voxel index
             fi.voxel_i = static_cast<uint64_t>(fi.display_i);
@@ -1265,11 +1269,22 @@ namespace IDA_IO
             float* y_arr = (float*)malloc(fi.dim_t * sizeof(float));
 
             // Prepare x array (selected voxel's data)
-            for (uint64_t t = 0; t < nt; ++t) {
-                if ( fi.tc_lock == false ) {
-                    *(x_arr + t) = *(fi.p_tc_focus_float + t + fi.tc_onset);
-                } else {
-                    *(x_arr + t) = *(fi.p_tc_refer_float + t + fi.tc_onset);
+            if ( fi.tc_model_accordion ) {
+                for (uint64_t t = 0; t < nt; ++t) {
+                    if ( fi.tc_lock == false ) {
+                        *(x_arr + t) = *(fi.p_tc_focus_float + t + fi.tc_onset);
+                    } else {
+                        *(x_arr + t) = *(fi.p_tc_model_float + t + fi.tc_onset);
+                    }
+                }
+            } else {
+
+                for (uint64_t t = 0; t < nt; ++t) {
+                    if ( fi.tc_lock == false ) {
+                        *(x_arr + t) = *(fi.p_tc_focus_float + t + fi.tc_onset);
+                    } else {
+                        *(x_arr + t) = *(fi.p_tc_refer_float + t + fi.tc_onset);
+                    }
                 }
             }
 

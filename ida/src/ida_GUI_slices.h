@@ -58,16 +58,12 @@ void SampleVoxelTimeCourseAccordionModel(IDA_IO::FileInfo& fi) {
 
     // Create time course
     for (int64_t t = 0; t < nt; ++t) {
-        if ( modulus_int64(t+shift, period*2) < period ) {
-            fi.p_tc_refer_float[t] = 0.0f;
+        if ( modulus_int64(t-shift, period*2) < period ) {
+            fi.p_tc_model_float[t] = 0.0f;
         } else {
-            fi.p_tc_refer_float[t] = 1.0f;
+            fi.p_tc_model_float[t] = 1.0f;
         }
     }
-
-    // Set min max
-    fi.tc_refer_min = 0.0f;
-    fi.tc_refer_max = 1.0f;
 }
 
 // ====================================================================================================================
@@ -412,9 +408,7 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
 
             if (fi.dim_t > 1 ) {
                 fi.tc_show_reference = true;
-                if ( fi.tc_model_accordion == false ) {
-                    SampleVoxelTimeCourseReference(fi);
-                }
+                SampleVoxelTimeCourseReference(fi);
                 if ( fi.tc_lock == false ) {
                     fi.tc_lock = !fi.tc_lock;
                 } 

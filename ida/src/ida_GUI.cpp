@@ -382,7 +382,8 @@ namespace IDA
             ImGui::Checkbox("Normalization 1", &show_tc_normalized1); ImGui::SameLine();
             ImGui::Checkbox("Normalization 2", &show_tc_normalized2);
             ImGui::Checkbox("Show Reference ", &fl.files[sf].tc_show_reference); ImGui::SameLine();
-            ImGui::Checkbox("Show Focus     ", &fl.files[sf].tc_show_focus);
+            ImGui::Checkbox("Show Focus     ", &fl.files[sf].tc_show_focus); ImGui::SameLine();
+            ImGui::Checkbox("Show Model     ", &fl.files[sf].tc_show_model);
             ImGui::Spacing();
 
             ImVec2 plot_size, pos;
@@ -395,6 +396,7 @@ namespace IDA
             ImU32 color_frame      = IM_COL32( 33,  47,  71, 255);
             ImU32 color_line1      = IM_COL32(255, 140,   0, 255);
             ImU32 color_line2      = IM_COL32(255, 255, 255, 255);
+            ImU32 color_line3      = IM_COL32(  0, 255,   0, 255);
             float line_thickness   = 1.0f;
 
             if ( show_tc_normalized1 ) {
@@ -440,6 +442,24 @@ namespace IDA
                                            color_line2, line_thickness);
                     }
                 }
+
+                // Draw model time course
+                if ( fl.files[sf].tc_show_model ) {
+                    min_y = 0.0f;
+                    max_y = 1.0f;
+                    auto get_screen_point3 = [&](int i, float* data) {
+                        float x = pos.x + (i / float(fl.files[sf].dim_t - 1)) * plot_size.x;
+                        float y = pos.y + (1.0f - (data[i] - min_y) / (max_y - min_y)) * plot_size.y;
+                        return ImVec2(x, y);
+                    };
+
+                    for (int i = fl.files[sf].tc_onset; i < fl.files[sf].tc_offset - 1; i++) {
+                        draw_list->AddLine(get_screen_point3(i  , fl.files[sf].p_tc_model_float),
+                                           get_screen_point3(i+1, fl.files[sf].p_tc_model_float),
+                                           color_line3, line_thickness);
+                    }
+                }
+
                 ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 85.f);  // Move cursor down
             }
 
@@ -928,11 +948,12 @@ namespace IDA
                             if ( fl.files[sf].tc_model_accordion ) {
                                 SampleVoxelTimeCourseAccordionModel(fl.files[sf]);
                                 fl.files[sf].tc_lock = true;
-                                fl.files[sf].tc_show_reference = true;
+                                fl.files[sf].tc_show_model = true;
                                 request_image_data_update = true;
                             } else {
                                 SampleVoxelTimeCourseReference(fl.files[sf]);
                                 fl.files[sf].tc_lock = true;
+                                fl.files[sf].tc_show_model = false;
                                 request_image_data_update = true;
                             }
                         }
