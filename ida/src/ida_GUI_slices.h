@@ -2,6 +2,11 @@
 
 #include "imgui.h"
 
+// Handy function that handles negative values as in  Python
+int64_t modulus_int64(int64_t a, int64_t b) {
+    return ((a % b) + b) % b;
+}
+
 // ====================================================================================================================
 // Procedure to sample voxel time course
 // ====================================================================================================================
@@ -44,6 +49,25 @@ void SampleVoxelTimeCourseReference(IDA_IO::FileInfo& fi) {
     // Adjust min max for better visualizing the timecourse
     fi.tc_refer_min = *std::min_element(fi.p_tc_refer_float + fi.tc_onset, fi.p_tc_refer_float + fi.tc_offset);
     fi.tc_refer_max = *std::max_element(fi.p_tc_refer_float + fi.tc_onset, fi.p_tc_refer_float + fi.tc_offset);
+}
+
+void SampleVoxelTimeCourseAccordionModel(IDA_IO::FileInfo& fi) {
+    int64_t nt = static_cast<int64_t>(fi.dim_t);
+    int64_t period = static_cast<int64_t>(fi.tc_model_period);   // Every this number * 2 of volume, cycle repeats
+    int64_t shift = static_cast<int64_t>(fi.tc_model_shift);     // Add this number to shift the model
+
+    // Create time course
+    for (int64_t t = 0; t < nt; ++t) {
+        if ( modulus_int64(t+shift, period*2) < period ) {
+            fi.p_tc_refer_float[t] = 0.0f;
+        } else {
+            fi.p_tc_refer_float[t] = 1.0f;
+        }
+    }
+
+    // Set min max
+    fi.tc_refer_min = 0.0f;
+    fi.tc_refer_max = 1.0f;
 }
 
 // ====================================================================================================================
@@ -388,11 +412,13 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
 
             if (fi.dim_t > 1 ) {
                 fi.tc_show_reference = true;
-                SampleVoxelTimeCourseReference(fi);
+                if ( fi.tc_model_accordion == false ) {
+                    SampleVoxelTimeCourseReference(fi);
+                }
                 if ( fi.tc_lock == false ) {
                     fi.tc_lock = !fi.tc_lock;
                 } 
-            }            
+            }
         }
     }
 

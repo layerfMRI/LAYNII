@@ -120,8 +120,8 @@ namespace IDA_IO
         GLuint      textureIDi_RGB;         // OpenGL needs this
         // Time course related ----------------------------------------------------------------------------------------
         bool        tc_lock;                // Lock/freeze to reference time course
-        bool        tc_show_reference;      // Determine if the time course is desired to be visualized
         bool        tc_show_focus;          // Determine if the time course is desired to be visualized
+        bool        tc_show_reference;      // Determine if the time course is desired to be visualized
         uint64_t    tc_focus_voxel_i;       // Focused voxel index i
         uint64_t    tc_focus_voxel_j;       // Focused voxel index j
         uint64_t    tc_focus_voxel_k;       // Focused voxel index k
@@ -137,6 +137,9 @@ namespace IDA_IO
         int         tc_onset;               // Omit volumes from start until this number
         int         tc_offset;              // Omit volumes from end until this number
         int         tc_shift;               // Shift time course data by this amount
+        bool        tc_model_accordion;     // Determine if the time model course is desired to be visualized
+        int         tc_model_period;        // Period of the accordion model
+        int         tc_model_shift;         // Shift accordion model
         // Correlation related ----------------------------------------------------------------------------------------
         bool        tc_show_Tmean;          // Show time course mean
         bool        tc_show_Tstd;           // Show time course standard deviation
@@ -681,8 +684,9 @@ namespace IDA_IO
 
             // Initialize the voxel data for timecourse visualizations;
             fi.tc_lock = false;
-            fi.tc_show_reference = false;
             fi.tc_show_focus = true;
+            fi.tc_show_reference = false;
+            fi.tc_model_accordion = false;
             fi.p_tc_focus_float = (float*)malloc(fi.dim_t * sizeof(float));
             fi.p_tc_refer_float = (float*)malloc(fi.dim_t * sizeof(float));
 
@@ -696,6 +700,10 @@ namespace IDA_IO
             fi.tc_onset  = 0;
             fi.tc_offset = fi.header.dim[4];
             fi.tc_shift = 0;
+
+            // Initalize accordion model parameters
+            fi.tc_model_period = 2;
+            fi.tc_model_shift = 0;
 
             // Time course descriptives related
             fi.tc_show_Tmean = true;
