@@ -9,8 +9,8 @@ namespace IDA
         // ============================================================================================================
         // Variables
         // ============================================================================================================
-        static char str_input[4096] = "Enter nifti path";
-        // static char str_input[4096] = "/Users/faruk/Documents/test-LN3_IDA/lo_BOLD_intemp.nii.gz";
+        // static char str_input[4096] = "Enter nifti path";
+        static char str_input[4096] = "/Users/faruk/data/test-LAYNII_IDA/lo_BOLD_intemp.nii.gz";
         // static char str_input[4096] = "/Users/faruk/Documents/test-LN3_IDA/test.nii.gz";
         // static char str_input[4096] = "/Users/faruk/data/data-alard/75um/sub-99_75um_crop.nii.gz";
 
@@ -52,15 +52,16 @@ namespace IDA
         if (loaded_data)
         {
             ImGui::Text("Image controls");
-            ImGui::Text("  Move             : Focus + CRTL + Move");
-            ImGui::Text("  Zoom             : Hover + CRTL + Wheel");
-            ImGui::Text("  Slice Scroll     : Hover + Wheel");
-            ImGui::Text("  Move focus voxel : W, A, S, D, Q, E, Z, X");
-
-            ImGui::Text("Time course controls");
-            ImGui::Text("  Update reference : Right click on slice");
+            ImGui::Text("  Move             : Shift + Move");
+            ImGui::Text("  Zoom             : Shift + Wheel");
+            ImGui::Text("  Slice Scroll     : Wheel");
+            ImGui::Text("  Move slice X : W, A");
+            ImGui::Text("  Move slice Y : S, D");
+            ImGui::Text("  Move slice Z : Q, E");
+            ImGui::Text("  Move time    : Z, X");
 
             ImGui::Text("Correlations controls");
+            ImGui::Text("  Update reference : Ctrl + Right click on slice");
             ImGui::Text("  Freeze correlations : Left click on slice");
             ImGui::Text("  Lag +1 : .");
             ImGui::Text("  Lag -1 : ,");

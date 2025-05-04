@@ -133,7 +133,7 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
 
         if ( fi.visualization_mode == 3) {
             if ( fi.tc_lock == false ) {
-                ImGui::Text("'Right Click' to freeze map");
+                ImGui::Text("'Ctrl + Right Click' to freeze map");
             } else {
                 ImGui::Text("'Left Click' to unfreeze");
             }
@@ -182,23 +182,23 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
     // Zoom image
     // TODO: Smoother zooming for the inspector can be achieved centering to the mouse position
     // ----------------------------------------------------------------------------------------------------------------
-    if ( ImGui::IsWindowHovered() && io.KeyCtrl && io.MouseWheel < 0 ) {
-        display_scale -= 0.5;
-        if (display_scale < 0.5) {
-            display_scale = 0.5;
+    if ( ImGui::IsWindowHovered() && io.KeyShift && io.MouseWheel < 0 ) {
+        display_scale -= 0.1;
+        if (display_scale < 0.1) {
+            display_scale = 0.1;
         }
-    } else if ( ImGui::IsWindowHovered() && io.KeyCtrl && io.MouseWheel > 0 ) {
-        display_scale += 0.5;
+    } else if ( ImGui::IsWindowHovered() && io.KeyShift && io.MouseWheel > 0 ) {
+        display_scale += 0.1;
     }
 
     // ----------------------------------------------------------------------------------------------------------------
     // Scroll through slices (Hover + Wheel)
     // ----------------------------------------------------------------------------------------------------------------
-    if ( ImGui::IsWindowHovered() && io.MouseWheel < 0 && disp_idx_3 > 0 && !io.KeyCtrl) {
+    if ( ImGui::IsWindowHovered() && io.MouseWheel < 0 && disp_idx_3 > 0 && !io.KeyShift) {
         disp_idx_3--;
         request_image_data_update = true;
 
-    } else if ( ImGui::IsWindowHovered() && io.MouseWheel > 0 && disp_idx_3 < dim3_vol-1 && !io.KeyCtrl) {
+    } else if ( ImGui::IsWindowHovered() && io.MouseWheel > 0 && disp_idx_3 < dim3_vol-1 && !io.KeyShift) {
         disp_idx_3++;
         request_image_data_update = true;
     }
@@ -219,7 +219,7 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
 
     // Move image (important to have it before image render for correct mouse inspector indexing)
     if ( ImGui::IsWindowHovered() ) {
-        if ( io.KeyCtrl ) {
+        if ( io.KeyShift ) {
             display_offset_x += io.MouseDelta.x / scl;
             display_offset_y += io.MouseDelta.y / scl;
         }
@@ -381,16 +381,18 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
         request_image_data_update = true;
 
         // Update reference time course voxel indices
-        fi.tc_refer_voxel_i = static_cast<uint64_t>(fi.voxel_i);
-        fi.tc_refer_voxel_j = static_cast<uint64_t>(fi.voxel_j);
-        fi.tc_refer_voxel_k = static_cast<uint64_t>(fi.voxel_k);
+        if ( io.KeyCtrl ) {
+            fi.tc_refer_voxel_i = static_cast<uint64_t>(fi.voxel_i);
+            fi.tc_refer_voxel_j = static_cast<uint64_t>(fi.voxel_j);
+            fi.tc_refer_voxel_k = static_cast<uint64_t>(fi.voxel_k);
 
-        if (fi.dim_t > 1 ) {
-            fi.tc_show_reference = true;
-            SampleVoxelTimeCourseReference(fi);
-            if ( fi.tc_lock == false ) {
-                fi.tc_lock = !fi.tc_lock;
-            } 
+            if (fi.dim_t > 1 ) {
+                fi.tc_show_reference = true;
+                SampleVoxelTimeCourseReference(fi);
+                if ( fi.tc_lock == false ) {
+                    fi.tc_lock = !fi.tc_lock;
+                } 
+            }            
         }
     }
 
