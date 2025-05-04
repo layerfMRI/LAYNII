@@ -112,6 +112,7 @@ namespace IDA
                 free(fl.files[sf].p_tc_refer_float);                
             }
             fl.removeFile(sf);
+            nr_files -= 1;
         }
 
         // Add load data button
@@ -150,10 +151,16 @@ namespace IDA
         {
             char buf[4096];
             snprintf(buf, sizeof(buf), "%d: %s", n, fl.files[n].name.c_str());
-            if (ImGui::Selectable(buf, sf == n)) {
+            // Highlight selected file with color
+            bool is_selected = (sf == n);
+            if ( is_selected )
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.55f, 0.0f, 1.0f));
+            if ( ImGui::Selectable(buf, is_selected) ) {
                 sf = n;
                 loaded_data = fl.files[sf].loaded_data;
             }
+            if ( is_selected )
+                ImGui::PopStyleColor();
         }
 
         if (sf >= 0) {
@@ -177,6 +184,21 @@ namespace IDA
         // --------------------------------------------------------------------------------------------------------
         // Keyboard controls
         // --------------------------------------------------------------------------------------------------------
+        if ( sf >= 0 ) {
+            if ( ImGui::IsKeyPressed(ImGuiKey_LeftBracket, true) ) {
+                sf += 1;
+                if ( sf == nr_files ) {
+                    sf = 0;
+                }
+            }
+            if ( ImGui::IsKeyPressed(ImGuiKey_RightBracket, true) ) {
+                sf -= 1;
+                if ( sf == -1 ) {
+                    sf = nr_files - 1;
+                }
+            }
+        }
+
         if (loaded_data) {
             // k axis nativation
             if ( ImGui::IsKeyPressed(ImGuiKey_E, true) ) {
