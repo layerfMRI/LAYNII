@@ -730,11 +730,20 @@ namespace IDA_IO
                 dot_pos -= 4;
             }
 
-            std::string path_out = fi.path.substr(0, dot_pos) + "_voxel_corr" + 
-                   "_x-" + std::to_string(fi.voxel_i) +
-                   "_y-" + std::to_string(fi.voxel_j) +
-                   "_z-" + std::to_string(fi.voxel_k) +
-                   fi.path.substr(dot_pos);
+            // Prepare output name
+            std::string path_out;
+            if ( fi.tc_model_accordion ) {
+                path_out = fi.path.substr(0, dot_pos) + "_corr-model_accordion" +
+                    "_p-" + std::to_string(fi.tc_model_period) +
+                    "_s-" + std::to_string(fi.tc_model_shift) +
+                    fi.path.substr(dot_pos);
+            } else {
+                path_out = fi.path.substr(0, dot_pos) + "_corr-voxel" +
+                    "_x-" + std::to_string(fi.voxel_i) +
+                    "_y-" + std::to_string(fi.voxel_j) +
+                    "_z-" + std::to_string(fi.voxel_k) +
+                    fi.path.substr(dot_pos);
+            }
 
             std::cout << fi.path << std::endl;
             std::cout << path_out << std::endl;
@@ -1428,11 +1437,27 @@ namespace IDA_IO
             float* y_arr = (float*)malloc(fi.dim_t * sizeof(float));
 
             // Prepare x array (selected voxel's data)
-            for (uint64_t t = 0; t < nt; ++t) {
-                *(x_arr + t) = *(fi.p_tc_refer_float + t + fi.tc_onset);
+            if ( fi.tc_model_accordion ) {
+                for (uint64_t t = 0; t < nt; ++t) {
+                    if ( fi.tc_lock == false ) {
+                        *(x_arr + t) = *(fi.p_tc_focus_float + t + fi.tc_onset);
+                    } else {
+                        *(x_arr + t) = *(fi.p_tc_model_float + t + fi.tc_onset);
+                    }
+                }
+            } else {
+
+                for (uint64_t t = 0; t < nt; ++t) {
+                    if ( fi.tc_lock == false ) {
+                        *(x_arr + t) = *(fi.p_tc_focus_float + t + fi.tc_onset);
+                    } else {
+                        *(x_arr + t) = *(fi.p_tc_refer_float + t + fi.tc_onset);
+                    }
+                }
             }
 
             // Compute correlations for the whole volume
+            printf("\r  Computing...\n");
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t j = 0; j < nj; ++j) {
                     for (uint64_t k = 0; k < nk; ++k) {
