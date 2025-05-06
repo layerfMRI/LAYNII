@@ -1281,21 +1281,29 @@ namespace IDA_IO
             if ( fi.tc_model_accordion ) {
                 for (uint64_t t = 0; t < nt; ++t) {
                     if ( fi.tc_lock == false ) {
-                        *(x_arr + t) = *(fi.p_tc_focus_float + t + fi.tc_onset);
+                        x_arr[t] = fi.p_tc_focus_float[t + fi.tc_onset];
                     } else {
-                        *(x_arr + t) = *(fi.p_tc_model_float + t + fi.tc_onset);
+                        x_arr[t] = fi.p_tc_model_float[t + fi.tc_onset];
                     }
                 }
             } else {
-
                 for (uint64_t t = 0; t < nt; ++t) {
                     if ( fi.tc_lock == false ) {
-                        *(x_arr + t) = *(fi.p_tc_focus_float + t + fi.tc_onset);
+                        x_arr[t] = fi.p_tc_focus_float[t + fi.tc_onset];
                     } else {
-                        *(x_arr + t) = *(fi.p_tc_refer_float + t + fi.tc_onset);
+                        x_arr[t] = fi.p_tc_refer_float[t + fi.tc_onset];
                     }
                 }
             }
+
+            // Pre compute reference time series terms
+            double sum_X = 0, sum_X2 = 0;
+            for (uint64_t t = 0; t < nt; ++t) {
+                sum_X += x_arr[t];
+                sum_X2 += x_arr[t]*x_arr[t];
+            }
+            double T = static_cast<double>(nt);
+            double denom_X = sqrt(T * sum_X2 - sum_X * sum_X); 
 
             // --------------------------------------------------------------------------------------------------------
             // Compute correlations for slice k
@@ -1303,37 +1311,26 @@ namespace IDA_IO
             uint64_t k = static_cast<uint64_t>(fi.display_k);
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t j = 0; j < nj; ++j) {
+                    uint64_t index3D = i + j*ni + k*nij;
 
                     // Prepare y array
                     for (uint64_t t = 0; t < nt; ++t) {
-                        uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*(t + fi.tc_onset);
+                        uint64_t index4D = index3D + fi.nr_voxels*(t + fi.tc_onset);
                         *(y_arr + t)= fi.p_data_float[index4D];
                     }
 
                     // Compute sums for covariance and variances
-                    double sum_X = 0, sum_Y = 0, sum_XY = 0;
-                    double sum_X2 = 0, sum_Y2 = 0;
+                    double sum_Y = 0, sum_XY = 0, sum_Y2 = 0;
                     for (int t = 0; t < nt; ++t) {
-                        sum_X += x_arr[t];
                         sum_Y += y_arr[t];
-                        sum_XY += x_arr[t] * y_arr[t];
-                        sum_X2 += x_arr[t] * x_arr[t];
                         sum_Y2 += y_arr[t] * y_arr[t];
+                        sum_XY += x_arr[t] * y_arr[t];
                     }
-
-                    // Compute covariance and variances
-                    double numerator = sum_XY - (sum_X * sum_Y / nt);
-                    double denominator = sqrt((sum_X2 - (sum_X * sum_X / nt)) * (sum_Y2 - (sum_Y * sum_Y / nt)));
-
-                    // Handle edge cases where denominator might be zero
-                    float r;
-                    if (denominator == 0) {
-                        r = 0.0f; // No correlation if variance is zero
-                    }
+                    double denom_Y = sqrt(T * sum_Y2 - sum_Y * sum_Y);
 
                     // Compute the Pearson correlation coefficient
+                    double r = (T * sum_XY - sum_Y * sum_X) / (denom_Y * denom_X);
                     uint64_t index2D = i + j*ni;
-                    r = static_cast<float>(numerator / denominator);
                     fi.p_sliceK_float_corr[index2D] = r;
                 }
             }
@@ -1344,37 +1341,26 @@ namespace IDA_IO
             uint64_t j = static_cast<uint64_t>(fi.display_j);
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t k = 0; k < nk; ++k) {
+                    uint64_t index3D = i + j*ni + k*nij;
 
                     // Prepare y array
                     for (uint64_t t = 0; t < nt; ++t) {
-                        uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*(t + fi.tc_onset);
+                        uint64_t index4D = index3D + fi.nr_voxels*(t + fi.tc_onset);
                         *(y_arr + t)= fi.p_data_float[index4D];
                     }
 
                     // Compute sums for covariance and variances
-                    double sum_X = 0, sum_Y = 0, sum_XY = 0;
-                    double sum_X2 = 0, sum_Y2 = 0;
+                    double sum_Y = 0, sum_XY = 0, sum_Y2 = 0;
                     for (int t = 0; t < nt; t++) {
-                        sum_X += x_arr[t];
                         sum_Y += y_arr[t];
-                        sum_XY += x_arr[t] * y_arr[t];
-                        sum_X2 += x_arr[t] * x_arr[t];
                         sum_Y2 += y_arr[t] * y_arr[t];
+                        sum_XY += x_arr[t] * y_arr[t];
                     }
-
-                    // Compute covariance and variances
-                    double numerator = sum_XY - (sum_X * sum_Y / nt);
-                    double denominator = sqrt((sum_X2 - (sum_X * sum_X / nt)) * (sum_Y2 - (sum_Y * sum_Y / nt)));
-
-                    // Handle edge cases where denominator might be zero
-                    float r;
-                    if (denominator == 0) {
-                        r = 0.0f; // No correlation if variance is zero
-                    }
+                    double denom_Y = sqrt(T * sum_Y2 - sum_Y * sum_Y);
 
                     // Compute the Pearson correlation coefficient
+                    double r = (T * sum_XY - sum_Y * sum_X) / (denom_Y * denom_X);
                     uint64_t index2D = i + k*ni;
-                    r = static_cast<float>(numerator / denominator);
                     fi.p_sliceJ_float_corr[index2D] = r;
                 }
             }
@@ -1385,37 +1371,26 @@ namespace IDA_IO
             uint64_t i = static_cast<uint64_t>(fi.display_i);
             for (uint64_t j = 0; j < nj; ++j) {
                 for (uint64_t k = 0; k < nk; ++k) {
+                    uint64_t index3D = i + j*ni + k*nij;
 
                     // Prepare y array
                     for (uint64_t t = 0; t < nt; ++t) {
-                        uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*(t + fi.tc_onset);
+                        uint64_t index4D = index3D + fi.nr_voxels*(t + fi.tc_onset);
                         *(y_arr + t)= fi.p_data_float[index4D];
                     }
 
                     // Compute sums for covariance and variances
-                    double sum_X = 0, sum_Y = 0, sum_XY = 0;
-                    double sum_X2 = 0, sum_Y2 = 0;
+                    double sum_Y = 0, sum_XY = 0, sum_Y2 = 0;
                     for (int t = 0; t < nt; t++) {
-                        sum_X += x_arr[t];
                         sum_Y += y_arr[t];
-                        sum_XY += x_arr[t] * y_arr[t];
-                        sum_X2 += x_arr[t] * x_arr[t];
                         sum_Y2 += y_arr[t] * y_arr[t];
+                        sum_XY += x_arr[t] * y_arr[t];
                     }
-
-                    // Compute covariance and variances
-                    double numerator = sum_XY - (sum_X * sum_Y / nt);
-                    double denominator = sqrt((sum_X2 - (sum_X * sum_X / nt)) * (sum_Y2 - (sum_Y * sum_Y / nt)));
-
-                    // Handle edge cases where denominator might be zero
-                    float r;
-                    if (denominator == 0) {
-                        r = 0.0f; // No correlation if variance is zero
-                    }
+                    double denom_Y = sqrt(T * sum_Y2 - sum_Y * sum_Y);
 
                     // Compute the Pearson correlation coefficient
+                    double r = (T * sum_XY - sum_Y * sum_X) / (denom_Y * denom_X);
                     uint64_t index2D = j + k*nj;
-                    r = static_cast<float>(numerator / denominator);
                     fi.p_sliceI_float_corr[index2D] = r;
                 }
             }
@@ -1423,11 +1398,7 @@ namespace IDA_IO
 
         void computeCorrelationsForVolume_float(FileInfo& fi)
         {
-            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
-            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
-            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
-            uint64_t nij = ni*nj;
 
             // Prepare volume output
             float* temp_vol_map = (float*)malloc(fi.nr_voxels * sizeof(float));
@@ -1440,61 +1411,52 @@ namespace IDA_IO
             if ( fi.tc_model_accordion ) {
                 for (uint64_t t = 0; t < nt; ++t) {
                     if ( fi.tc_lock == false ) {
-                        *(x_arr + t) = *(fi.p_tc_focus_float + t + fi.tc_onset);
+                        x_arr[t] = fi.p_tc_focus_float[t + fi.tc_onset];
                     } else {
-                        *(x_arr + t) = *(fi.p_tc_model_float + t + fi.tc_onset);
+                        x_arr[t] = fi.p_tc_model_float[t + fi.tc_onset];
                     }
                 }
             } else {
-
                 for (uint64_t t = 0; t < nt; ++t) {
                     if ( fi.tc_lock == false ) {
-                        *(x_arr + t) = *(fi.p_tc_focus_float + t + fi.tc_onset);
+                        x_arr[t] = fi.p_tc_focus_float[t + fi.tc_onset];
                     } else {
-                        *(x_arr + t) = *(fi.p_tc_refer_float + t + fi.tc_onset);
+                        x_arr[t] = fi.p_tc_refer_float[t + fi.tc_onset];
                     }
                 }
             }
 
+            // Pre compute reference time series terms
+            double sum_X = 0, sum_X2 = 0;
+            for (uint64_t t = 0; t < nt; ++t) {
+                sum_X += x_arr[t];
+                sum_X2 += x_arr[t]*x_arr[t];
+            }
+
+            double T = static_cast<double>(nt);
+            double denom_X = sqrt(T * sum_X2 - sum_X * sum_X); 
+
             // Compute correlations for the whole volume
             printf("\r  Computing...\n");
-            for (uint64_t i = 0; i < ni; ++i) {
-                for (uint64_t j = 0; j < nj; ++j) {
-                    for (uint64_t k = 0; k < nk; ++k) {
+            for (uint64_t i = 0; i < fi.nr_voxels; ++i) {
 
-                        // Prepare y array
-                        for (uint64_t t = 0; t < nt; ++t) {
-                            uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*(t + fi.tc_onset);
-                            *(y_arr + t) = fi.p_data_float[index4D];
-                        }
-
-                        // Compute sums for covariance and variances
-                        double sum_X = 0, sum_Y = 0, sum_XY = 0;
-                        double sum_X2 = 0, sum_Y2 = 0;
-                        for (uint64_t t = 0; t < nt; t++) {
-                            sum_X += x_arr[t];
-                            sum_Y += y_arr[t];
-                            sum_XY += x_arr[t] * y_arr[t];
-                            sum_X2 += x_arr[t] * x_arr[t];
-                            sum_Y2 += y_arr[t] * y_arr[t];
-                        }
-
-                        // Compute covariance and variances
-                        double numerator = sum_XY - (sum_X * sum_Y / nt);
-                        double denominator = sqrt((sum_X2 - (sum_X * sum_X / nt)) * (sum_Y2 - (sum_Y * sum_Y / nt)));
-
-                        // Handle edge cases where denominator might be zero
-                        float r;
-                        if (denominator == 0) {
-                            r = 0.0f; // No correlation if variance is zero
-                        }
-
-                        // Compute the Pearson correlation coefficient
-                        r = static_cast<float>(numerator / denominator);
-                        uint64_t index3D = i + j*ni + k*nij;
-                        temp_vol_map[index3D] = r;
-                    }
+                // Prepare y array
+                for (uint64_t t = 0; t < nt; ++t) {
+                    *(y_arr + t) = fi.p_data_float[i + fi.nr_voxels*(t + fi.tc_onset)];
                 }
+
+                // Compute sums for covariance and variances
+                double sum_Y = 0, sum_XY = 0, sum_Y2 = 0;
+                for (uint64_t t = 0; t < nt; t++) {
+                    sum_Y += y_arr[t];
+                    sum_Y2 += y_arr[t] * y_arr[t];
+                    sum_XY += x_arr[t] * y_arr[t];
+                }
+                double denom_Y = sqrt(T * sum_Y2 - sum_Y * sum_Y);
+
+                // Compute the Pearson correlation coefficient
+                double r = (T * sum_XY - sum_Y * sum_X) / (denom_Y * denom_X);
+                temp_vol_map[i] = static_cast<float>(r);
             }
 
             // Save the output map
