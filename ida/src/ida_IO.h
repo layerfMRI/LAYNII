@@ -1473,12 +1473,12 @@ namespace IDA_IO
                 float v = static_cast<float>(fi.p_sliceK_uint8[i]);
                 float r = fi.p_sliceK_float_corr[i];
 
-                // Red when r is close to 1, and grayscale underlay otwerwise
+                // Red when r is close to 1, and grayscale underlay otherwise
                 if (r > 0) {
                     fi.p_sliceK_RGB_uint8[i*3]   = static_cast<uint8_t>( v * (1-r) + 255 * r );
                     fi.p_sliceK_RGB_uint8[i*3+1] = static_cast<uint8_t>( v * (1-r) );
                     fi.p_sliceK_RGB_uint8[i*3+2] = static_cast<uint8_t>( v * (1-r) );
-                // Blue when r is close to -1, and grayscale underlay otwerwise
+                // Blue when r is close to -1, and grayscale underlay otherwise
                 } else {
                     fi.p_sliceK_RGB_uint8[i*3]   = static_cast<uint8_t>( v * (1+r) );
                     fi.p_sliceK_RGB_uint8[i*3+1] = static_cast<uint8_t>( v * (1+r) );
@@ -1493,12 +1493,12 @@ namespace IDA_IO
                 float v = static_cast<float>(fi.p_sliceJ_uint8[i]);
                 float r = fi.p_sliceJ_float_corr[i];
 
-                // Red when r is close to 1, and grayscale underlay otwerwise
+                // Red when r is close to 1, and grayscale underlay otherwise
                 if (r > 0) {
                     fi.p_sliceJ_RGB_uint8[i*3]   = static_cast<uint8_t>( v * (1-r) + 255 * r );
                     fi.p_sliceJ_RGB_uint8[i*3+1] = static_cast<uint8_t>( v * (1-r) );
                     fi.p_sliceJ_RGB_uint8[i*3+2] = static_cast<uint8_t>( v * (1-r) );
-                // Blue when r is close to -1, and grayscale underlay otwerwise
+                // Blue when r is close to -1, and grayscale underlay otherwise
                 } else {
                     fi.p_sliceJ_RGB_uint8[i*3]   = static_cast<uint8_t>( v * (1+r) );
                     fi.p_sliceJ_RGB_uint8[i*3+1] = static_cast<uint8_t>( v * (1+r) );
@@ -1513,12 +1513,12 @@ namespace IDA_IO
                 float v = static_cast<float>(fi.p_sliceI_uint8[i]);
                 float r = fi.p_sliceI_float_corr[i];
 
-                // Red when r is close to 1, and grayscale underlay otwerwise
+                // Red when r is close to 1, and grayscale underlay otherwise
                 if (r > 0) {
                     fi.p_sliceI_RGB_uint8[i*3]   = static_cast<uint8_t>( v * (1-r) + 255 * r );
                     fi.p_sliceI_RGB_uint8[i*3+1] = static_cast<uint8_t>( v * (1-r) );
                     fi.p_sliceI_RGB_uint8[i*3+2] = static_cast<uint8_t>( v * (1-r) );
-                // Blue when r is close to -1, and grayscale underlay otwerwise
+                // Blue when r is close to -1, and grayscale underlay otherwise
                 } else {
                     fi.p_sliceI_RGB_uint8[i*3]   = static_cast<uint8_t>( v * (1+r) );
                     fi.p_sliceI_RGB_uint8[i*3+1] = static_cast<uint8_t>( v * (1+r) );
