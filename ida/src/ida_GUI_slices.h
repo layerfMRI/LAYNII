@@ -152,10 +152,9 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
         }
 
         if ( fi.visualization_mode == 3) {
-            if ( fi.tc_lock == false ) {
-                ImGui::Text("'Ctrl + Right Click' to freeze map");
-            } else {
-                ImGui::Text("'Left Click' to unfreeze");
+            ImGui::Text("'Double Click' to pin voxel");
+            if ( fi.tc_lock ) {
+            ImGui::Text("'Right Click' to unfreeze");
             }
         }
 
@@ -393,27 +392,27 @@ void RenderSlice(int& dim1_vol, int& dim2_vol, int& dim3_vol, float dim1_sli, fl
     // ----------------------------------------------------------------------------------------------------------------
     // Mouse click
     // ----------------------------------------------------------------------------------------------------------------
+    if ( ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered() ) {
+        // Update reference time course voxel indices
+        fi.tc_refer_voxel_i = static_cast<uint64_t>(fi.voxel_i);
+        fi.tc_refer_voxel_j = static_cast<uint64_t>(fi.voxel_j);
+        fi.tc_refer_voxel_k = static_cast<uint64_t>(fi.voxel_k);
+
+        if (fi.dim_t > 1 ) {
+            fi.tc_show_reference = true;
+            SampleVoxelTimeCourseReference(fi);
+            if ( fi.tc_lock == false ) {
+                fi.tc_lock = !fi.tc_lock;
+            } 
+        }
+    }
+
     if ( ImGui::IsMouseClicked(ImGuiMouseButton_Left, true) && ImGui::IsItemHovered() ) {
         // Update the displayed slices based on clicked voxel
         fi.display_i = static_cast<int>(fi.voxel_i);
         fi.display_j = static_cast<int>(fi.voxel_j);
         fi.display_k = static_cast<int>(fi.voxel_k);
         request_image_data_update = true;
-
-        // Update reference time course voxel indices
-        if ( io.KeyCtrl ) {
-            fi.tc_refer_voxel_i = static_cast<uint64_t>(fi.voxel_i);
-            fi.tc_refer_voxel_j = static_cast<uint64_t>(fi.voxel_j);
-            fi.tc_refer_voxel_k = static_cast<uint64_t>(fi.voxel_k);
-
-            if (fi.dim_t > 1 ) {
-                fi.tc_show_reference = true;
-                SampleVoxelTimeCourseReference(fi);
-                if ( fi.tc_lock == false ) {
-                    fi.tc_lock = !fi.tc_lock;
-                } 
-            }
-        }
     }
 
     // ----------------------------------------------------------------------------------------------------------------
