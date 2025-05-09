@@ -165,11 +165,11 @@ int main(int argc, char*  argv[]) {
     log_nifti_descriptives(nii4);
 
     // Get dimensions of input
-    const int size_x = nii1->nx;
-    const int size_y = nii1->ny;
-    const int size_z = nii1->nz;
-    const int size_time = nii1->nt;
-    const int nr_voxels = size_z * size_y * size_x;
+    const int64_t size_x = nii1->nx;
+    const int64_t size_y = nii1->ny;
+    const int64_t size_z = nii1->nz;
+    const int64_t size_time = nii1->nt;
+    const int64_t nr_voxels = size_z * size_y * size_x;
 
     // ========================================================================
     // Fix input datatype issues
@@ -190,7 +190,7 @@ int main(int argc, char*  argv[]) {
     float max_d = std::numeric_limits<float>::min();
 
     // Check D coordinate min & max
-    for (int i = 0; i != nr_voxels; ++i) {
+    for (int64_t i = 0; i != nr_voxels; ++i) {
         if (*(coords_d_data + i) != 0) {
             if (*(coords_d_data + i) < min_d) {
                 min_d = *(coords_d_data + i);
@@ -220,7 +220,7 @@ int main(int argc, char*  argv[]) {
     nifti_image* out_cells = copy_nifti_as_int32(domain);
     int32_t* out_cells_data = static_cast<int32_t*>(out_cells->data);
 
-    for (int i = 0; i != nr_voxels; ++i) {
+    for (int64_t i = 0; i != nr_voxels; ++i) {
         *(out_cells_data + i) = 0;
     }
 
@@ -351,8 +351,8 @@ int main(int argc, char*  argv[]) {
     float min_v = std::numeric_limits<float>::max();
     float max_v = std::numeric_limits<float>::min();
 
-    for (int ii = 0; ii != nr_voi; ++ii) {
-        int i = *(voi_id + ii);
+    for (int64_t ii = 0; ii != nr_voi; ++ii) {
+        int64_t i = *(voi_id + ii);
         // Check U coordinate min & max
         if (*(coords_uv_data + nr_voxels*0 + i) < min_u) {
             min_u = *(coords_uv_data + nr_voxels*0 + i);
@@ -374,9 +374,9 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Visit each voxel to check their coordinate
     // ========================================================================
-    for (int t = 0; t != size_time; ++t) {
-        for (int ii = 0; ii != nr_voi; ++ii) {
-            int i = *(voi_id + ii);
+    for (int64_t t = 0; t != size_time; ++t) {
+        for (int64_t ii = 0; ii != nr_voi; ++ii) {
+            int64_t i = *(voi_id + ii);
 
             float u = *(coords_uv_data + nr_voxels*0 + i);
             float v = *(coords_uv_data + nr_voxels*1 + i);
@@ -388,26 +388,26 @@ int main(int argc, char*  argv[]) {
             u *= static_cast<float>(bins_u);
             v *= static_cast<float>(bins_v);
             // Cast to integer (floor & cast)
-            int cell_idx_u = static_cast<int>(u);
-            int cell_idx_v = static_cast<int>(v);
+            int64_t cell_idx_u = static_cast<int64_t>(u);
+            int64_t cell_idx_v = static_cast<int64_t>(v);
 
             // Handle depth separately
             float d = static_cast<float>(*(coords_d_data + i));
-            int cell_idx_d = 0;
+            int64_t cell_idx_d = 0;
             if (mode_depth_metric) {  // Metric file
                 if (d >= 1) {  // Include 1 in the max index
                     cell_idx_d = bins_d;
                 } else {  // Scale up and floor
                     d *= bins_d;
-                    cell_idx_d = static_cast<int>(d);
+                    cell_idx_d = static_cast<int64_t>(d);
                 }
             } else {  // Layer file
-                cell_idx_d = static_cast<int>(d - 1);
+                cell_idx_d = static_cast<int64_t>(d - 1);
             }
 
             // Flat image cell index
-            int j = bins_u * cell_idx_v + cell_idx_u;
-            int k = cell_idx_d * nr_cells + j;
+            int64_t j = bins_u * cell_idx_v + cell_idx_u;
+            int64_t k = cell_idx_d * nr_cells + j;
 
             // Write cell index to output
             *(out_cells_data + i) = j + 1;
@@ -416,7 +416,7 @@ int main(int argc, char*  argv[]) {
             *(flat_values_data + k + t*nr_bins) += *(nii_input_data + i + t*nr_voxels);
 
             // Project folded data coordinates
-            int ix, iy, iz;
+            int64_t ix, iy, iz;
             tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
             *(flat_coords_data + k + nr_bins*0) += static_cast<float>(ix);
             *(flat_coords_data + k + nr_bins*1) += static_cast<float>(iy);
@@ -430,8 +430,8 @@ int main(int argc, char*  argv[]) {
     }
 
     // Take the mean of each projected cell value
-    for (int t = 0; t != size_time; ++t) {
-        for (int i = 0; i != nr_bins; ++i) {
+    for (int64_t t = 0; t != size_time; ++t) {
+        for (int64_t i = 0; i != nr_bins; ++i) {
             if (*(flat_density_data + i) > 1) {
                 *(flat_values_data + i + t*nr_bins) /= *(flat_density_data + i);
 
@@ -461,12 +461,12 @@ int main(int argc, char*  argv[]) {
         float* flood_dist_data = static_cast<float*>(flood_dist->data);
 
         // --------------------------------------------------------------------
-        const int size_x = bins_u;
-        const int size_y = bins_v;
-        const int size_z = bins_d;
-        const int end_x = size_x - 1;
-        const int end_y = size_y - 1;
-        const int end_z = size_z - 1;
+        const int64_t size_x = bins_u;
+        const int64_t size_y = bins_v;
+        const int64_t size_z = bins_d;
+        const int64_t end_x = size_x - 1;
+        const int64_t end_y = size_y - 1;
+        const int64_t end_z = size_z - 1;
 
         const float dX = 1;
         const float dY = 1;
@@ -479,9 +479,9 @@ int main(int argc, char*  argv[]) {
         // Long diagonals
         const float dia_xyz = sqrt(dX * dX + dY * dY + dZ * dZ);
 
-        for (int t=0; t!=size_time; ++t) {
+        for (int64_t t=0; t!=size_time; ++t) {
             // Initialize grow volume
-            for (int i = 0; i != nr_bins; ++i) {
+            for (int64_t i = 0; i != nr_bins; ++i) {
                 if (*(flat_values_data + i + t*nr_bins) != 0) {
                     *(flood_step_data + i) = 1.;
                     *(flood_dist_data + i) = 0.;
@@ -490,8 +490,8 @@ int main(int argc, char*  argv[]) {
                     *(flood_dist_data + i) = 0.;
                 }
             }
-            int grow_step = 1, bin_counter = 1;
-            int ix, iy, iz, j;
+            int64_t grow_step = 1, bin_counter = 1;
+            int64_t ix, iy, iz, j;
             float d;
             if (size_time > 1) {
                 cout << "  Doing 4th dimension: " << t+1 << endl;
@@ -500,7 +500,7 @@ int main(int argc, char*  argv[]) {
 
             while (bin_counter != 0) {
                 bin_counter = 0;
-                for (int i = 0; i != nr_bins; ++i) {
+                for (int64_t i = 0; i != nr_bins; ++i) {
                     if (*(flood_step_data + i) == grow_step) {
                         tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
                         bin_counter += 1;
@@ -915,7 +915,7 @@ int main(int argc, char*  argv[]) {
 
         // NOTE(Option 2) Mask values based on radius
         if (mode_norm_mask) {
-            for (int i = 0; i != nr_bins; ++i) {
+            for (int64_t i = 0; i != nr_bins; ++i) {
                 float coord_u = i % bins_u;
                 float coord_v = floor(i % nr_cells / bins_v);
                 coord_u /= bins_u;
@@ -931,8 +931,8 @@ int main(int argc, char*  argv[]) {
         }
 
         // NOTE(Option 1): Mask values outside of the flattened disk
-        for (int t = 0; t != size_time; ++t) {
-            for (int i = 0; i != nr_bins; ++i) {
+        for (int64_t t = 0; t != size_time; ++t) {
+            for (int64_t i = 0; i != nr_bins; ++i) {
                 if (*(flat_domain_data + i) != 1) {
                     *(flat_values_data + i + t*nr_bins) = 0;
                     *(flat_density_data + i) = 0;
