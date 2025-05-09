@@ -8,6 +8,7 @@
 #include <string>
 #include <tuple>
 #include <algorithm>
+#include <limits>
 #include "./nifti2_io.h"
 
 using namespace std;
