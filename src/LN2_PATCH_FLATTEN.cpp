@@ -47,7 +47,7 @@ int main(int argc, char*  argv[]) {
     nifti_image *nii1 = NULL, *nii2 = NULL, *nii3 = NULL, *nii4 = NULL;
     char *fin1 = NULL, *fout = NULL, *fin2=NULL, *fin3=NULL, *fin4=NULL;
     int ac;
-    int bins_u = 10, bins_v = 10, bins_d = 1;
+    int64_t bins_u = 10, bins_v = 10, bins_d = 1;
     bool mode_debug = false, mode_voronoi = false, mode_norm_mask = false;
     bool mode_density = false;
 
@@ -227,11 +227,11 @@ int main(int argc, char*  argv[]) {
     // ------------------------------------------------------------------------
     // Determine flat image dimensions
     // ------------------------------------------------------------------------
-    int nr_cells = bins_u * bins_v;
+    int64_t nr_cells = bins_u * bins_v;
     if (mode_depth_metric == false) {  // Layer file
         bins_d = max_d;
     }
-    int nr_bins = nr_cells * bins_d;
+    int64_t nr_bins = nr_cells * bins_d;
 
     // Add bin dimensions into the output tag
     std::ostringstream tag_u, tag_v, tag_d;
@@ -257,7 +257,7 @@ int main(int argc, char*  argv[]) {
     flat_4D->scl_slope = 1;
     int32_t* flat_4D_data = static_cast<int32_t*>(flat_4D->data);
 
-    for (int i = 0; i != nr_bins*size_time; ++i) {
+    for (int64_t i = 0; i != nr_bins*size_time; ++i) {
         *(flat_4D_data + i) = 0;
     }
 
@@ -284,7 +284,7 @@ int main(int argc, char*  argv[]) {
     flat_3D->scl_slope = 1;
     int32_t* flat_3D_data = static_cast<int32_t*>(flat_3D->data);
 
-    for (int i = 0; i != nr_bins; ++i) {
+    for (int64_t i = 0; i != nr_bins; ++i) {
         *(flat_3D_data + i) = 0;
     }
 
@@ -315,7 +315,7 @@ int main(int argc, char*  argv[]) {
     flat_coords->scl_slope = 1;
     float* flat_coords_data = static_cast<float*>(flat_coords->data);
 
-    for (int i = 0; i != nr_bins*3; ++i) {
+    for (int64_t i = 0; i != nr_bins*3; ++i) {
         *(flat_coords_data + i) = 0;
     }
 
@@ -324,19 +324,19 @@ int main(int argc, char*  argv[]) {
     // flooding distance loop to the subset of voxels. Required for substantial
     // speed boost.
     // Find the subset voxels that will be used many times
-    int nr_voi = 0;  // Voxels of interest
-    for (int i = 0; i != nr_voxels; ++i) {
+    int64_t nr_voi = 0;  // Voxels of interest
+    for (int64_t i = 0; i != nr_voxels; ++i) {
         if (*(domain_data + i) != 0){
             nr_voi += 1;
         }
     }
     // Allocate memory to only the voxel of interest
-    int* voi_id;
-    voi_id = (int*) malloc(nr_voi*sizeof(int));
+    int64_t* voi_id;
+    voi_id = (int64_t*) malloc(nr_voi*sizeof(int64_t));
 
     // Fill in indices to be able to remap from subset to full set of voxels
-    int ii = 0;
-    for (int i = 0; i != nr_voxels; ++i) {
+    int64_t ii = 0;
+    for (int64_t i = 0; i != nr_voxels; ++i) {
         if (*(domain_data + i) != 0){
             *(voi_id + ii) = i;
             ii += 1;
@@ -931,14 +931,19 @@ int main(int argc, char*  argv[]) {
         }
 
         // NOTE(Option 1): Mask values outside of the flattened disk
+        for (int64_t i = 0; i != nr_bins; ++i) {
+            if (*(flat_domain_data + i) != 1) {
+                *(flat_density_data + i) = 0;
+                *(flat_coords_data + nr_bins*0 + i) = 0;
+                *(flat_coords_data + nr_bins*1 + i) = 0;
+                *(flat_coords_data + nr_bins*2 + i) = 0;
+            }
+        }
+
         for (int64_t t = 0; t != size_time; ++t) {
             for (int64_t i = 0; i != nr_bins; ++i) {
                 if (*(flat_domain_data + i) != 1) {
                     *(flat_values_data + i + t*nr_bins) = 0;
-                    *(flat_density_data + i) = 0;
-                    *(flat_coords_data + nr_bins*0 + i) = 0;
-                    *(flat_coords_data + nr_bins*1 + i) = 0;
-                    *(flat_coords_data + nr_bins*2 + i) = 0;
                 }
             }
         }
