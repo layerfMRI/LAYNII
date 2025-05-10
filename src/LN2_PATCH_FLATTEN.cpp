@@ -931,19 +931,14 @@ int main(int argc, char*  argv[]) {
         }
 
         // NOTE(Option 1): Mask values outside of the flattened disk
-        for (int64_t i = 0; i != nr_bins; ++i) {
-            if ( *(flat_domain_data + i) != 1 ) {
-                *(flat_density_data + i) = 0;
-                *(flat_coords_data + nr_bins*0 + i) = 0;
-                *(flat_coords_data + nr_bins*1 + i) = 0;
-                *(flat_coords_data + nr_bins*2 + i) = 0;
-            }
-        }
-
-        for (int64_t i = 0; i != nr_bins; ++i) {
-            for (int64_t t = 0; t != size_time; ++t) {
-                if ( *(flat_domain_data + i) != 1 ) {
-                    *(flat_values_data + nr_bins*t + i) = 0;
+        for (int64_t t = 0; t != size_time; ++t) {
+            for (int64_t i = 0; i != nr_bins; ++i) {
+                if (*(flat_domain_data + i) != 1) {
+                    *(flat_values_data + i + t*nr_bins) = 0;
+                    *(flat_density_data + i) = 0;
+                    *(flat_coords_data + nr_bins*0 + i) = 0;
+                    *(flat_coords_data + nr_bins*1 + i) = 0;
+                    *(flat_coords_data + nr_bins*2 + i) = 0;
                 }
             }
         }
