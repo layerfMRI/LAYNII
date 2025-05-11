@@ -141,6 +141,10 @@ namespace IDA
                 fl.files[sf].overlay_min = fl.files[sf].display_min;
                 fl.files[sf].overlay_max = fl.files[sf].display_max;
 
+                fl.files[sf].tc_refer_voxel_i = fl.files[sf].dim_i / 2;
+                fl.files[sf].tc_refer_voxel_j = fl.files[sf].dim_j / 2;
+                fl.files[sf].tc_refer_voxel_k = fl.files[sf].dim_k / 2;
+
                 fl.files[sf].loaded_data = true;
                 loaded_data = fl.files[sf].loaded_data;
             }
@@ -168,10 +172,10 @@ namespace IDA
             ImGui::Separator();
             ImGui::Text("Selected File:");
             ImGui::Text("  Voxel Volume (X×Y×Z)           : %.6f", fl.files[sf].voxel_volume);
-            ImGui::Text("    1st Voxel Dimension (X)      : %.3f", fl.files[sf].pixdim_i);
-            ImGui::Text("    2nd Voxel Dimension (Y)      : %.3f", fl.files[sf].pixdim_j);
-            ImGui::Text("    3rd Voxel Dimension (Z)      : %.3f", fl.files[sf].pixdim_k);
-            ImGui::Text("    4th Voxel Dimension (T)      : %.3f", fl.files[sf].pixdim_t);
+            ImGui::Text("    1st Voxel Dimension (X)      : %.6f", fl.files[sf].pixdim_i);
+            ImGui::Text("    2nd Voxel Dimension (Y)      : %.6f", fl.files[sf].pixdim_j);
+            ImGui::Text("    3rd Voxel Dimension (Z)      : %.6f", fl.files[sf].pixdim_k);
+            ImGui::Text("    4th Voxel Dimension (T)      : %.6f", fl.files[sf].pixdim_t);
             ImGui::Text("  Nr. voxels (Nx × Ny × Nz × Nt) : %llu", fl.files[sf].nr_voxels * fl.files[sf].dim_t);
             ImGui::Text("    1st Data Axis Elements (Nx)  : %d"  , fl.files[sf].dim_i);
             ImGui::Text("    2nd Data Axis Elements (Ny)  : %d"  , fl.files[sf].dim_j);
@@ -952,7 +956,6 @@ namespace IDA
                                 request_image_data_update = true;
                             } else {
                                 SampleVoxelTimeCourseReference(fl.files[sf]);
-                                fl.files[sf].tc_lock = true;
                                 fl.files[sf].tc_show_model = false;
                                 request_image_data_update = true;
                             }
