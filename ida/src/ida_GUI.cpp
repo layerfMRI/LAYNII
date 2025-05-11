@@ -185,13 +185,13 @@ namespace IDA
         // Keyboard controls
         // --------------------------------------------------------------------------------------------------------
         if ( sf >= 0 ) {
-            if ( ImGui::IsKeyPressed(ImGuiKey_LeftBracket, true) ) {
+            if ( ImGui::IsKeyPressed(ImGuiKey_RightBracket, true) ) {
                 sf += 1;
                 if ( sf == nr_files ) {
                     sf = 0;
                 }
             }
-            if ( ImGui::IsKeyPressed(ImGuiKey_RightBracket, true) ) {
+            if ( ImGui::IsKeyPressed(ImGuiKey_LeftBracket, true) ) {
                 sf -= 1;
                 if ( sf == -1 ) {
                     sf = nr_files - 1;
@@ -944,7 +944,7 @@ namespace IDA
                             fl.computeCorrelationsForVolume_float(fl.files[sf]);
                         }
 
-                        if ( ImGui::Checkbox("Show Accordion Model", &fl.files[sf].tc_model_accordion) ) {
+                        if ( ImGui::Checkbox("Simple Blocks", &fl.files[sf].tc_model_accordion) ) {
                             if ( fl.files[sf].tc_model_accordion ) {
                                 SampleVoxelTimeCourseAccordionModel(fl.files[sf]);
                                 fl.files[sf].tc_lock = true;

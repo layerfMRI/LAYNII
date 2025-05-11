@@ -443,6 +443,9 @@ namespace IDA_IO
                     printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
                     gzread(file, buffer, READ_LIMIT);
                     for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
+                        // TODO: ind2sub4D_s_major
+                        // TODO: sub2ind4D_t_major
+                        // TODO: Track nr voxels per chunk to adjust the offset
                         fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
                     }
                 }
