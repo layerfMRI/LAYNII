@@ -78,7 +78,7 @@ int main(int argc, char*  argv[]) {
         return 2;
     }
 
-    log_welcome("LN2_SENSITIVITY - Ale WIP");
+    log_welcome("LN2_SENSITIVITY");
     log_nifti_descriptives(nii1);
 
     // Get dimensions of input
@@ -112,7 +112,7 @@ int main(int argc, char*  argv[]) {
     nifti_update_dims_from_array(nii_sensitivity);
 
     // // ========================================================================
-    cout << " Calculating sensitivity..." << endl;
+    cout << "\n  Calculating sensitivity..." << endl;
     // // ========================================================================
     // Compute L2 norm (Euclidean norm) across the time dimension
 

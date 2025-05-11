@@ -82,7 +82,7 @@ int main(int argc, char*  argv[]) {
         return 2;
     }
 
-    log_welcome("LN2_SPECIFICITY - Ale WIP");
+    log_welcome("LN2_SPECIFICITY");
     log_nifti_descriptives(nii1);
 
     // Get dimensions of input
@@ -116,7 +116,7 @@ int main(int argc, char*  argv[]) {
     nifti_update_dims_from_array(nii_specificity);
 
     // // ========================================================================
-    cout << " Calculating specificity..." << endl;
+    cout << "\n  Calculating specificity..." << endl;
     // // ========================================================================
     
     const float ONEPI = 3.14159265358979f;
