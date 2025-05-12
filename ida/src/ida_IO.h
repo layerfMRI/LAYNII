@@ -8,6 +8,7 @@
 #include <vector>
 #include <SDL.h>
 #include <algorithm>
+#include "../dep/idalib.h"
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include <SDL_opengles2.h>
 #else
@@ -443,9 +444,6 @@ namespace IDA_IO
                     printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
                     gzread(file, buffer, READ_LIMIT);
                     for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
-                        // TODO: ind2sub4D_s_major
-                        // TODO: sub2ind4D_t_major
-                        // TODO: Track nr voxels per chunk to adjust the offset
                         fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
                     }
                 }
@@ -484,18 +482,40 @@ namespace IDA_IO
                 uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(signed short);
                 uint64_t nr_voxels_remainder = remainder / sizeof(signed short);
                 signed short* buffer = (signed short*)malloc(READ_LIMIT);
+
+                printf("!!! TEST T MAJOR !!!\n"); 
+                
+                uint64_t size_x = static_cast<uint64_t>(fi.header.dim[1]);
+                uint64_t size_y = static_cast<uint64_t>(fi.header.dim[2]);
+                uint64_t size_z = static_cast<uint64_t>(fi.header.dim[3]);
+                uint64_t size_time = static_cast<uint64_t>(fi.header.dim[4]);
+                uint64_t it, ix, iy, iz;
+
                 for (uint64_t j = 0; j < nr_chunks; ++j) {
                     printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
                     gzread(file, buffer, READ_LIMIT);
                     for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
-                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                        // Compute linear index (xyzt)
+                        uint64_t ii = j*nr_voxels_per_chunk + i;
+                        // Compute T major indices (txyz)
+                        std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                        // Compute T major linear index
+                        uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                        // Copy data from xyzt to txyz order
+                        fi.p_data_float[k] = (float)buffer[i];
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
                 gzread(file, buffer, remainder);
                 for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
-                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    // Compute T major indices (txyz)
+                    std::tie(ix, iy, iz, it) = ida_ind2sub_4D(i, size_x, size_y, size_z);
+                    // Compute T major linear index
+                    uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                    // Copy data from xyzt to txyz order
+                    fi.p_data_float[k] = (float)buffer[i];
                 }
+                std::cout << "!!! HELLO !!!" << std::endl; 
                 gzclose(file);
                 free(buffer);
             } else if (fi.header.datatype == 512) {

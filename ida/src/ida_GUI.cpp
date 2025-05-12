@@ -1,6 +1,6 @@
 #include "ida_GUI.h"
 #include "ida_GUI_slices.h"
-#include "../dep/idalib.h"
+
 
 namespace IDA
 {
