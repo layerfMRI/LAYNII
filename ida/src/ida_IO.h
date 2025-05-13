@@ -412,6 +412,13 @@ namespace IDA_IO
             // Read buffer size
             const int READ_LIMIT = 1024 * 1024 * 1024;  // 1 GB in bytes
 
+            // Prep common variables
+            uint64_t size_x = static_cast<uint64_t>(fi.header.dim[1]);
+            uint64_t size_y = static_cast<uint64_t>(fi.header.dim[2]);
+            uint64_t size_z = static_cast<uint64_t>(fi.header.dim[3]);
+            uint64_t size_time = static_cast<uint64_t>(fi.header.dim[4]);
+            uint64_t it, ix, iy, iz;
+
             // --------------------------------------------------------------------------------------------------------
             // Handle different data types. 
             // --------------------------------------------------------------------------------------------------------
@@ -440,56 +447,6 @@ namespace IDA_IO
                 uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(unsigned char);
                 uint64_t nr_voxels_remainder = remainder / sizeof(unsigned char);
                 unsigned char* buffer = (unsigned char*)malloc(READ_LIMIT);
-                for (uint64_t j = 0; j < nr_chunks; ++j) {
-                    printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
-                    gzread(file, buffer, READ_LIMIT);
-                    for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
-                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
-                    }
-                }
-                printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
-                gzread(file, buffer, remainder);
-                for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
-                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
-                }
-                gzclose(file);
-                free(buffer);
-            } else if (fi.header.datatype == 256) {
-                uint64_t size_all_voxels = nr_data_points * sizeof(signed char);
-                uint64_t nr_chunks = size_all_voxels / READ_LIMIT;  // Integer division, quotient
-                uint64_t remainder = size_all_voxels % READ_LIMIT;  // Remainder
-                uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(signed char);
-                uint64_t nr_voxels_remainder = remainder / sizeof(signed char);
-                signed char* buffer = (signed char*)malloc(READ_LIMIT);
-                for (uint64_t j = 0; j < nr_chunks; ++j) {
-                    printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
-                    gzread(file, buffer, READ_LIMIT);
-                    for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
-                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
-                    }
-                }
-                printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
-                gzread(file, buffer, remainder);
-                for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
-                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
-                }
-                gzclose(file);
-                free(buffer);
-            } else if (fi.header.datatype == 4) {
-                uint64_t size_all_voxels = nr_data_points * sizeof(signed short);
-                uint64_t nr_chunks = size_all_voxels / READ_LIMIT;  // Integer division, quotient
-                uint64_t remainder = size_all_voxels % READ_LIMIT;  // Remainder
-                uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(signed short);
-                uint64_t nr_voxels_remainder = remainder / sizeof(signed short);
-                signed short* buffer = (signed short*)malloc(READ_LIMIT);
-
-                printf("!!! TEST T MAJOR !!!\n"); 
-                
-                uint64_t size_x = static_cast<uint64_t>(fi.header.dim[1]);
-                uint64_t size_y = static_cast<uint64_t>(fi.header.dim[2]);
-                uint64_t size_z = static_cast<uint64_t>(fi.header.dim[3]);
-                uint64_t size_time = static_cast<uint64_t>(fi.header.dim[4]);
-                uint64_t it, ix, iy, iz;
 
                 for (uint64_t j = 0; j < nr_chunks; ++j) {
                     printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
@@ -508,14 +465,87 @@ namespace IDA_IO
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
                 gzread(file, buffer, remainder);
                 for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
+                    // Compute linear index (xyzt)
+                    uint64_t ii = nr_chunks*nr_voxels_per_chunk + i;
                     // Compute T major indices (txyz)
-                    std::tie(ix, iy, iz, it) = ida_ind2sub_4D(i, size_x, size_y, size_z);
+                    std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
                     // Compute T major linear index
                     uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                     // Copy data from xyzt to txyz order
                     fi.p_data_float[k] = (float)buffer[i];
                 }
-                std::cout << "!!! HELLO !!!" << std::endl; 
+                gzclose(file);
+                free(buffer);
+            } else if (fi.header.datatype == 256) {
+                uint64_t size_all_voxels = nr_data_points * sizeof(signed char);
+                uint64_t nr_chunks = size_all_voxels / READ_LIMIT;  // Integer division, quotient
+                uint64_t remainder = size_all_voxels % READ_LIMIT;  // Remainder
+                uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(signed char);
+                uint64_t nr_voxels_remainder = remainder / sizeof(signed char);
+                signed char* buffer = (signed char*)malloc(READ_LIMIT);
+
+                for (uint64_t j = 0; j < nr_chunks; ++j) {
+                    printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
+                    gzread(file, buffer, READ_LIMIT);
+                    for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
+                        // Compute linear index (xyzt)
+                        uint64_t ii = j*nr_voxels_per_chunk + i;
+                        // Compute T major indices (txyz)
+                        std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                        // Compute T major linear index
+                        uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                        // Copy data from xyzt to txyz order
+                        fi.p_data_float[k] = (float)buffer[i];
+                    }
+                }
+                printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
+                gzread(file, buffer, remainder);
+                for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
+                    // Compute linear index (xyzt)
+                    uint64_t ii = nr_chunks*nr_voxels_per_chunk + i;
+                    // Compute T major indices (txyz)
+                    std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                    // Compute T major linear index
+                    uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                    // Copy data from xyzt to txyz order
+                    fi.p_data_float[k] = (float)buffer[i];
+                }
+                gzclose(file);
+                free(buffer);
+            } else if (fi.header.datatype == 4) {
+                uint64_t size_all_voxels = nr_data_points * sizeof(signed short);
+                uint64_t nr_chunks = size_all_voxels / READ_LIMIT;  // Integer division, quotient
+                uint64_t remainder = size_all_voxels % READ_LIMIT;  // Remainder
+                uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(signed short);
+                uint64_t nr_voxels_remainder = remainder / sizeof(signed short);
+                signed short* buffer = (signed short*)malloc(READ_LIMIT);
+                
+                for (uint64_t j = 0; j < nr_chunks; ++j) {
+                    printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
+                    gzread(file, buffer, READ_LIMIT);
+                    for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
+                        // Compute linear index (xyzt)
+                        uint64_t ii = j*nr_voxels_per_chunk + i;
+                        // Compute T major indices (txyz)
+                        std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                        // Compute T major linear index
+                        uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                        // Copy data from xyzt to txyz order
+                        fi.p_data_float[k] = (float)buffer[i];
+                    }
+                }
+                printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
+                gzread(file, buffer, remainder);
+                for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
+                    // Compute linear index (xyzt)
+                    uint64_t ii = nr_chunks*nr_voxels_per_chunk + i;
+                    // Compute T major indices (txyz)
+                    std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                    // Compute T major linear index
+                    uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                    // Copy data from xyzt to txyz order
+                    fi.p_data_float[k] = (float)buffer[i];
+                }
                 gzclose(file);
                 free(buffer);
             } else if (fi.header.datatype == 512) {
@@ -525,17 +555,32 @@ namespace IDA_IO
                 uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(unsigned short);
                 uint64_t nr_voxels_remainder = remainder / sizeof(unsigned short);
                 unsigned short* buffer = (unsigned short*)malloc(READ_LIMIT);
+
                 for (uint64_t j = 0; j < nr_chunks; ++j) {
                     printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
                     gzread(file, buffer, READ_LIMIT);
                     for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
-                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                        // Compute linear index (xyzt)
+                        uint64_t ii = j*nr_voxels_per_chunk + i;
+                        // Compute T major indices (txyz)
+                        std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                        // Compute T major linear index
+                        uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                        // Copy data from xyzt to txyz order
+                        fi.p_data_float[k] = (float)buffer[i];
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
                 gzread(file, buffer, remainder);
                 for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
-                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    // Compute linear index (xyzt)
+                    uint64_t ii = nr_chunks*nr_voxels_per_chunk + i;
+                    // Compute T major indices (txyz)
+                    std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                    // Compute T major linear index
+                    uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                    // Copy data from xyzt to txyz order
+                    fi.p_data_float[k] = (float)buffer[i];
                 }
                 gzclose(file);
                 free(buffer);
@@ -546,17 +591,32 @@ namespace IDA_IO
                 uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(signed int);
                 uint64_t nr_voxels_remainder = remainder / sizeof(signed int);
                 signed int* buffer = (signed int*)malloc(READ_LIMIT);
+
                 for (uint64_t j = 0; j < nr_chunks; ++j) {
                     printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
                     gzread(file, buffer, READ_LIMIT);
                     for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
-                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                        // Compute linear index (xyzt)
+                        uint64_t ii = j*nr_voxels_per_chunk + i;
+                        // Compute T major indices (txyz)
+                        std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                        // Compute T major linear index
+                        uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                        // Copy data from xyzt to txyz order
+                        fi.p_data_float[k] = (float)buffer[i];
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
                 gzread(file, buffer, remainder);
                 for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
-                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    // Compute linear index (xyzt)
+                    uint64_t ii = nr_chunks*nr_voxels_per_chunk + i;
+                    // Compute T major indices (txyz)
+                    std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                    // Compute T major linear index
+                    uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                    // Copy data from xyzt to txyz order
+                    fi.p_data_float[k] = (float)buffer[i];
                 }
                 gzclose(file);
                 free(buffer);
@@ -567,17 +627,32 @@ namespace IDA_IO
                 uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(float);
                 uint64_t nr_voxels_remainder = remainder / sizeof(float);
                 float* buffer = (float*)malloc(READ_LIMIT);
+
                 for (uint64_t j = 0; j < nr_chunks; ++j) {
                     printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
                     gzread(file, buffer, READ_LIMIT);
                     for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
-                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                        // Compute linear index (xyzt)
+                        uint64_t ii = j*nr_voxels_per_chunk + i;
+                        // Compute T major indices (txyz)
+                        std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                        // Compute T major linear index
+                        uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                        // Copy data from xyzt to txyz order
+                        fi.p_data_float[k] = (float)buffer[i];
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
                 gzread(file, buffer, remainder);
                 for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
-                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    // Compute linear index (xyzt)
+                    uint64_t ii = nr_chunks*nr_voxels_per_chunk + i;
+                    // Compute T major indices (txyz)
+                    std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                    // Compute T major linear index
+                    uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                    // Copy data from xyzt to txyz order
+                    fi.p_data_float[k] = (float)buffer[i];
                 }
                 gzclose(file);
                 free(buffer);
@@ -588,17 +663,32 @@ namespace IDA_IO
                 uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(unsigned int);
                 uint64_t nr_voxels_remainder = remainder / sizeof(unsigned int);
                 unsigned int* buffer = (unsigned int*)malloc(READ_LIMIT);
+
                 for (uint64_t j = 0; j < nr_chunks; ++j) {
                     printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
                     gzread(file, buffer, READ_LIMIT);
                     for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
-                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                        // Compute linear index (xyzt)
+                        uint64_t ii = j*nr_voxels_per_chunk + i;
+                        // Compute T major indices (txyz)
+                        std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                        // Compute T major linear index
+                        uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                        // Copy data from xyzt to txyz order
+                        fi.p_data_float[k] = (float)buffer[i];
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
                 gzread(file, buffer, remainder);
                 for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
-                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    // Compute linear index (xyzt)
+                    uint64_t ii = nr_chunks*nr_voxels_per_chunk + i;
+                    // Compute T major indices (txyz)
+                    std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                    // Compute T major linear index
+                    uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                    // Copy data from xyzt to txyz order
+                    fi.p_data_float[k] = (float)buffer[i];
                 }
                 gzclose(file);
                 free(buffer);
@@ -609,17 +699,32 @@ namespace IDA_IO
                 uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(double);
                 uint64_t nr_voxels_remainder = remainder / sizeof(double);
                 double* buffer = (double*)malloc(READ_LIMIT);
+
                 for (uint64_t j = 0; j < nr_chunks; ++j) {
                     printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
                     gzread(file, buffer, READ_LIMIT);
                     for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
-                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                        // Compute linear index (xyzt)
+                        uint64_t ii = j*nr_voxels_per_chunk + i;
+                        // Compute T major indices (txyz)
+                        std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                        // Compute T major linear index
+                        uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                        // Copy data from xyzt to txyz order
+                        fi.p_data_float[k] = (float)buffer[i];
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
                 gzread(file, buffer, remainder);
                 for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
-                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    // Compute linear index (xyzt)
+                    uint64_t ii = nr_chunks*nr_voxels_per_chunk + i;
+                    // Compute T major indices (txyz)
+                    std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                    // Compute T major linear index
+                    uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                    // Copy data from xyzt to txyz order
+                    fi.p_data_float[k] = (float)buffer[i];
                 }
                 gzclose(file);
                 free(buffer);
@@ -630,17 +735,32 @@ namespace IDA_IO
                 uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(long long);
                 uint64_t nr_voxels_remainder = remainder / sizeof(long long);
                 long long* buffer = (long long*)malloc(READ_LIMIT);
+
                 for (uint64_t j = 0; j < nr_chunks; ++j) {
                     printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
                     gzread(file, buffer, READ_LIMIT);
                     for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
-                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                        // Compute linear index (xyzt)
+                        uint64_t ii = j*nr_voxels_per_chunk + i;
+                        // Compute T major indices (txyz)
+                        std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                        // Compute T major linear index
+                        uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                        // Copy data from xyzt to txyz order
+                        fi.p_data_float[k] = (float)buffer[i];
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
                 gzread(file, buffer, remainder);
                 for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
-                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    // Compute linear index (xyzt)
+                    uint64_t ii = nr_chunks*nr_voxels_per_chunk + i;
+                    // Compute T major indices (txyz)
+                    std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                    // Compute T major linear index
+                    uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                    // Copy data from xyzt to txyz order
+                    fi.p_data_float[k] = (float)buffer[i];
                 }
                 gzclose(file);
                 free(buffer);
@@ -651,17 +771,32 @@ namespace IDA_IO
                 uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(unsigned long long);
                 uint64_t nr_voxels_remainder = remainder / sizeof(unsigned long long);
                 unsigned long long* buffer = (unsigned long long*)malloc(READ_LIMIT);
+
                 for (uint64_t j = 0; j < nr_chunks; ++j) {
                     printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
                     gzread(file, buffer, READ_LIMIT);
                     for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
-                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                        // Compute linear index (xyzt)
+                        uint64_t ii = j*nr_voxels_per_chunk + i;
+                        // Compute T major indices (txyz)
+                        std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                        // Compute T major linear index
+                        uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                        // Copy data from xyzt to txyz order
+                        fi.p_data_float[k] = (float)buffer[i];
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
                 gzread(file, buffer, remainder);
                 for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
-                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    // Compute linear index (xyzt)
+                    uint64_t ii = nr_chunks*nr_voxels_per_chunk + i;
+                    // Compute T major indices (txyz)
+                    std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                    // Compute T major linear index
+                    uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                    // Copy data from xyzt to txyz order
+                    fi.p_data_float[k] = (float)buffer[i];
                 }
                 gzclose(file);
                 free(buffer);
@@ -672,17 +807,32 @@ namespace IDA_IO
                 uint64_t nr_voxels_per_chunk = READ_LIMIT / sizeof(long double);
                 uint64_t nr_voxels_remainder = remainder / sizeof(long double);
                 long double* buffer = (long double*)malloc(READ_LIMIT);
+
                 for (uint64_t j = 0; j < nr_chunks; ++j) {
                     printf("\r  Reading chunks (%llu/%llu)...     ", j+1, nr_chunks+1); fflush(stdout);
                     gzread(file, buffer, READ_LIMIT);
                     for (uint64_t i = 0; i < nr_voxels_per_chunk; ++i) {
-                        fi.p_data_float[j*nr_voxels_per_chunk + i] = (float)buffer[i];
+                        // Compute linear index (xyzt)
+                        uint64_t ii = j*nr_voxels_per_chunk + i;
+                        // Compute T major indices (txyz)
+                        std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                        // Compute T major linear index
+                        uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                        // Copy data from xyzt to txyz order
+                        fi.p_data_float[k] = (float)buffer[i];
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
                 gzread(file, buffer, remainder);
                 for (uint64_t i = 0; i < nr_voxels_remainder; ++i) {
-                    fi.p_data_float[nr_chunks*nr_voxels_per_chunk + i] = (float)buffer[i];
+                    // Compute linear index (xyzt)
+                    uint64_t ii = nr_chunks*nr_voxels_per_chunk + i;
+                    // Compute T major indices (txyz)
+                    std::tie(ix, iy, iz, it) = ida_ind2sub_4D(ii, size_x, size_y, size_z);
+                    // Compute T major linear index
+                    uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                    // Copy data from xyzt to txyz order
+                    fi.p_data_float[k] = (float)buffer[i];
                 }
                 gzclose(file);
                 free(buffer);
@@ -899,10 +1049,12 @@ namespace IDA_IO
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t k = static_cast<uint64_t>(fi.display_k);
             uint64_t t = static_cast<uint64_t>(fi.display_t);
-            uint64_t nij = ni*nj;
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            // uint64_t nij = ni*nj;
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t j = 0; j < nj; ++j) {
-                    uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
+                    // uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
+                    uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                     uint64_t index2D = i + j*ni;
                     fi.p_sliceK_float[index2D] = fi.p_data_float[index4D];
                 }
@@ -914,12 +1066,14 @@ namespace IDA_IO
             uint64_t ni = static_cast<uint64_t>(fi.dim_i);
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
             uint64_t j = static_cast<uint64_t>(fi.display_j);
             uint64_t t = static_cast<uint64_t>(fi.display_t);
-            uint64_t nij = ni*nj;
+            // uint64_t nij = ni*nj;
             for (uint64_t i = 0; i < ni; i++) {
                 for (uint64_t k = 0; k < nk; k++) {
-                    uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
+                    // uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
+                    uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                     uint64_t index2D = i + k*ni;
                     fi.p_sliceJ_float[index2D] = fi.p_data_float[index4D];
                 }
@@ -931,12 +1085,14 @@ namespace IDA_IO
             uint64_t ni = static_cast<uint64_t>(fi.dim_i);
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
             uint64_t i = static_cast<uint64_t>(fi.display_i);
             uint64_t t = static_cast<uint64_t>(fi.display_t);
-            uint64_t nij = ni*nj;
+            // uint64_t nij = ni*nj;
             for (uint64_t j = 0; j < nj; j++) {
                 for (uint64_t k = 0; k < nk; k++) {
-                    uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
+                    // uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
+                    uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                     uint64_t index2D = j + k*nj;
                     fi.p_sliceI_float[index2D] = fi.p_data_float[index4D];
                 }
@@ -952,7 +1108,7 @@ namespace IDA_IO
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
             uint64_t k = static_cast<uint64_t>(fi.display_k);
-            uint64_t nij = ni*nj;
+            // uint64_t nij = ni*nj;
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t j = 0; j < nj; ++j) {
                     uint64_t index2D = i + j*ni;
@@ -961,13 +1117,15 @@ namespace IDA_IO
 
                     // Compute time mean
                     for (uint64_t t = 0; t < nt; ++t) {
-                        uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
+                        // uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         fi.p_sliceK_float_Tmean[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
                     }
 
                     // Compute time standard deviation
                     for (uint64_t t = 0; t < nt; ++t) {
-                        uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
+                        // uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         fi.p_sliceK_float_Tstd[index2D] = 
                             (fi.p_data_float[index4D] - fi.p_sliceK_float_Tmean[index2D])
                             * (fi.p_data_float[index4D] - fi.p_sliceK_float_Tmean[index2D]) / static_cast<float>(nt);
@@ -992,13 +1150,14 @@ namespace IDA_IO
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
             uint64_t j = static_cast<uint64_t>(fi.display_j);
-            uint64_t nij = ni*nj;
+            // uint64_t nij = ni*nj;
             for (uint64_t i = 0; i < ni; i++) {
                 for (uint64_t k = 0; k < nk; k++) {
                     uint64_t index2D = i + k*ni;
                     fi.p_sliceJ_float_Tmean[index2D] = 0;
                     for (uint64_t t = 0; t < nt; ++t) {
-                        uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
+                        // uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         fi.p_sliceJ_float_Tmean[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
                     }
                 }
@@ -1016,13 +1175,14 @@ namespace IDA_IO
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
             uint64_t i = static_cast<uint64_t>(fi.display_i);
-            uint64_t nij = ni*nj;
+            // uint64_t nij = ni*nj;
             for (uint64_t j = 0; j < nj; j++) {
                 for (uint64_t k = 0; k < nk; k++) {
                     uint64_t index2D = j + k*nj;
                     fi.p_sliceI_float_Tmean[index2D] = 0;
                     for (uint64_t t = 0; t < nt; ++t) {
-                        uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
+                        // uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         fi.p_sliceI_float_Tmean[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
                     }
                 }
@@ -1270,12 +1430,23 @@ namespace IDA_IO
         {
             float max_val = std::numeric_limits<float>::min();
             float min_val = std::numeric_limits<float>::max();
+            uint64_t size_x = static_cast<uint64_t>(fi.dim_i);
+            uint64_t size_y = static_cast<uint64_t>(fi.dim_j);
+            uint64_t size_z = static_cast<uint64_t>(fi.dim_k);
+            uint64_t size_time = static_cast<uint64_t>(fi.dim_t);
+            uint64_t it, ix, iy, iz;
+
+            // Only find min max based on the first volume (t==0)
             for (uint64_t i = 0; i < fi.nr_voxels; ++i) {
-                if (fi.p_data_float[i] < min_val) {
-                    min_val = fi.p_data_float[i];
+                // Compute XYZ major indices
+                std::tie(ix, iy, iz, it) = ida_ind2sub_4D(i, size_x, size_y, size_z);
+                // Compute T major linear index
+                uint64_t index4D = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
+                if (fi.p_data_float[index4D] < min_val) {
+                    min_val = fi.p_data_float[index4D];
                 }
-                if (fi.p_data_float[i] > max_val) {
-                    max_val = fi.p_data_float[i];
+                if (fi.p_data_float[index4D] > max_val) {
+                    max_val = fi.p_data_float[index4D];
                 }
             }
             fi.data_max = max_val;
@@ -1293,8 +1464,8 @@ namespace IDA_IO
             uint64_t ni = static_cast<uint64_t>(fi.dim_i);
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
-            uint64_t nt = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
-            uint64_t nij = ni*nj;
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
 
             // Prepare 1D arrays buffers that will be used to compute correlations
             float* x_arr = (float*)malloc(fi.dim_t * sizeof(float));
@@ -1302,7 +1473,7 @@ namespace IDA_IO
 
             // Prepare x array (selected voxel's data)
             if ( fi.tc_model_accordion ) {
-                for (uint64_t t = 0; t < nt; ++t) {
+                for (uint64_t t = 0; t < nt_chosen; ++t) {
                     if ( fi.tc_lock == false ) {
                         x_arr[t] = fi.p_tc_focus_float[t + fi.tc_onset];
                     } else {
@@ -1310,7 +1481,7 @@ namespace IDA_IO
                     }
                 }
             } else {
-                for (uint64_t t = 0; t < nt; ++t) {
+                for (uint64_t t = 0; t < nt_chosen; ++t) {
                     if ( fi.tc_lock == false ) {
                         x_arr[t] = fi.p_tc_focus_float[t + fi.tc_onset];
                     } else {
@@ -1321,11 +1492,11 @@ namespace IDA_IO
 
             // Pre compute reference time series terms
             double sum_X = 0, sum_X2 = 0;
-            for (uint64_t t = 0; t < nt; ++t) {
+            for (uint64_t t = 0; t < nt_chosen; ++t) {
                 sum_X += x_arr[t];
                 sum_X2 += x_arr[t]*x_arr[t];
             }
-            double T = static_cast<double>(nt);
+            double T = static_cast<double>(nt_chosen);
             double denom_X = sqrt(T * sum_X2 - sum_X * sum_X); 
 
             // --------------------------------------------------------------------------------------------------------
@@ -1334,17 +1505,16 @@ namespace IDA_IO
             uint64_t k = static_cast<uint64_t>(fi.display_k);
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t j = 0; j < nj; ++j) {
-                    uint64_t index3D = i + j*ni + k*nij;
 
                     // Prepare y array
-                    for (uint64_t t = 0; t < nt; ++t) {
-                        uint64_t index4D = index3D + fi.nr_voxels*(t + fi.tc_onset);
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t + fi.tc_onset, i, j, k, nt, ni, nj);
                         *(y_arr + t)= fi.p_data_float[index4D];
                     }
 
                     // Compute sums for covariance and variances
                     double sum_Y = 0, sum_XY = 0, sum_Y2 = 0;
-                    for (int t = 0; t < nt; ++t) {
+                    for (int t = 0; t < nt_chosen; ++t) {
                         sum_Y += y_arr[t];
                         sum_Y2 += y_arr[t] * y_arr[t];
                         sum_XY += x_arr[t] * y_arr[t];
@@ -1364,17 +1534,16 @@ namespace IDA_IO
             uint64_t j = static_cast<uint64_t>(fi.display_j);
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t k = 0; k < nk; ++k) {
-                    uint64_t index3D = i + j*ni + k*nij;
 
                     // Prepare y array
-                    for (uint64_t t = 0; t < nt; ++t) {
-                        uint64_t index4D = index3D + fi.nr_voxels*(t + fi.tc_onset);
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t + fi.tc_onset, i, j, k, nt, ni, nj);
                         *(y_arr + t)= fi.p_data_float[index4D];
                     }
 
                     // Compute sums for covariance and variances
                     double sum_Y = 0, sum_XY = 0, sum_Y2 = 0;
-                    for (int t = 0; t < nt; t++) {
+                    for (int t = 0; t < nt_chosen; t++) {
                         sum_Y += y_arr[t];
                         sum_Y2 += y_arr[t] * y_arr[t];
                         sum_XY += x_arr[t] * y_arr[t];
@@ -1394,17 +1563,16 @@ namespace IDA_IO
             uint64_t i = static_cast<uint64_t>(fi.display_i);
             for (uint64_t j = 0; j < nj; ++j) {
                 for (uint64_t k = 0; k < nk; ++k) {
-                    uint64_t index3D = i + j*ni + k*nij;
 
                     // Prepare y array
-                    for (uint64_t t = 0; t < nt; ++t) {
-                        uint64_t index4D = index3D + fi.nr_voxels*(t + fi.tc_onset);
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t + fi.tc_onset, i, j, k, nt, ni, nj);
                         *(y_arr + t)= fi.p_data_float[index4D];
                     }
 
                     // Compute sums for covariance and variances
                     double sum_Y = 0, sum_XY = 0, sum_Y2 = 0;
-                    for (int t = 0; t < nt; t++) {
+                    for (int t = 0; t < nt_chosen; t++) {
                         sum_Y += y_arr[t];
                         sum_Y2 += y_arr[t] * y_arr[t];
                         sum_XY += x_arr[t] * y_arr[t];
@@ -1421,7 +1589,12 @@ namespace IDA_IO
 
         void computeCorrelationsForVolume_float(FileInfo& fi)
         {
-            uint64_t nt = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t it, ix, iy, iz;
 
             // Prepare volume output
             float* temp_vol_map = (float*)malloc(fi.nr_voxels * sizeof(float));
@@ -1432,7 +1605,7 @@ namespace IDA_IO
 
             // Prepare x array (selected voxel's data)
             if ( fi.tc_model_accordion ) {
-                for (uint64_t t = 0; t < nt; ++t) {
+                for (uint64_t t = 0; t < nt_chosen; ++t) {
                     if ( fi.tc_lock == false ) {
                         x_arr[t] = fi.p_tc_focus_float[t + fi.tc_onset];
                     } else {
@@ -1440,7 +1613,7 @@ namespace IDA_IO
                     }
                 }
             } else {
-                for (uint64_t t = 0; t < nt; ++t) {
+                for (uint64_t t = 0; t < nt_chosen; ++t) {
                     if ( fi.tc_lock == false ) {
                         x_arr[t] = fi.p_tc_focus_float[t + fi.tc_onset];
                     } else {
@@ -1451,26 +1624,29 @@ namespace IDA_IO
 
             // Pre compute reference time series terms
             double sum_X = 0, sum_X2 = 0;
-            for (uint64_t t = 0; t < nt; ++t) {
+            for (uint64_t t = 0; t < nt_chosen; ++t) {
                 sum_X += x_arr[t];
                 sum_X2 += x_arr[t]*x_arr[t];
             }
 
-            double T = static_cast<double>(nt);
+            double T = static_cast<double>(nt_chosen);
             double denom_X = sqrt(T * sum_X2 - sum_X * sum_X); 
 
             // Compute correlations for the whole volume
             printf("\r  Computing...\n");
             for (uint64_t i = 0; i < fi.nr_voxels; ++i) {
+                // Compute T major indices (txyz)
+                std::tie(ix, iy, iz, it) = ida_ind2sub_4D_Tmajor(i, ni, nj, nk);
 
                 // Prepare y array
-                for (uint64_t t = 0; t < nt; ++t) {
-                    *(y_arr + t) = fi.p_data_float[i + fi.nr_voxels*(t + fi.tc_onset)];
+                for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    uint64_t index4D = ida_sub2ind_4D_Tmajor(t + fi.tc_onset, ix, iy, iz, nt, ni, nj);
+                    *(y_arr + t) = fi.p_data_float[index4D];
                 }
 
                 // Compute sums for covariance and variances
                 double sum_Y = 0, sum_XY = 0, sum_Y2 = 0;
-                for (uint64_t t = 0; t < nt; t++) {
+                for (uint64_t t = 0; t < nt_chosen; t++) {
                     sum_Y += y_arr[t];
                     sum_Y2 += y_arr[t] * y_arr[t];
                     sum_XY += x_arr[t] * y_arr[t];

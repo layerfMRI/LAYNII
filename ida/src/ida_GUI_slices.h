@@ -20,7 +20,8 @@ void SampleVoxelTimeCourseFocus(IDA_IO::FileInfo& fi) {
 
     // Load voxel data
     for (uint64_t t = 0; t < nt; ++t) {
-        uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+        // uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
         fi.p_tc_focus_float[t] = fi.p_data_float[index4D];
     }
 
@@ -39,7 +40,9 @@ void SampleVoxelTimeCourseReference(IDA_IO::FileInfo& fi) {
 
     // Load voxel data
     for (uint64_t t = 0; t < nt; ++t) {
-        uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+        // uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+
         // NOTE: Shift is implemented here. Modulus is implemented to work as in Python
         int64_t raw_tt = static_cast<int64_t>(t + fi.tc_shift) % static_cast<int64_t>(nt);  // Can return negative
         uint64_t tt = (static_cast<int64_t>(nt) + (raw_tt % static_cast<int64_t>(nt))) % static_cast<int64_t>(nt);
@@ -83,6 +86,7 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
     uint64_t ni = static_cast<uint64_t>(fi.dim_i);
     uint64_t nj = static_cast<uint64_t>(fi.dim_j);
     uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+    uint64_t nt = static_cast<uint64_t>(fi.dim_t);
 
     if ( ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone) && ImGui::BeginTooltip() ) {
         // ------------------------------------------------------------------------------------------------------------
@@ -110,7 +114,8 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
         uint64_t j = static_cast<uint64_t>(fi.voxel_j);
         uint64_t k = static_cast<uint64_t>(fi.voxel_k);
         uint64_t t = static_cast<uint64_t>(fi.voxel_t);
-        uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+        // uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
+        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
 
         // ------------------------------------------------------------------------------------------------------------
         // Pull voxel data from 4D into 1D memory, only if the hovered over voxel changes

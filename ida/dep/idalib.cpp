@@ -59,12 +59,13 @@ std::tuple<uint64_t, uint64_t, uint64_t, uint64_t> ida_ind2sub_4D_Tmajor(
 
 
 uint64_t ida_sub2ind_4D(const uint64_t x, const uint64_t y, const uint64_t z, const uint64_t t,
-                       const uint64_t size_x, const uint64_t size_y, const uint64_t size_z) {
+                        const uint64_t size_x, const uint64_t size_y, const uint64_t size_z) {
     return size_x * size_y * size_z * t + size_x * size_y * z + size_x * y + x;
 }
 
 uint64_t ida_sub2ind_4D_Tmajor(const uint64_t t, const uint64_t x, const uint64_t y, const uint64_t z,
-                              const uint64_t size_time, const uint64_t size_x, const uint64_t size_y) {
-    return t + size_time * (x + size_x * (y + size_y * z));
+                               const uint64_t size_time, const uint64_t size_x, const uint64_t size_y) {
+    // return t + size_time * (x + size_x * (y + size_y * z));
+    return size_time * size_x * size_y * z + size_time * size_x * y + size_time * x + t;
 }
 
