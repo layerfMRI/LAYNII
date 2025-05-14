@@ -93,6 +93,9 @@ namespace IDA
             std::string fileName = filePath.substr(filePath.find_last_of("/\\") + 1);
             fl.addFile(fileName, filePath);         // Add the new file to the list
             fl.fillFileInfo(fl.files[nr_files]);    // Fill minimum information
+            if (loaded_data == false) {  // Auto select the first added file
+                sf = 0;
+            }
         }
 
         // Add remove file button
