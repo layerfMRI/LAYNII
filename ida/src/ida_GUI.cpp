@@ -857,49 +857,58 @@ namespace IDA
                         }
                     }
 
-                    // ------------------------------------------------------------------------------------------------
-                    // Time course shift/lag adjustments
-                    // ------------------------------------------------------------------------------------------------
-                    ImGui::PushButtonRepeat(true);
-                    if ( ImGui::ArrowButton("##TC_shift_decrease", ImGuiDir_Left) ) {
-                        fl.files[sf].tc_shift -= 1;
-                        if ( fl.files[sf].tc_shift < -fl.files[sf].dim_t ) {
-                            fl.files[sf].tc_shift = -fl.files[sf].dim_t;
-                        }
-                        if ( fl.files[sf].tc_model_accordion == false ) {
-                            SampleVoxelTimeCourseReference(fl.files[sf]);
-                        }
-                        if ( fl.files[sf].visualization_mode == 3 ) {
-                            request_image_data_update = true;
-                        }
-                    }
-                    ImGui::SameLine(0.0f, spacing);
-                    if ( ImGui::ArrowButton("##TC_shift_increase", ImGuiDir_Right) ) {
-                        fl.files[sf].tc_shift += 1;
-                        if ( fl.files[sf].tc_shift > fl.files[sf].dim_t ) {
-                            fl.files[sf].tc_shift = fl.files[sf].dim_t;
-                        }
-                        if ( fl.files[sf].tc_model_accordion == false ) {
-                            SampleVoxelTimeCourseReference(fl.files[sf]);
-                        }
-                        if ( fl.files[sf].visualization_mode == 3 ) {
-                            request_image_data_update = true;
-                        }
-                    }
-                    ImGui::PopButtonRepeat();
-                    ImGui::SameLine();
-                    if ( ImGui::SliderInt("Ref. Shift", &fl.files[sf].tc_shift, -fl.files[sf].dim_t, fl.files[sf].dim_t, "%i") ) {
-                        if ( fl.files[sf].tc_model_accordion == false ) {
-                            SampleVoxelTimeCourseReference(fl.files[sf]);
-                        }
-                        if ( fl.files[sf].visualization_mode == 3 ) {
-                            request_image_data_update = true;
-                        }
-                    }
+                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    // NOTE: Deactivated while implementing the correlation shift
+                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-                    // ------------------------------------------------------------------------------------------------
-                    // CORRELATION CONTROLS
-                    // ------------------------------------------------------------------------------------------------
+                    // // ------------------------------------------------------------------------------------------------
+                    // // Time course shift/lag adjustments
+                    // // ------------------------------------------------------------------------------------------------
+                    // ImGui::PushButtonRepeat(true);
+                    // if ( ImGui::ArrowButton("##TC_shift_decrease", ImGuiDir_Left) ) {
+                    //     fl.files[sf].tc_shift -= 1;
+                    //     if ( fl.files[sf].tc_shift < -fl.files[sf].dim_t ) {
+                    //         fl.files[sf].tc_shift = -fl.files[sf].dim_t;
+                    //     }
+                    //     if ( fl.files[sf].tc_model_accordion == false ) {
+                    //         SampleVoxelTimeCourseReference(fl.files[sf]);
+                    //     }
+                    //     if ( fl.files[sf].visualization_mode == 3 ) {
+                    //         request_image_data_update = true;
+                    //     }
+                    // }
+                    // ImGui::SameLine(0.0f, spacing);
+                    // if ( ImGui::ArrowButton("##TC_shift_increase", ImGuiDir_Right) ) {
+                    //     fl.files[sf].tc_shift += 1;
+                    //     if ( fl.files[sf].tc_shift > fl.files[sf].dim_t ) {
+                    //         fl.files[sf].tc_shift = fl.files[sf].dim_t;
+                    //     }
+                    //     if ( fl.files[sf].tc_model_accordion == false ) {
+                    //         SampleVoxelTimeCourseReference(fl.files[sf]);
+                    //     }
+                    //     if ( fl.files[sf].visualization_mode == 3 ) {
+                    //         request_image_data_update = true;
+                    //     }
+                    // }
+                    // ImGui::PopButtonRepeat();
+                    // ImGui::SameLine();
+                    // if ( ImGui::SliderInt("Ref. Shift", &fl.files[sf].tc_shift, -fl.files[sf].dim_t, fl.files[sf].dim_t, "%i") ) {
+                    //     if ( fl.files[sf].tc_model_accordion == false ) {
+                    //         SampleVoxelTimeCourseReference(fl.files[sf]);
+                    //     }
+                    //     if ( fl.files[sf].visualization_mode == 3 ) {
+                    //         request_image_data_update = true;
+                    //     }
+                    // }
+                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                }
+
+                // ----------------------------------------------------------------------------------------------------
+                // CORRELATION CONTROLS
+                // ----------------------------------------------------------------------------------------------------
+                ImGui::Spacing();
+                ImGui::Separator();
+                if ( ImGui::CollapsingHeader("TIME COURSE CORRELATION CONTROLS", ImGuiTreeNodeFlags_DefaultOpen) ) {
                     if ( fl.files[sf].visualization_mode != 3 ) {
                         if ( ImGui::Button("Enable Correlations") ) {
                             show_voxel_inspector = true;
@@ -951,7 +960,7 @@ namespace IDA
                             fl.computeCorrelationsForVolume_float(fl.files[sf]);
                         }
 
-                        if ( ImGui::Checkbox("Simple Blocks", &fl.files[sf].tc_model_accordion) ) {
+                        if ( ImGui::Checkbox("Model Simple Blocks", &fl.files[sf].tc_model_accordion) ) {
                             if ( fl.files[sf].tc_model_accordion ) {
                                 SampleVoxelTimeCourseAccordionModel(fl.files[sf]);
                                 fl.files[sf].tc_lock = true;
@@ -962,20 +971,65 @@ namespace IDA
                                 fl.files[sf].tc_show_model = false;
                                 request_image_data_update = true;
                             }
-                        }
+                        } 
                     }
 
                     if ( fl.files[sf].tc_model_accordion ) {
-                        if (ImGui::SliderInt("Model Period", &fl.files[sf].tc_model_period, 1, fl.files[sf].dim_t, "%i") ) {
+                        // Model Period
+                        ImGui::PushButtonRepeat(true);
+                        if (ImGui::ArrowButton("##ModelPeriod_decrease", ImGuiDir_Left)) {
+                            fl.files[sf].tc_model_period -= 1;
+                            if (fl.files[sf].tc_model_period < 1) {
+                                fl.files[sf].tc_model_period = 1;
+                            }
                             SampleVoxelTimeCourseAccordionModel(fl.files[sf]);
                             request_image_data_update = true;
                         }
-                        
-                        if ( ImGui::SliderInt("Model Shift", &fl.files[sf].tc_model_shift,
-                                              -fl.files[sf].tc_model_period*2, fl.files[sf].tc_model_period*2, "%i") ) {
+                        ImGui::SameLine(0.0f, spacing);
+                        if (ImGui::ArrowButton("##ModelPeriod_increase", ImGuiDir_Right)) {
+                            fl.files[sf].tc_model_period += 1;
+                            if (fl.files[sf].tc_model_period > fl.files[sf].dim_t) {
+                                fl.files[sf].tc_model_period = fl.files[sf].dim_t;
+                            }
                             SampleVoxelTimeCourseAccordionModel(fl.files[sf]);
                             request_image_data_update = true;
                         }
+                        ImGui::PopButtonRepeat();
+                        ImGui::SameLine();
+                        if (ImGui::SliderInt("##ModelPeriod", &fl.files[sf].tc_model_period, 1, fl.files[sf].dim_t, "%i")) {
+                            SampleVoxelTimeCourseAccordionModel(fl.files[sf]);
+                            request_image_data_update = true;
+                        }     
+                        ImGui::SameLine();
+                        ImGui::Text("Period");
+
+                        // Model Shift
+                        ImGui::PushButtonRepeat(true);
+                        if (ImGui::ArrowButton("##ModelShift_decrease", ImGuiDir_Left)) {
+                            fl.files[sf].tc_model_shift -= 1;
+                            if (fl.files[sf].tc_model_shift < -fl.files[sf].dim_t) {
+                                fl.files[sf].tc_model_shift = -fl.files[sf].dim_t;
+                            }
+                            SampleVoxelTimeCourseAccordionModel(fl.files[sf]);
+                            request_image_data_update = true;
+                        }
+                        ImGui::SameLine(0.0f, spacing);
+                        if (ImGui::ArrowButton("##ModelShift_increase", ImGuiDir_Right)) {
+                            fl.files[sf].tc_model_shift += 1;
+                            if (fl.files[sf].tc_model_shift > fl.files[sf].dim_t) {
+                                fl.files[sf].tc_model_shift = fl.files[sf].dim_t;
+                            }
+                            SampleVoxelTimeCourseAccordionModel(fl.files[sf]);
+                            request_image_data_update = true;
+                        }
+                        ImGui::PopButtonRepeat();
+                        ImGui::SameLine();
+                        if (ImGui::SliderInt("##ModelShift", &fl.files[sf].tc_model_shift, -fl.files[sf].dim_t, fl.files[sf].dim_t, "%i")) {
+                            SampleVoxelTimeCourseAccordionModel(fl.files[sf]);
+                            request_image_data_update = true;
+                        }     
+                        ImGui::SameLine();
+                        ImGui::Text("Shift");
                     }
                 }
 
