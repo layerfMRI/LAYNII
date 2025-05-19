@@ -1,5 +1,7 @@
 #include "ida_GUI.h"
 #include "ida_GUI_slices.h"
+#include <iostream>
+#include <fstream>
 
 
 namespace IDA
@@ -89,12 +91,20 @@ namespace IDA
         {
             // Open a file dialog or get the file path in some way
             std::string filePath = str_input;
-            // Extract the file name from the path
-            std::string fileName = filePath.substr(filePath.find_last_of("/\\") + 1);
-            fl.addFile(fileName, filePath);         // Add the new file to the list
-            fl.fillFileInfo(fl.files[nr_files]);    // Fill minimum information
-            if (loaded_data == false) {  // Auto select the first added file
-                sf = 0;
+
+            // Check whether the file exists
+            std::ifstream file(filePath);
+            if (file.good()) {
+                std::cout << "File exists.\n";
+                // Extract the file name from the path
+                std::string fileName = filePath.substr(filePath.find_last_of("/\\") + 1);
+                fl.addFile(fileName, filePath);         // Add the new file to the list
+                fl.fillFileInfo(fl.files[nr_files]);    // Fill minimum information
+                if (loaded_data == false) {  // Auto select the first added file
+                    sf = 0;
+                }
+            } else {
+                std::cout << "File does not exist! Check the input path.\n";
             }
         }
 
