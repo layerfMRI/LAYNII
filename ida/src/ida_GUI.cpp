@@ -76,9 +76,12 @@ namespace IDA
         // ------------------------------------------------------------------------------------------------------------
         ImGui::Begin("File Menu");
 
+        ImVec4 bg_color = ImGui::GetStyleColorVec4(ImGuiCol_WindowBg); // Push style colors to match background       
+        ImGui::PushStyleColor(ImGuiCol_Button, bg_color);  // Override only the idle button background color
         if (ImGui::Button("LayNii IDA [PreAlpha-1]")) {
             ImGui::OpenPopup("LayNii IDA (Integrated Discovery Application)");
         }
+        ImGui::PopStyleColor();
 
         if (ImGui::BeginPopupModal("LayNii IDA (Integrated Discovery Application)", nullptr,
                                    ImGuiWindowFlags_AlwaysAutoResize))
@@ -209,7 +212,7 @@ namespace IDA
                     free(fl.files[sf].p_sliceJ_uint8);
                     free(fl.files[sf].p_sliceI_uint8);
                     free(fl.files[sf].p_tc_focus_float);
-                    free(fl.files[sf].p_tc_refer_float);                
+                    free(fl.files[sf].p_tc_refer_float);
                 }
                 fl.removeFile(sf);
                 nr_files -= 1;
@@ -225,9 +228,9 @@ namespace IDA
                 fl.loadSliceJ_float(fl.files[sf]);
                 fl.loadSliceI_float(fl.files[sf]);
 
-                fl.loadSliceK_uint8(fl.files[sf]);
-                fl.loadSliceJ_uint8(fl.files[sf]);
-                fl.loadSliceI_uint8(fl.files[sf]);
+                fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float);
+                fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float);
+                fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float);
 
                 fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j,
                                              fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
@@ -777,9 +780,9 @@ namespace IDA
                     if (ImGui::Button("Enable Overlay")) {
                         fl.prepareRBGSlices(fl.files[sf]);
 
-                        fl.loadSliceK_uint8(fl.files[sf]);
-                        fl.loadSliceJ_uint8(fl.files[sf]);
-                        fl.loadSliceI_uint8(fl.files[sf]);
+                        fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float);
+                        fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float);
+                        fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float);
 
                         fl.loadSliceK_RGB_uint8(fl.files[sf]);
                         fl.loadSliceJ_RGB_uint8(fl.files[sf]);
@@ -1131,54 +1134,85 @@ namespace IDA
                     }
                 }
 
-                // // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                // ImGui::SeparatorText("[WIP] QUALITY CONTROLS");
-                // // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                // if ( fl.files[sf].visualization_mode != 2 ) {
-                //     if ( ImGui::Button("Enable Descriptives") ) {
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                ImGui::Spacing();
+                ImGui::Separator();
+                if ( ImGui::CollapsingHeader("QUALITY ASSURANCE CONTROLS", ImGuiTreeNodeFlags_DefaultOpen) ) {
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    if ( fl.files[sf].tc_QA_type != 1 ) {
+                        if ( ImGui::Button("Enable tMean ") ) {
 
-                //         // Prepare data to hold correlation maps
-                //         free(fl.files[sf].p_sliceK_float_Tmean);
-                //         free(fl.files[sf].p_sliceJ_float_Tmean);
-                //         free(fl.files[sf].p_sliceI_float_Tmean);
-                //         free(fl.files[sf].p_sliceK_float_Tstd);
-                //         free(fl.files[sf].p_sliceJ_float_Tstd);
-                //         free(fl.files[sf].p_sliceI_float_Tstd);
+                            // Prepare data to hold tMean maps
+                            free(fl.files[sf].p_sliceK_float_QA);
+                            free(fl.files[sf].p_sliceJ_float_QA);
+                            free(fl.files[sf].p_sliceI_float_QA);
+                            fl.files[sf].p_sliceK_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
+                            fl.files[sf].p_sliceJ_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
+                            fl.files[sf].p_sliceI_float_QA = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
 
-                //         fl.files[sf].p_sliceK_float_Tmean = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
-                //         fl.files[sf].p_sliceJ_float_Tmean = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
-                //         fl.files[sf].p_sliceI_float_Tmean = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
-                //         fl.files[sf].p_sliceK_float_Tstd = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
-                //         fl.files[sf].p_sliceJ_float_Tstd = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
-                //         fl.files[sf].p_sliceI_float_Tstd = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
+                            // Enable real time time mean
+                            fl.loadSliceK_float_tMean(fl.files[sf]);
+                            fl.loadSliceJ_float_tMean(fl.files[sf]);
+                            fl.loadSliceI_float_tMean(fl.files[sf]);
 
-                //         // Enable real time time mean
-                //         fl.loadSliceK_Tmean_float(fl.files[sf]);
-                //         fl.loadSliceJ_Tmean_float(fl.files[sf]);
-                //         fl.loadSliceI_Tmean_float(fl.files[sf]);
+                            fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float_QA);
+                            fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float_QA);
+                            fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float_QA);
 
-                //         fl.loadSliceK_uint8(fl.files[sf]);
-                //         fl.loadSliceJ_uint8(fl.files[sf]);
-                //         fl.loadSliceI_uint8(fl.files[sf]);
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j,
+                                                         fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k,
+                                                         fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k,
+                                                         fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
 
-                //         fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j,
-                //                                      fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
-                //         fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k,
-                //                                      fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
-                //         fl.uploadTextureDataToOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k,
-                //                                      fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
+                            fl.files[sf].tc_QA_type = 1;
+                            request_image_data_update = true;
+                        }
+                    } else {
+                        if ( ImGui::Button("Disable tMean") ) {
+                            request_image_data_update = true;
+                            fl.files[sf].tc_QA_type = 0;
+                        }
+                    }
 
-                //         fl.files[sf].visualization_mode = 2;
-                //         request_image_data_update = true;
-                //     }
-                // } else {
-                //     if ( ImGui::Button("Disable Tmean") ) {
-                //         request_image_data_update = true;
-                //         fl.files[sf].visualization_mode = 0;
-                //     }
-                //     ImGui::Checkbox("Time Mean", &fl.files[sf].tc_show_Tmean); ImGui::SameLine();
-                //     ImGui::Checkbox("Time Std ", &fl.files[sf].tc_show_Tstd);
-                // }
+                    ImGui::SameLine();
+                    if ( fl.files[sf].tc_QA_type != 2 ) {
+                        if ( ImGui::Button("Enable tSD ") ) {
+
+                            // Prepare data to hold tMean maps
+                            free(fl.files[sf].p_sliceK_float_QA);
+                            free(fl.files[sf].p_sliceJ_float_QA);
+                            free(fl.files[sf].p_sliceI_float_QA);
+                            fl.files[sf].p_sliceK_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
+                            fl.files[sf].p_sliceJ_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
+                            fl.files[sf].p_sliceI_float_QA = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
+
+                            // Enable real time time mean
+                            fl.loadSliceK_float_tSD(fl.files[sf]);
+                            fl.loadSliceJ_float_tSD(fl.files[sf]);
+                            fl.loadSliceI_float_tSD(fl.files[sf]);
+
+                            fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float_QA);
+                            fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float_QA);
+                            fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float_QA);
+
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j,
+                                                         fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k,
+                                                         fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k,
+                                                         fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
+
+                            fl.files[sf].tc_QA_type = 2;
+                            request_image_data_update = true;
+                        }
+                    } else {
+                        if ( ImGui::Button("Disable tSD") ) {
+                            fl.files[sf].tc_QA_type = 0;
+                        }
+                    }
+                }
             }
         }
         ImGui::End();
@@ -1248,45 +1282,44 @@ namespace IDA
             // --------------------------------------------------------------------------------------------------------
             if ( fl.files[sf].visualization_mode == 0 ) {
                 if ( request_image_data_update ) {
-                    fl.loadSliceK_float(fl.files[sf]);
-                    fl.loadSliceJ_float(fl.files[sf]);
-                    fl.loadSliceI_float(fl.files[sf]);
+                    if ( fl.files[sf].tc_QA_type == 0 ) {  // Direct data
+                        fl.loadSliceK_float(fl.files[sf]);
+                        fl.loadSliceJ_float(fl.files[sf]);
+                        fl.loadSliceI_float(fl.files[sf]);
+                    } else if ( fl.files[sf].tc_QA_type == 1 ) {  // tMean
+                        fl.loadSliceK_float_tMean(fl.files[sf]);
+                        fl.loadSliceJ_float_tMean(fl.files[sf]);
+                        fl.loadSliceI_float_tMean(fl.files[sf]);
+                    } else if ( fl.files[sf].tc_QA_type == 2 ) {  // tSD
+                        fl.loadSliceK_float_tSD(fl.files[sf]);
+                        fl.loadSliceJ_float_tSD(fl.files[sf]);
+                        fl.loadSliceI_float_tSD(fl.files[sf]);
+                    }
                     request_image_update = true;
                 }
                 
                 if ( request_image_update ) {
-                    fl.loadSliceK_uint8(fl.files[sf]);
-                    fl.updateTextureDataInOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j, 
-                                                 fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
-                    fl.loadSliceJ_uint8(fl.files[sf]);
-                    fl.updateTextureDataInOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k, 
-                                                 fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
-                    fl.loadSliceI_uint8(fl.files[sf]);
-                    fl.updateTextureDataInOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k, 
-                                                 fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
-                }
-
-            // --------------------------------------------------------------------------------------------------------
-            // Time mean mode
-            // --------------------------------------------------------------------------------------------------------
-            } else if ( fl.files[sf].visualization_mode == 2 ) {
-                if ( request_image_data_update ) {
-                    fl.loadSliceK_Tmean_float(fl.files[sf]);
-                    fl.loadSliceJ_Tmean_float(fl.files[sf]);
-                    fl.loadSliceI_Tmean_float(fl.files[sf]);
-                    request_image_update = true;
-                }
-                
-                if ( request_image_update ) {
-                    fl.loadSliceK_uint8(fl.files[sf]);
-                    fl.updateTextureDataInOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j, 
-                                                 fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
-                    fl.loadSliceJ_uint8(fl.files[sf]);
-                    fl.updateTextureDataInOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k, 
-                                                 fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
-                    fl.loadSliceI_uint8(fl.files[sf]);
-                    fl.updateTextureDataInOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k, 
-                                                 fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
+                    if ( fl.files[sf].tc_QA_type == 0 ) {  // Direct data
+                        fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float);
+                        fl.updateTextureDataInOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j, 
+                                                     fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
+                        fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float);
+                        fl.updateTextureDataInOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k, 
+                                                     fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
+                        fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float);
+                        fl.updateTextureDataInOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k, 
+                                                     fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
+                    } else { // QA mode
+                        fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float_QA);
+                        fl.updateTextureDataInOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j, 
+                                                     fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
+                        fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float_QA);
+                        fl.updateTextureDataInOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k, 
+                                                     fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
+                        fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float_QA);
+                        fl.updateTextureDataInOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k, 
+                                                     fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
+                    }
                 }
 
             // --------------------------------------------------------------------------------------------------------
@@ -1301,15 +1334,15 @@ namespace IDA
                 }
                 
                 if ( request_image_update ) {
-                    fl.loadSliceK_uint8(fl.files[sf]);
+                    fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float);
                     fl.loadSliceK_RGB_uint8(fl.files[sf]);
                     fl.updateTextureDataInOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_j, 
                                                      fl.files[sf].textureIDk_RGB, fl.files[sf].p_sliceK_RGB_uint8);
-                    fl.loadSliceJ_uint8(fl.files[sf]);
+                    fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float);
                     fl.loadSliceJ_RGB_uint8(fl.files[sf]);
                     fl.updateTextureDataInOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_k, 
                                                      fl.files[sf].textureIDj_RGB, fl.files[sf].p_sliceJ_RGB_uint8);
-                    fl.loadSliceI_uint8(fl.files[sf]);
+                    fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float);
                     fl.loadSliceI_RGB_uint8(fl.files[sf]);
                     fl.updateTextureDataInOpenGL_RGB(fl.files[sf].dim_j, fl.files[sf].dim_k, 
                                                      fl.files[sf].textureIDi_RGB, fl.files[sf].p_sliceI_RGB_uint8);
@@ -1329,9 +1362,9 @@ namespace IDA
                 if ( request_image_update ) {
                     fl.computeCorrelationsForSlices_float(fl.files[sf]);
 
-                    fl.loadSliceK_uint8(fl.files[sf]);
-                    fl.loadSliceJ_uint8(fl.files[sf]);
-                    fl.loadSliceI_uint8(fl.files[sf]);
+                    fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float);
+                    fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float);
+                    fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float);
 
                     fl.loadSliceK_Correlations_uint8(fl.files[sf]);
                     fl.loadSliceJ_Correlations_uint8(fl.files[sf]);
@@ -1351,7 +1384,7 @@ namespace IDA
         }
 
         // ============================================================================================================
-        // WIP
+        // NOTE: This sections is for developers
         // ============================================================================================================
         // Demo window
         if (show_demo_window)

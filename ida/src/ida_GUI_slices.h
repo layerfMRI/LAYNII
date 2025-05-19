@@ -114,7 +114,6 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
         uint64_t j = static_cast<uint64_t>(fi.voxel_j);
         uint64_t k = static_cast<uint64_t>(fi.voxel_k);
         uint64_t t = static_cast<uint64_t>(fi.voxel_t);
-        // uint64_t index4D = i + j*ni + k*ni*nj + fi.nr_voxels*t;
         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
 
         // ------------------------------------------------------------------------------------------------------------
@@ -146,10 +145,44 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
         // Render inspector fields
         // ------------------------------------------------------------------------------------------------------------
         if ( show_voxel_value ) {
-            ImGui::Text("Value : %.3f", fi.p_data_float[fi.focus_voxel_index4D]);
-            if ( visualization_mode == 3 ) {
-                ImGui::SameLine();
-                ImGui::Text("| Corr : [WIP]");
+            ImGui::Text("Value = %.3f", fi.p_data_float[fi.focus_voxel_index4D]);
+
+            // Print QA values
+            if ( fi.tc_QA_type != 0 ) {
+
+                float value_QA;
+                if ( slice_window == 3 ) {
+                    uint64_t index2D = i + j*ni;
+                    value_QA = fi.p_sliceK_float_QA[index2D];
+                } else if ( slice_window == 2 ) {
+                    uint64_t index2D = i + k*ni;
+                    value_QA = fi.p_sliceJ_float_QA[index2D];
+                } else if ( slice_window == 1 ) {
+                    uint64_t index2D = j + k*nj;
+                    value_QA = fi.p_sliceI_float_QA[index2D];
+                }
+
+                if ( fi.tc_QA_type == 1 ) {
+                    ImGui::Text("tMean = %.3f", value_QA);
+                } else if ( fi.tc_QA_type == 2 ) {
+                    ImGui::Text("tSD   = %.3f", value_QA);
+                }
+            }
+
+            // Print correlation values
+            if ( fi.visualization_mode == 3 ) {
+                float value_corr = 0.0f;
+                if ( slice_window == 3 ) {
+                    uint64_t index2D = i + j*ni;
+                    value_corr = fi.p_sliceK_float_corr[index2D];
+                } else if ( slice_window == 2 ) {
+                    uint64_t index2D = i + k*ni;
+                    value_corr = fi.p_sliceJ_float_corr[index2D];
+                } else if ( slice_window == 1 ) {
+                    uint64_t index2D = j + k*nj;
+                    value_corr = fi.p_sliceI_float_corr[index2D];
+                }
+                ImGui::Text("Corr. = %.3f", value_corr);
             }
         }
         if ( show_voxel_indices ) {

@@ -143,18 +143,15 @@ namespace IDA_IO
         float*      p_tc_model_float;       // Model time course
         int         tc_model_period;        // Period of the accordion model
         int         tc_model_shift;         // Shift accordion model
-        // Correlation related ----------------------------------------------------------------------------------------
-        bool        tc_show_Tmean;          // Show time course mean
-        bool        tc_show_Tstd;           // Show time course standard deviation
-        float*      p_sliceK_float_Tmean;   // Holds time mean data
-        float*      p_sliceJ_float_Tmean;   // Holds time mean data
-        float*      p_sliceI_float_Tmean;   // Holds time mean data
-        float*      p_sliceK_float_Tstd;    // Holds time strandard deviation data
-        float*      p_sliceJ_float_Tstd;    // Holds time strandard deviation data
-        float*      p_sliceI_float_Tstd;    // Holds time strandard deviation data
         float*      p_sliceK_float_corr;    // Holds correlation data
         float*      p_sliceJ_float_corr;    // Holds correlation data
         float*      p_sliceI_float_corr;    // Holds correlation data
+        // Correlation related ----------------------------------------------------------------------------------------
+        uint8_t     tc_QA_type;             // Quality assurance metrics (1: tMean, 2:tSNR, 3:Skew, 4:Kurtosis)
+        float*      p_sliceK_float_QA;      // Holds quality assurance data
+        float*      p_sliceJ_float_QA;      // Holds quality assurance data
+        float*      p_sliceI_float_QA;      // Holds quality assurance data
+        // Visualization modes ----------------------------------------------------------------------------------------
         int         visualization_mode;     // 0: grayscale, 1: RGB red overlay, 3: RGB correlation overlay
         // Add more file-related information as needed
     };
@@ -385,12 +382,12 @@ namespace IDA_IO
             free(fi.p_tc_focus_float);
             free(fi.p_tc_refer_float);
             free(fi.p_tc_model_float);
-            free(fi.p_sliceK_float_Tmean);
-            free(fi.p_sliceJ_float_Tmean);
-            free(fi.p_sliceI_float_Tmean);
             free(fi.p_sliceK_float_corr);
             free(fi.p_sliceJ_float_corr);
             free(fi.p_sliceI_float_corr);
+            free(fi.p_sliceK_float_QA);
+            free(fi.p_sliceJ_float_QA);
+            free(fi.p_sliceI_float_QA);
 
             // Open the gzip-compressed file using zlib
             const char* cString = fi.path.c_str();
@@ -418,6 +415,15 @@ namespace IDA_IO
             uint64_t size_z = static_cast<uint64_t>(fi.header.dim[3]);
             uint64_t size_time = static_cast<uint64_t>(fi.header.dim[4]);
             uint64_t it, ix, iy, iz;
+
+            // Check for slope = 0, for cases where nifti header is incorrectly tempered with
+            if ( fi.header.scl_slope == 0.0f ) {
+                printf("\n  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                printf("\n  Nifti heade 'scl_slope' is zero! This nifti file has been improperly tempered with!");
+                printf("\n  Setting 'scl_slope' to 1. Otherwise, all voxels will be zero.\n");
+                printf("\n  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                fi.header.scl_slope = 1.0f;
+            }
 
             // --------------------------------------------------------------------------------------------------------
             // Handle different data types. 
@@ -460,6 +466,9 @@ namespace IDA_IO
                         uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                         // Copy data from xyzt to txyz order
                         fi.p_data_float[k] = (float)buffer[i];
+                        // Scale and translate based on nifti header
+                        fi.p_data_float[k] *= fi.header.scl_slope;
+                        fi.p_data_float[k] += fi.header.scl_inter;
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
@@ -473,6 +482,9 @@ namespace IDA_IO
                     uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                     // Copy data from xyzt to txyz order
                     fi.p_data_float[k] = (float)buffer[i];
+                    // Scale and translate based on nifti header
+                    fi.p_data_float[k] *= fi.header.scl_slope;
+                    fi.p_data_float[k] += fi.header.scl_inter;
                 }
                 gzclose(file);
                 free(buffer);
@@ -496,6 +508,9 @@ namespace IDA_IO
                         uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                         // Copy data from xyzt to txyz order
                         fi.p_data_float[k] = (float)buffer[i];
+                        // Scale and translate based on nifti header
+                        fi.p_data_float[k] *= fi.header.scl_slope;
+                        fi.p_data_float[k] += fi.header.scl_inter;
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
@@ -509,6 +524,9 @@ namespace IDA_IO
                     uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                     // Copy data from xyzt to txyz order
                     fi.p_data_float[k] = (float)buffer[i];
+                    // Scale and translate based on nifti header
+                    fi.p_data_float[k] *= fi.header.scl_slope;
+                    fi.p_data_float[k] += fi.header.scl_inter;
                 }
                 gzclose(file);
                 free(buffer);
@@ -532,6 +550,9 @@ namespace IDA_IO
                         uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                         // Copy data from xyzt to txyz order
                         fi.p_data_float[k] = (float)buffer[i];
+                        // Scale and translate based on nifti header
+                        fi.p_data_float[k] *= fi.header.scl_slope;
+                        fi.p_data_float[k] += fi.header.scl_inter;
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
@@ -545,6 +566,9 @@ namespace IDA_IO
                     uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                     // Copy data from xyzt to txyz order
                     fi.p_data_float[k] = (float)buffer[i];
+                    // Scale and translate based on nifti header
+                    fi.p_data_float[k] *= fi.header.scl_slope;
+                    fi.p_data_float[k] += fi.header.scl_inter;
                 }
                 gzclose(file);
                 free(buffer);
@@ -568,6 +592,9 @@ namespace IDA_IO
                         uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                         // Copy data from xyzt to txyz order
                         fi.p_data_float[k] = (float)buffer[i];
+                        // Scale and translate based on nifti header
+                        fi.p_data_float[k] *= fi.header.scl_slope;
+                        fi.p_data_float[k] += fi.header.scl_inter;
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
@@ -581,6 +608,9 @@ namespace IDA_IO
                     uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                     // Copy data from xyzt to txyz order
                     fi.p_data_float[k] = (float)buffer[i];
+                    // Scale and translate based on nifti header
+                    fi.p_data_float[k] *= fi.header.scl_slope;
+                    fi.p_data_float[k] += fi.header.scl_inter;
                 }
                 gzclose(file);
                 free(buffer);
@@ -604,6 +634,9 @@ namespace IDA_IO
                         uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                         // Copy data from xyzt to txyz order
                         fi.p_data_float[k] = (float)buffer[i];
+                        // Scale and translate based on nifti header
+                        fi.p_data_float[k] *= fi.header.scl_slope;
+                        fi.p_data_float[k] += fi.header.scl_inter;
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
@@ -617,6 +650,9 @@ namespace IDA_IO
                     uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                     // Copy data from xyzt to txyz order
                     fi.p_data_float[k] = (float)buffer[i];
+                    // Scale and translate based on nifti header
+                    fi.p_data_float[k] *= fi.header.scl_slope;
+                    fi.p_data_float[k] += fi.header.scl_inter;
                 }
                 gzclose(file);
                 free(buffer);
@@ -640,6 +676,9 @@ namespace IDA_IO
                         uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                         // Copy data from xyzt to txyz order
                         fi.p_data_float[k] = (float)buffer[i];
+                        // Scale and translate based on nifti header
+                        fi.p_data_float[k] *= fi.header.scl_slope;
+                        fi.p_data_float[k] += fi.header.scl_inter;
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
@@ -653,6 +692,9 @@ namespace IDA_IO
                     uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                     // Copy data from xyzt to txyz order
                     fi.p_data_float[k] = (float)buffer[i];
+                    // Scale and translate based on nifti header
+                    fi.p_data_float[k] *= fi.header.scl_slope;
+                    fi.p_data_float[k] += fi.header.scl_inter;
                 }
                 gzclose(file);
                 free(buffer);
@@ -676,6 +718,9 @@ namespace IDA_IO
                         uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                         // Copy data from xyzt to txyz order
                         fi.p_data_float[k] = (float)buffer[i];
+                        // Scale and translate based on nifti header
+                        fi.p_data_float[k] *= fi.header.scl_slope;
+                        fi.p_data_float[k] += fi.header.scl_inter;
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
@@ -689,6 +734,9 @@ namespace IDA_IO
                     uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                     // Copy data from xyzt to txyz order
                     fi.p_data_float[k] = (float)buffer[i];
+                    // Scale and translate based on nifti header
+                    fi.p_data_float[k] *= fi.header.scl_slope;
+                    fi.p_data_float[k] += fi.header.scl_inter;
                 }
                 gzclose(file);
                 free(buffer);
@@ -712,6 +760,9 @@ namespace IDA_IO
                         uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                         // Copy data from xyzt to txyz order
                         fi.p_data_float[k] = (float)buffer[i];
+                        // Scale and translate based on nifti header
+                        fi.p_data_float[k] *= fi.header.scl_slope;
+                        fi.p_data_float[k] += fi.header.scl_inter;
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
@@ -725,6 +776,9 @@ namespace IDA_IO
                     uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                     // Copy data from xyzt to txyz order
                     fi.p_data_float[k] = (float)buffer[i];
+                    // Scale and translate based on nifti header
+                    fi.p_data_float[k] *= fi.header.scl_slope;
+                    fi.p_data_float[k] += fi.header.scl_inter;
                 }
                 gzclose(file);
                 free(buffer);
@@ -748,6 +802,9 @@ namespace IDA_IO
                         uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                         // Copy data from xyzt to txyz order
                         fi.p_data_float[k] = (float)buffer[i];
+                        // Scale and translate based on nifti header
+                        fi.p_data_float[k] *= fi.header.scl_slope;
+                        fi.p_data_float[k] += fi.header.scl_inter;
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
@@ -761,6 +818,9 @@ namespace IDA_IO
                     uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                     // Copy data from xyzt to txyz order
                     fi.p_data_float[k] = (float)buffer[i];
+                    // Scale and translate based on nifti header
+                    fi.p_data_float[k] *= fi.header.scl_slope;
+                    fi.p_data_float[k] += fi.header.scl_inter;
                 }
                 gzclose(file);
                 free(buffer);
@@ -784,6 +844,9 @@ namespace IDA_IO
                         uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                         // Copy data from xyzt to txyz order
                         fi.p_data_float[k] = (float)buffer[i];
+                        // Scale and translate based on nifti header
+                        fi.p_data_float[k] *= fi.header.scl_slope;
+                        fi.p_data_float[k] += fi.header.scl_inter;
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
@@ -797,6 +860,9 @@ namespace IDA_IO
                     uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                     // Copy data from xyzt to txyz order
                     fi.p_data_float[k] = (float)buffer[i];
+                    // Scale and translate based on nifti header
+                    fi.p_data_float[k] *= fi.header.scl_slope;
+                    fi.p_data_float[k] += fi.header.scl_inter;
                 }
                 gzclose(file);
                 free(buffer);
@@ -820,6 +886,9 @@ namespace IDA_IO
                         uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                         // Copy data from xyzt to txyz order
                         fi.p_data_float[k] = (float)buffer[i];
+                        // Scale and translate based on nifti header
+                        fi.p_data_float[k] *= fi.header.scl_slope;
+                        fi.p_data_float[k] += fi.header.scl_inter;
                     }
                 }
                 printf("\r  Reading chunks (%llu/%llu)...     \n", nr_chunks+1, nr_chunks+1); 
@@ -833,6 +902,9 @@ namespace IDA_IO
                     uint64_t k = ida_sub2ind_4D_Tmajor(it, ix, iy, iz, size_time, size_x, size_y);
                     // Copy data from xyzt to txyz order
                     fi.p_data_float[k] = (float)buffer[i];
+                    // Scale and translate based on nifti header
+                    fi.p_data_float[k] *= fi.header.scl_slope;
+                    fi.p_data_float[k] += fi.header.scl_inter;
                 }
                 gzclose(file);
                 free(buffer);
@@ -883,8 +955,7 @@ namespace IDA_IO
             fi.tc_model_shift = 0;
 
             // Time course descriptives related
-            fi.tc_show_Tmean = true;
-            fi.tc_show_Tstd  = false;
+            fi.tc_QA_type = 0;
         }
 
         // ============================================================================================================
@@ -1099,97 +1170,150 @@ namespace IDA_IO
             }
         }
 
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // Time mean and standard deviation computations
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        void loadSliceK_Tmean_float(FileInfo& fi)
+        // ============================================================================================================
+        // tMean (time mean)
+        // ============================================================================================================
+        void loadSliceK_float_tMean(FileInfo& fi)
         {
             uint64_t ni = static_cast<uint64_t>(fi.dim_i);
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
             uint64_t k = static_cast<uint64_t>(fi.display_k);
-            // uint64_t nij = ni*nj;
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t j = 0; j < nj; ++j) {
                     uint64_t index2D = i + j*ni;
-                    fi.p_sliceK_float_Tmean[index2D] = 0;
-                    fi.p_sliceK_float_Tstd[index2D] = 0;
+                    fi.p_sliceK_float_QA[index2D] = 0;
 
                     // Compute time mean
                     for (uint64_t t = 0; t < nt; ++t) {
-                        // uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        fi.p_sliceK_float_Tmean[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
+                        fi.p_sliceK_float_QA[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
                     }
-
-                    // Compute time standard deviation
-                    for (uint64_t t = 0; t < nt; ++t) {
-                        // uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
-                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        fi.p_sliceK_float_Tstd[index2D] = 
-                            (fi.p_data_float[index4D] - fi.p_sliceK_float_Tmean[index2D])
-                            * (fi.p_data_float[index4D] - fi.p_sliceK_float_Tmean[index2D]) / static_cast<float>(nt);
-                    }
-                    fi.p_sliceK_float_Tstd[index2D] = sqrt(fi.p_sliceK_float_Tstd[index2D]);
-                }
-            }
-            // Copy to visualization slice
-            for (uint64_t i = 0; i < ni*nj; ++i) {
-                if ( fi.tc_show_Tstd ) {
-                    fi.p_sliceK_float[i] = fi.p_sliceK_float_Tstd[i];
-                } else {
-                    fi.p_sliceK_float[i] = fi.p_sliceK_float_Tmean[i];                    
                 }
             }
         }
 
-        void loadSliceJ_Tmean_float(FileInfo& fi)
+        void loadSliceJ_float_tMean(FileInfo& fi)
         {
             uint64_t ni = static_cast<uint64_t>(fi.dim_i);
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
             uint64_t j = static_cast<uint64_t>(fi.display_j);
-            // uint64_t nij = ni*nj;
             for (uint64_t i = 0; i < ni; i++) {
                 for (uint64_t k = 0; k < nk; k++) {
                     uint64_t index2D = i + k*ni;
-                    fi.p_sliceJ_float_Tmean[index2D] = 0;
+                    fi.p_sliceJ_float_QA[index2D] = 0;
                     for (uint64_t t = 0; t < nt; ++t) {
-                        // uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        fi.p_sliceJ_float_Tmean[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
+                        fi.p_sliceJ_float_QA[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
                     }
                 }
             }
-            // Copy to visualization slice
-            for (uint64_t i = 0; i < ni*nk; ++i) {  
-                fi.p_sliceJ_float[i] = fi.p_sliceJ_float_Tmean[i];
-            }
         }
 
-        void loadSliceI_Tmean_float(FileInfo& fi)
+        void loadSliceI_float_tMean(FileInfo& fi)
         {
             uint64_t ni = static_cast<uint64_t>(fi.dim_i);
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
             uint64_t i = static_cast<uint64_t>(fi.display_i);
-            // uint64_t nij = ni*nj;
             for (uint64_t j = 0; j < nj; j++) {
                 for (uint64_t k = 0; k < nk; k++) {
                     uint64_t index2D = j + k*nj;
-                    fi.p_sliceI_float_Tmean[index2D] = 0;
+                    fi.p_sliceI_float_QA[index2D] = 0;
                     for (uint64_t t = 0; t < nt; ++t) {
-                        // uint64_t index4D = i + j*ni + k*nij + fi.nr_voxels*t;
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        fi.p_sliceI_float_Tmean[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
+                        fi.p_sliceI_float_QA[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
                     }
                 }
             }
-            // Copy to visualization slice
-            for (uint64_t i = 0; i < nj*nk; ++i) {  
-                fi.p_sliceI_float[i] = fi.p_sliceI_float_Tmean[i];
+        }
+
+        // ============================================================================================================
+        // tSD (time standard deviation)
+        // ============================================================================================================
+        void loadSliceK_float_tSD(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t k = static_cast<uint64_t>(fi.display_k);
+            double N = static_cast<double>(nt);
+
+            for (uint64_t i = 0; i < ni; ++i) {
+                for (uint64_t j = 0; j < nj; ++j) {
+                    // Compute variance using Welford's method
+                    double M = 0.0, S = 0.0;
+                    for (uint64_t t = 0; t < nt; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double x = static_cast<double>(fi.p_data_float[index4D]);
+                        double oldM = M;
+                        M = M + (x - M) / (static_cast<double>(t+1));
+                        S = S + (x - M) * (x - oldM);
+                    }
+                    double variance = S / (N - 1);
+                    double SD = std::sqrt(variance);
+                    uint64_t index2D = i + j*ni;
+                    fi.p_sliceK_float_QA[index2D] = static_cast<float>(SD);
+                }
+            }
+        }
+
+        void loadSliceJ_float_tSD(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t j = static_cast<uint64_t>(fi.display_j);
+            double N = static_cast<double>(nt);
+
+            for (uint64_t i = 0; i < ni; i++) {
+                for (uint64_t k = 0; k < nk; k++) {
+                    // Compute variance using Welford's method
+                    double M = 0.0, S = 0.0;
+                    for (uint64_t t = 0; t < nt; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double x = static_cast<double>(fi.p_data_float[index4D]);
+                        double oldM = M;
+                        M = M + (x - M) / (static_cast<double>(t+1));
+                        S = S + (x - M) * (x - oldM);
+                    }
+                    double variance = S / (N - 1);
+                    double SD = std::sqrt(variance);
+                    uint64_t index2D = i + k*ni;
+                    fi.p_sliceJ_float_QA[index2D] = static_cast<float>(SD);
+                }
+            }
+        }
+
+        void loadSliceI_float_tSD(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t i = static_cast<uint64_t>(fi.display_i);
+            double N = static_cast<double>(nt);
+
+            for (uint64_t j = 0; j < nj; j++) {
+                for (uint64_t k = 0; k < nk; k++) {
+                    // Compute variance using Welford's method
+                    double M = 0.0, S = 0.0;
+                    for (uint64_t t = 0; t < nt; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double x = static_cast<double>(fi.p_data_float[index4D]);
+                        double oldM = M;
+                        M = M + (x - M) / (static_cast<double>(t+1));
+                        S = S + (x - M) * (x - oldM);
+                    }
+                    double variance = S / (N - 1);
+                    double SD = std::sqrt(variance);
+                    uint64_t index2D = j + k*nj;
+                    fi.p_sliceI_float_QA[index2D] = static_cast<float>(SD);
+                }
             }
         }
 
@@ -1198,52 +1322,50 @@ namespace IDA_IO
         // ============================================================================================================
         // NOTE: I have decided to keep the functions separate because this might be more useful for covering 2D cases.
         // Not completely sure but keeping it simple for now.
-        void loadSliceK_uint8(FileInfo& fi)
+        void loadSliceK_uint8(FileInfo& fi, float* p_float)
         {
             int nr_pixels = fi.dim_i * fi.dim_j;
             float thr_min = fi.display_min;
             float thr_max = fi.display_max;
             for (int i = 0; i < nr_pixels; i++) {
-                if (fi.p_sliceK_float[i] > thr_max) {
+                if (p_float[i] > thr_max) {
                     fi.p_sliceK_uint8[i] = 255;
-                } else if (fi.p_sliceK_float[i] < thr_min) {
+                } else if (p_float[i] < thr_min) {
                     fi.p_sliceK_uint8[i] = 0;
                 } else {
-                    fi.p_sliceK_uint8[i] = static_cast<uint8_t>((fi.p_sliceK_float[i] - thr_min)
-                                                                            / (thr_max - thr_min) * 255);
+                    fi.p_sliceK_uint8[i] = static_cast<uint8_t>((p_float[i] - thr_min) / (thr_max - thr_min) * 255);
                 }
             }
         }
 
-        void loadSliceJ_uint8(FileInfo& fi)
+        void loadSliceJ_uint8(FileInfo& fi, float* p_float)
         {
             int nr_pixels = fi.dim_i * fi.dim_k;
             float thr_min = fi.display_min;
             float thr_max = fi.display_max;
             for (int i = 0; i < nr_pixels; i++) {
-                if (fi.p_sliceJ_float[i] > thr_max) {
+                if (p_float[i] > thr_max) {
                     fi.p_sliceJ_uint8[i] = 255;
-                } else if (fi.p_sliceJ_float[i] < thr_min) {
+                } else if (p_float[i] < thr_min) {
                     fi.p_sliceJ_uint8[i] = 0;
                 } else {
-                    fi.p_sliceJ_uint8[i] = static_cast<uint8_t>((fi.p_sliceJ_float[i] - thr_min)
-                                                                            / (thr_max - thr_min) * 255);
+                    fi.p_sliceJ_uint8[i] = static_cast<uint8_t>((p_float[i] - thr_min) / (thr_max - thr_min) * 255);
                 }
             }
         }
 
-        void loadSliceI_uint8(FileInfo& fi)
+        void loadSliceI_uint8(FileInfo& fi, float* p_float)
         {
             int nr_pixels = fi.dim_j * fi.dim_k;
             float thr_min = fi.display_min;
             float thr_max = fi.display_max;
             for (int i = 0; i < nr_pixels; i++) {
-                if (fi.p_sliceI_float[i] > thr_max) {
+                if (p_float[i] > thr_max) {
                     fi.p_sliceI_uint8[i] = 255;
-                } else if (fi.p_sliceI_float[i] < thr_min) {
+                } else if (p_float[i] < thr_min) {
                     fi.p_sliceI_uint8[i] = 0;
                 } else {
-                    fi.p_sliceI_uint8[i] = static_cast<uint8_t>((fi.p_sliceI_float[i] - thr_min) / (thr_max - thr_min) * 255);
+                    fi.p_sliceI_uint8[i] = static_cast<uint8_t>((p_float[i] - thr_min) / (thr_max - thr_min) * 255);
                 }
             }
         }
