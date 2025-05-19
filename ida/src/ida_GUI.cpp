@@ -105,7 +105,7 @@ namespace IDA
             ImGui::NewLine();
             ImGui::Text("'LayNii IDA' is ");
             ImGui::SameLine();
-            ImGui::TextColored(ImVec4(0.9f, 0.6f, 0.0f, 1.0f), "*free and open source*");
+            ImGui::Text("free and open source");
             ImGui::SameLine();
             ImGui::Text("thanks to the generous support by:");
             ImGui::BulletText("Brain Innovation, Maastricht, NL");
