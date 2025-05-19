@@ -33,6 +33,8 @@ namespace IDA
 
         static int sf = -1;  // Selected file
 
+        ImVec4 color_active = ImVec4(1.0f, 0.5f, 0.0f, 1.0f);
+
         int nr_files = fl.files.size();
         float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
 
@@ -262,7 +264,7 @@ namespace IDA
             // Highlight selected file with color
             bool is_selected = (sf == n);
             if ( is_selected )
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.55f, 0.0f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_Text, color_active);
             if ( ImGui::Selectable(buf, is_selected) ) {
                 sf = n;
                 loaded_data = fl.files[sf].loaded_data;
@@ -628,8 +630,6 @@ namespace IDA
             // --------------------------------------------------------------------------------------------------------
             if ( ImGui::CollapsingHeader("SLICE BROWSER CONTROLS", ImGuiTreeNodeFlags_DefaultOpen) ) {
 
-                ImGui::Text("Visualization Mode: %u", fl.files[sf].visualization_mode);
-
                 // Slice k
                 ImGui::PushButtonRepeat(true);
                 if (ImGui::ArrowButton("##SliceK_decrease", ImGuiDir_Left)) {
@@ -745,6 +745,164 @@ namespace IDA
                 }
             }
 
+            if ( fl.files[sf].dim_t > 1 ) {
+                // ====================================================================================================
+                // QUALITY ASSURANCE CONTROLS
+                // ====================================================================================================
+                ImGui::Spacing();
+                ImGui::Separator();
+                if ( ImGui::CollapsingHeader("QUALITY ASSURANCE CONTROLS", ImGuiTreeNodeFlags_DefaultOpen) ) {
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Temporal mean
+                    // ------------------------------------------------------------------------------------------------
+                    if ( fl.files[sf].tc_QA_type != 1 ) {
+                        if ( ImGui::Button("tMean     ") ) {
+
+                            // Prepare data to hold tMean maps
+                            free(fl.files[sf].p_sliceK_float_QA);
+                            free(fl.files[sf].p_sliceJ_float_QA);
+                            free(fl.files[sf].p_sliceI_float_QA);
+                            fl.files[sf].p_sliceK_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
+                            fl.files[sf].p_sliceJ_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
+                            fl.files[sf].p_sliceI_float_QA = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
+
+                            // Enable real time time mean
+                            fl.loadSliceK_float_tMean(fl.files[sf]);
+                            fl.loadSliceJ_float_tMean(fl.files[sf]);
+                            fl.loadSliceI_float_tMean(fl.files[sf]);
+
+                            fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float_QA);
+                            fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float_QA);
+                            fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float_QA);
+
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j,
+                                                         fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k,
+                                                         fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k,
+                                                         fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
+
+                            fl.files[sf].tc_QA_type = 1;
+                            request_image_data_update = true;
+                        }
+                    } else {
+                        ImGui::PushStyleColor(ImGuiCol_Button, color_active);
+                        if ( ImGui::Button("tMean     ") ) {
+                            request_image_data_update = true;
+                            fl.files[sf].tc_QA_type = 0;
+                        }
+                        ImGui::PopStyleColor();
+                    }
+                    
+                    // ------------------------------------------------------------------------------------------------
+                    // Temporal standard deviation
+                    // ------------------------------------------------------------------------------------------------
+                    ImGui::SameLine();
+                    if ( fl.files[sf].tc_QA_type != 2 ) {
+                        if ( ImGui::Button("tSD       ") ) {
+
+                            // Prepare data to hold tMean maps
+                            free(fl.files[sf].p_sliceK_float_QA);
+                            free(fl.files[sf].p_sliceJ_float_QA);
+                            free(fl.files[sf].p_sliceI_float_QA);
+                            fl.files[sf].p_sliceK_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
+                            fl.files[sf].p_sliceJ_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
+                            fl.files[sf].p_sliceI_float_QA = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
+
+                            // Enable real time time mean
+                            fl.loadSliceK_float_tSD(fl.files[sf]);
+                            fl.loadSliceJ_float_tSD(fl.files[sf]);
+                            fl.loadSliceI_float_tSD(fl.files[sf]);
+
+                            fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float_QA);
+                            fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float_QA);
+                            fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float_QA);
+
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j,
+                                                         fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k,
+                                                         fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k,
+                                                         fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
+
+                            fl.files[sf].tc_QA_type = 2;
+                            request_image_data_update = true;
+                        }
+                    } else {
+                        ImGui::PushStyleColor(ImGuiCol_Button, color_active);
+                        if ( ImGui::Button("tSD       ") ) {
+                            fl.files[sf].tc_QA_type = 0;
+                        }
+                        ImGui::PopStyleColor();
+                    }
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Temporal signal to noise ratio
+                    // ------------------------------------------------------------------------------------------------
+                    ImGui::SameLine();
+
+                    if ( fl.files[sf].tc_QA_type != 3 ) {
+                        if ( ImGui::Button("tSNR      ") ) {
+                            printf("WIP...\n");
+                            fl.files[sf].tc_QA_type = 2;
+                        }
+                    } else {
+                        if ( ImGui::Button("tSNR WIP ") ) {
+                            printf("WIP...\n");
+                            fl.files[sf].tc_QA_type = 0;
+                        }
+                    }
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Temporal skewness
+                    // ------------------------------------------------------------------------------------------------
+                    if ( fl.files[sf].tc_QA_type != 4 ) {
+                        if ( ImGui::Button("Skewness  ") ) {
+                            printf("WIP...\n");
+                            fl.files[sf].tc_QA_type = 2;
+                        }
+                    } else {
+                        if ( ImGui::Button("Skewness  ") ) {
+                            printf("WIP...\n");
+                            fl.files[sf].tc_QA_type = 0;
+                        }
+                    }
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Temporal kurtosis
+                    // ------------------------------------------------------------------------------------------------
+                    ImGui::SameLine();
+                    if ( fl.files[sf].tc_QA_type != 4 ) {
+                        if ( ImGui::Button("Kurtosis  ") ) {
+                            printf("WIP...\n");
+                            fl.files[sf].tc_QA_type = 2;
+                        }
+                    } else {
+                        if ( ImGui::Button("Kurtosis  ") ) {
+                            printf("WIP...\n");
+                            fl.files[sf].tc_QA_type = 0;
+                        }
+                    }
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Temporal autocorrelation
+                    // ------------------------------------------------------------------------------------------------
+                    ImGui::SameLine();
+                    if ( fl.files[sf].tc_QA_type != 4 ) {
+                        if ( ImGui::Button("Auto-Corr.") ) {
+                            printf("WIP...\n");
+                            fl.files[sf].tc_QA_type = 2;
+                        }
+                    } else {
+                        if ( ImGui::Button("Auto-Corr.") ) {
+                            printf("WIP...\n");
+                            fl.files[sf].tc_QA_type = 0;
+                        }
+                    }
+                }
+            }
+
             // --------------------------------------------------------------------------------------------------------
             // CONTRAST CONTROLS
             // --------------------------------------------------------------------------------------------------------
@@ -825,35 +983,6 @@ namespace IDA
                 }
 
                 if (fl.files[sf].visualization_mode != 1) {
-                    ImGui::EndDisabled();
-                }
-            }
-
-            // ========================================================================================================
-            // VISUAL SETTINGS
-            // ========================================================================================================
-            ImGui::Spacing();
-            ImGui::Separator();
-            if ( ImGui::CollapsingHeader("VISUAL SETTINGS") ) {
-                ImGui::Checkbox("Show mouse crosshair", &show_mouse_crosshair); ImGui::SameLine();
-                ImGui::Checkbox("Show slice crosshair", &show_slice_crosshair);
-
-                // ----------------------------------------------------------------------------------------------------
-                // VOXEL INSPECTOR CONTROLS"
-                // ----------------------------------------------------------------------------------------------------
-                ImGui::Checkbox("Toggle voxel inspector", &show_voxel_inspector);
-
-                if ( !show_voxel_inspector ) {
-                    ImGui::BeginDisabled(true);
-                }
-                ImGui::Checkbox("Show value", &show_voxel_value); ImGui::SameLine();
-                ImGui::Checkbox("Show indices", &show_voxel_indices); ImGui::SameLine();
-
-                if ( fl.files[sf].dim_t > 1 ) {
-                    ImGui::Checkbox("Show time course", &show_voxel_time_course);
-                }
-
-                if (!show_voxel_inspector) {
                     ImGui::EndDisabled();
                 }
             }
@@ -1133,85 +1262,34 @@ namespace IDA
                         ImGui::Text("Shift");
                     }
                 }
+            }
 
-                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                ImGui::Spacing();
-                ImGui::Separator();
-                if ( ImGui::CollapsingHeader("QUALITY ASSURANCE CONTROLS", ImGuiTreeNodeFlags_DefaultOpen) ) {
-                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    if ( fl.files[sf].tc_QA_type != 1 ) {
-                        if ( ImGui::Button("Enable tMean ") ) {
+            // ========================================================================================================
+            // VISUAL SETTINGS
+            // ========================================================================================================
+            ImGui::Spacing();
+            ImGui::Separator();
+            if ( ImGui::CollapsingHeader("VISUAL SETTINGS") ) {
+                ImGui::Checkbox("Show mouse crosshair", &show_mouse_crosshair); ImGui::SameLine();
+                ImGui::Checkbox("Show slice crosshair", &show_slice_crosshair);
 
-                            // Prepare data to hold tMean maps
-                            free(fl.files[sf].p_sliceK_float_QA);
-                            free(fl.files[sf].p_sliceJ_float_QA);
-                            free(fl.files[sf].p_sliceI_float_QA);
-                            fl.files[sf].p_sliceK_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
-                            fl.files[sf].p_sliceJ_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
-                            fl.files[sf].p_sliceI_float_QA = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
+                // ----------------------------------------------------------------------------------------------------
+                // VOXEL INSPECTOR CONTROLS"
+                // ----------------------------------------------------------------------------------------------------
+                ImGui::Checkbox("Toggle voxel inspector", &show_voxel_inspector);
 
-                            // Enable real time time mean
-                            fl.loadSliceK_float_tMean(fl.files[sf]);
-                            fl.loadSliceJ_float_tMean(fl.files[sf]);
-                            fl.loadSliceI_float_tMean(fl.files[sf]);
+                if ( !show_voxel_inspector ) {
+                    ImGui::BeginDisabled(true);
+                }
+                ImGui::Checkbox("Show value", &show_voxel_value); ImGui::SameLine();
+                ImGui::Checkbox("Show indices", &show_voxel_indices); ImGui::SameLine();
 
-                            fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float_QA);
-                            fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float_QA);
-                            fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float_QA);
+                if ( fl.files[sf].dim_t > 1 ) {
+                    ImGui::Checkbox("Show time course", &show_voxel_time_course);
+                }
 
-                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j,
-                                                         fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
-                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k,
-                                                         fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
-                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k,
-                                                         fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
-
-                            fl.files[sf].tc_QA_type = 1;
-                            request_image_data_update = true;
-                        }
-                    } else {
-                        if ( ImGui::Button("Disable tMean") ) {
-                            request_image_data_update = true;
-                            fl.files[sf].tc_QA_type = 0;
-                        }
-                    }
-
-                    ImGui::SameLine();
-                    if ( fl.files[sf].tc_QA_type != 2 ) {
-                        if ( ImGui::Button("Enable tSD ") ) {
-
-                            // Prepare data to hold tMean maps
-                            free(fl.files[sf].p_sliceK_float_QA);
-                            free(fl.files[sf].p_sliceJ_float_QA);
-                            free(fl.files[sf].p_sliceI_float_QA);
-                            fl.files[sf].p_sliceK_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
-                            fl.files[sf].p_sliceJ_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
-                            fl.files[sf].p_sliceI_float_QA = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
-
-                            // Enable real time time mean
-                            fl.loadSliceK_float_tSD(fl.files[sf]);
-                            fl.loadSliceJ_float_tSD(fl.files[sf]);
-                            fl.loadSliceI_float_tSD(fl.files[sf]);
-
-                            fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float_QA);
-                            fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float_QA);
-                            fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float_QA);
-
-                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j,
-                                                         fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
-                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k,
-                                                         fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
-                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k,
-                                                         fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
-
-                            fl.files[sf].tc_QA_type = 2;
-                            request_image_data_update = true;
-                        }
-                    } else {
-                        if ( ImGui::Button("Disable tSD") ) {
-                            fl.files[sf].tc_QA_type = 0;
-                        }
-                    }
+                if (!show_voxel_inspector) {
+                    ImGui::EndDisabled();
                 }
             }
         }
