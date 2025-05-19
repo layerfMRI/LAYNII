@@ -75,13 +75,98 @@ namespace IDA
         // Input/Output Menu
         // ------------------------------------------------------------------------------------------------------------
         ImGui::Begin("File Menu");
-        ImGui::Text("FPS %.0f ", ImGui::GetIO().Framerate);
-        ImGui::SameLine();
-        ImGui::Checkbox("Show Full Header", &show_header_info);
 
-        // NOTE: This checkbox is here for development.
+        if (ImGui::Button("LayNii IDA [PreAlpha-1]")) {
+            ImGui::OpenPopup("LayNii IDA (Integrated Discovery Application)");
+        }
+
+        if (ImGui::BeginPopupModal("LayNii IDA (Integrated Discovery Application)", nullptr,
+                                   ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::Text("LayNii IDA is a high-performance tool designed for fast and intuitive interaction");
+            ImGui::Text("  with large scale, ultra high resolution MRI data. Built on a custom engine optimized");
+            ImGui::Text("  for extreme speed, LayNii IDA empowers researchers to explore and interact with their");
+            ImGui::Text("  datasets in real-time. LayNii IDA delivers a uniquely fluid experience that redefines");
+            ImGui::Text("  what is possible in high-resolution neuroimaging exploration.");
+
+            ImGui::NewLine();
+            ImGui::Text("'LayNii IDA' is developed by:");
+            ImGui::BulletText("Omer Faruk Gulban");
+
+            ImGui::Indent();
+            if (ImGui::SmallButton("https://ofgulban.github.io/")) {
+                ImGui::SetClipboardText("https://ofgulban.github.io/");
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Click to copy link");
+            }
+            ImGui::Unindent();
+
+            ImGui::NewLine();
+            ImGui::Text("'LayNii IDA' is ");
+            ImGui::SameLine();
+            ImGui::TextColored(ImVec4(0.9f, 0.6f, 0.0f, 1.0f), "*free and open source*");
+            ImGui::SameLine();
+            ImGui::Text("thanks to the generous support by:");
+            ImGui::BulletText("Brain Innovation, Maastricht, NL");
+            ImGui::Indent();
+            if (ImGui::SmallButton("www.brainvoyager.com")) {
+                ImGui::SetClipboardText("https://www.brainvoyager.com");
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Click to copy link");
+            }
+            ImGui::Unindent();
+
+            ImGui::NewLine();
+            ImGui::Text("'LayNii: A software suit for layer (f)MRI' is developed by:");
+            ImGui::BulletText("Renzo Huber and Omer Faruk Gulban.");
+            ImGui::Indent();
+            if (ImGui::SmallButton("github.com/layerfMRI/LayNii")) {
+                ImGui::SetClipboardText("https://github.com/layerfMRI/LayNii");
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Click to copy link");
+            }
+            ImGui::Unindent();
+
+            ImGui::NewLine();
+            ImGui::Text("Follow LayNii IDA developments at:");
+            ImGui::BulletText(""); ImGui::SameLine();
+            if (ImGui::SmallButton("www.youtube.com/@ofgulban")) {
+                ImGui::SetClipboardText("https://www.youtube.com/@ofgulban");
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Click to copy link");
+            }
+
+            ImGui::NewLine();
+            ImGui::Text("If you encounter problems, please report them at:");
+            ImGui::BulletText(""); ImGui::SameLine();
+            if (ImGui::SmallButton("github.com/layerfMRI/LayNii/issues")) {
+                ImGui::SetClipboardText("https://github.com/layerfMRI/LayNii/issues");
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Click to copy link");
+            }
+
+            ImGui::NewLine();
+            if (ImGui::Button("Close")) {
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+
+        ImGui::SameLine();
+        ImGui::Text("FPS %.0f", ImGui::GetIO().Framerate);
+
+        // ------------------------------------------------------------------------------------------------------------
+        // NOTE: This checkbox is here for development. Comment out before releases
         ImGui::SameLine();
         ImGui::Checkbox("Demo Window", &show_demo_window);  
+        // ------------------------------------------------------------------------------------------------------------
+
+        ImGui::Separator();
 
         // Enter file path as text
         ImGui::InputText("Input path", str_input, IM_ARRAYSIZE(str_input));
@@ -108,31 +193,31 @@ namespace IDA
             }
         }
 
-        // Add remove file button
-        ImGui::SameLine();
-        if (ImGui::Button("Remove"))
+        if (sf >= 0)
         {
-            loaded_data = false;
-            if ( fl.files[sf].loaded_data ) {
-                free(fl.files[sf].p_data_float);
-                free(fl.files[sf].p_sliceK_float);
-                free(fl.files[sf].p_sliceJ_float);
-                free(fl.files[sf].p_sliceI_float);
-                free(fl.files[sf].p_sliceK_uint8);
-                free(fl.files[sf].p_sliceJ_uint8);
-                free(fl.files[sf].p_sliceI_uint8);
-                free(fl.files[sf].p_tc_focus_float);
-                free(fl.files[sf].p_tc_refer_float);                
+            // Add remove file button
+            ImGui::SameLine();
+            if (ImGui::Button("Remove"))
+            {
+                loaded_data = false;
+                if ( fl.files[sf].loaded_data ) {
+                    free(fl.files[sf].p_data_float);
+                    free(fl.files[sf].p_sliceK_float);
+                    free(fl.files[sf].p_sliceJ_float);
+                    free(fl.files[sf].p_sliceI_float);
+                    free(fl.files[sf].p_sliceK_uint8);
+                    free(fl.files[sf].p_sliceJ_uint8);
+                    free(fl.files[sf].p_sliceI_uint8);
+                    free(fl.files[sf].p_tc_focus_float);
+                    free(fl.files[sf].p_tc_refer_float);                
+                }
+                fl.removeFile(sf);
+                nr_files -= 1;
             }
-            fl.removeFile(sf);
-            nr_files -= 1;
-        }
 
-        // Add load data button
-        ImGui::SameLine();
-        if (ImGui::Button("Load Data"))
-        {
-            if (sf >= 0)
+            // Add load data button
+            ImGui::SameLine();
+            if (ImGui::Button("Load Data"))
             {
                 fl.loadNiftiDataTest(fl.files[sf]);
 
@@ -161,6 +246,9 @@ namespace IDA
                 fl.files[sf].loaded_data = true;
                 loaded_data = fl.files[sf].loaded_data;
             }
+
+            ImGui::SameLine();
+            ImGui::Checkbox("Show Full Header", &show_header_info);
         }
 
         // Display list of selectable file names
@@ -1269,14 +1357,14 @@ namespace IDA
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
 
-        // // Show file selection window
-        // if (show_file_window)
-        // {
-        //     ImGui::Begin("Another Window", &show_file_window);  // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-        //     ImGui::Text("Hello from another window!");
-        //     if (ImGui::Button("Close Me"))
-        //         show_file_window = false;
-        //     ImGui::End();
-        // }
+        // Show file selection window
+        if (show_file_window)
+        {
+            ImGui::Begin("Another Window", &show_file_window);  // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+            ImGui::Text("Hello from another window!");
+            if (ImGui::Button("Close Me"))
+                show_file_window = false;
+            ImGui::End();
+        }
 	}
 }
