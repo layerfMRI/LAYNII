@@ -837,69 +837,69 @@ namespace IDA
                         ImGui::PopStyleColor();
                     }
 
-                    // ------------------------------------------------------------------------------------------------
-                    // Temporal signal to noise ratio
-                    // ------------------------------------------------------------------------------------------------
-                    ImGui::SameLine();
+                    // // ------------------------------------------------------------------------------------------------
+                    // // Temporal signal to noise ratio
+                    // // ------------------------------------------------------------------------------------------------
+                    // ImGui::SameLine();
 
-                    if ( fl.files[sf].tc_QA_type != 3 ) {
-                        if ( ImGui::Button("tSNR      ") ) {
-                            printf("WIP...\n");
-                            fl.files[sf].tc_QA_type = 2;
-                        }
-                    } else {
-                        if ( ImGui::Button("tSNR WIP ") ) {
-                            printf("WIP...\n");
-                            fl.files[sf].tc_QA_type = 0;
-                        }
-                    }
+                    // if ( fl.files[sf].tc_QA_type != 3 ) {
+                    //     if ( ImGui::Button("tSNR      ") ) {
+                    //         printf("WIP...\n");
+                    //         fl.files[sf].tc_QA_type = 2;
+                    //     }
+                    // } else {
+                    //     if ( ImGui::Button("tSNR WIP ") ) {
+                    //         printf("WIP...\n");
+                    //         fl.files[sf].tc_QA_type = 0;
+                    //     }
+                    // }
 
-                    // ------------------------------------------------------------------------------------------------
-                    // Temporal skewness
-                    // ------------------------------------------------------------------------------------------------
-                    if ( fl.files[sf].tc_QA_type != 4 ) {
-                        if ( ImGui::Button("Skewness  ") ) {
-                            printf("WIP...\n");
-                            fl.files[sf].tc_QA_type = 2;
-                        }
-                    } else {
-                        if ( ImGui::Button("Skewness  ") ) {
-                            printf("WIP...\n");
-                            fl.files[sf].tc_QA_type = 0;
-                        }
-                    }
+                    // // ------------------------------------------------------------------------------------------------
+                    // // Temporal skewness
+                    // // ------------------------------------------------------------------------------------------------
+                    // if ( fl.files[sf].tc_QA_type != 4 ) {
+                    //     if ( ImGui::Button("Skewness  ") ) {
+                    //         printf("WIP...\n");
+                    //         fl.files[sf].tc_QA_type = 2;
+                    //     }
+                    // } else {
+                    //     if ( ImGui::Button("Skewness  ") ) {
+                    //         printf("WIP...\n");
+                    //         fl.files[sf].tc_QA_type = 0;
+                    //     }
+                    // }
 
-                    // ------------------------------------------------------------------------------------------------
-                    // Temporal kurtosis
-                    // ------------------------------------------------------------------------------------------------
-                    ImGui::SameLine();
-                    if ( fl.files[sf].tc_QA_type != 4 ) {
-                        if ( ImGui::Button("Kurtosis  ") ) {
-                            printf("WIP...\n");
-                            fl.files[sf].tc_QA_type = 2;
-                        }
-                    } else {
-                        if ( ImGui::Button("Kurtosis  ") ) {
-                            printf("WIP...\n");
-                            fl.files[sf].tc_QA_type = 0;
-                        }
-                    }
+                    // // ------------------------------------------------------------------------------------------------
+                    // // Temporal kurtosis
+                    // // ------------------------------------------------------------------------------------------------
+                    // ImGui::SameLine();
+                    // if ( fl.files[sf].tc_QA_type != 4 ) {
+                    //     if ( ImGui::Button("Kurtosis  ") ) {
+                    //         printf("WIP...\n");
+                    //         fl.files[sf].tc_QA_type = 2;
+                    //     }
+                    // } else {
+                    //     if ( ImGui::Button("Kurtosis  ") ) {
+                    //         printf("WIP...\n");
+                    //         fl.files[sf].tc_QA_type = 0;
+                    //     }
+                    // }
 
-                    // ------------------------------------------------------------------------------------------------
-                    // Temporal autocorrelation
-                    // ------------------------------------------------------------------------------------------------
-                    ImGui::SameLine();
-                    if ( fl.files[sf].tc_QA_type != 4 ) {
-                        if ( ImGui::Button("Auto-Corr.") ) {
-                            printf("WIP...\n");
-                            fl.files[sf].tc_QA_type = 2;
-                        }
-                    } else {
-                        if ( ImGui::Button("Auto-Corr.") ) {
-                            printf("WIP...\n");
-                            fl.files[sf].tc_QA_type = 0;
-                        }
-                    }
+                    // // ------------------------------------------------------------------------------------------------
+                    // // Temporal autocorrelation
+                    // // ------------------------------------------------------------------------------------------------
+                    // ImGui::SameLine();
+                    // if ( fl.files[sf].tc_QA_type != 4 ) {
+                    //     if ( ImGui::Button("Auto-Corr.") ) {
+                    //         printf("WIP...\n");
+                    //         fl.files[sf].tc_QA_type = 2;
+                    //     }
+                    // } else {
+                    //     if ( ImGui::Button("Auto-Corr.") ) {
+                    //         printf("WIP...\n");
+                    //         fl.files[sf].tc_QA_type = 0;
+                    //     }
+                    // }
                 }
             }
 
