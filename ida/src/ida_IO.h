@@ -418,10 +418,10 @@ namespace IDA_IO
 
             // Check for slope = 0, for cases where nifti header is incorrectly tempered with
             if ( fi.header.scl_slope == 0.0f ) {
-                printf("\n  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                printf("\n  Nifti heade 'scl_slope' is zero! This nifti file has been improperly tempered with!");
-                printf("\n  Setting 'scl_slope' to 1. Otherwise, all voxels will be zero.\n");
-                printf("\n  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                printf("  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+                printf("  Nifti header 'scl_slope' is zero! This nifti file has been improperly tempered with!\n");
+                printf("  Setting 'scl_slope' to 1. Otherwise, all voxels will be zero.                       \n");
+                printf("  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
                 fi.header.scl_slope = 1.0f;
             }
 
