@@ -11,7 +11,7 @@
 #   pacman -S mingw-w64-i686-SDL2
 #
 
-#CXX = g++
+CXX = g++
 #CXX = clang++
 
 EXE = LayNii_IDA
@@ -35,6 +35,7 @@ LINUX_GL_LIBS = -lGL
 CXXFLAGS = -std=c++11 -DHAVE_ZLIB -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends -I$(IMGUI_DIR)/dep
 CXXFLAGS += -g -Wall -Wformat
 CXXFLAGS += -O3
+# CXXFLAGS += -march=native
 LIBS = -lz
 
 ##---------------------------------------------------------------------
