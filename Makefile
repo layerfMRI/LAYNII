@@ -1,6 +1,7 @@
 # LayNii makefile
 
-CC		= c++
+# CC		= c++
+CC		= g++
 CFLAGS	= -std=c++11 -DHAVE_ZLIB
 CFLAGS 	+= -O3
 LFLAGS	= -lm -lz
