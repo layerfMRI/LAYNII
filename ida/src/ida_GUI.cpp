@@ -11,8 +11,8 @@ namespace IDA
         // ============================================================================================================
         // Variables
         // ============================================================================================================
-        // static char str_input[4096] = "Enter nifti path";
-        static char str_input[4096] = "/Users/faruk/data/test-LAYNII_IDA/lo_BOLD_intemp.nii.gz";
+        static char str_input[4096] = "Enter full path to a nifti file";
+        // static char str_input[4096] = "/Users/faruk/data/test-LAYNII_IDA/lo_BOLD_intemp.nii.gz";
         // static char str_input[4096] = "/Users/faruk/Documents/test-LN3_IDA/test.nii.gz";
         // static char str_input[4096] = "/Users/faruk/data/data-alard/75um/sub-99_75um_crop.nii.gz";
 
