@@ -167,8 +167,8 @@ namespace IDA
 
         // ------------------------------------------------------------------------------------------------------------
         // NOTE: This checkbox is here for development. Comment out before releases
-        ImGui::SameLine();
-        ImGui::Checkbox("Demo Window", &show_demo_window);  
+        // ImGui::SameLine();
+        // ImGui::Checkbox("Demo Window", &show_demo_window);  
         // ------------------------------------------------------------------------------------------------------------
 
         ImGui::Separator();
