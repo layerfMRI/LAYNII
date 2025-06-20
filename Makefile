@@ -72,6 +72,7 @@ LAYNII2		= 	LN2_LAYERS \
 				LN2_SENSITIVITY \
 				LN2_SPECIFICITY \
 				LN2_INTPRO \
+				LN2_FRISGO \
 				
 DERIVATIVES	=	LN2_GRADIENTS \
 				LN2_GRAMAG \
@@ -274,6 +275,10 @@ LN2_SPECIFICITY:
 
 LN2_INTPRO:
 	$(CC) $(CFLAGS) -o LN2_INTPRO src/LN2_INTPRO.cpp $(LIBRARIES) $(LFLAGS)
+
+LN2_FRISGO:
+	$(CC) $(CFLAGS) -o LN2_FRISGO src/LN2_FRISGO.cpp $(LIBRARIES) $(LFLAGS)
+
 
 # =============================================================================
 # Work in progress programs
