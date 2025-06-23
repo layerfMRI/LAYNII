@@ -4,27 +4,39 @@
 
 int show_help(void) {
     printf(
-    "LN2_FRISGO : Smooths data within the time domain. It removes high\n"
-    "                frequency spikes like a low-pass filter.\n"
+    "LN2_FRISGO :  This program amins to correct for Fuzzy Ripple \n"
+    "              artifacts in dual polarity EPI data.\n"
+    "              \n"
     "\n"
     "Usage:\n"
-    "    LN2_FRISGO -input timeseries.nii -gaus 1.0 \n"
+    "    LN2_FRISGO -input timeseries.nii -lpass 1.0 \n"
     "    LN2_FRISGO -input timeseries.nii -box 1 \n"
     "    ../LN2_FRISGO -input lo_BOLD_intemp.nii -box 1 \n" 
-    "    ../LN2_FRISGO -input lo_BOLD_intemp.nii -gaus 1 \n" 
+    "    ../LN2_FRISGO -input lo_BOLD_intemp.nii -lpass 1 \n" 
     "\n"
     "Options:\n"
     "    -help   : Show this help.\n"
     "    -input  : Nifti (.nii) file with time series data that will be \n"
     "              nii_smooth. Only the first time point is used. \n"
-    "    -gaus   : Doing the smoothing with a Gaussian weight function. \n"
-    "              A travelling window of averaging. Specify the value \n"
+    "    -tshift : This option of dual polarity correction estimates \n"
+    "              the fMRI signal rigth between TRs. Just like slice  \n"
+    "              timing correction, but for 3D-EPI This way the triger \n"
+    "              timing is directly aligned with the k-space center.\n"
+    "              Here we use a third order interpolation across time \n"
+    "              to minimize temporal blurring.\n"
+    "              "
+    "    -lpass  : This option of dual polarity correction estimates slow \n"
+    "              changes of the Fruzzy ripple across time. \n"
+    "              A Gaussian travelling window of averaging is used to \n"
+    "              to estimate the Fuzzy Ripple modulations. Specify the value \n"
     "              of the Gaussian size (float values) in units of TR. \n"
-    "    -box    : Doing the smoothing with a box-var. Specify the value \n"
-    "              of the box sice (integer value). This is like a \n"
-    "              running average sliding window.\n"
+    "              Make sure to use values that are bigger than you trial timing.\n"
+    "              The default value is 40 TRs.\n"
+    "    -run    : Doing the dual-polarity correction by assuming that the \n"
+    "              Fuzzy Ripples are indenital for the entire run. \n"
     "    -output : (Optional) Output filename, including .nii or\n"
     "              .nii.gz, and path if needed. Overwrites existing files.\n"    
+     "    -verb  : wrtiting out all the inbetween steps, for debugging. \n"
     "\n"
     "Notes:\n"
     "    This program was featured in the following ISMRM presentation:\n"
@@ -37,7 +49,7 @@ int main(int argc, char * argv[]) {
     bool use_outpath = false ;
     char  *fout = NULL ;
     char* fin = NULL;
-    int ac, do_gaus = 0, do_box = 0, bFWHM_val = 0;
+    int ac, do_gaus = 0, do_run = 0, do_tshift = 0, bFWHM_val = 0, do_verb = 0;
     float gFWHM_val = 0.0;
     if (argc  <  3) return show_help();
 
@@ -45,20 +57,19 @@ int main(int argc, char * argv[]) {
     for (ac = 1; ac  <  argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
-        } else if (!strcmp(argv[ac], "-gaus")) {
+        } else if (!strcmp(argv[ac], "-lpass")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -gaus\n");
+                fprintf(stderr, "** missing argument for -lpass\n");
                 return 1;
             }
             gFWHM_val = atof(argv[ac]);
             do_gaus = 1;
-        } else if (!strcmp(argv[ac], "-box")) {
-            if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -box\n");
-                return 1;
-            }
-            bFWHM_val = atoi(argv[ac]);
-            do_box = 1;
+        } else if (!strcmp(argv[ac], "-run")) {
+            do_run = 1;
+        } else if (!strcmp(argv[ac], "-verb")) {
+            do_verb = 1;
+        } else if (!strcmp(argv[ac], "-tshift")) {
+            do_tshift = 1;
         } else if (!strcmp(argv[ac], "-input")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -input\n");
@@ -83,34 +94,54 @@ int main(int argc, char * argv[]) {
         return 1;
     }
 
+    if (!use_outpath) fout = fin;
+
     // Read input dataset
     nifti_image * nii_input = nifti_image_read(fin, 1);
     if (!nii_input) {
         fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin);
         return 2;
     }
-    if (do_box + do_gaus !=1) {
-        cout << "  Invalid smoothing option. Select gaus or box." << endl;
+
+    if ( gFWHM_val ==0 ) {
+        cout << "  *******************************************************" << endl;
+        cout << "  You did not specify a value for -lpass, so I will use the default value of 40 TRs." << endl;
+        cout << "  If you want to change this, please specify a value for -lpass." << endl;
+        cout << "  *******************************************************" << endl;
+        gFWHM_val = 40.0; // Default value
+    } else {
+        cout << "  Using Gaussian low pass filter with FWHM of " << gFWHM_val << " TRs." << endl; 
+    }
+
+    if (do_run + do_gaus + do_tshift == 0) {
+        cout << "  *******************************************************" << endl;
+        cout << "  Invalid smoothing option. Select at least one: lpass OR run OR tshift," << endl;
+        cout << "  of you selected neither, I dont know what to do." << endl;
+        cout << "  *******************************************************" << endl;
         return 2;
     }
 
-    log_welcome("LN_TEMPSMOOTH");
+
+    log_welcome("LN2_FRISGO");
     log_nifti_descriptives(nii_input);
     if (do_gaus) {
-        cout << "Selected temporal smoothing: Gaussian" << endl;
-    } else if (do_box) {
-        cout << "Selected temporal smoothing: Box-car" << endl;
+        cout << "Selected temporal low pass filter: Gaussian" << endl;
+    } else if (do_run) {
+        cout << "Selected run wise estimation and correction of Fuzzy Ripples" << endl;
+    }   else if (do_tshift) {
+        cout << "Selected slice timing correction for Fuzzy Ripples" << endl;
     }
 
     // Get dimensions of input
     int size_x = nii_input->nx;
     int size_y = nii_input->ny;
     int size_z = nii_input->nz;
-    int size_time = nii_input->nt;
+    int size_t = nii_input->nt;
     int nr_voxels = size_x * size_y * size_z;
     // int nx = nii_input->nx;
     // int nxy = nii_input->nx * nii_input->ny;
     int nxyz = nii_input->nx * nii_input->ny * nii_input->nz;
+    int nxyzt = nii_input->nx * nii_input->ny * nii_input->nz * nii_input->nt;
     float dT = 1;
 
     // ========================================================================
@@ -130,54 +161,198 @@ int main(int argc, char * argv[]) {
     nii_weight->data = calloc(nii_weight->nvox, nii_weight->nbyper);
     float* nii_weight_data = static_cast<float*>(nii_weight->data);
 
+    if (do_verb) cout << "done allocating" << endl;
+
+    // ========================================================================
+    // Preparing things I need for all ways of Fuzzy Ripple correction
+    // ========================================================================
+    // error time series
+    nifti_image* nii_error = copy_nifti_as_float32(nii);
+    float* nii_error_data = static_cast<float*>(nii_error->data);
+    if (do_verb) cout << "done allocating error time series" << endl;
+
+    // setting all error data to zero
+    for (int i = 0; i < nxyzt ; ++i)   *(nii_error_data + i) = 0;
+
+    if (do_verb) cout << "calciulating error across time: first " << endl;
+    // getting error of first time point
+    for (int i = 0; i < nr_voxels; ++i) {
+        *(nii_error_data + i) = *(nii_data + nxyz * 0 + i) - *(nii_data + nxyz * 1 + i);
+    }
+
+    if (do_verb) cout << "calciulating error across time: last" << endl;
+    // getting error of last time point
+    for (int i = 0; i < nr_voxels; ++i) {
+    //   *(nii_error_data + (nxyz*(size_t-1)) + i) = *(nii_data + (nxyz*(size_t-1)) + i) - *(nii_data + (nxyz*(size_t-2)) + i);
+    }
+    
+    if (do_verb) cout << "calciulating error across time: all the rest" << endl;
+    // getting error for all the other time points in between
+     for (int t = 1; t < size_t-2; ++t) {
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_error_data + t*nxyz + i) =  *(nii_data + t*nxyz + i) 
+                                              - 0.5 *  ( *(nii_data + (t-1)*nxyz + i))
+                                              - 0.5 *  ( *(nii_data + (t+1)*nxyz + i));
+        }
+     }
+
+     // invertign error every other TR
+        for (int t = 1; t < size_t; t += 2) {
+           for (int i = 0; i < nr_voxels; ++i) {
+                *(nii_error_data + t*nxyz + i) *= -1;
+            }
+        }
+
+    if (do_verb) save_output_nifti(fout, "error_maps", nii_error, true, use_outpath);
+    // ========================================================================
+    // Run wise estimation of Fuzzy Ripple
+    // ========================================================================
+     
+    if (do_run) {
+    if (do_verb) cout << "starting run wise Fuzzy Ripple correction" << endl;
+        // allocating memory for average error 
+        nifti_image* nii_mean_error = copy_nifti_as_float32(nii_weight);
+        float* nii_mean_error_data = static_cast<float*>(nii_mean_error->data);
+         for (int i = 0; i < nxyz ; ++i)   *(nii_mean_error_data + i) = 0;
+
+        // getting average of error across time
+        for (int i = 0; i < nr_voxels; ++i) {
+            float sum = 0;
+            for (int it = 0; it < size_t; ++it) {
+                sum += *(nii_error_data + nxyz * it + i);
+            }
+            *(nii_mean_error_data + i) = sum / size_t;
+        }
+       
+        if (do_verb) save_output_nifti(fout, "mean_error_maps", nii_mean_error, true, use_outpath);
+
+        // subtracting error from original data with inverse sign of every other TR
+        for (int it = 0; it < size_t; ++it) {
+            for (int i = 0; i < nr_voxels; ++i) {
+                int j = nxyz * it + i;
+                if (it % 2 == 0) {
+                    *(nii_smooth_data + j) = *(nii_data + j) - ( *(nii_mean_error_data + i)) * 0.5 ;
+                } else {
+                    *(nii_smooth_data + j) = *(nii_data + j) + ( *(nii_mean_error_data + i)) * 0.5 ;
+                }
+            }
+        }
+        save_output_nifti(fout, "runwise_corrected", nii_smooth, true, use_outpath);
+
+
+    }
+
+
+    // ========================================================================
+    // Fuzzy ripple correction via slice time correction
+    // ========================================================================
+
+    if (do_tshift) {
+        // convention is to fist forward
+        // see assumed time table below
+        // t is trigger
+        // k time point of largest power of fmri signal: k-scpace center for acquisition   // 
+        // input data are like this:  
+        // t       t       t       t       t       t       t       ....
+        //     k       k       k       k       k       k       k       ....
+        //
+        // output data are like this: 
+        // t       t       t       t       t       t       t       ....
+        // k       k       k       k       k       k       k       ....
+
+        // if there are less than 4 TRs, there is nothing to do for me.
+        if (size_t<4) {
+            cout << "###############################" << endl;
+            cout << "you have less than 4 TRs, so I canot reallt do 3rd order spline fitting with this" << endl;
+            cout << "go back to the scanner and collect longer time series" << endl;
+            return 1; 
+        }
+
+        // dealing with first two time point, interpolating back
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_smooth_data + nxyz * 0 + i) = 0.5 * ( *(nii_data + nxyz * 0 + i) + *(nii_data + nxyz * 1 + i) ) ;
+            *(nii_smooth_data + nxyz * 1 + i) = 0.5 * ( *(nii_data + nxyz * 1 + i) + *(nii_data + nxyz * 2 + i) ) ;
+        }
+        // dealing with last two time points copying averages
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_smooth_data + nxyz * (size_t-2) + i) = 0.5 * ( *(nii_data + nxyz * (size_t-2) + i) + *(nii_data + nxyz * (size_t-3) + i) );
+            *(nii_smooth_data + nxyz * (size_t-1) + i) = 0.5 * ( *(nii_data + nxyz * (size_t-2) + i) + *(nii_data + nxyz * (size_t-1) + i) ) ;
+        }
+        // dealing with all the time points in between
+        for (int t = 2; t < size_t-2; ++t) {
+            for (int i = 0; i < nr_voxels; ++i) {
+                *(nii_smooth_data + t*nxyz + i) = // 0.5 * ( *(nii_data + nxyz * (t-2) + i) + *(nii_data + nxyz * (t-1) + i) ) ;
+                                              - 0.0625 *  ( *(nii_data + (t-2)*nxyz + i))
+                                              + 0.5625 *  ( *(nii_data + (t-1)*nxyz + i))
+                                              + 0.5625 *  ( *(nii_data + (t)*nxyz + i))
+                                              - 0.0625 *  ( *(nii_data + (t+1)*nxyz + i));
+            }
+        }
+        save_output_nifti(fout, "tshift_corrected", nii_smooth, true, use_outpath);
+    }
+
     // ========================================================================
     // Smoothing loop
     // ========================================================================
     int vic;
     if (do_gaus) {
         vic = max(1., 2. * gFWHM_val / dT);  // Ignore if voxel is too far
-    } else if (do_box) {
-        vic = bFWHM_val;
-    }
-    cout << "    vic " << vic << endl;
-    cout << "    FWHM_val " << gFWHM_val << endl;
 
-    for (int i = 0; i < nr_voxels; ++i) {
-        *(nii_weight_data + i) = 0;
-        if (*(nii_data + i) != 0) {
-            for (int it = 0; it < size_time; ++it) {
-                int j = nxyz * it + i;
-                *(nii_smooth_data + j) = 0;
+        cout << "    vic " << vic << endl;
+        cout << "    FWHM_val " << gFWHM_val << endl;
 
-                if (do_gaus) {
-                    float weight = 0;
-                    int jt_start = max(0, it - vic);
-                    int jt_stop = min(it + vic + 1, size_time);
-                    for (int jt = jt_start; jt < jt_stop; ++jt) {
-                        int k = nxyz * jt + i;
-                        float dist = abs(it - jt);
-                        float g = gaus(dist, gFWHM_val);
-                        *(nii_smooth_data + j) += (*(nii_data + k) * g);
-                        weight += g;
-                    }
-                    *(nii_smooth_data + j) /= weight;
-                } else if (do_box) {
-                    float weight = 0;
-                    int jt_start = max(0, it - vic);
-                    int jt_stop = min(it + vic + 1, size_time);
-                    for (int jt = jt_start; jt < jt_stop; ++jt) {
-                        int k = nxyz * jt + i;
-                        *(nii_smooth_data + j) += *(nii_data + k);
-                        weight += 1;
-                    }
-                    *(nii_smooth_data + j) /= weight;
-                }
+        // allocating memory for smoothed error time series.
+        nifti_image* nii_smooth_error = copy_nifti_as_float32(nii);
+        float* nii_smooth_error_data = static_cast<float*>(nii_smooth_error->data);
+
+        cout << "starting smoothing loop....This might take a while" << endl;
+        cout << "progress is shown in percent" << endl;
+        cout << "  " << flush;
+        for (int i = 0; i < nr_voxels; ++i) {
+
+            if (i % (nr_voxels / 100) == 0) {
+                cout << "\b\b\b\b" << i * 100 / nr_voxels << "%" << flush;
+            }
+
+            *(nii_weight_data + i) = 0;
+            if (*(nii_error_data + i) != 0) {
+                for (int it = 0; it < size_t; ++it) {
+                    int j = nxyz * it + i;
+                    *(nii_smooth_error_data + j) = 0;
+
+                        float weight = 0;
+                        int jt_start = max(0, it - vic);
+                        int jt_stop = min(it + vic + 1, size_t);
+                        for (int jt = jt_start; jt < jt_stop; ++jt) {
+                            int k = nxyz * jt + i;
+                            float dist = abs(it - jt);
+                            float g = gaus(dist, gFWHM_val);
+                            *(nii_smooth_error_data + j) += (*(nii_error_data + k) * g);
+                            weight += g;
+                        }
+                        *(nii_smooth_error_data + j) /= weight;
             }
         }
     }
 
-    if (!use_outpath) fout = fin;
-    save_output_nifti(fout, "tempsmooth", nii_smooth, true, use_outpath);
+    // wrtitng out smoothed error time series   
+    if (do_verb) save_output_nifti(fout, "smooth_error_maps", nii_smooth_error, true, use_outpath);
+
+    // correcting original data with smoothed error time series
+    for (int it = 0; it < size_t; ++it) {
+        for (int i = 0; i < nr_voxels; ++i) {
+            int j = nxyz * it + i;
+            if (it % 2 == 0) {
+                *(nii_smooth_data + j) = *(nii_data + j) - (*(nii_smooth_error_data + j)) * 0.5 ;
+            } else {
+                *(nii_smooth_data + j) = *(nii_data + j) + (*(nii_smooth_error_data + j)) * 0.5 ;
+            }
+        }
+    }
+    
+    save_output_nifti(fout, "lpass_corrected", nii_smooth, true, use_outpath);
+
+    }
 
     cout << "  Finished." << endl;
     return 0;
