@@ -103,7 +103,7 @@ int main(int argc, char * argv[]) {
         return 2;
     }
 
-    if ( gFWHM_val ==0 ) {
+    if ( gFWHM_val ==0 & do_gaus == 1) {
         cout << "  *******************************************************" << endl;
         cout << "  You did not specify a value for -lpass, so I will use the default value of 40 TRs." << endl;
         cout << "  If you want to change this, please specify a value for -lpass." << endl;
@@ -161,87 +161,7 @@ int main(int argc, char * argv[]) {
     nii_weight->data = calloc(nii_weight->nvox, nii_weight->nbyper);
     float* nii_weight_data = static_cast<float*>(nii_weight->data);
 
-    if (do_verb) cout << "done allocating" << endl;
-
-    // ========================================================================
-    // Preparing things I need for all ways of Fuzzy Ripple correction
-    // ========================================================================
-    // error time series
-    nifti_image* nii_error = copy_nifti_as_float32(nii);
-    float* nii_error_data = static_cast<float*>(nii_error->data);
-    if (do_verb) cout << "done allocating error time series" << endl;
-
-    // setting all error data to zero
-    for (int i = 0; i < nxyzt ; ++i)   *(nii_error_data + i) = 0;
-
-    if (do_verb) cout << "calciulating error across time: first " << endl;
-    // getting error of first time point
-    for (int i = 0; i < nr_voxels; ++i) {
-        *(nii_error_data + i) = *(nii_data + nxyz * 0 + i) - *(nii_data + nxyz * 1 + i);
-    }
-
-    if (do_verb) cout << "calciulating error across time: last" << endl;
-    // getting error of last time point
-    for (int i = 0; i < nr_voxels; ++i) {
-    //   *(nii_error_data + (nxyz*(size_t-1)) + i) = *(nii_data + (nxyz*(size_t-1)) + i) - *(nii_data + (nxyz*(size_t-2)) + i);
-    }
-    
-    if (do_verb) cout << "calciulating error across time: all the rest" << endl;
-    // getting error for all the other time points in between
-     for (int t = 1; t < size_t-2; ++t) {
-        for (int i = 0; i < nr_voxels; ++i) {
-            *(nii_error_data + t*nxyz + i) =  *(nii_data + t*nxyz + i) 
-                                              - 0.5 *  ( *(nii_data + (t-1)*nxyz + i))
-                                              - 0.5 *  ( *(nii_data + (t+1)*nxyz + i));
-        }
-     }
-
-     // invertign error every other TR
-        for (int t = 1; t < size_t; t += 2) {
-           for (int i = 0; i < nr_voxels; ++i) {
-                *(nii_error_data + t*nxyz + i) *= -1;
-            }
-        }
-
-    if (do_verb) save_output_nifti(fout, "error_maps", nii_error, true, use_outpath);
-    // ========================================================================
-    // Run wise estimation of Fuzzy Ripple
-    // ========================================================================
-     
-    if (do_run) {
-    if (do_verb) cout << "starting run wise Fuzzy Ripple correction" << endl;
-        // allocating memory for average error 
-        nifti_image* nii_mean_error = copy_nifti_as_float32(nii_weight);
-        float* nii_mean_error_data = static_cast<float*>(nii_mean_error->data);
-         for (int i = 0; i < nxyz ; ++i)   *(nii_mean_error_data + i) = 0;
-
-        // getting average of error across time
-        for (int i = 0; i < nr_voxels; ++i) {
-            float sum = 0;
-            for (int it = 0; it < size_t; ++it) {
-                sum += *(nii_error_data + nxyz * it + i);
-            }
-            *(nii_mean_error_data + i) = sum / size_t;
-        }
-       
-        if (do_verb) save_output_nifti(fout, "mean_error_maps", nii_mean_error, true, use_outpath);
-
-        // subtracting error from original data with inverse sign of every other TR
-        for (int it = 0; it < size_t; ++it) {
-            for (int i = 0; i < nr_voxels; ++i) {
-                int j = nxyz * it + i;
-                if (it % 2 == 0) {
-                    *(nii_smooth_data + j) = *(nii_data + j) - ( *(nii_mean_error_data + i)) * 0.5 ;
-                } else {
-                    *(nii_smooth_data + j) = *(nii_data + j) + ( *(nii_mean_error_data + i)) * 0.5 ;
-                }
-            }
-        }
-        save_output_nifti(fout, "runwise_corrected", nii_smooth, true, use_outpath);
-
-
-    }
-
+    if (do_verb) cout << "done allocating the main stuff, not going though the spefics algorythm as desired " << endl;
 
     // ========================================================================
     // Fuzzy ripple correction via slice time correction
@@ -254,11 +174,11 @@ int main(int argc, char * argv[]) {
         // k time point of largest power of fmri signal: k-scpace center for acquisition   // 
         // input data are like this:  
         // t       t       t       t       t       t       t       ....
-        //     k       k       k       k       k       k       k       ....
+        //     k1      k2      k3      k4      k5      k6      k7      ....
         //
         // output data are like this: 
         // t       t       t       t       t       t       t       ....
-        // k       k       k       k       k       k       k       ....
+        // k1      k1-2    k2-3    k3-4    k4-5    k5-6    k6-7    ....
 
         // if there are less than 4 TRs, there is nothing to do for me.
         if (size_t<4) {
@@ -279,6 +199,18 @@ int main(int argc, char * argv[]) {
             *(nii_smooth_data + nxyz * (size_t-1) + i) = 0.5 * ( *(nii_data + nxyz * (size_t-2) + i) + *(nii_data + nxyz * (size_t-1) + i) ) ;
         }
         // dealing with all the time points in between
+        // y = a + b x + c x^2 + d x^3, for 4 data points, 
+        //forward matrix is y = M A, 
+        //with y = (y1, y2, y3, y4) the signal strenghts across 4 time point
+        //with A = a, b, c, d, the prefactors of the cubic polinomial 
+        //y (X=0) is desired, so the other x values are -1.5, -0.5, 0.5, 1.5
+        //so the forward matrix is M = (1, -1.5, 2.25, -3.375; 
+        //                              1, -0.5, 0.25, -0.125; 
+        //                              1, 0.5,  0.25,  0.125; 
+        //                              1, 1.5,  2.25,  3.375)
+        //so the inverse matrix is M^-1 = (- 0.0625, + 0.5625, + 0.5625, - 0.0625 ) .... (we only need th first row).
+        // and the output is y = M^-1 y, so we can just multiply the input data with the inverse matrix.
+
         for (int t = 2; t < size_t-2; ++t) {
             for (int i = 0; i < nr_voxels; ++i) {
                 *(nii_smooth_data + t*nxyz + i) = // 0.5 * ( *(nii_data + nxyz * (t-2) + i) + *(nii_data + nxyz * (t-1) + i) ) ;
@@ -291,69 +223,177 @@ int main(int argc, char * argv[]) {
         save_output_nifti(fout, "tshift_corrected", nii_smooth, true, use_outpath);
     }
 
+
+
     // ========================================================================
-    // Smoothing loop
+    // Preparing things I need for runwise and low pass correcfted ways of Fuzzy Ripple correction
     // ========================================================================
-    int vic;
-    if (do_gaus) {
-        vic = max(1., 2. * gFWHM_val / dT);  // Ignore if voxel is too far
+    if(do_gaus || do_run) {
+        if (do_verb) cout << "preparing for runwise and low pass correction" << endl;
 
-        cout << "    vic " << vic << endl;
-        cout << "    FWHM_val " << gFWHM_val << endl;
+        // allocating memory for weight time series
+        nifti_image* nii_weight = nifti_copy_nim_info(nii);
+        nii_weight->nt = 1;
+        nii_weight->datatype = NIFTI_TYPE_FLOAT32;
+        nii_weight->nbyper = sizeof(float);
+        nii_weight->nvox = size_x * size_y * size_z;
+        nii_weight->data = calloc(nii_weight->nvox, nii_weight->nbyper);
+        float* nii_weight_data = static_cast<float*>(nii_weight->data);
 
-        // allocating memory for smoothed error time series.
-        nifti_image* nii_smooth_error = copy_nifti_as_float32(nii);
-        float* nii_smooth_error_data = static_cast<float*>(nii_smooth_error->data);
-
-        cout << "starting smoothing loop....This might take a while" << endl;
-        cout << "progress is shown in percent" << endl;
-        cout << "  " << flush;
-        for (int i = 0; i < nr_voxels; ++i) {
-
-            if (i % (nr_voxels / 100) == 0) {
-                cout << "\b\b\b\b" << i * 100 / nr_voxels << "%" << flush;
-            }
-
-            *(nii_weight_data + i) = 0;
-            if (*(nii_error_data + i) != 0) {
-                for (int it = 0; it < size_t; ++it) {
-                    int j = nxyz * it + i;
-                    *(nii_smooth_error_data + j) = 0;
-
-                        float weight = 0;
-                        int jt_start = max(0, it - vic);
-                        int jt_stop = min(it + vic + 1, size_t);
-                        for (int jt = jt_start; jt < jt_stop; ++jt) {
-                            int k = nxyz * jt + i;
-                            float dist = abs(it - jt);
-                            float g = gaus(dist, gFWHM_val);
-                            *(nii_smooth_error_data + j) += (*(nii_error_data + k) * g);
-                            weight += g;
-                        }
-                        *(nii_smooth_error_data + j) /= weight;
-            }
-        }
-    }
-
-    // wrtitng out smoothed error time series   
-    if (do_verb) save_output_nifti(fout, "smooth_error_maps", nii_smooth_error, true, use_outpath);
-
-    // correcting original data with smoothed error time series
-    for (int it = 0; it < size_t; ++it) {
-        for (int i = 0; i < nr_voxels; ++i) {
-            int j = nxyz * it + i;
-            if (it % 2 == 0) {
-                *(nii_smooth_data + j) = *(nii_data + j) - (*(nii_smooth_error_data + j)) * 0.5 ;
-            } else {
-                *(nii_smooth_data + j) = *(nii_data + j) + (*(nii_smooth_error_data + j)) * 0.5 ;
-            }
-        }
-    }
     
-    save_output_nifti(fout, "lpass_corrected", nii_smooth, true, use_outpath);
+        // error time series
+        nifti_image* nii_error = copy_nifti_as_float32(nii);
+        float* nii_error_data = static_cast<float*>(nii_error->data);
+        if (do_verb) cout << "done allocating error time series" << endl;
+        
+        // checking if the allocation was successful
+        if (!nii_weight_data) {
+            std::cerr << "Allocation failed for nii_weight_data\n";
+            return 1;
+        }
+        if (!nii_smooth_data) {
+            std::cerr << "Allocation failed for nii_smooth_data\n";
+            return 1;
+        }
 
-    }
+        // setting all error data to zero
+        for (int i = 0; i < nxyzt ; ++i)   *(nii_error_data + i) = 0;
 
+        if (do_verb) cout << "calculating error across time: first " << endl;
+        // getting error of first time point
+        for (int i = 0; i < nr_voxels; ++i) {
+            *(nii_error_data + i) = *(nii_data + nxyz * 0 + i) - *(nii_data + nxyz * 1 + i);
+        }
+
+        if (do_verb) cout << "calculating error across time: last" << endl;
+        // getting error of last time point
+        for (int i = 0; i < nr_voxels; ++i) {
+        *(nii_error_data + (nxyz*(size_t-1)) + i) = *(nii_data + (nxyz*(size_t-1)) + i) - *(nii_data + (nxyz*(size_t-2)) + i);
+        }
+        
+        if (do_verb) cout << "calculating error across time: all the rest" << endl;
+        // getting error for all the other time points in between
+        for (int t = 1; t < size_t-1; ++t) {
+            for (int i = 0; i < nr_voxels; ++i) {
+                *(nii_error_data + t*nxyz + i) =  *(nii_data + t*nxyz + i) 
+                                                - 0.5 *  ( *(nii_data + (t-1)*nxyz + i))
+                                                - 0.5 *  ( *(nii_data + (t+1)*nxyz + i));
+            }
+        }
+
+        // invertign error every other TR
+            for (int t = 1; t < size_t; t += 2) {
+            for (int i = 0; i < nr_voxels; ++i) {
+                    *(nii_error_data + t*nxyz + i) *= -1;
+                }
+            }
+
+        if (do_verb) save_output_nifti(fout, "error_maps", nii_error, true, use_outpath);
+
+
+        // ========================================================================
+        // Run wise estimation of Fuzzy Ripple
+        // ========================================================================
+        
+        if (do_run) {
+            if (do_verb) cout << "starting run wise Fuzzy Ripple correction" << endl;
+            // allocating memory for average error 
+            nifti_image* nii_mean_error = copy_nifti_as_float32(nii_weight);
+            float* nii_mean_error_data = static_cast<float*>(nii_mean_error->data);
+            for (int i = 0; i < nxyz ; ++i)   *(nii_mean_error_data + i) = 0;
+
+            // getting average of error across time
+            for (int i = 0; i < nr_voxels; ++i) {
+                float sum = 0;
+                for (int it = 0; it < size_t; ++it) {
+                    sum += *(nii_error_data + nxyz * it + i);
+                }
+                *(nii_mean_error_data + i) = sum / size_t;
+            }
+        
+            if (do_verb) save_output_nifti(fout, "mean_error_maps", nii_mean_error, true, use_outpath);
+
+            // subtracting error from original data with inverse sign of every other TR
+            for (int it = 0; it < size_t; ++it) {
+                for (int i = 0; i < nr_voxels; ++i) {
+                    int j = nxyz * it + i;
+                    if (it % 2 == 0) {
+                        *(nii_smooth_data + j) = *(nii_data + j) - ( *(nii_mean_error_data + i)) * 0.5 ;
+                    } else {
+                        *(nii_smooth_data + j) = *(nii_data + j) + ( *(nii_mean_error_data + i)) * 0.5 ;
+                    }
+                }
+            }
+            save_output_nifti(fout, "runwise_corrected", nii_smooth, true, use_outpath);
+
+
+        }
+
+
+        // ========================================================================
+        // Smoothing loop
+        // ========================================================================
+        int vic;
+        if (do_gaus) {
+            vic = max(1., 2. * gFWHM_val / dT);  // Ignore if voxel is too far
+
+            cout << "    vic " << vic << endl;
+            cout << "    FWHM_val " << gFWHM_val << endl;
+
+            // allocating memory for smoothed error time series.
+            nifti_image* nii_smooth_error = copy_nifti_as_float32(nii);
+            float* nii_smooth_error_data = static_cast<float*>(nii_smooth_error->data);
+
+            cout << "starting smoothing loop....This might take a while" << endl;
+            cout << "progress is shown in percent" << endl;
+            cout << "  " << flush;
+            for (int i = 0; i < nr_voxels; ++i) {
+
+                if (i % (nr_voxels / 100) == 0) {
+                    cout << "\b\b\b\b" << i * 100 / nr_voxels << "%" << flush;
+                }
+
+                *(nii_weight_data + i) = 0;
+                if (*(nii_error_data + i) != 0) {
+                    for (int it = 0; it < size_t; ++it) {
+                        int j = nxyz * it + i;
+                        *(nii_smooth_error_data + j) = 0;
+
+                            float weight = 0;
+                            int jt_start = max(0, it - vic);
+                            int jt_stop = min(it + vic + 1, size_t);
+                            for (int jt = jt_start; jt < jt_stop; ++jt) {
+                                int k = nxyz * jt + i;
+                                float dist = abs(it - jt);
+                                float g = gaus(dist, gFWHM_val);
+                                *(nii_smooth_error_data + j) += (*(nii_error_data + k) * g);
+                                weight += g;
+                            }
+                            *(nii_smooth_error_data + j) /= weight;
+                    }
+                }
+            }
+
+            // wrtitng out smoothed error time series   
+            if (do_verb) save_output_nifti(fout, "smooth_error_maps", nii_smooth_error, true, use_outpath);
+
+             // correcting original data with smoothed error time series
+            for (int it = 0; it < size_t; ++it) {
+                for (int i = 0; i < nr_voxels; ++i) {
+                    int j = nxyz * it + i;
+                    if (it % 2 == 0) {
+                        *(nii_smooth_data + j) = *(nii_data + j) - (*(nii_smooth_error_data + j)) * 0.5 ;
+                    } else {
+                        *(nii_smooth_data + j) = *(nii_data + j) + (*(nii_smooth_error_data + j)) * 0.5 ;
+                    }
+                }
+            }
+            
+            save_output_nifti(fout, "lpass_corrected", nii_smooth, true, use_outpath);
+
+        } // smoothing loop closed
+
+    } 
     cout << "  Finished." << endl;
     return 0;
 }
