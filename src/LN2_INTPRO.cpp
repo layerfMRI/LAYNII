@@ -7,6 +7,10 @@ int show_help(void) {
     printf(
     "LN2_INTPRO: Intensity projections. Useful for e.g. highlighting vessels.\n"
     "\n"
+    " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+    " !!! WIP: Need to add maximum projection !!!\n"
+    " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+    "\n"
     "Usage:\n"
     "     LN2_INTPRO -input file.nii -min -range 3 \n"
     "\n"
