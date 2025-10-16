@@ -174,7 +174,7 @@ int main(int argc, char*  argv[]) {
       int16_t* mask_data = static_cast<int16_t*>(mask->data);	
       
 	  for (int j = 0; j != nr_voxels; ++j) {
-            if (*(mask_data + j) == 0  ) {
+            if (*(mask_data + j) < 1/niil->scl_slope ) { // if mask is zero) {
                 *(layers_data + j) = 0;
             }
         }
