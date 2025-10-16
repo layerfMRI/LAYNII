@@ -357,7 +357,7 @@ int main(int argc, char*  argv[]) {
         *(voi_id + nr_voi_gm + i) = *(voi_id_borders + i);
     }
     free(voi_id_borders);
-    free(voi_id_gm);
+    // free(voi_id_gm);
 
     // ------------------------------------------------------------------------
     // Reduce input to voxels of interest
@@ -1235,6 +1235,114 @@ int main(int argc, char*  argv[]) {
         *(nii_out_int16_data + i) = static_cast<int16_t>(*(voi_metric + ii) * static_cast<float>(nr_layers)) + 1;
     }
     save_output_nifti(fout, "DEBUG_equidist_layers", nii_out_int16, false);
+
+    // ================================================================================================================
+    // Compute Middle Gray Matter (MidGM) 
+    // ================================================================================================================
+    printf("\n  Computing midGM...\n");
+    int16_t* voi_midgm1 = (int16_t*)malloc(nr_voi * sizeof(int16_t));
+    int16_t* voi_midgm2 = (int16_t*)malloc(nr_voi * sizeof(int16_t));
+
+    // Find inner half
+    for (int ii = 0; ii != nr_voi; ++ii) {
+        // Find edge case midGM
+        if (*(voi_metric + ii) < 0.5) {
+            *(voi_midgm1 + ii) = 1;
+        } else {
+            *(voi_midgm1 + ii) = 0;
+        }
+    }
+
+    // Find outer half
+    for (int ii = 0; ii != nr_voi; ++ii) {
+        // Find edge case midGM
+        if (*(voi_metric + ii) > 0.5) {
+            *(voi_midgm2 + ii) = 1;
+        } else {
+            *(voi_midgm2 + ii) = 0;
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    // Find overlap in neighbors
+    // ------------------------------------------------------------------------
+    int16_t* voi_midgm = (int16_t*)malloc(nr_voi * sizeof(int16_t));
+    // Set all to zeros as I will only evaluate gm voxels
+    for (int ii = 0; ii != nr_voi; ++ii) {
+        *(voi_midgm + ii) = 0;
+    }
+
+    for (int ii = 0; ii != nr_voi_gm; ++ii) {
+        int i = *(voi_id_gm + ii);
+        tie(ix, iy, iz) = ind2sub_3D(i, size_x, size_y);
+
+        int iii = *(voi_id_inv + i);
+        if (*(voi_midgm1 + iii) != 0) {
+            // ----------------------------------------------------------------
+            // 1-jump neighbours
+            // ----------------------------------------------------------------
+            if (ix > 0) {
+                j = sub2ind_3D(ix-1, iy, iz, size_x, size_y);
+                jj = *(voi_id_inv + j);
+                if (*(voi_midgm2 + jj) != 0) {
+                    *(voi_midgm + iii) = 1;
+                }
+            }
+            if (ix < end_x) {
+                j = sub2ind_3D(ix+1, iy, iz, size_x, size_y);
+                jj = *(voi_id_inv + j);
+                if (*(voi_midgm2 + jj) != 0) {
+                    *(voi_midgm + iii) = 1;
+                }
+            }
+            if (iy > 0) {
+                j = sub2ind_3D(ix, iy-1, iz, size_x, size_y);
+                jj = *(voi_id_inv + j);
+                if (*(voi_midgm2 + jj) != 0) {
+                    *(voi_midgm + iii) = 1;
+                }
+            }
+            if (iy < end_y) {
+                j = sub2ind_3D(ix, iy+1, iz, size_x, size_y);
+                jj = *(voi_id_inv + j);
+                if (*(voi_midgm2 + jj) != 0) {
+                    *(voi_midgm + iii) = 1;
+                }
+            }
+            if (iz > 0) {
+                j = sub2ind_3D(ix, iy, iz-1, size_x, size_y);
+                jj = *(voi_id_inv + j);
+                if (*(voi_midgm2 + jj) != 0) {
+                    *(voi_midgm + iii) = 1;
+                }
+            }
+            if (iz < end_z) {
+                j = sub2ind_3D(ix, iy, iz+1, size_x, size_y);
+                jj = *(voi_id_inv + j);
+                if (*(voi_midgm2 + jj) != 0) {
+                    *(voi_midgm + iii) = 1;
+                }
+            }
+        } else {
+            *(voi_midgm + iii) = 0;
+        }
+    }
+    free(voi_midgm1);
+    free(voi_midgm2);
+
+    // Fill in exact midpoints (edge case)
+    for (int ii = 0; ii != nr_voi; ++ii) {
+        if (*(voi_metric + ii) == 0.5) {
+            *(voi_midgm + ii) = 1;
+        }
+    }
+
+    // DEBUG
+    for (int ii = 0; ii != nr_voi; ++ii) {
+        int i = *(voi_id + ii);
+        *(nii_out_int16_data + i) = *(voi_midgm + ii);
+    }
+    save_output_nifti(fout, "DEBUG_equidist_midGM", nii_out_int16, false);
 
     cout << "\n  Finished.\n" << endl;
     return 0;
