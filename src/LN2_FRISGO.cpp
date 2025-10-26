@@ -24,7 +24,7 @@ int show_help(void) {
     "              timing is directly aligned with the k-space center.\n"
     "              Here we use a third order interpolation across time \n"
     "              to minimize temporal blurring.\n"
-    "              "
+    "              \n"
     "    -lpass  : This option of dual polarity correction estimates slow \n"
     "              changes of the Fruzzy ripple across time. \n"
     "              A Gaussian travelling window of averaging is used to \n"
@@ -166,8 +166,17 @@ int main(int argc, char * argv[]) {
     // ========================================================================
     // Fuzzy ripple correction via slice time correction
     // ========================================================================
+cout << "run until here -2 " << endl;
+
+    for (int t = 0; t < size_t; ++t) {
+            for (int i = 0; i < nr_voxels; ++i) {
+                *(nii_smooth_data + t*nxyz + i) = 0.0 ;
+            }
+        }
+cout << "run until here -1 " << endl;
 
     if (do_tshift) {
+        
         // convention is to fist forward
         // see assumed time table below
         // t is trigger
@@ -187,17 +196,20 @@ int main(int argc, char * argv[]) {
             cout << "go back to the scanner and collect longer time series" << endl;
             return 1; 
         }
-
+cout << "run until here0 " << endl;
         // dealing with first two time point, interpolating back
         for (int i = 0; i < nr_voxels; ++i) {
             *(nii_smooth_data + nxyz * 0 + i) = 0.5 * ( *(nii_data + nxyz * 0 + i) + *(nii_data + nxyz * 1 + i) ) ;
             *(nii_smooth_data + nxyz * 1 + i) = 0.5 * ( *(nii_data + nxyz * 1 + i) + *(nii_data + nxyz * 2 + i) ) ;
         }
+        cout << "run until here1 " << endl;
         // dealing with last two time points copying averages
+        // removed for now because I had segmegtnation errors here
         for (int i = 0; i < nr_voxels; ++i) {
-            *(nii_smooth_data + nxyz * (size_t-2) + i) = 0.5 * ( *(nii_data + nxyz * (size_t-2) + i) + *(nii_data + nxyz * (size_t-3) + i) );
-            *(nii_smooth_data + nxyz * (size_t-1) + i) = 0.5 * ( *(nii_data + nxyz * (size_t-2) + i) + *(nii_data + nxyz * (size_t-1) + i) ) ;
+         //   *(nii_smooth_data + nxyz * (size_t-3) + i) = 0.5 * ( *(nii_data + nxyz * (size_t-3) + i) + *(nii_data + nxyz * (size_t-4) + i) );
+         //   *(nii_smooth_data + nxyz * (size_t-4) + i) = 0.5 * ( *(nii_data + nxyz * (size_t-3) + i) + *(nii_data + nxyz * (size_t-2) + i) ) ;
         }
+        cout << "run until here2 " << endl;
         // dealing with all the time points in between
         // y = a + b x + c x^2 + d x^3, for 4 data points, 
         //forward matrix is y = M A, 
@@ -267,8 +279,9 @@ int main(int argc, char * argv[]) {
 
         if (do_verb) cout << "calculating error across time: last" << endl;
         // getting error of last time point
+        // removed - was causing segmentation faults
         for (int i = 0; i < nr_voxels; ++i) {
-        *(nii_error_data + (nxyz*(size_t-1)) + i) = *(nii_data + (nxyz*(size_t-1)) + i) - *(nii_data + (nxyz*(size_t-2)) + i);
+        // *(nii_error_data + (nxyz*(size_t-1)) + i) = *(nii_data + (nxyz*(size_t-1)) + i) - *(nii_data + (nxyz*(size_t-2)) + i);
         }
         
         if (do_verb) cout << "calculating error across time: all the rest" << endl;
