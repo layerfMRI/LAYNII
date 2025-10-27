@@ -34,6 +34,8 @@ int show_help(void) {
     "              The default value is 40 TRs.\n"
     "    -run    : Doing the dual-polarity correction by assuming that the \n"
     "              Fuzzy Ripples are indenital for the entire run. \n"
+    "    -calib  : This option assumes that the first 4 volumes have alternating \n"
+    "              read polarity, while the remainer of the run has one polarity (WIP). \n"
     "    -output : (Optional) Output filename, including .nii or\n"
     "              .nii.gz, and path if needed. Overwrites existing files.\n"    
      "    -verb  : wrtiting out all the inbetween steps, for debugging. \n"
