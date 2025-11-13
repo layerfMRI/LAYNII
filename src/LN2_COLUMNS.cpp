@@ -178,9 +178,10 @@ int main(int argc, char*  argv[]) {
     // ------------------------------------------------------------------------
     // Find initial number of columns if the optional input is given
     int32_t max_column_id = 0;
+    int32_t* nii_centroids_data;
     if (mode_initialize_with_centroids) {
         nifti_image* nii_centroids = copy_nifti_as_int32(nii3);
-        int32_t* nii_centroids_data = static_cast<int32_t*>(nii_centroids->data);
+        nii_centroids_data = static_cast<int32_t*>(nii_centroids->data);
 
         // Find maximum column id
         for (uint32_t i = 0; i != nr_voxels; ++i) {
@@ -214,7 +215,7 @@ int main(int argc, char*  argv[]) {
     // Find the subset voxels that will be used many times
     uint32_t nr_voi = 0;  // Voxels of interest
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_midgm_data + i) == 1){
+        if (*(nii_midgm_data + i) == 1) {
             nr_voi += 1;
         }
     }
@@ -225,7 +226,7 @@ int main(int argc, char*  argv[]) {
     // Fill in indices to be able to remap from subset to full set of voxels
     uint32_t ii = 0;
     for (uint32_t i = 0; i != nr_voxels; ++i) {
-        if (*(nii_midgm_data + i) == 1){
+        if (*(nii_midgm_data + i) == 1) {
             *(voi_id + ii) = i;
             ii += 1;
         }
@@ -467,6 +468,16 @@ int main(int argc, char*  argv[]) {
             }
         }
         *(nii_midgm_data + start_voxel) = 2;  // Reduce to single initial voxel
+    }
+
+    // Setup midgm input when centroids are given
+    if (mode_initialize_with_centroids) {
+        for (uint32_t ii = 0; ii != nr_voi; ++ii) {
+            uint32_t i = *(voi_id + ii);  // Map subset to full set
+            if (*(nii_centroids_data + i) > 0) {
+                *(nii_midgm_data + i) = 2;
+            }
+        }
     }
 
     // Initialize new voxel
@@ -873,7 +884,7 @@ int main(int argc, char*  argv[]) {
 
         // --------------------------------------------------------------------
         // Remove the initial voxel (reduces arbitrariness of the 1st point)
-        // NOTE(Faruk): This step guarantees to start from extrememums. The
+        // NOTE(Faruk): This step guarantees to start from extremums. The
         // initial point is only used to determine an extremum distance.
         // if (n == 0) {
         //     *(nii_midgm_data + start_voxel) = 1;
