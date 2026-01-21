@@ -303,6 +303,9 @@ LN2_REGRESS_OUT:
 LN3_LAYERS:
 	$(CC) $(CFLAGS) -o LN3_LAYERS src/LN3_LAYERS.cpp $(LIBRARIES) $(LFLAGS)
 
+LN2_SNAPCAST:
+	$(CC) $(CFLAGS) -o LN2_SNAPCAST src/LN2_SNAPCAST.cpp $(LIBRARIES) $(LFLAGS)
+
 # =============================================================================
 
 clean:
