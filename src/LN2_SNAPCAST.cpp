@@ -4,8 +4,8 @@
 int show_help(void) {
     printf(
     "LN2_SNAPCAST: Create snapshots of isometric projections over the cardinal axes.\n"
-    "              It is intended to be used as a fast way to visualize subdural\n"
-    "              and leptomeningeal brain surace renders.\n"
+    "              It is intended to be used as a fast way to visualize subdural and\n"
+    "              leptomeningeal brain surfaces.\n"
     "\n"
     "Usage:\n"
     "    LN2_SNAPCAST -input T2star.nii.gz -mask brain_mask.nii.gz\n"
@@ -14,6 +14,8 @@ int show_help(void) {
     "    -help     : Show this help.\n"
     "    -input    : A 3D nifti file that contains values to project.\n"
     "                Only non zero voxels will be used.\n"
+    "    -ray_step : (Optional) A positive integer. Determines the number of voxels for\n"
+    "                ray penetration. Higher values give smoother results. Default is '5'.\n"
     // "    -mask     : (Optional) 3D binary nifti file that will be used to mask the input.\n"
     "    -output   : (Optional) Output basename for all outputs.\n"
     "\n");
@@ -24,7 +26,7 @@ int main(int argc, char*  argv[]) {
 
     nifti_image *nii1 = NULL;
     char *fin1 = NULL, *fout = NULL;
-    int ac;
+    int ac, ray_step = 5;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -38,12 +40,12 @@ int main(int argc, char*  argv[]) {
             }
             fin1 = argv[ac];
             fout = argv[ac];
-        // } else if (!strcmp(argv[ac], "-mask")) {
-        //     if (++ac >= argc) {
-        //         fprintf(stderr, "** missing argument for -mask\n");
-        //         return 1;
-        //     }
-        //     radius = atof(argv[ac]);
+        } else if (!strcmp(argv[ac], "-ray_step")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -ray_step\n");
+            } else {
+                ray_step = atof(argv[ac]);
+            }
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -126,19 +128,27 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Compute rays
     // ========================================================================
+    int step_count = 0;
+    int step_max = ray_step;
+
     // Loop across rays on x plane
     for (int z = 0; z != size_z; ++z) {
         for (int y = 0; y != size_y; ++y) {
+
 
             // Loop across a ray
             for (int x = 0; x != size_x; ++x) {
                 int i = sub2ind_3D(x, y, z, size_x, size_y);
                 if ( *(nii_input_data + i) != 0 ) {
-
                     int k = sub2ind_3D(y, z, 0, size_max, size_max);
-                    *(nii_output_data + k) = *(nii_input_data + i);
+                    *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
+                    step_count += 1;
+                    if (step_count == step_max) {
+                        break;
+                    }
                 }
             }
+            step_count = 0;
 
             // Loop across a ray in reverse
             for (int x = size_x-1; x >= 0; --x) {
@@ -146,9 +156,14 @@ int main(int argc, char*  argv[]) {
                 if ( *(nii_input_data + i) != 0 ) {
 
                     int k = sub2ind_3D(y, z, 1, size_max, size_max);
-                    *(nii_output_data + k) = *(nii_input_data + i);
+                    *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
+                    step_count += 1;
+                    if (step_count == step_max) {
+                        break;
+                    }
                 }
             }
+            step_count = 0;
 
         }
     }
@@ -164,9 +179,14 @@ int main(int argc, char*  argv[]) {
                 if ( *(nii_input_data + i) != 0 ) {
 
                     int k = sub2ind_3D(x, z, 2, size_max, size_max);
-                    *(nii_output_data + k) = *(nii_input_data + i);
+                    *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
+                    step_count += 1;
+                    if (step_count == step_max) {
+                        break;
+                    }
                 }
             }
+            step_count = 0;
 
             // Loop across a ray in reverse
             for (int y = size_y-1; y >= 0; --y) {
@@ -174,9 +194,14 @@ int main(int argc, char*  argv[]) {
                 if ( *(nii_input_data + i) != 0 ) {
 
                     int k = sub2ind_3D(x, z, 3, size_max, size_max);
-                    *(nii_output_data + k) = *(nii_input_data + i);
+                    *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
+                    step_count += 1;
+                    if (step_count == step_max) {
+                        break;
+                    }
                 }
             }
+            step_count = 0;
 
         }
     }
@@ -192,9 +217,14 @@ int main(int argc, char*  argv[]) {
                 if ( *(nii_input_data + i) != 0 ) {
 
                     int k = sub2ind_3D(x, y, 4, size_max, size_max);
-                    *(nii_output_data + k) = *(nii_input_data + i);
+                    *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
+                    step_count += 1;
+                    if (step_count == step_max) {
+                        break;
+                    }
                 }
             }
+            step_count = 0;
 
             // Loop across a ray in reverse
             for (int z = size_z-1; z >= 0; --z) {
@@ -202,16 +232,27 @@ int main(int argc, char*  argv[]) {
                 if ( *(nii_input_data + i) != 0 ) {
 
                     int k = sub2ind_3D(x, y, 5, size_max, size_max);
-                    *(nii_output_data + k) = *(nii_input_data + i);
+                    *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
+                    step_count += 1;
+                    if (step_count == step_max) {
+                        break;
+                    }
                 }
             }
+            step_count = 0;
+
         }
     }
 
     // ========================================================================
     // Save
+    // ========================================================================
+    // Prepare tags for the output
+    std::ostringstream tag_1;
+    tag_1 << ray_step;
+
     cout << "  Saving output..." << endl;
-    save_output_nifti(fout, "snapcast", nii_output, true);
+    save_output_nifti(fout, "snapcast_ray_step-"+tag_1.str(), nii_output, true);
 
     cout << "\n  Finished." << endl;
     return 0;
