@@ -101,6 +101,10 @@ int main(int argc, char*  argv[]) {
 
     const uint32_t nr_voxels_out = size_z_out * size_y_out * size_x_out;
 
+    const uint32_t offset_x = (size_max - size_x) / 2;
+    const uint32_t offset_y = (size_max - size_y) / 2;
+    const uint32_t offset_z = (size_max - size_z) / 2;
+
     // ========================================================================
     // Allocating new nifti for output 4D nifti
     // ========================================================================
@@ -143,7 +147,7 @@ int main(int argc, char*  argv[]) {
                 for (int x = 0; x != size_x; ++x) {
                     int i = sub2ind_4D(x, y, z, t, size_x, size_y, size_z);
                     if ( *(nii_input_data + i) != 0 ) {
-                        int k = sub2ind_4D(y, z, 0, t, size_max, size_max, 6);
+                        int k = sub2ind_4D(y + offset_y, z + offset_z, 0, t, size_max, size_max, 6);
                         *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
                         step_count += 1;
                         if (step_count == step_max) {
@@ -158,7 +162,7 @@ int main(int argc, char*  argv[]) {
                     int i = sub2ind_4D(x, y, z, t, size_x, size_y, size_z);
                     if ( *(nii_input_data + i) != 0 ) {
 
-                        int k = sub2ind_4D(y, z, 1, t, size_max, size_max, 6);
+                        int k = sub2ind_4D(y + offset_y, z + offset_z, 1, t, size_max, size_max, 6);
                         *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
                         step_count += 1;
                         if (step_count == step_max) {
@@ -180,7 +184,7 @@ int main(int argc, char*  argv[]) {
                     int i = sub2ind_4D(x, y, z, t, size_x, size_y, size_z);
                     if ( *(nii_input_data + i) != 0 ) {
 
-                        int k = sub2ind_4D(x, z, 2, t, size_max, size_max, 6);
+                        int k = sub2ind_4D(x + offset_x, z + offset_z, 2, t, size_max, size_max, 6);
                         *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
                         step_count += 1;
                         if (step_count == step_max) {
@@ -195,7 +199,7 @@ int main(int argc, char*  argv[]) {
                     int i = sub2ind_4D(x, y, z, t, size_x, size_y, size_z);
                     if ( *(nii_input_data + i) != 0 ) {
 
-                        int k = sub2ind_4D(x, z, 3, t, size_max, size_max, 6);
+                        int k = sub2ind_4D(x + offset_x, z + offset_z, 3, t, size_max, size_max, 6);
                         *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
                         step_count += 1;
                         if (step_count == step_max) {
@@ -217,7 +221,7 @@ int main(int argc, char*  argv[]) {
                     int i = sub2ind_4D(x, y, z, t, size_x, size_y, size_z);
                     if ( *(nii_input_data + i) != 0 ) {
 
-                        int k = sub2ind_4D(x, y, 4, t, size_max, size_max, 6);
+                        int k = sub2ind_4D(x + offset_x, y + offset_y, 4, t, size_max, size_max, 6);
                         *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
                         step_count += 1;
                         if (step_count == step_max) {
@@ -232,7 +236,7 @@ int main(int argc, char*  argv[]) {
                     int i = sub2ind_4D(x, y, z, t, size_x, size_y, size_z);
                     if ( *(nii_input_data + i) != 0 ) {
 
-                        int k = sub2ind_4D(x, y, 5, t, size_max, size_max, 6);
+                        int k = sub2ind_4D(x + offset_x, y + offset_y, 5, t, size_max, size_max, 6);
                         *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
                         step_count += 1;
                         if (step_count == step_max) {
