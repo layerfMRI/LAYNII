@@ -11,13 +11,14 @@ int show_help(void) {
     "    LN2_SNAPCAST -input T2star.nii.gz -mask brain_mask.nii.gz\n"
     "\n"
     "Options:\n"
-    "    -help     : Show this help.\n"
-    "    -input    : A 3D or 4D nifti file that contains values to project.\n"
-    "                Only non zero voxels will be used.\n"
-    "    -step_max : (Optional) A positive integer. Determines the number of voxels for\n"
-    "                ray penetration. Higher values give smoother results. Default is '5'.\n"
+    "    -help   : Show this help.\n"
+    "    -input  : A 3D or 4D nifti file that contains values to project.\n"
+    "              Only non zero voxels will be used.\n"
+    "    -type   : Projection type. Options are: 'mean', 'min', 'max'. Default is 'mean'.\n"
+    "    -steps  : A positive integer. Determines the number of voxels for\n"
+    "              ray penetration. Higher values give smoother results. Default is '5'.\n"
     // "    -mask     : (Optional) 3D binary nifti file that will be used to mask the input.\n"
-    "    -output   : (Optional) Output basename for all outputs.\n"
+    "    -output : (Optional) Output basename for all outputs.\n"
     "\n");
     return 0;
 }
@@ -26,8 +27,9 @@ int main(int argc, char*  argv[]) {
 
     nifti_image *nii1 = NULL;
     char *fin1 = NULL, *fout = NULL;
-    int ac, mode = 0;
-    int64_t step_max = 5, step_count_all = 0, step_count = 0;
+    int ac;
+    int64_t steps = 5, step_count_all = 0, step_count = 0;
+    std::string projection_type = "mean";
 
     // Process user options
     if (argc < 2) return show_help();
@@ -41,11 +43,20 @@ int main(int argc, char*  argv[]) {
             }
             fin1 = argv[ac];
             fout = argv[ac];
-        } else if (!strcmp(argv[ac], "-step_max")) {
+        } else if (!strcmp(argv[ac], "-steps")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -step_max\n");
+                fprintf(stderr, "** missing argument for -steps\n");
             } else {
-                step_max = atof(argv[ac]);
+                steps = atof(argv[ac]);
+            }
+        } else if (!strcmp(argv[ac], "-type")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -type\n");
+                return 1;
+            }
+            projection_type = argv[ac];
+            for (auto &c : projection_type) {  // Convert to lowercase
+                c = std::tolower(c);
             }
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
@@ -72,6 +83,13 @@ int main(int argc, char*  argv[]) {
     }
 
     log_welcome("LN2_SNAPCAST");
+    // Check projection type input
+    if (projection_type == "mean" || projection_type == "min" || projection_type == "max" ) {
+        std::cout << "  Type: '" << projection_type << "' intensity projection.\n" << std::endl;
+    } else {
+        fprintf(stderr, "** invalid projection type: '%s'\n", projection_type.c_str());
+        return 1;          
+    }
     log_nifti_descriptives(nii1);
 
     // Get dimensions of input
@@ -134,7 +152,7 @@ int main(int argc, char*  argv[]) {
     // ================================================================================================================
     // Compute rays with mean intensity projection
     // ================================================================================================================
-    if ( mode == 0 ) {
+    if ( projection_type == "mean" ) {
         for (int64_t t = 0; t != size_time; ++t) {  // Loop across time points
             cout << "\r    Volume: " << t+1 << "/" << size_time << flush;
 
@@ -146,11 +164,11 @@ int main(int argc, char*  argv[]) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
                         if ( *(nii_input_data + i) != 0 ) {
                             step_count += 1;
-                            if ( step_count == step_max || step_count_all == size_x ) {
+                            if ( step_count == steps || step_count_all == size_x ) {
                                 break;
                             }
                             int64_t k = sub2ind_4D_64(y + offset_y, z + offset_z, 0, t, size_max, size_max, 6);
-                            *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
+                            *(nii_output_data + k) += *(nii_input_data + i) * 1. / steps;
                         }
                     }
                     step_count_all = 0;
@@ -161,11 +179,11 @@ int main(int argc, char*  argv[]) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
                         if ( *(nii_input_data + i) != 0 ) {
                             step_count += 1;
-                            if ( step_count == step_max || step_count_all == size_x ) {
+                            if ( step_count == steps || step_count_all == size_x ) {
                                 break;
                             }
                             int64_t k = sub2ind_4D_64(y + offset_y, z + offset_z, 1, t, size_max, size_max, 6);
-                            *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
+                            *(nii_output_data + k) += *(nii_input_data + i) * 1. / steps;
                         }
                     }
                     step_count_all = 0;
@@ -183,11 +201,11 @@ int main(int argc, char*  argv[]) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
                         if ( *(nii_input_data + i) != 0 ) {
                             step_count += 1;
-                            if ( step_count == step_max || step_count_all == size_y ) {
+                            if ( step_count == steps || step_count_all == size_y ) {
                                 break;
                             }
                             int64_t k = sub2ind_4D_64(x + offset_x, z + offset_z, 2, t, size_max, size_max, 6);
-                            *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
+                            *(nii_output_data + k) += *(nii_input_data + i) * 1. / steps;
                         }
                     }
                     step_count_all = 0;
@@ -198,11 +216,11 @@ int main(int argc, char*  argv[]) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
                         if ( *(nii_input_data + i) != 0 ) {
                             step_count += 1;
-                            if ( step_count == step_max || step_count_all == size_y ) {
+                            if ( step_count == steps || step_count_all == size_y ) {
                                 break;
                             }
                             int64_t k = sub2ind_4D_64(x + offset_x, z + offset_z, 3, t, size_max, size_max, 6);
-                            *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
+                            *(nii_output_data + k) += *(nii_input_data + i) * 1. / steps;
                         }
                     }
                     step_count_all = 0;
@@ -220,11 +238,11 @@ int main(int argc, char*  argv[]) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
                         if ( *(nii_input_data + i) != 0 ) {
                             step_count += 1;
-                            if ( step_count == step_max || step_count_all == size_z ) {
+                            if ( step_count == steps || step_count_all == size_z ) {
                                 break;
                             }
                             int64_t k = sub2ind_4D_64(x + offset_x, y + offset_y, 4, t, size_max, size_max, 6);
-                            *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
+                            *(nii_output_data + k) += *(nii_input_data + i) * 1. / steps;
                         }
                     }
                     step_count_all = 0;
@@ -235,11 +253,11 @@ int main(int argc, char*  argv[]) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
                         if ( *(nii_input_data + i) != 0 ) {
                             step_count += 1;
-                            if ( step_count == step_max || step_count_all == size_z ) {
+                            if ( step_count == steps || step_count_all == size_z ) {
                                 break;
                             }
                             int64_t k = sub2ind_4D_64(x + offset_x, y + offset_y, 5, t, size_max, size_max, 6);
-                            *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
+                            *(nii_output_data + k) += *(nii_input_data + i) * 1. / steps;
                         }
                     }
                     step_count_all = 0;
@@ -253,7 +271,7 @@ int main(int argc, char*  argv[]) {
     // ================================================================================================================
     // Compute rays with minimum intensity projection
     // ================================================================================================================
-    if ( mode == 1 ) {
+    else if ( projection_type == "min" ) {
 
         for (int64_t t = 0; t != size_time; ++t) {  // Loop across time points
             cout << "\r    Volume: " << t+1 << "/" << size_time << flush;
@@ -270,7 +288,7 @@ int main(int argc, char*  argv[]) {
                             if ( step_count == 1 ) {
                                 *(nii_output_data + k) = *(nii_input_data + i);
                             }
-                            else if ( step_count == step_max || step_count_all == size_x ) {
+                            else if ( step_count == steps || step_count_all == size_x ) {
                                 break;
                             }
                             if ( *(nii_input_data + i) < *(nii_output_data + k) ) {
@@ -290,7 +308,7 @@ int main(int argc, char*  argv[]) {
                             if ( step_count == 1 ) {
                                 *(nii_output_data + k) = *(nii_input_data + i);
                             }
-                            else if ( step_count == step_max || step_count_all == size_x ) {
+                            else if ( step_count == steps || step_count_all == size_x ) {
                                 break;
                             }
                             if ( *(nii_input_data + i) < *(nii_output_data + k) ) {
@@ -317,7 +335,7 @@ int main(int argc, char*  argv[]) {
                             if ( step_count == 1 ) {
                                 *(nii_output_data + k) = *(nii_input_data + i);
                             }
-                            else if ( step_count == step_max || step_count_all == size_x ) {
+                            else if ( step_count == steps || step_count_all == size_x ) {
                                 break;
                             }
                             if ( *(nii_input_data + i) < *(nii_output_data + k) ) {
@@ -337,7 +355,7 @@ int main(int argc, char*  argv[]) {
                             if ( step_count == 1 ) {
                                 *(nii_output_data + k) = *(nii_input_data + i);
                             }
-                            else if ( step_count == step_max || step_count_all == size_x ) {
+                            else if ( step_count == steps || step_count_all == size_x ) {
                                 break;
                             }
                             if ( *(nii_input_data + i) < *(nii_output_data + k) ) {
@@ -364,7 +382,7 @@ int main(int argc, char*  argv[]) {
                             if ( step_count == 1 ) {
                                 *(nii_output_data + k) = *(nii_input_data + i);
                             }
-                            else if ( step_count == step_max || step_count_all == size_x ) {
+                            else if ( step_count == steps || step_count_all == size_x ) {
                                 break;
                             }
                             if ( *(nii_input_data + i) < *(nii_output_data + k) ) {
@@ -384,10 +402,160 @@ int main(int argc, char*  argv[]) {
                             if ( step_count == 1 ) {
                                 *(nii_output_data + k) = *(nii_input_data + i);
                             }
-                            else if ( step_count == step_max || step_count_all == size_x ) {
+                            else if ( step_count == steps || step_count_all == size_x ) {
                                 break;
                             }
                             if ( *(nii_input_data + i) < *(nii_output_data + k) ) {
+                                *(nii_output_data + k) = *(nii_input_data + i);
+                            }
+                        }
+                    }
+                    step_count_all = 0;
+                    step_count = 0;
+                }
+            }
+        }
+        cout << endl;
+    }
+
+    // ================================================================================================================
+    // Compute rays with maximum intensity projection
+    // ================================================================================================================
+    else if ( projection_type == "max" ) {
+
+        for (int64_t t = 0; t != size_time; ++t) {  // Loop across time points
+            cout << "\r    Volume: " << t+1 << "/" << size_time << flush;
+
+            for (int64_t z = 0; z != size_z; ++z) { // Loop across rays on x plane
+                for (int64_t y = 0; y != size_y; ++y) {
+
+                    // Loop across a ray
+                    for (int64_t x = 0; x != size_x; ++x) {
+                        int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
+                        if ( *(nii_input_data + i) != 0 ) {
+                            step_count += 1;
+                            int64_t k = sub2ind_4D_64(y + offset_y, z + offset_z, 0, t, size_max, size_max, 6);
+                            if ( step_count == 1 ) {
+                                *(nii_output_data + k) = *(nii_input_data + i);
+                            }
+                            else if ( step_count == steps || step_count_all == size_x ) {
+                                break;
+                            }
+                            if ( *(nii_input_data + i) > *(nii_output_data + k) ) {
+                                *(nii_output_data + k) = *(nii_input_data + i);
+                            }
+                        }
+                    }
+                    step_count_all = 0;
+                    step_count = 0;
+
+                    // Loop across a ray in reverse
+                    for (int64_t x = size_x-1; x >= 0; --x) {
+                        int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
+                        if ( *(nii_input_data + i) != 0 ) {
+                            step_count += 1;
+                            int64_t k = sub2ind_4D_64(y + offset_y, z + offset_z, 1, t, size_max, size_max, 6);
+                            if ( step_count == 1 ) {
+                                *(nii_output_data + k) = *(nii_input_data + i);
+                            }
+                            else if ( step_count == steps || step_count_all == size_x ) {
+                                break;
+                            }
+                            if ( *(nii_input_data + i) > *(nii_output_data + k) ) {
+                                *(nii_output_data + k) = *(nii_input_data + i);
+                            }
+                        }
+                    }
+                    step_count_all = 0;
+                    step_count = 0;
+                }
+            }
+
+            // --------------------------------------------------------------------
+            // Loop across rays on y plane
+            for (int64_t z = 0; z != size_z; ++z) {
+                for (int64_t x = 0; x != size_x; ++x) {
+
+                    // Loop across a ray
+                    for (int64_t y = 0; y != size_y; ++y) {
+                        int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
+                        if ( *(nii_input_data + i) != 0 ) {
+                            step_count += 1;
+                            int64_t k = sub2ind_4D_64(x + offset_x, z + offset_z, 2, t, size_max, size_max, 6);
+                            if ( step_count == 1 ) {
+                                *(nii_output_data + k) = *(nii_input_data + i);
+                            }
+                            else if ( step_count == steps || step_count_all == size_x ) {
+                                break;
+                            }
+                            if ( *(nii_input_data + i) > *(nii_output_data + k) ) {
+                                *(nii_output_data + k) = *(nii_input_data + i);
+                            }
+                        }
+                    }
+                    step_count_all = 0;
+                    step_count = 0;
+
+                    // Loop across a ray in reverse
+                    for (int64_t y = size_y-1; y >= 0; --y) {
+                        int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
+                        if ( *(nii_input_data + i) != 0 ) {
+                            step_count += 1;
+                            int64_t k = sub2ind_4D_64(x + offset_x, z + offset_z, 3, t, size_max, size_max, 6);
+                            if ( step_count == 1 ) {
+                                *(nii_output_data + k) = *(nii_input_data + i);
+                            }
+                            else if ( step_count == steps || step_count_all == size_x ) {
+                                break;
+                            }
+                            if ( *(nii_input_data + i) > *(nii_output_data + k) ) {
+                                *(nii_output_data + k) = *(nii_input_data + i);
+                            }
+                        }
+                    }
+                    step_count_all = 0;
+                    step_count = 0;
+                }
+            }
+
+            // --------------------------------------------------------------------
+            // Loop across rays on z plane
+            for (int64_t y = 0; y != size_y; ++y) {
+                for (int64_t x = 0; x != size_x; ++x) {
+
+                    // Loop across a ray
+                    for (int64_t z = 0; z != size_z; ++z) {
+                        int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
+                        if ( *(nii_input_data + i) != 0 ) {
+                            step_count += 1;
+                            int64_t k = sub2ind_4D_64(x + offset_x, y + offset_y, 4, t, size_max, size_max, 6);
+                            if ( step_count == 1 ) {
+                                *(nii_output_data + k) = *(nii_input_data + i);
+                            }
+                            else if ( step_count == steps || step_count_all == size_x ) {
+                                break;
+                            }
+                            if ( *(nii_input_data + i) > *(nii_output_data + k) ) {
+                                *(nii_output_data + k) = *(nii_input_data + i);
+                            }
+                        }
+                    }
+                    step_count_all = 0;
+                    step_count = 0;
+
+                    // Loop across a ray in reverse
+                    for (int64_t z = size_z-1; z >= 0; --z) {
+                        int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
+                        if ( *(nii_input_data + i) != 0 ) {
+                            step_count += 1;
+                            int64_t k = sub2ind_4D_64(x + offset_x, y + offset_y, 5, t, size_max, size_max, 6);
+                            if ( step_count == 1 ) {
+                                *(nii_output_data + k) = *(nii_input_data + i);
+                            }
+                            else if ( step_count == steps || step_count_all == size_x ) {
+                                break;
+                            }
+                            if ( *(nii_input_data + i) > *(nii_output_data + k) ) {
                                 *(nii_output_data + k) = *(nii_input_data + i);
                             }
                         }
@@ -405,16 +573,9 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Prepare tags for the output
     std::ostringstream tag_1;
-    tag_1 << step_max;
-
+    tag_1 << steps;
     cout << "  Saving output..." << endl;
-    if ( mode == 0 ) {
-        save_output_nifti(fout, "snapcast-mean_step_max-"+tag_1.str(), nii_output, true);
-    }
-    else if ( mode == 1 ) {
-        save_output_nifti(fout, "snapcast-min_step_max-"+tag_1.str(), nii_output, true);
-    }
-
+    save_output_nifti(fout, "snapcast-"+projection_type+"_steps-"+tag_1.str(), nii_output, true);
 
     cout << "\n  Finished." << endl;
     return 0;
