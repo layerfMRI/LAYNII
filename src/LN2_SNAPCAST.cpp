@@ -26,8 +26,8 @@ int main(int argc, char*  argv[]) {
 
     nifti_image *nii1 = NULL;
     char *fin1 = NULL, *fout = NULL;
-    int ac, step_max = 5, step_count_all = 0, step_count = 0;
-    int mode = 0;
+    int ac, mode = 0;
+    int64_t step_max = 5, step_count_all = 0, step_count = 0;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -75,16 +75,16 @@ int main(int argc, char*  argv[]) {
     log_nifti_descriptives(nii1);
 
     // Get dimensions of input
-    const uint32_t size_x = nii1->nx;
-    const uint32_t size_y = nii1->ny;
-    const uint32_t size_z = nii1->nz;
-    const uint32_t size_time = nii1->nt;
+    const int64_t size_x = nii1->nx;
+    const int64_t size_y = nii1->ny;
+    const int64_t size_z = nii1->nz;
+    const int64_t size_time = nii1->nt;
 
-    const uint32_t end_x = size_x - 1;
-    const uint32_t end_y = size_y - 1;
-    const uint32_t end_z = size_z - 1;
+    const int64_t end_x = size_x - 1;
+    const int64_t end_y = size_y - 1;
+    const int64_t end_z = size_z - 1;
 
-    const uint32_t nr_voxels = size_z * size_y * size_x;
+    const int64_t nr_voxels = size_z * size_y * size_x;
 
     // ========================================================================
     // Fix input datatype issues
@@ -94,17 +94,17 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     // Compute the new dimensions of output
     // ========================================================================
-    const uint32_t size_max = std::max(size_z, std::max(size_x, size_y));
-    const uint32_t size_x_out = size_max;
-    const uint32_t size_y_out = size_max;
-    const uint32_t size_z_out = 6;  // For 6 cube faces (cardinal data axes)
-    const uint32_t size_time_out = size_time;
+    const int64_t size_max = std::max(size_z, std::max(size_x, size_y));
+    const int64_t size_x_out = size_max;
+    const int64_t size_y_out = size_max;
+    const int64_t size_z_out = 6;  // For 6 cube faces (cardinal data axes)
+    const int64_t size_time_out = size_time;
 
-    const uint32_t nr_voxels_out = size_z_out * size_y_out * size_x_out;
+    const int64_t nr_voxels_out = size_z_out * size_y_out * size_x_out;
 
-    const uint32_t offset_x = (size_max - size_x) / 2;
-    const uint32_t offset_y = (size_max - size_y) / 2;
-    const uint32_t offset_z = (size_max - size_z) / 2;
+    const int64_t offset_x = (size_max - size_x) / 2;
+    const int64_t offset_y = (size_max - size_y) / 2;
+    const int64_t offset_z = (size_max - size_z) / 2;
 
     // ========================================================================
     // Allocating new nifti for output 4D nifti
@@ -127,7 +127,7 @@ int main(int argc, char*  argv[]) {
     log_nifti_descriptives(nii_output);
 
     // Prepare for mean intensity projection
-    for (int i = 0; i != nr_voxels_out * size_time_out; ++i) {
+    for (int64_t i = 0; i != nr_voxels_out * size_time_out; ++i) {
         *(nii_output_data + i) = 0;
     }
 
@@ -135,21 +135,21 @@ int main(int argc, char*  argv[]) {
     // Compute rays with mean intensity projection
     // ================================================================================================================
     if ( mode == 0 ) {
-        for (int t = 0; t != size_time; ++t) {  // Loop across time points
+        for (int64_t t = 0; t != size_time; ++t) {  // Loop across time points
             cout << "\r    Volume: " << t+1 << "/" << size_time << flush;
 
-            for (int z = 0; z != size_z; ++z) { // Loop across rays on x plane
-                for (int y = 0; y != size_y; ++y) {
+            for (int64_t z = 0; z != size_z; ++z) { // Loop across rays on x plane
+                for (int64_t y = 0; y != size_y; ++y) {
 
                     // Loop across a ray
-                    for (int x = 0; x != size_x; ++x) {
-                        int i = sub2ind_4D(x, y, z, t, size_x, size_y, size_z);
+                    for (int64_t x = 0; x != size_x; ++x) {
+                        int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
                         if ( *(nii_input_data + i) != 0 ) {
                             step_count += 1;
                             if ( step_count == step_max || step_count_all == size_x ) {
                                 break;
                             }
-                            int k = sub2ind_4D(y + offset_y, z + offset_z, 0, t, size_max, size_max, 6);
+                            int64_t k = sub2ind_4D_64(y + offset_y, z + offset_z, 0, t, size_max, size_max, 6);
                             *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
                         }
                     }
@@ -157,14 +157,14 @@ int main(int argc, char*  argv[]) {
                     step_count = 0;
 
                     // Loop across a ray in reverse
-                    for (int x = size_x-1; x >= 0; --x) {
-                        int i = sub2ind_4D(x, y, z, t, size_x, size_y, size_z);
+                    for (int64_t x = size_x-1; x >= 0; --x) {
+                        int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
                         if ( *(nii_input_data + i) != 0 ) {
                             step_count += 1;
                             if ( step_count == step_max || step_count_all == size_x ) {
                                 break;
                             }
-                            int k = sub2ind_4D(y + offset_y, z + offset_z, 1, t, size_max, size_max, 6);
+                            int64_t k = sub2ind_4D_64(y + offset_y, z + offset_z, 1, t, size_max, size_max, 6);
                             *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
                         }
                     }
@@ -175,18 +175,18 @@ int main(int argc, char*  argv[]) {
 
             // --------------------------------------------------------------------
             // Loop across rays on y plane
-            for (int z = 0; z != size_z; ++z) {
-                for (int x = 0; x != size_x; ++x) {
+            for (int64_t z = 0; z != size_z; ++z) {
+                for (int64_t x = 0; x != size_x; ++x) {
 
                     // Loop across a ray
-                    for (int y = 0; y != size_y; ++y) {
-                        int i = sub2ind_4D(x, y, z, t, size_x, size_y, size_z);
+                    for (int64_t y = 0; y != size_y; ++y) {
+                        int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
                         if ( *(nii_input_data + i) != 0 ) {
                             step_count += 1;
                             if ( step_count == step_max || step_count_all == size_y ) {
                                 break;
                             }
-                            int k = sub2ind_4D(x + offset_x, z + offset_z, 2, t, size_max, size_max, 6);
+                            int64_t k = sub2ind_4D_64(x + offset_x, z + offset_z, 2, t, size_max, size_max, 6);
                             *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
                         }
                     }
@@ -194,14 +194,14 @@ int main(int argc, char*  argv[]) {
                     step_count = 0;
 
                     // Loop across a ray in reverse
-                    for (int y = size_y-1; y >= 0; --y) {
-                        int i = sub2ind_4D(x, y, z, t, size_x, size_y, size_z);
+                    for (int64_t y = size_y-1; y >= 0; --y) {
+                        int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
                         if ( *(nii_input_data + i) != 0 ) {
                             step_count += 1;
                             if ( step_count == step_max || step_count_all == size_y ) {
                                 break;
                             }
-                            int k = sub2ind_4D(x + offset_x, z + offset_z, 3, t, size_max, size_max, 6);
+                            int64_t k = sub2ind_4D_64(x + offset_x, z + offset_z, 3, t, size_max, size_max, 6);
                             *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
                         }
                     }
@@ -212,18 +212,18 @@ int main(int argc, char*  argv[]) {
 
             // --------------------------------------------------------------------
             // Loop across rays on z plane
-            for (int y = 0; y != size_y; ++y) {
-                for (int x = 0; x != size_x; ++x) {
+            for (int64_t y = 0; y != size_y; ++y) {
+                for (int64_t x = 0; x != size_x; ++x) {
 
                     // Loop across a ray
-                    for (int z = 0; z != size_z; ++z) {
-                        int i = sub2ind_4D(x, y, z, t, size_x, size_y, size_z);
+                    for (int64_t z = 0; z != size_z; ++z) {
+                        int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
                         if ( *(nii_input_data + i) != 0 ) {
                             step_count += 1;
                             if ( step_count == step_max || step_count_all == size_z ) {
                                 break;
                             }
-                            int k = sub2ind_4D(x + offset_x, y + offset_y, 4, t, size_max, size_max, 6);
+                            int64_t k = sub2ind_4D_64(x + offset_x, y + offset_y, 4, t, size_max, size_max, 6);
                             *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
                         }
                     }
@@ -231,14 +231,14 @@ int main(int argc, char*  argv[]) {
                     step_count = 0;
 
                     // Loop across a ray in reverse
-                    for (int z = size_z-1; z >= 0; --z) {
-                        int i = sub2ind_4D(x, y, z, t, size_x, size_y, size_z);
+                    for (int64_t z = size_z-1; z >= 0; --z) {
+                        int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
                         if ( *(nii_input_data + i) != 0 ) {
                             step_count += 1;
                             if ( step_count == step_max || step_count_all == size_z ) {
                                 break;
                             }
-                            int k = sub2ind_4D(x + offset_x, y + offset_y, 5, t, size_max, size_max, 6);
+                            int64_t k = sub2ind_4D_64(x + offset_x, y + offset_y, 5, t, size_max, size_max, 6);
                             *(nii_output_data + k) += *(nii_input_data + i) * 1. / step_max;
                         }
                     }
@@ -255,18 +255,18 @@ int main(int argc, char*  argv[]) {
     // ================================================================================================================
     if ( mode == 1 ) {
 
-        for (int t = 0; t != size_time; ++t) {  // Loop across time points
+        for (int64_t t = 0; t != size_time; ++t) {  // Loop across time points
             cout << "\r    Volume: " << t+1 << "/" << size_time << flush;
 
-            for (int z = 0; z != size_z; ++z) { // Loop across rays on x plane
-                for (int y = 0; y != size_y; ++y) {
+            for (int64_t z = 0; z != size_z; ++z) { // Loop across rays on x plane
+                for (int64_t y = 0; y != size_y; ++y) {
 
                     // Loop across a ray
-                    for (int x = 0; x != size_x; ++x) {
-                        int i = sub2ind_4D(x, y, z, t, size_x, size_y, size_z);
+                    for (int64_t x = 0; x != size_x; ++x) {
+                        int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
                         if ( *(nii_input_data + i) != 0 ) {
                             step_count += 1;
-                            int k = sub2ind_4D(y + offset_y, z + offset_z, 0, t, size_max, size_max, 6);
+                            int64_t k = sub2ind_4D_64(y + offset_y, z + offset_z, 0, t, size_max, size_max, 6);
                             if ( step_count == 1 ) {
                                 *(nii_output_data + k) = *(nii_input_data + i);
                             }
@@ -282,11 +282,11 @@ int main(int argc, char*  argv[]) {
                     step_count = 0;
 
                     // Loop across a ray in reverse
-                    for (int x = size_x-1; x >= 0; --x) {
-                        int i = sub2ind_4D(x, y, z, t, size_x, size_y, size_z);
+                    for (int64_t x = size_x-1; x >= 0; --x) {
+                        int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
                         if ( *(nii_input_data + i) != 0 ) {
                             step_count += 1;
-                            int k = sub2ind_4D(y + offset_y, z + offset_z, 1, t, size_max, size_max, 6);
+                            int64_t k = sub2ind_4D_64(y + offset_y, z + offset_z, 1, t, size_max, size_max, 6);
                             if ( step_count == 1 ) {
                                 *(nii_output_data + k) = *(nii_input_data + i);
                             }
@@ -305,15 +305,15 @@ int main(int argc, char*  argv[]) {
 
             // --------------------------------------------------------------------
             // Loop across rays on y plane
-            for (int z = 0; z != size_z; ++z) {
-                for (int x = 0; x != size_x; ++x) {
+            for (int64_t z = 0; z != size_z; ++z) {
+                for (int64_t x = 0; x != size_x; ++x) {
 
                     // Loop across a ray
-                    for (int y = 0; y != size_y; ++y) {
-                        int i = sub2ind_4D(x, y, z, t, size_x, size_y, size_z);
+                    for (int64_t y = 0; y != size_y; ++y) {
+                        int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
                         if ( *(nii_input_data + i) != 0 ) {
                             step_count += 1;
-                            int k = sub2ind_4D(x + offset_x, z + offset_z, 2, t, size_max, size_max, 6);
+                            int64_t k = sub2ind_4D_64(x + offset_x, z + offset_z, 2, t, size_max, size_max, 6);
                             if ( step_count == 1 ) {
                                 *(nii_output_data + k) = *(nii_input_data + i);
                             }
@@ -329,11 +329,11 @@ int main(int argc, char*  argv[]) {
                     step_count = 0;
 
                     // Loop across a ray in reverse
-                    for (int y = size_y-1; y >= 0; --y) {
-                        int i = sub2ind_4D(x, y, z, t, size_x, size_y, size_z);
+                    for (int64_t y = size_y-1; y >= 0; --y) {
+                        int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
                         if ( *(nii_input_data + i) != 0 ) {
                             step_count += 1;
-                            int k = sub2ind_4D(x + offset_x, z + offset_z, 3, t, size_max, size_max, 6);
+                            int64_t k = sub2ind_4D_64(x + offset_x, z + offset_z, 3, t, size_max, size_max, 6);
                             if ( step_count == 1 ) {
                                 *(nii_output_data + k) = *(nii_input_data + i);
                             }
@@ -352,15 +352,15 @@ int main(int argc, char*  argv[]) {
 
             // --------------------------------------------------------------------
             // Loop across rays on z plane
-            for (int y = 0; y != size_y; ++y) {
-                for (int x = 0; x != size_x; ++x) {
+            for (int64_t y = 0; y != size_y; ++y) {
+                for (int64_t x = 0; x != size_x; ++x) {
 
                     // Loop across a ray
-                    for (int z = 0; z != size_z; ++z) {
-                        int i = sub2ind_4D(x, y, z, t, size_x, size_y, size_z);
+                    for (int64_t z = 0; z != size_z; ++z) {
+                        int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
                         if ( *(nii_input_data + i) != 0 ) {
                             step_count += 1;
-                            int k = sub2ind_4D(x + offset_x, y + offset_y, 4, t, size_max, size_max, 6);
+                            int64_t k = sub2ind_4D_64(x + offset_x, y + offset_y, 4, t, size_max, size_max, 6);
                             if ( step_count == 1 ) {
                                 *(nii_output_data + k) = *(nii_input_data + i);
                             }
@@ -376,11 +376,11 @@ int main(int argc, char*  argv[]) {
                     step_count = 0;
 
                     // Loop across a ray in reverse
-                    for (int z = size_z-1; z >= 0; --z) {
-                        int i = sub2ind_4D(x, y, z, t, size_x, size_y, size_z);
+                    for (int64_t z = size_z-1; z >= 0; --z) {
+                        int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
                         if ( *(nii_input_data + i) != 0 ) {
                             step_count += 1;
-                            int k = sub2ind_4D(x + offset_x, y + offset_y, 5, t, size_max, size_max, 6);
+                            int64_t k = sub2ind_4D_64(x + offset_x, y + offset_y, 5, t, size_max, size_max, 6);
                             if ( step_count == 1 ) {
                                 *(nii_output_data + k) = *(nii_input_data + i);
                             }
