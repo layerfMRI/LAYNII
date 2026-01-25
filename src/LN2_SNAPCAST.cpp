@@ -14,7 +14,7 @@ int show_help(void) {
     "    -help     : Show this help.\n"
     "    -input    : A 3D or 4D nifti file that contains values to project.\n"
     "                Only non zero voxels will be used.\n"
-    "    -ray_step : (Optional) A positive integer. Determines the number of voxels for\n"
+    "    -step_max : (Optional) A positive integer. Determines the number of voxels for\n"
     "                ray penetration. Higher values give smoother results. Default is '5'.\n"
     // "    -mask     : (Optional) 3D binary nifti file that will be used to mask the input.\n"
     "    -output   : (Optional) Output basename for all outputs.\n"
@@ -41,9 +41,9 @@ int main(int argc, char*  argv[]) {
             }
             fin1 = argv[ac];
             fout = argv[ac];
-        } else if (!strcmp(argv[ac], "-ray_step")) {
+        } else if (!strcmp(argv[ac], "-step_max")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -ray_step\n");
+                fprintf(stderr, "** missing argument for -step_max\n");
             } else {
                 step_max = atof(argv[ac]);
             }
