@@ -76,11 +76,9 @@ std::tuple<int64_t, int64_t, int64_t> ind2sub_3D_64(
     const int64_t size_x,
     const int64_t size_y);
 
-std::tuple<int64_t, int64_t, int64_t, int64_t> ind2sub_4D_64(
-    const int64_t linear_index,
-    const int64_t size_x,
-    const int64_t size_y,
-    const int64_t size_z);
+std::tuple<uint64_t, uint64_t, uint64_t, uint64_t> ind2sub_4D_64(
+    const uint64_t linear_index, const uint64_t nx, const uint64_t ny, const uint64_t nz);
+
 
 int64_t sub2ind_3D_64(const int64_t x,
                       const int64_t y,
@@ -88,13 +86,8 @@ int64_t sub2ind_3D_64(const int64_t x,
                       const int64_t size_x,
                       const int64_t size_y);
 
-int64_t sub2ind_4D_64(const int64_t x,
-                      const int64_t y,
-                      const int64_t z,
-                      const int64_t t,
-                      const int64_t size_x,
-                      const int64_t size_y,
-                      const int64_t size_z);
+uint64_t sub2ind_4D_64(const uint64_t x, const uint64_t y, const uint64_t z, const uint64_t t,
+                       const uint64_t nx, const uint64_t ny, const uint64_t nz);
 
 std::tuple<float, float> simplex_closure_2D(float x, float y);
 std::tuple<float, float> simplex_perturb_2D(float x, float y, float a, float b);

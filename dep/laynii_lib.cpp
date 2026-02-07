@@ -255,58 +255,58 @@ nifti_image* copy_nifti_as_float32_with_scl_slope_and_scl_inter(nifti_image* nii
     nii_new->nbyper = sizeof(float);
     nii_new->data = calloc(nii_new->nvox, nii_new->nbyper);
     float* nii_new_data = static_cast<float*>(nii_new->data);
-    int nr_voxels = nii_new->nvox;
+    uint64_t nr_voxels = nii_new->nvox;
 
     // NOTE(Faruk): See nifti1.h for notes on data types
     // ------------------------------------------------------------------------
     if (nii->datatype == 2) {  // NIFTI_TYPE_UINT8
         uint8_t* nii_data = static_cast<uint8_t*>(nii->data);
-        for (int i = 0; i < nr_voxels; ++i) {
+        for (uint64_t i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else if (nii->datatype == 512) {  // NIFTI_TYPE_UINT16
         uint16_t* nii_data = static_cast<uint16_t*>(nii->data);
-        for (int i = 0; i < nr_voxels; ++i) {
+        for (uint64_t i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else if (nii->datatype == 768) {  // NIFTI_TYPE_UINT32
         uint32_t* nii_data = static_cast<uint32_t*>(nii->data);
-        for (int i = 0; i < nr_voxels; ++i) {
+        for (uint64_t i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else if (nii->datatype == 1280) {  // NIFTI_TYPE_UINT64
         uint64_t* nii_data = static_cast<uint64_t*>(nii->data);
-        for (int i = 0; i < nr_voxels; ++i) {
+        for (uint64_t i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else if (nii->datatype == 256) {  // NIFTI_TYPE_INT8
         int8_t* nii_data = static_cast<int8_t*>(nii->data);
-        for (int i = 0; i < nr_voxels; ++i) {
+        for (uint64_t i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else if (nii->datatype == 4) {  // NIFTI_TYPE_INT16
         int16_t* nii_data = static_cast<int16_t*>(nii->data);
-        for (int i = 0; i < nr_voxels; ++i) {
+        for (uint64_t i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else if (nii->datatype == 8) {  // NIFTI_TYPE_INT32
         int32_t* nii_data = static_cast<int32_t*>(nii->data);
-        for (int i = 0; i < nr_voxels; ++i) {
+        for (uint64_t i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else if (nii->datatype == 1024) {  // NIFTI_TYPE_INT64
         int64_t* nii_data = static_cast<int64_t*>(nii->data);
-        for (int i = 0; i < nr_voxels; ++i) {
+        for (uint64_t i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else if (nii->datatype == 16) {  // NIFTI_TYPE_FLOAT32
         float* nii_data = static_cast<float*>(nii->data);
-        for (int i = 0; i < nr_voxels; ++i) {
+        for (uint64_t i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else if (nii->datatype == 64) {  // NIFTI_TYPE_FLOAT64
         double* nii_data = static_cast<double*>(nii->data);
-        for (int i = 0; i < nr_voxels; ++i) {
+        for (uint64_t i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) = static_cast<float>(*(nii_data + i));
         }
     } else {
@@ -314,7 +314,7 @@ nifti_image* copy_nifti_as_float32_with_scl_slope_and_scl_inter(nifti_image* nii
     }
 
     // Replace nans with zeros
-    for (int i = 0; i < nr_voxels; ++i) {
+    for (uint64_t i = 0; i < nr_voxels; ++i) {
         if (*(nii_new_data + i)!= *(nii_new_data + i)) {
             *(nii_new_data + i) = 0;
         }
@@ -324,7 +324,7 @@ nifti_image* copy_nifti_as_float32_with_scl_slope_and_scl_inter(nifti_image* nii
     cout << "  Nifti header 'scl slope': " << nii->scl_slope <<endl;
     cout << "  Nifti header 'scl inter': " << nii->scl_inter <<endl;
     if (nii->scl_slope != 0) {
-        for (int i = 0; i < nr_voxels; ++i) {
+        for (uint64_t i = 0; i < nr_voxels; ++i) {
             *(nii_new_data + i) *= nii->scl_slope;
             *(nii_new_data + i) += nii->scl_inter;
         }
@@ -359,10 +359,10 @@ nifti_image* copy_nifti_as_float32(nifti_image* nii) {
     //                                 int datatype, int data_fill)
 
     nifti_image* nii_new = nifti_copy_nim_info(nii);
-    const uint64_t size_x = nii->nx;
-    const uint64_t size_y = nii->ny;
-    const uint64_t size_z = nii->nz;
-    const uint64_t size_time = nii->nt;
+    const uint64_t size_x = static_cast<uint64_t>(nii->nx);
+    const uint64_t size_y = static_cast<uint64_t>(nii->ny);
+    const uint64_t size_z = static_cast<uint64_t>(nii->nz);
+    const uint64_t size_time = static_cast<uint64_t>(nii->nt);
     const uint64_t nr_voxels = size_x * size_y * size_z * size_time;
     nii_new->datatype = NIFTI_TYPE_FLOAT32;
     nii_new->nbyper = sizeof(float);
@@ -450,10 +450,10 @@ nifti_image* copy_nifti_as_double(nifti_image* nii) {
     //                                 int datatype, int data_fill)
 
     nifti_image* nii_new = nifti_copy_nim_info(nii);
-    const uint64_t size_x = nii->nx;
-    const uint64_t size_y = nii->ny;
-    const uint64_t size_z = nii->nz;
-    const uint64_t size_time = nii->nt;
+    const uint64_t size_x = static_cast<uint64_t>(nii->nx);
+    const uint64_t size_y = static_cast<uint64_t>(nii->ny);
+    const uint64_t size_z = static_cast<uint64_t>(nii->nz);
+    const uint64_t size_time = static_cast<uint64_t>(nii->nt);
     const uint64_t nr_voxels = size_x * size_y * size_z * size_time;
     nii_new->datatype = NIFTI_TYPE_FLOAT32;
     nii_new->nbyper = sizeof(double);
@@ -528,10 +528,10 @@ nifti_image* copy_nifti_as_double(nifti_image* nii) {
 
 nifti_image* copy_nifti_as_int32(nifti_image* nii) {
     nifti_image* nii_new = nifti_copy_nim_info(nii);
-    const uint64_t size_x = nii->nx;
-    const uint64_t size_y = nii->ny;
-    const uint64_t size_z = nii->nz;
-    const uint64_t size_time = nii->nt;
+    const uint64_t size_x = static_cast<uint64_t>(nii->nx);
+    const uint64_t size_y = static_cast<uint64_t>(nii->ny);
+    const uint64_t size_z = static_cast<uint64_t>(nii->nz);
+    const uint64_t size_time = static_cast<uint64_t>(nii->nt);
     const uint64_t nr_voxels = size_x * size_y * size_z * size_time;
     nii_new->datatype = NIFTI_TYPE_INT32;
     nii_new->nbyper = sizeof(int32_t);
@@ -606,10 +606,10 @@ nifti_image* copy_nifti_as_int32(nifti_image* nii) {
 
 nifti_image* copy_nifti_as_float16(nifti_image* nii) {
     nifti_image* nii_new = nifti_copy_nim_info(nii);
-    const uint64_t size_x = nii->nx;
-    const uint64_t size_y = nii->ny;
-    const uint64_t size_z = nii->nz;
-    const uint64_t size_time = nii->nt;
+    const uint64_t size_x = static_cast<uint64_t>(nii->nx);
+    const uint64_t size_y = static_cast<uint64_t>(nii->ny);
+    const uint64_t size_z = static_cast<uint64_t>(nii->nz);
+    const uint64_t size_time = static_cast<uint64_t>(nii->nt);
     const uint64_t nr_voxels = size_x * size_y * size_z * size_time;
     // NOTE(Renzo): I know that it is not suppoded to look like INT. This is an
     // unlucky naming convention. It is a float16, trust me.
@@ -687,10 +687,10 @@ nifti_image* copy_nifti_as_float16(nifti_image* nii) {
 
 nifti_image* copy_nifti_as_int16(nifti_image* nii) {
     nifti_image* nii_new = nifti_copy_nim_info(nii);
-    const uint64_t size_x = nii->nx;
-    const uint64_t size_y = nii->ny;
-    const uint64_t size_z = nii->nz;
-    const uint64_t size_time = nii->nt;
+    const uint64_t size_x = static_cast<uint64_t>(nii->nx);
+    const uint64_t size_y = static_cast<uint64_t>(nii->ny);
+    const uint64_t size_z = static_cast<uint64_t>(nii->nz);
+    const uint64_t size_time = static_cast<uint64_t>(nii->nt);
     const uint64_t nr_voxels = size_x * size_y * size_z * size_time;
     nii_new->datatype = NIFTI_TYPE_INT16;
     nii_new->nbyper = sizeof(int16_t);
@@ -767,10 +767,10 @@ nifti_image* copy_nifti_as_int16(nifti_image* nii) {
 
 nifti_image* copy_nifti_as_int8(nifti_image* nii) {
     nifti_image* nii_new = nifti_copy_nim_info(nii);
-    const uint64_t size_x = nii->nx;
-    const uint64_t size_y = nii->ny;
-    const uint64_t size_z = nii->nz;
-    const uint64_t size_time = nii->nt;
+    const uint64_t size_x = static_cast<uint64_t>(nii->nx);
+    const uint64_t size_y = static_cast<uint64_t>(nii->ny);
+    const uint64_t size_z = static_cast<uint64_t>(nii->nz);
+    const uint64_t size_time = static_cast<uint64_t>(nii->nt);
     const uint64_t nr_voxels = size_x * size_y * size_z * size_time;
     nii_new->datatype = NIFTI_TYPE_INT8;
     nii_new->nbyper = sizeof(int8_t);
@@ -900,18 +900,21 @@ std::tuple<int64_t, int64_t, int64_t> ind2sub_3D_64(
     return std::make_tuple(x, y, z);
 }
 
-std::tuple<int64_t, int64_t, int64_t, int64_t> ind2sub_4D_64(
-    const int64_t linear_index,
-    const int64_t size_x,
-    const int64_t size_y,
-    const int64_t size_z) {
+std::tuple<uint64_t, uint64_t, uint64_t, uint64_t> ind2sub_4D_64(
+    const uint64_t linear_index,
+    const uint64_t size_x,
+    const uint64_t size_y,
+    const uint64_t size_z) {
 
-    int64_t t = linear_index / (size_x * size_y * size_z);
-    int64_t temp = linear_index % (size_x * size_y * size_z);
-    int64_t z = temp / (size_x * size_y);
-    temp = linear_index % (size_x * size_y);
-    int64_t y = temp / size_x;
-    int64_t x = temp % size_x;
+    uint64_t size_xy = size_x * size_y;
+    uint64_t size_xyz = size_x * size_y * size_z;
+
+    uint64_t t = linear_index / size_xyz;
+    uint64_t temp = linear_index % size_xyz;
+    uint64_t z = temp / size_xy;
+    temp = linear_index % size_xy;
+    uint64_t y = temp / size_x;
+    uint64_t x = temp % size_x;
 
     return std::make_tuple(x, y, z, t);
 }
@@ -922,8 +925,8 @@ int64_t sub2ind_3D_64(const int64_t x, const int64_t y, const int64_t z,
     return size_x * size_y * z + size_x * y + x;
 }
 
-int64_t sub2ind_4D_64(const int64_t x, const int64_t y, const int64_t z, const int64_t t,
-                      const int64_t size_x, const int64_t size_y, const int64_t size_z) {
+uint64_t sub2ind_4D_64(const uint64_t x, const uint64_t y, const uint64_t z, const uint64_t t,
+                       const uint64_t size_x, const uint64_t size_y, const uint64_t size_z) {
     return size_x * size_y * size_z * t + size_x * size_y * z + size_x * y + x;
 }
 
