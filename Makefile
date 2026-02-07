@@ -73,6 +73,7 @@ LAYNII2		= 	LN2_LAYERS \
 				LN2_SPECIFICITY \
 				LN2_INTPRO \
 				LN2_FRISGO \
+				LN2_ZSCORE \
 				
 DERIVATIVES	=	LN2_GRADIENTS \
 				LN2_GRAMAG \
@@ -279,6 +280,8 @@ LN2_INTPRO:
 LN2_FRISGO:
 	$(CC) $(CFLAGS) -o LN2_FRISGO src/LN2_FRISGO.cpp $(LIBRARIES) $(LFLAGS)
 
+LN2_ZSCORE:
+	$(CC) $(CFLAGS) -o LN2_ZSCORE src/LN2_ZSCORE.cpp $(LIBRARIES) $(LFLAGS)
 
 # =============================================================================
 # Work in progress programs
