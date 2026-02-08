@@ -144,8 +144,10 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    cout << "    Saving..." << endl;
-    save_output_nifti(fout, "despike-median", nii_median, false);
+    if (mode_debug) {
+        cout << "    Saving..." << endl;
+        save_output_nifti(fout, "despike-median", nii_median, false);
+    }
 
     // ========================================================================
     cout << "  Computing median absolute deviations (MAD)..." << endl;
@@ -200,7 +202,7 @@ int main(int argc, char * argv[]) {
     }
 
     cout << "    Saving..." << endl;
-    save_output_nifti(fout, "despike-counts", nii_counts, false);
+    save_output_nifti(fout, "despike-outlier_counts", nii_counts, false);
 
     // ========================================================================
     cout << "  Imputing..." << endl;
