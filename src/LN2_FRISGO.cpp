@@ -9,17 +9,20 @@ int show_help(void) {
     "              \n"
     "\n"
     "Usage:\n"
-    "    LN2_FRISGO -input timeseries.nii -tshift\n"
+    "    LN2_FRISGO -input timeseries.nii -simple\n"
+    "    LN2_FRISGO -input timeseries.nii -spline\n"
     // "    LN2_FRISGO -input timeseries.nii -lpass 1.0 \n"
     // "    LN2_FRISGO -input timeseries.nii -box 1 \n"
-    "    ../LN2_FRISGO -input lo_BOLD_intemp.nii -tshift \n" 
+    "    ../LN2_FRISGO -input lo_BOLD_intemp.nii -spline \n" 
     // "    ../LN2_FRISGO -input lo_BOLD_intemp.nii -box 1 \n" 
     // "    ../LN2_FRISGO -input lo_BOLD_intemp.nii -lpass 1 \n" 
     "\n"
     "Options:\n"
     "    -help   : Show this help.\n"
     "    -input  : Nifti (.nii) file with time series data. \n"
-    "    -tshift : This option of dual polarity correction estimates \n"
+    "    -simple : Weighed average with 3 time points [0.25*t-1 + 0.5*t0 + 0.25*t+1].\n"
+    "              Particularly useful for despiked data.\n"
+    "    -spline : This option of dual polarity correction estimates \n"
     "              the fMRI signal right between TRs. Similar to slice scan \n"
     "              timing correction, but for 3D-EPI. This way the trigger \n"
     "              timing is directly aligned with the k-space center.\n"
@@ -57,19 +60,21 @@ int show_help(void) {
 }
 
 int main(int argc, char * argv[]) {
-    bool use_outpath = false ;
+    bool use_outpath = false, mode_simple=true, mode_spline=false;
     char  *fout = NULL ;
     char* fin = NULL;
-    int ac, do_gaus = 0, do_run = 0, do_tshift = 0, bFWHM_val = 0, do_verb = 0;
-    float gFWHM_val = 0.0;
+    int ac, do_gaus = 0, do_run = 0, bFWHM_val = 0, do_verb = 0;
+    float gFWHM_val = 40.0;
     if (argc  <  3) return show_help();
 
     // Process user options
     for (ac = 1; ac  <  argc; ac++) {
         if (!strncmp(argv[ac], "-h", 2)) {
             return show_help();
-        } else if (!strcmp(argv[ac], "-tshift")) {
-            do_tshift = 1;
+        } else if (!strcmp(argv[ac], "-simple")) {
+            mode_simple = true;
+        } else if (!strcmp(argv[ac], "-spline")) {
+            mode_spline = true;
         } else if (!strcmp(argv[ac], "-runwise")) {
             do_run = 1;
         } else if (!strcmp(argv[ac], "-lpass")) {
@@ -114,32 +119,8 @@ int main(int argc, char * argv[]) {
         return 2;
     }
 
-    if (do_run + do_gaus + do_tshift == 0) {
-        cout << "  ***********************************************" << endl;
-        cout << "  Invalid smoothing option. Select at least one: " << endl;
-        cout << "      -lpass OR -run OR -tshift                  " << endl;
-        cout << "  ***********************************************" << endl;
-        return 2;
-    }
-
-    if ( gFWHM_val ==0 & do_gaus == 1) {
-        cout << "  ***********************************************" << endl;
-        cout << "  No -lpass value. Using default value of 40 TRs." << endl;
-        cout << "  ***********************************************" << endl;
-        gFWHM_val = 40.0; // Default value
-    } else {
-        cout << "  Using Gaussian low pass filter with FWHM of " << gFWHM_val << " TRs." << endl; 
-    }
-
     log_welcome("LN2_FRISGO");
     log_nifti_descriptives(nii_input);
-    if (do_gaus) {
-        cout << "Selected temporal low pass filter: Gaussian." << endl;
-    } else if (do_run) {
-        cout << "Selected run wise estimation and correction of Fuzzy Ripples." << endl;
-    }   else if (do_tshift) {
-        cout << "Selected slice timing correction for Fuzzy Ripples." << endl;
-    }
 
     // Get dimensions of input
     const uint64_t size_x = nii_input->nx;
@@ -147,6 +128,8 @@ int main(int argc, char * argv[]) {
     const uint64_t size_z = nii_input->nz;
     const uint64_t size_time = nii_input->nt;
     const uint64_t nr_voxels = size_x * size_y * size_z;
+
+    const uint64_t end_time = size_time - 1;
 
     const uint64_t nxyz = size_x * size_y * size_z;
     const uint64_t nxyzt = size_x * size_y * size_z * size_time;
@@ -170,7 +153,7 @@ int main(int argc, char * argv[]) {
     float* nii_weight_data = static_cast<float*>(nii_weight->data);
 
     // ========================================================================
-    // Fuzzy ripple correction via tshift
+    // Fuzzy ripple correction via spline
     // ========================================================================
     // Set to zero
     for (int t = 0; t < size_time; ++t) {
@@ -178,8 +161,36 @@ int main(int argc, char * argv[]) {
             *(nii_smooth_data + t*nxyz + i) = 0.0;
         }
     }
+
+    if (mode_simple) {
+        // NOTE[Faruk]: I think this is a better combination for despiked data
+        // where the spike volume is imputed with time neighbors. For example
+        // 3rd order spline with 4 neighbors gives asymmetric smoothing, as one
+        // of the 4 volumes is made of other 2.
+
+        cout << "  Selected: Simple correction" << endl;
+        uint64_t ix, iy, iz, it;
+        for (uint64_t i = 0; i < nxyzt; ++i) {
+            std::tie(ix, iy, iz, it) = ind2sub_4D_64(i, size_x, size_y, size_z);
+
+            // Weighted average of neighboring time points
+            if (it > 0 && it < end_time) {
+                uint64_t j = sub2ind_4D_64(ix, iy, iz, it-1, size_x, size_y, size_z);
+                uint64_t k = sub2ind_4D_64(ix, iy, iz, it+1, size_x, size_y, size_z);
+                *(nii_smooth_data + i) = *(nii_data + i) * 0.5 + ( (*(nii_data + j) + *(nii_data + k) ) * 0.25);
+            } else if (it == end_time) {
+                uint64_t j = sub2ind_4D_64(ix, iy, iz, it-1, size_x, size_y, size_z);
+                *(nii_smooth_data + i) = ( *(nii_data + i) + *(nii_data + j) ) * 0.5;
+            } else if (it == 0) {
+                uint64_t k = sub2ind_4D_64(ix, iy, iz, it+1, size_x, size_y, size_z);
+                *(nii_smooth_data + i) = ( *(nii_data + i) + *(nii_data + k) ) * 0.5;
+            }
+        }
+        cout << "    Saving..." << endl;
+        save_output_nifti(fout, "frisgo-simple", nii_smooth, true, use_outpath);
+    }
     
-    if (do_tshift) {
+    if (mode_spline) {
         
         // NOTE[Renzo]: Convention is to fist forward. See assumed time table below
         //   t is trigger
@@ -235,7 +246,8 @@ int main(int argc, char * argv[]) {
                     - 0.0625 * ( *(nii_data + nr_voxels*(t+1) + i));
             }
         }
-        save_output_nifti(fout, "frisgo_corr-tshift", nii_smooth, true, use_outpath);
+        cout << "    Saving..." << endl;
+        save_output_nifti(fout, "frisgo-spline", nii_smooth, true, use_outpath);
     }
 
     // // ========================================================================
@@ -337,7 +349,7 @@ int main(int argc, char * argv[]) {
     //                 }
     //             }
     //         }
-    //         save_output_nifti(fout, "frisgo_corr-runwise", nii_smooth, true, use_outpath);
+    //         save_output_nifti(fout, "frisgo-runwise", nii_smooth, true, use_outpath);
 
 
     //     }
@@ -401,7 +413,7 @@ int main(int argc, char * argv[]) {
     //             }
     //         }
             
-    //         save_output_nifti(fout, "frisgo_corr-lpass", nii_smooth, true, use_outpath);
+    //         save_output_nifti(fout, "frisgo-lpass", nii_smooth, true, use_outpath);
 
     //     } // smoothing loop closed
 
