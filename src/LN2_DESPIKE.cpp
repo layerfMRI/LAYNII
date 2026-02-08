@@ -3,11 +3,13 @@
 
 int show_help(void) {
     printf(
-    "LN_ZSCORE: Voxel-wise despiking for timeseries based on z-scores.\n"
+    "LN_DESPIKE: Voxel-wise despiking for timeseries based on robust z-scores.\n"
+    "            Outliers are imputed with simple averaging of the neighboring\n"
+    "            time points (t-1 t+1).\n"
     "\n"
     "Usage:\n"
-    "    LN_ZSCORE -input Nulled_intemp.nii \n"
-    "    ../LN_ZSCORE -input lo_BOLD_intemp.nii \n" 
+    "    LN_DESPIKE -input Nulled_intemp.nii \n"
+    "    ../LN_DESPIKE -input lo_BOLD_intemp.nii \n" 
     "\n"
     "Options:\n"
     "    -help   : Show this help.\n"
@@ -224,7 +226,7 @@ int main(int argc, char * argv[]) {
     }
 
     cout << "    Saving..." << endl;
-    save_output_nifti(fout, "despike-simplest", nii_output, false);
+    save_output_nifti(fout, "despike-simple", nii_output, false);
 
     cout << "Finished." << endl;
     return 0;
