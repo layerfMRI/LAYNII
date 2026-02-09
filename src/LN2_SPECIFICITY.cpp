@@ -104,9 +104,9 @@ int main(int argc, char*  argv[]) {
     nii_output->data = calloc(nii_output->nvox, nii_output->nbyper);
     float* nii_output_data = static_cast<float*>(nii_output->data);
 
-    // // ========================================================================
+    // ========================================================================
     cout << "\n  Calculating specificity..." << endl;
-    // // ========================================================================
+    // ========================================================================
     const float ONEPI = 3.14159265358979f;
 
     // Dynamically create reference vector `v` of length `size_time`

@@ -100,9 +100,9 @@ int main(int argc, char*  argv[]) {
     nii_output->data = calloc(nii_output->nvox, nii_output->nbyper);
     float* nii_output_data = static_cast<float*>(nii_output->data);
 
-    // // ========================================================================
+    // ========================================================================
     cout << "\n  Calculating sensitivity..." << endl;
-    // // ========================================================================
+    // ========================================================================
     // Compute L2 norm (Euclidean norm) across the time dimension
     for (uint64_t i = 0; i != nr_voxels; ++i) {  // Loop across voxels
         float sum_sq = 0;
