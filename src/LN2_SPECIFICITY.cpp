@@ -86,39 +86,31 @@ int main(int argc, char*  argv[]) {
     log_nifti_descriptives(nii1);
 
     // Get dimensions of input
-    const uint32_t size_x = nii1->nx;
-    const uint32_t size_y = nii1->ny;
-    const uint32_t size_z = nii1->nz;
-    const uint32_t size_time = nii1->nt;
+    const uint64_t size_x = nii1->nx;
+    const uint64_t size_y = nii1->ny;
+    const uint64_t size_z = nii1->nz;
+    const uint64_t size_time = nii1->nt;
 
-    const uint32_t nr_voxels = size_z * size_y * size_x;
+    const uint64_t nr_voxels = size_z * size_y * size_x;
 
     // ========================================================================
     // Fix input datatype issues and prepare 3D Nifti output
     // ========================================================================
-    nifti_image* nii_input1 = copy_nifti_as_float32_with_scl_slope_and_scl_inter(nii1);
-    float* nii_input1_data = static_cast<float*>(nii_input1->data);
+    nifti_image* nii_input = copy_nifti_as_float32_with_scl_slope_and_scl_inter(nii1);
+    float* nii_input_data = static_cast<float*>(nii_input->data);
 
-    nifti_image* nii_specificity = copy_nifti_as_float32(nii_input1);  // Keep this copy
-    float* nii_specificity_data = static_cast<float*>(nii_specificity->data);
-
-    // Initialize output to zeros
-    for (int i = 0; i != nr_voxels; ++i) {
-        *(nii_specificity_data + i) = 0;
-    }
-
-    // Ensure it's correctly set as a 3D image
-    nii_specificity->dim[0] = 3;
-    nii_specificity->dim[1] = size_x;
-    nii_specificity->dim[2] = size_y;
-    nii_specificity->dim[3] = size_z;
-    nii_specificity->dim[4] = 1;
-    nifti_update_dims_from_array(nii_specificity);
+    // Allocate new nifti for 3D outputs
+    nifti_image* nii_output = nifti_copy_nim_info(nii_input);
+    nii_output->nt = 1;
+    nii_output->nvox = nr_voxels;
+    nii_output->datatype = NIFTI_TYPE_FLOAT32;
+    nii_output->nbyper = sizeof(float);
+    nii_output->data = calloc(nii_output->nvox, nii_output->nbyper);
+    float* nii_output_data = static_cast<float*>(nii_output->data);
 
     // // ========================================================================
     cout << "\n  Calculating specificity..." << endl;
     // // ========================================================================
-    
     const float ONEPI = 3.14159265358979f;
 
     // Dynamically create reference vector `v` of length `size_time`
@@ -132,11 +124,11 @@ int main(int argc, char*  argv[]) {
     float max_angle = std::acos(1.0 / std::sqrt(size_time)) * 180.0 / ONEPI;
 
     // Process each voxel
-    for (uint32_t i = 0; i != nr_voxels; ++i) {   // Loop across voxels
+    for (uint64_t i = 0; i != nr_voxels; ++i) {   // Loop across voxels
         vector<float> u(size_time, 0.0f);
 
-        for (uint32_t t = 0; t != size_time; ++t) {  // Loop across vector components    
-            float val = *(nii_input1_data + i + nr_voxels*t);
+        for (uint64_t t = 0; t != size_time; ++t) {  // Loop across vector components    
+            float val = *(nii_input_data + i + nr_voxels*t);
                 if (val < 0.0) {
                     val = 0;
                 }  
@@ -164,10 +156,12 @@ int main(int argc, char*  argv[]) {
             float vox_spec = 1.0f - (angle_degree / max_angle);
 
             // Store the computed L2 norm in the 3D output
-            *(nii_specificity_data + i) = vox_spec;
+            *(nii_output_data + i) = vox_spec;
         }
     }
-    save_output_nifti(fout, "specificity", nii_specificity, true);
+
+    cout << "    Saving..." << endl;
+    save_output_nifti(fout, "specificity", nii_output, true);
 
     cout << "\n  Finished." << endl;
     return 0;
