@@ -37,7 +37,6 @@ int main(int argc, char*  argv[]) {
     nifti_image *nii1 = NULL;
     char *fin1 = NULL, *fin2 = NULL, *fout = NULL;
     int ac;
-    bool mode_debug = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -51,9 +50,6 @@ int main(int argc, char*  argv[]) {
             }
             fin1 = argv[ac];
             fout = argv[ac];
-    
-        } else if (!strcmp(argv[ac], "-debug")) {
-            mode_debug = true;
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
