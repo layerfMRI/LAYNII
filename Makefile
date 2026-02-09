@@ -76,6 +76,7 @@ LAYNII2		= 	LN2_LAYERS \
 				LN2_SNAPCAST \
 				LN2_ZSCORE \
 				LN2_DESPIKE \
+				LN2_RECIPROCAL \
 				
 DERIVATIVES	=	LN2_GRADIENTS \
 				LN2_GRAMAG \
@@ -287,6 +288,9 @@ LN2_ZSCORE:
 
 LN2_DESPIKE:
 	$(CC) $(CFLAGS) -o LN2_DESPIKE src/LN2_DESPIKE.cpp $(LIBRARIES) $(LFLAGS)
+
+LN2_RECIPROCAL:
+	$(CC) $(CFLAGS) -o LN2_RECIPROCAL src/LN2_RECIPROCAL.cpp $(LIBRARIES) $(LFLAGS)
 
 # =============================================================================
 # Work in progress programs
