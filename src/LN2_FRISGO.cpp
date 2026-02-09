@@ -153,7 +153,7 @@ int main(int argc, char * argv[]) {
     float* nii_weight_data = static_cast<float*>(nii_weight->data);
 
     // ========================================================================
-    // Fuzzy ripple correction via spline
+    // Fuzzy ripple correction using weighted averaging of a symmetric window
     // ========================================================================
     // Set to zero
     for (int t = 0; t < size_time; ++t) {
@@ -187,9 +187,12 @@ int main(int argc, char * argv[]) {
             }
         }
         cout << "    Saving..." << endl;
-        save_output_nifti(fout, "frisgo-simple", nii_smooth, true, use_outpath);
+        save_output_nifti(fout, "frisgo-simple", nii_smooth, false);
     }
-    
+
+    // ========================================================================
+    // Fuzzy ripple using 4 TRs with 3rd order spline
+    // ========================================================================    
     if (mode_spline) {
         
         // NOTE[Renzo]: Convention is to fist forward. See assumed time table below
@@ -247,7 +250,7 @@ int main(int argc, char * argv[]) {
             }
         }
         cout << "    Saving..." << endl;
-        save_output_nifti(fout, "frisgo-spline", nii_smooth, true, use_outpath);
+        save_output_nifti(fout, "frisgo-spline", nii_smooth, false);
     }
 
     // // ========================================================================
