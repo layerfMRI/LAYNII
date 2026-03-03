@@ -316,7 +316,7 @@ int main(int argc, char * argv[]) {
     //             }
     //         }
 
-    //     if (do_verb) save_output_nifti(fout, "error_maps", nii_error, true, use_outpath);
+    //     if (do_verb) save_output_nifti(fout, "error_maps", nii_error, false);
 
 
     //     // ========================================================================
@@ -339,7 +339,7 @@ int main(int argc, char * argv[]) {
     //             *(nii_mean_error_data + i) = sum / size_time;
     //         }
         
-    //         if (do_verb) save_output_nifti(fout, "mean_error_maps", nii_mean_error, true, use_outpath);
+    //         if (do_verb) save_output_nifti(fout, "mean_error_maps", nii_mean_error, false);
 
     //         // subtracting error from original data with inverse sign of every other TR
     //         for (int it = 0; it < size_time; ++it) {
@@ -352,7 +352,7 @@ int main(int argc, char * argv[]) {
     //                 }
     //             }
     //         }
-    //         save_output_nifti(fout, "frisgo-runwise", nii_smooth, true, use_outpath);
+    //         save_output_nifti(fout, "frisgo-runwise", nii_smooth, false);
 
 
     //     }
@@ -402,7 +402,7 @@ int main(int argc, char * argv[]) {
     //         }
 
     //         // Write out smoothed error time series   
-    //         if (do_verb) save_output_nifti(fout, "smooth_error_maps", nii_smooth_error, true, use_outpath);
+    //         if (do_verb) save_output_nifti(fout, "smooth_error_maps", nii_smooth_error, false);
 
     //          // Correct original data with smoothed error time series
     //         for (int it = 0; it < size_time; ++it) {
@@ -416,7 +416,7 @@ int main(int argc, char * argv[]) {
     //             }
     //         }
             
-    //         save_output_nifti(fout, "frisgo-lpass", nii_smooth, true, use_outpath);
+    //         save_output_nifti(fout, "frisgo-lpass", nii_smooth, false);
 
     //     } // smoothing loop closed
 
