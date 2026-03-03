@@ -1,6 +1,7 @@
 # LayNii makefile
 
-CC		= c++
+# CC		= c++
+CC		= g++
 CFLAGS	= -std=c++11 -DHAVE_ZLIB
 CFLAGS 	+= -O3
 LFLAGS	= -lm -lz
@@ -71,6 +72,11 @@ LAYNII2		= 	LN2_LAYERS \
 				LN2_SENSITIVITY \
 				LN2_SPECIFICITY \
 				LN2_INTPRO \
+				LN2_FRISGO \
+				LN2_SNAPCAST \
+				LN2_ZSCORE \
+				LN2_DESPIKE \
+				LN2_RECIPROCAL \
 				
 DERIVATIVES	=	LN2_GRADIENTS \
 				LN2_GRAMAG \
@@ -274,6 +280,18 @@ LN2_SPECIFICITY:
 LN2_INTPRO:
 	$(CC) $(CFLAGS) -o LN2_INTPRO src/LN2_INTPRO.cpp $(LIBRARIES) $(LFLAGS)
 
+LN2_FRISGO:
+	$(CC) $(CFLAGS) -o LN2_FRISGO src/LN2_FRISGO.cpp $(LIBRARIES) $(LFLAGS)
+
+LN2_ZSCORE:
+	$(CC) $(CFLAGS) -o LN2_ZSCORE src/LN2_ZSCORE.cpp $(LIBRARIES) $(LFLAGS)
+
+LN2_DESPIKE:
+	$(CC) $(CFLAGS) -o LN2_DESPIKE src/LN2_DESPIKE.cpp $(LIBRARIES) $(LFLAGS)
+
+LN2_RECIPROCAL:
+	$(CC) $(CFLAGS) -o LN2_RECIPROCAL src/LN2_RECIPROCAL.cpp $(LIBRARIES) $(LFLAGS)
+
 # =============================================================================
 # Work in progress programs
 LN2_UVD_LSTSQR:
@@ -296,6 +314,9 @@ LN2_REGRESS_OUT:
 
 LN3_LAYERS:
 	$(CC) $(CFLAGS) -o LN3_LAYERS src/LN3_LAYERS.cpp $(LIBRARIES) $(LFLAGS)
+
+LN2_SNAPCAST:
+	$(CC) $(CFLAGS) -o LN2_SNAPCAST src/LN2_SNAPCAST.cpp $(LIBRARIES) $(LFLAGS)
 
 # =============================================================================
 

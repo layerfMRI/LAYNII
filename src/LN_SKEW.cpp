@@ -231,9 +231,9 @@ int main(int argc, char * argv[]) {
         for (int64_t iy = 0; iy < sy; ++iy) {
             for (int64_t ix = 0; ix <sx; ++ix) {
                 vic_counter = 0; 
-                for (int64_t iz_i = std::max(0LL, iz-vic); iz_i <= std::min(iz+vic, sz-1LL); ++iz_i) {
-                    for (int64_t iy_i = std::max(0LL, iy-vic); iy_i <= std::min(iy+vic, sy-1LL); ++iy_i) {
-                        for (int64_t ix_i = std::max(0LL, ix-vic); ix_i <= std::min(ix+vic, sx-1LL); ++ix_i) {
+                for (int64_t iz_i = std::max(int64_t(0), iz-vic); iz_i <= std::min(iz+vic, sz-int64_t(1)); ++iz_i) {
+                    for (int64_t iy_i = std::max(int64_t(0), iy-vic); iy_i <= std::min(iy+vic, sy-int64_t(1)); ++iy_i) {
+                        for (int64_t ix_i = std::max(int64_t(0), ix-vic); ix_i <= std::min(ix+vic, sx-int64_t(1)); ++ix_i) {
                             vecl[vic_counter] = *(nii_mean_data + nxy * iz_i + nx * iy_i + ix_i);  
                             vic_counter++;
                         }
@@ -252,9 +252,9 @@ int main(int argc, char * argv[]) {
         for (int64_t iy = 0; iy < sy; ++iy) {
             for (int64_t ix = 0; ix <sx; ++ix) {
                 vic_counter = 0; 
-                for (int64_t iz_i = std::max(0LL, iz-vic); iz_i <= std::min(iz+vic, sz-1LL); ++iz_i) {
-                    for (int64_t iy_i = std::max(0LL, iy-vic); iy_i <= std::min(iy+vic, sy-1LL); ++iy_i) {
-                        for (int64_t ix_i = std::max(0LL, ix-vic); ix_i <= std::min(ix+vic, sx-1LL); ++ix_i) {
+                for (int64_t iz_i = std::max(int64_t(0), iz-vic); iz_i <= std::min(iz+vic, sz-int64_t(1)); ++iz_i) {
+                    for (int64_t iy_i = std::max(int64_t(0), iy-vic); iy_i <= std::min(iy+vic, sy-int64_t(1)); ++iy_i) {
+                        for (int64_t ix_i = std::max(int64_t(0), ix-vic); ix_i <= std::min(ix+vic, sx-int64_t(1)); ++ix_i) {
                             vecl[vic_counter] = *(nii_NOISE_data + nxy * iz_i + nx * iy_i + ix_i);  
                             vic_counter++;
                         }

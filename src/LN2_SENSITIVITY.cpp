@@ -37,7 +37,6 @@ int main(int argc, char*  argv[]) {
     nifti_image *nii1 = NULL;
     char *fin1 = NULL, *fin2 = NULL, *fout = NULL;
     int ac;
-    bool mode_debug = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -51,9 +50,6 @@ int main(int argc, char*  argv[]) {
             }
             fin1 = argv[ac];
             fout = argv[ac];
-    
-        } else if (!strcmp(argv[ac], "-debug")) {
-            mode_debug = true;
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -82,53 +78,47 @@ int main(int argc, char*  argv[]) {
     log_nifti_descriptives(nii1);
 
     // Get dimensions of input
-    const uint32_t size_x = nii1->nx;
-    const uint32_t size_y = nii1->ny;
-    const uint32_t size_z = nii1->nz;
-    const uint32_t size_time = nii1->nt;
+    const uint64_t size_x = nii1->nx;
+    const uint64_t size_y = nii1->ny;
+    const uint64_t size_z = nii1->nz;
+    const uint64_t size_time = nii1->nt;
 
-    const uint32_t nr_voxels = size_z * size_y * size_x;
+    const uint64_t nr_voxels = size_z * size_y * size_x;
 
     // ========================================================================
     // Fix input datatype issues and prepare 3D Nifti output
     // ========================================================================
-    nifti_image* nii_input1 = copy_nifti_as_float32_with_scl_slope_and_scl_inter(nii1);
-    float* nii_input1_data = static_cast<float*>(nii_input1->data);
+    nifti_image* nii_input = copy_nifti_as_float32_with_scl_slope_and_scl_inter(nii1);
+    float* nii_input_data = static_cast<float*>(nii_input->data);
 
-    nifti_image* nii_sensitivity = copy_nifti_as_float32(nii_input1);  // Keep this copy
-    float* nii_sensitivity_data = static_cast<float*>(nii_sensitivity->data);
+    // Allocate new nifti for 3D outputs
+    nifti_image* nii_output = nifti_copy_nim_info(nii_input);
+    nii_output->nt = 1;
+    nii_output->nvox = nr_voxels;
+    nii_output->datatype = NIFTI_TYPE_FLOAT32;
+    nii_output->nbyper = sizeof(float);
+    nii_output->data = calloc(nii_output->nvox, nii_output->nbyper);
+    float* nii_output_data = static_cast<float*>(nii_output->data);
 
-    // Initialize output to zeros
-    for (int i = 0; i != nr_voxels; ++i) {
-        *(nii_sensitivity_data + i) = 0;
-    }
-
-    // Ensure it's correctly set as a 3D image
-    nii_sensitivity->dim[0] = 3;
-    nii_sensitivity->dim[1] = size_x;
-    nii_sensitivity->dim[2] = size_y;
-    nii_sensitivity->dim[3] = size_z;
-    nii_sensitivity->dim[4] = 1;
-    nifti_update_dims_from_array(nii_sensitivity);
-
-    // // ========================================================================
+    // ========================================================================
     cout << "\n  Calculating sensitivity..." << endl;
-    // // ========================================================================
+    // ========================================================================
     // Compute L2 norm (Euclidean norm) across the time dimension
-
-    for (uint32_t i = 0; i != nr_voxels; ++i) {  // Loop across voxels
+    for (uint64_t i = 0; i != nr_voxels; ++i) {  // Loop across voxels
         float sum_sq = 0;
-        for (uint32_t t = 0; t != size_time; ++t) {  // Loop across time points 
-            float val = *(nii_input1_data + i + nr_voxels*t);
+        for (uint64_t t = 0; t != size_time; ++t) {  // Loop across time points 
+            float val = *(nii_input_data + i + nr_voxels*t);
             if (val < 0.0) {
                 val = 0;
             }
             sum_sq += val * val;
         }
         // Store the computed L2 norm in the 3D output
-        *(nii_sensitivity_data + i) = sqrt(sum_sq);
+        *(nii_output_data + i) = sqrt(sum_sq);
     }
-    save_output_nifti(fout, "sensitivity", nii_sensitivity, true);
+
+    cout << "    Saving..." << endl;
+    save_output_nifti(fout, "sensitivity", nii_output, true);
 
     cout << "\n  Finished." << endl;
     return 0;

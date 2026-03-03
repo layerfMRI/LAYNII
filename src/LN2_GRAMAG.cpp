@@ -13,8 +13,8 @@ int show_help(void) {
     "Options:\n"
     "    -help   : Show this help.\n"
     "    -input  : Nifti image that will be used to compute gradients.\n"
-    "              This can be a 4D nifti. in 4D case, 3D gradients\n"
-    "              will be computed for each volume.\n"
+    "              This can be a 4D nifti. In 4D case, 3D gradients will be\n"
+    "              computed for each volume.\n"
     "    -output : (Optional) Output basename for all outputs.\n"
     "    -debug  : (Optional) Save extra intermediate outputs.\n"
     "\n"
@@ -31,7 +31,6 @@ int main(int argc, char*  argv[]) {
     nifti_image *nii1 = NULL;
     char *fin1 = NULL, *fout = NULL;
     int ac;
-    bool mode_debug = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -45,8 +44,6 @@ int main(int argc, char*  argv[]) {
             }
             fin1 = argv[ac];
             fout = argv[ac];
-        } else if (!strcmp(argv[ac], "-debug")) {
-            mode_debug = true;
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -75,16 +72,17 @@ int main(int argc, char*  argv[]) {
     log_nifti_descriptives(nii1);
 
     // Get dimensions of input
-    const uint32_t size_x = nii1->nx;
-    const uint32_t size_y = nii1->ny;
-    const uint32_t size_z = nii1->nz;
-    const uint32_t size_time = nii1->nt;
+    const uint64_t size_x = static_cast<uint64_t>(nii1->nx);
+    const uint64_t size_y = static_cast<uint64_t>(nii1->ny);
+    const uint64_t size_z = static_cast<uint64_t>(nii1->nz);
+    const uint64_t size_time = static_cast<uint64_t>(nii1->nt);
 
-    const uint32_t end_x = size_x - 1;
-    const uint32_t end_y = size_y - 1;
-    const uint32_t end_z = size_z - 1;
+    const uint64_t end_x = size_x - 1;
+    const uint64_t end_y = size_y - 1;
+    const uint64_t end_z = size_z - 1;
 
-    const uint32_t nr_voxels = size_z * size_y * size_x;
+    const uint64_t nxyz = size_z * size_y * size_x;
+    const uint64_t nxyzt = size_z * size_y * size_x * size_time;
 
     // ========================================================================
     // Fix input datatype issues
@@ -96,50 +94,46 @@ int main(int argc, char*  argv[]) {
     nifti_image* nii_gramag = copy_nifti_as_float32(nii_input);
     float* nii_gramag_data = static_cast<float*>(nii_gramag->data);
 
-    // Set to zero
-    for (uint32_t i = 0; i != nr_voxels*size_time; ++i) {
-        *(nii_gramag_data + i) = 0;
-    }
-
     // ========================================================================
     // Find connected clusters
     // ========================================================================
     cout << "  Computing gradients..." << endl;
 
-    uint32_t ix, iy, iz, it, j, k;
+    uint64_t ix, iy, iz, it;
 
-    for (uint32_t t = 0; t != size_time; ++t) {
+    for (uint64_t t = 0; t != size_time; ++t) {
         cout << "\r    Volume: " << t+1 << "/" << size_time << flush;
 
-        for (uint32_t i = 0; i != nr_voxels; ++i) {
-            tie(ix, iy, iz, it) = ind2sub_4D(i+nr_voxels*t, size_x, size_y, size_z);
+        for (uint64_t i = 0; i != nxyz; ++i) {
+            std::tie(ix, iy, iz, it) = ind2sub_4D_64(i+nxyz*t, size_x, size_y, size_z);
             float gra_x = 0, gra_y = 0, gra_z = 0;
 
             // ----------------------------------------------------------------
             // 1-jump neighbours
             // ----------------------------------------------------------------
             if (ix > 0 && ix < end_x) {
-                j = sub2ind_4D(ix-1, iy, iz, it, size_x, size_y, size_z);
-                k = sub2ind_4D(ix+1, iy, iz, it, size_x, size_y, size_z);
+                uint64_t j = sub2ind_4D_64(ix-1, iy, iz, it, size_x, size_y, size_z);
+                uint64_t k = sub2ind_4D_64(ix+1, iy, iz, it, size_x, size_y, size_z);
                 gra_x = *(nii_input_data + j) - *(nii_input_data + k);
             }
             if (iy > 0 && iy < end_y) {
-                j = sub2ind_4D(ix, iy-1, iz, it, size_x, size_y, size_z);
-                k = sub2ind_4D(ix, iy+1, iz, it, size_x, size_y, size_z);
+                uint64_t j = sub2ind_4D_64(ix, iy-1, iz, it, size_x, size_y, size_z);
+                uint64_t k = sub2ind_4D_64(ix, iy+1, iz, it, size_x, size_y, size_z);
                 gra_y = *(nii_input_data + j) - *(nii_input_data + k);
             }
             if (iz > 0 && iz < end_z) {
-                j = sub2ind_4D(ix, iy, iz-1, it, size_x, size_y, size_z);
-                k = sub2ind_4D(ix, iy, iz+1, it, size_x, size_y, size_z);
+                uint64_t j = sub2ind_4D_64(ix, iy, iz-1, it, size_x, size_y, size_z);
+                uint64_t k = sub2ind_4D_64(ix, iy, iz+1, it, size_x, size_y, size_z);
                 gra_z = *(nii_input_data + j) - *(nii_input_data + k);
             }
 
             // ----------------------------------------------------------------
             // Compute magnitude
-            *(nii_gramag_data + i+nr_voxels*t) = sqrt(gra_x*gra_x + gra_y*gra_y + gra_z*gra_z);
+            *(nii_gramag_data + i + nxyz*t) = std::sqrt(gra_x*gra_x + gra_y*gra_y + gra_z*gra_z);
         }
     }
     cout << endl;
+
     cout << "  Saving output..." << endl;
     save_output_nifti(fout, "gramag", nii_gramag, true);
 

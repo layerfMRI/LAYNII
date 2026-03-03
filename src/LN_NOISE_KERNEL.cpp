@@ -94,9 +94,9 @@ int main(int argc, char * argv[]) {
 
 
     if (kernel_size%2==0) {
-        cout << " you chose a kernel size of " << kernel_size << " even though I tols you to use an odd value... SHAME ON YOU";
+        cout << "  You chose a kernel size of " << kernel_size << ". However, only odd numbers are accepted.";
         kernel_size = kernel_size -1;
-        cout << "    I am using " << kernel_size << " instead" << endl;
+        cout << "  Therefore, kernel size of " << kernel_size << " is going to be used instead." << endl;
     }
 
     int kernel_vol = kernel_size * kernel_size* kernel_size;
@@ -159,9 +159,9 @@ int main(int argc, char * argv[]) {
     cout << " Kernel size/2 = " << kernel_size/2 << endl;
 
     if ( size_x < kernel_size*2 || size_y < kernel_size*2 || size_z < kernel_size*2) {
-        cout << "####################################################" << endl;
-        cout << "#### WARNING your Kernel might be too big ##########" << endl;
-        cout << "####################################################" << endl;
+        cout << "##############################################" << endl;
+        cout << "###  WARNING your Kernel might be too big  ###" << endl;
+        cout << "##############################################" << endl;
     }
 
     int vic_x = 0 , vic_y = 0 , vic_z = 0;
