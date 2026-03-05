@@ -163,19 +163,17 @@ int main(int argc, char * argv[]) {
     // ========================================================================
     // Fuzzy ripple correction using weighted averaging of a symmetric window
     // ========================================================================
-    // Set to zero
-    for (int t = 0; t < size_time; ++t) {
-        for (int i = 0; i < nxyz; ++i) {
-            *(nii_smooth_data + t*nxyz + i) = 0.0;
-        }
-    }
-
     if (mode_simple) {
         // NOTE[Faruk]: I think this is a better combination for despiked data
         // where the spike volume is imputed with time neighbors. For example
         // 3rd order spline with 4 neighbors gives asymmetric smoothing, as one
         // of the 4 volumes is made of other 2.
         cout << "  Doing simple correction..." << endl;
+
+        // Set output to zero
+        for (int i = 0; i < nxyzt; ++i) {
+            *(nii_smooth_data + i) = 0;
+        }
 
         uint64_t ix, iy, iz, it;
         for (uint64_t i = 0; i < nxyzt; ++i) {
@@ -203,6 +201,11 @@ int main(int argc, char * argv[]) {
     // ========================================================================    
     if (mode_spline) {
         cout << "  Doing spline correction..." << endl;
+
+        // Set output to zero
+        for (int i = 0; i < nxyzt; ++i) {
+            *(nii_smooth_data + i) = 0;
+        }
 
         // NOTE[Renzo]: Convention is to fist forward. See assumed time table below
         //   t is trigger
@@ -269,6 +272,11 @@ int main(int argc, char * argv[]) {
     // ========================================================================
     if (mode_lpass || mode_runwise) {
         cout << "  Preparing for low pass or run-wise correction..." << endl;
+
+        // Set output to zero
+        for (int i = 0; i < nxyzt; ++i) {
+            *(nii_smooth_data + i) = 0;
+        }
 
         // Allocate memory for Gaussian weights
         nifti_image* nii_weight = nifti_copy_nim_info(nii);
