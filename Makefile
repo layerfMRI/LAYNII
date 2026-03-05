@@ -73,10 +73,10 @@ LAYNII2		= 	LN2_LAYERS \
 				LN2_SPECIFICITY \
 				LN2_INTPRO \
 				LN2_FRISGO \
-				LN2_SNAPCAST \
-				LN2_ZSCORE \
 				LN2_DESPIKE \
+				LN2_ZSCORE \
 				LN2_RECIPROCAL \
+				LN2_SNAPCAST \
 				
 DERIVATIVES	=	LN2_GRADIENTS \
 				LN2_GRAMAG \
@@ -292,6 +292,9 @@ LN2_DESPIKE:
 LN2_RECIPROCAL:
 	$(CC) $(CFLAGS) -o LN2_RECIPROCAL src/LN2_RECIPROCAL.cpp $(LIBRARIES) $(LFLAGS)
 
+LN2_SNAPCAST:
+	$(CC) $(CFLAGS) -o LN2_SNAPCAST src/LN2_SNAPCAST.cpp $(LIBRARIES) $(LFLAGS)
+
 # =============================================================================
 # Work in progress programs
 LN2_UVD_LSTSQR:
@@ -314,9 +317,6 @@ LN2_REGRESS_OUT:
 
 LN3_LAYERS:
 	$(CC) $(CFLAGS) -o LN3_LAYERS src/LN3_LAYERS.cpp $(LIBRARIES) $(LFLAGS)
-
-LN2_SNAPCAST:
-	$(CC) $(CFLAGS) -o LN2_SNAPCAST src/LN2_SNAPCAST.cpp $(LIBRARIES) $(LFLAGS)
 
 # =============================================================================
 
