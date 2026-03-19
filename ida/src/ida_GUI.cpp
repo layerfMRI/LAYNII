@@ -80,7 +80,7 @@ namespace IDA
 
         ImVec4 bg_color = ImGui::GetStyleColorVec4(ImGuiCol_WindowBg); // Push style colors to match background       
         ImGui::PushStyleColor(ImGuiCol_Button, bg_color);  // Override only the idle button background color
-        if (ImGui::Button("LayNii IDA [PreAlpha-1]")) {
+        if (ImGui::Button("LayNii IDA [PreAlpha-2]")) {
             ImGui::OpenPopup("LayNii IDA (Integrated Discovery Application)");
         }
         ImGui::PopStyleColor();
@@ -507,6 +507,7 @@ namespace IDA
             ImU32 color_line1      = IM_COL32(255, 140,   0, 255);
             ImU32 color_line2      = IM_COL32(255, 255, 255, 255);
             ImU32 color_line3      = IM_COL32(  0, 255,   0, 255);
+            ImU32 color_line4      = IM_COL32(128, 128, 128, 255);
             float line_thickness   = 1.0f;
 
             if ( show_tc_normalized1 ) {
@@ -518,6 +519,12 @@ namespace IDA
                 // Draw plot background
                 draw_list->AddRectFilled(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y), color_background);
                 draw_list->AddRect(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y), color_frame, 0.0f, 0, 2.0f);
+
+                // Draw time point
+                float pos_indicator_x = pos.x + plot_size.x * fl.files[sf].display_t / (fl.files[sf].dim_t-1);
+                draw_list->AddLine(ImVec2(pos_indicator_x, pos.y),
+                                   ImVec2(pos_indicator_x, pos.y + plot_size.y),
+                                   color_line4, 0.5);
 
                 // Draw reference time course
                 if ( fl.files[sf].tc_show_reference ) {
@@ -582,6 +589,12 @@ namespace IDA
                 // Draw plot background
                 draw_list->AddRectFilled(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y), color_background);
                 draw_list->AddRect(pos, ImVec2(pos.x + plot_size.x, pos.y + plot_size.y), color_frame, 0.0f, 0, 2.0f);
+
+                // Draw time point
+                float pos_indicator_x = pos.x + plot_size.x * fl.files[sf].display_t / (fl.files[sf].dim_t-1);
+                draw_list->AddLine(ImVec2(pos_indicator_x, pos.y),
+                                   ImVec2(pos_indicator_x, pos.y + plot_size.y),
+                                   color_line4, 0.5);
 
                 // Draw reference time course
                 if ( fl.files[sf].tc_show_reference ) {
