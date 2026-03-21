@@ -11,10 +11,8 @@ namespace IDA
         // ============================================================================================================
         // Variables
         // ============================================================================================================
-        static char str_input[4096] = "Enter full path to a nifti file";
-        // static char str_input[4096] = "/Users/faruk/data/temp-LayNii_IDA/lo_BOLD_intemp.nii.gz";
-        // static char str_input[4096] = "/Users/faruk/Documents/test-LN3_IDA/test.nii.gz";
-        // static char str_input[4096] = "/Users/faruk/data/data-alard/75um/sub-99_75um_crop.nii.gz";
+        // static char str_input[4096] = "Enter full path to a nifti file";
+        static char str_input[4096] = "/Users/faruk/data/temp-LayNii_IDA/lo_BOLD_intemp.nii.gz";
 
         static bool loaded_data          = false;
         static bool show_header_info     = false;
@@ -926,25 +924,61 @@ namespace IDA
                         ImGui::PopStyleColor();
                     }
 
-                    // // ------------------------------------------------------------------------------------------------
-                    // // Temporal skewness
-                    // // ------------------------------------------------------------------------------------------------
-                    // if ( fl.files[sf].tc_QA_type != 4 ) {
-                    //     if ( ImGui::Button("Skewness  ") ) {
-                    //         printf("WIP...\n");
-                    //         fl.files[sf].tc_QA_type = 2;
-                    //     }
-                    // } else {
-                    //     if ( ImGui::Button("Skewness  ") ) {
-                    //         printf("WIP...\n");
-                    //         fl.files[sf].tc_QA_type = 0;
-                    //     }
-                    // }
+                    // ------------------------------------------------------------------------------------------------
+                    // Temporal Skewness
+                    // ------------------------------------------------------------------------------------------------
+                    ImGui::SameLine();
+                    if ( fl.files[sf].tc_QA_type != 4 ) {
+                        if ( ImGui::Button("tSkewness ") ) {
+                            // Set contrast and buttons
+                            fl.files[sf].display_min = -1;
+                            fl.files[sf].display_max = 1;
+                            fl.files[sf].slider_contrast_min = -1;
+                            fl.files[sf].slider_contrast_max = 1;
+
+                            // Prepare data to hold slice maps
+                            free(fl.files[sf].p_sliceK_float_QA);
+                            free(fl.files[sf].p_sliceJ_float_QA);
+                            free(fl.files[sf].p_sliceI_float_QA);
+                            fl.files[sf].p_sliceK_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
+                            fl.files[sf].p_sliceJ_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
+                            fl.files[sf].p_sliceI_float_QA = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
+
+                            // Enable real-time standard deviation
+                            fl.loadSliceK_float_tSkewness(fl.files[sf]);
+                            fl.loadSliceJ_float_tSkewness(fl.files[sf]);
+                            fl.loadSliceI_float_tSkewness(fl.files[sf]);
+
+                            fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float_QA);
+                            fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float_QA);
+                            fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float_QA);
+
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j,
+                                                         fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k,
+                                                         fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k,
+                                                         fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
+
+                            fl.files[sf].tc_QA_type = 4;
+                            request_image_data_update = true;
+                        }
+                    } else {
+                        if ( ImGui::Button("tSkewness ") ) {
+                            // Revert QA-specific contrasts
+                            fl.files[sf].display_min = fl.files[sf].data_min;
+                            fl.files[sf].display_max = fl.files[sf].data_max;
+                            fl.files[sf].slider_contrast_min = fl.files[sf].data_min;
+                            fl.files[sf].slider_contrast_max = fl.files[sf].data_max;
+
+                            fl.files[sf].tc_QA_type = 0;
+                            request_image_data_update = true;
+                        }
+                    }
 
                     // // ------------------------------------------------------------------------------------------------
-                    // // Temporal kurtosis
+                    // // Temporal Kurtosis
                     // // ------------------------------------------------------------------------------------------------
-                    // ImGui::SameLine();
                     // if ( fl.files[sf].tc_QA_type != 4 ) {
                     //     if ( ImGui::Button("Kurtosis  ") ) {
                     //         printf("WIP...\n");
@@ -1444,6 +1478,14 @@ namespace IDA
                         fl.loadSliceK_float_tSD(fl.files[sf]);
                         fl.loadSliceJ_float_tSD(fl.files[sf]);
                         fl.loadSliceI_float_tSD(fl.files[sf]);
+                    } else if ( fl.files[sf].tc_QA_type == 3 ) {  // tSNR
+                        fl.loadSliceK_float_tSNR(fl.files[sf]);
+                        fl.loadSliceJ_float_tSNR(fl.files[sf]);
+                        fl.loadSliceI_float_tSNR(fl.files[sf]);
+                    } else if ( fl.files[sf].tc_QA_type == 4 ) {  // tSkewness
+                        fl.loadSliceK_float_tSkewness(fl.files[sf]);
+                        fl.loadSliceJ_float_tSkewness(fl.files[sf]);
+                        fl.loadSliceI_float_tSkewness(fl.files[sf]);
                     }
                     request_image_update = true;
                 }
