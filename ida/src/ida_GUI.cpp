@@ -1114,7 +1114,7 @@ namespace IDA
                             SampleVoxelTimeCourseReference(fl.files[sf]);
                         }
                         SampleVoxelTimeCourseFocus(fl.files[sf]);
-                        if ( fl.files[sf].visualization_mode == 3 ) {
+                        if ( fl.files[sf].visualization_mode == 3 || fl.files[sf].tc_QA_type != 0 ) {
                             request_image_data_update = true;
                         }
                     }
@@ -1128,7 +1128,7 @@ namespace IDA
                             SampleVoxelTimeCourseReference(fl.files[sf]);
                         }
                         SampleVoxelTimeCourseFocus(fl.files[sf]);
-                        if ( fl.files[sf].visualization_mode == 3 ) {
+                        if ( fl.files[sf].visualization_mode == 3 || fl.files[sf].tc_QA_type != 0 ) {
                             request_image_data_update = true;
                         }
                     }
@@ -1142,7 +1142,7 @@ namespace IDA
                             SampleVoxelTimeCourseReference(fl.files[sf]);
                         }
                         SampleVoxelTimeCourseFocus(fl.files[sf]);
-                        if ( fl.files[sf].visualization_mode == 3 ) {
+                        if ( fl.files[sf].visualization_mode == 3 || fl.files[sf].tc_QA_type != 0 ) {
                             request_image_data_update = true;
                         }
                     }
@@ -1160,7 +1160,7 @@ namespace IDA
                             SampleVoxelTimeCourseReference(fl.files[sf]);
                         }
                         SampleVoxelTimeCourseFocus(fl.files[sf]);
-                        if ( fl.files[sf].visualization_mode == 3 ) {
+                        if ( fl.files[sf].visualization_mode == 3 || fl.files[sf].tc_QA_type != 0 ) {
                             request_image_data_update = true;
                         }
                     }
@@ -1174,7 +1174,7 @@ namespace IDA
                             SampleVoxelTimeCourseReference(fl.files[sf]);
                         }
                         SampleVoxelTimeCourseFocus(fl.files[sf]);
-                        if ( fl.files[sf].visualization_mode == 3 ) {
+                        if ( fl.files[sf].visualization_mode == 3 || fl.files[sf].tc_QA_type != 0 ) {
                             request_image_data_update = true;
                         }
                     }
@@ -1188,7 +1188,7 @@ namespace IDA
                             SampleVoxelTimeCourseReference(fl.files[sf]);
                         }
                         SampleVoxelTimeCourseFocus(fl.files[sf]);
-                        if ( fl.files[sf].visualization_mode == 3 ) {
+                        if ( fl.files[sf].visualization_mode == 3 || fl.files[sf].tc_QA_type != 0 ) {
                             request_image_data_update = true;
                         }
                     }

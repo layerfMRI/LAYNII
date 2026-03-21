@@ -1180,6 +1180,7 @@ namespace IDA_IO
             uint64_t ni = static_cast<uint64_t>(fi.dim_i);
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
             uint64_t k = static_cast<uint64_t>(fi.display_k);
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t j = 0; j < nj; ++j) {
@@ -1187,9 +1188,9 @@ namespace IDA_IO
                     fi.p_sliceK_float_QA[index2D] = 0;
 
                     // Compute time mean
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        fi.p_sliceK_float_QA[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
+                        fi.p_sliceK_float_QA[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt_chosen);
                     }
                 }
             }
@@ -1201,14 +1202,15 @@ namespace IDA_IO
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
             uint64_t j = static_cast<uint64_t>(fi.display_j);
             for (uint64_t i = 0; i < ni; i++) {
                 for (uint64_t k = 0; k < nk; k++) {
                     uint64_t index2D = i + k*ni;
                     fi.p_sliceJ_float_QA[index2D] = 0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        fi.p_sliceJ_float_QA[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
+                        fi.p_sliceJ_float_QA[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt_chosen);
                     }
                 }
             }
@@ -1220,14 +1222,15 @@ namespace IDA_IO
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
             uint64_t i = static_cast<uint64_t>(fi.display_i);
             for (uint64_t j = 0; j < nj; j++) {
                 for (uint64_t k = 0; k < nk; k++) {
                     uint64_t index2D = j + k*nj;
                     fi.p_sliceI_float_QA[index2D] = 0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        fi.p_sliceI_float_QA[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
+                        fi.p_sliceI_float_QA[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt_chosen);
                     }
                 }
             }
@@ -1241,14 +1244,15 @@ namespace IDA_IO
             uint64_t ni = static_cast<uint64_t>(fi.dim_i);
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
             uint64_t k = static_cast<uint64_t>(fi.display_k);
-            double N = static_cast<double>(nt);
+            double N = static_cast<double>(nt_chosen);
 
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t j = 0; j < nj; ++j) {
                     // Compute variance using Welford's method
                     double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double x = static_cast<double>(fi.p_data_float[index4D]);
                         double oldM = M;
@@ -1269,14 +1273,15 @@ namespace IDA_IO
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
             uint64_t j = static_cast<uint64_t>(fi.display_j);
-            double N = static_cast<double>(nt);
+            double N = static_cast<double>(nt_chosen);
 
             for (uint64_t i = 0; i < ni; i++) {
                 for (uint64_t k = 0; k < nk; k++) {
                     // Compute variance using Welford's method
                     double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double x = static_cast<double>(fi.p_data_float[index4D]);
                         double oldM = M;
@@ -1297,14 +1302,15 @@ namespace IDA_IO
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
             uint64_t i = static_cast<uint64_t>(fi.display_i);
-            double N = static_cast<double>(nt);
+            double N = static_cast<double>(nt_chosen);
 
             for (uint64_t j = 0; j < nj; j++) {
                 for (uint64_t k = 0; k < nk; k++) {
                     // Compute variance using Welford's method
                     double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double x = static_cast<double>(fi.p_data_float[index4D]);
                         double oldM = M;
@@ -1327,23 +1333,24 @@ namespace IDA_IO
             uint64_t ni = static_cast<uint64_t>(fi.dim_i);
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
             uint64_t k = static_cast<uint64_t>(fi.display_k);
-            double N = static_cast<double>(nt);
+            double N = static_cast<double>(nt_chosen);
 
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t j = 0; j < nj; ++j) {
                     // ------------------------------------------------------------------------------------------------
                     // Compute time mean
                     double A = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        A += fi.p_data_float[index4D] / static_cast<float>(nt);
+                        A += static_cast<double>(fi.p_data_float[index4D]) / static_cast<double>(nt_chosen);
                     }
 
                     // ------------------------------------------------------------------------------------------------
                     // Compute variance using Welford's method
                     double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double x = static_cast<double>(fi.p_data_float[index4D]);
                         double oldM = M;
@@ -1367,23 +1374,24 @@ namespace IDA_IO
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
             uint64_t j = static_cast<uint64_t>(fi.display_j);
-            double N = static_cast<double>(nt);
+            double N = static_cast<double>(nt_chosen);
 
             for (uint64_t i = 0; i < ni; i++) {
                 for (uint64_t k = 0; k < nk; k++) {
                     // ------------------------------------------------------------------------------------------------
                     // Compute time mean
                     double A = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        A += fi.p_data_float[index4D] / static_cast<float>(nt);
+                        A += static_cast<double>(fi.p_data_float[index4D]) / static_cast<double>(nt_chosen);
                     }
 
                     // ------------------------------------------------------------------------------------------------
                     // Compute variance using Welford's method
                     double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double x = static_cast<double>(fi.p_data_float[index4D]);
                         double oldM = M;
@@ -1407,23 +1415,24 @@ namespace IDA_IO
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
             uint64_t i = static_cast<uint64_t>(fi.display_i);
-            double N = static_cast<double>(nt);
+            double N = static_cast<double>(nt_chosen);
 
             for (uint64_t j = 0; j < nj; j++) {
                 for (uint64_t k = 0; k < nk; k++) {
                     // ------------------------------------------------------------------------------------------------
                     // Compute time mean
                     double A = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        A += fi.p_data_float[index4D] / static_cast<float>(nt);
+                        A += static_cast<double>(fi.p_data_float[index4D]) / static_cast<double>(nt_chosen);
                     }
 
                     // ------------------------------------------------------------------------------------------------
                     // Compute variance using Welford's method
                     double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double x = static_cast<double>(fi.p_data_float[index4D]);
                         double oldM = M;
@@ -1449,23 +1458,24 @@ namespace IDA_IO
             uint64_t ni = static_cast<uint64_t>(fi.dim_i);
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
             uint64_t k = static_cast<uint64_t>(fi.display_k);
-            double N = static_cast<double>(nt);
+            double N = static_cast<double>(nt_chosen);
 
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t j = 0; j < nj; ++j) {
                     // ------------------------------------------------------------------------------------------------
                     // Compute time mean
                     double A = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        A += fi.p_data_float[index4D] / static_cast<float>(nt);
+                        A += static_cast<double>(fi.p_data_float[index4D]) / static_cast<double>(nt_chosen);
                     }
 
                     // ------------------------------------------------------------------------------------------------
                     // Calculate sum of cubed deviations
                     double B = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double diff = fi.p_data_float[index4D] - A;
                         B += diff * diff * diff;   // For Skewness
@@ -1474,7 +1484,7 @@ namespace IDA_IO
                     // ------------------------------------------------------------------------------------------------
                     // Compute variance using Welford's method
                     double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double x = static_cast<double>(fi.p_data_float[index4D]);
                         double oldM = M;
@@ -1500,23 +1510,24 @@ namespace IDA_IO
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
             uint64_t j = static_cast<uint64_t>(fi.display_j);
-            double N = static_cast<double>(nt);
+            double N = static_cast<double>(nt_chosen);
 
             for (uint64_t i = 0; i < ni; i++) {
                 for (uint64_t k = 0; k < nk; k++) {
                     // ------------------------------------------------------------------------------------------------
                     // Compute time mean
                     double A = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        A += fi.p_data_float[index4D] / static_cast<float>(nt);
+                        A += static_cast<double>(fi.p_data_float[index4D]) / static_cast<double>(nt_chosen);
                     }
 
                     // ------------------------------------------------------------------------------------------------
                     // Calculate sum of cubed deviations
                     double B = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double diff = fi.p_data_float[index4D] - A;
                         B += diff * diff * diff;   // For Skewness
@@ -1525,7 +1536,7 @@ namespace IDA_IO
                     // ------------------------------------------------------------------------------------------------
                     // Compute variance using Welford's method
                     double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double x = static_cast<double>(fi.p_data_float[index4D]);
                         double oldM = M;
@@ -1551,23 +1562,24 @@ namespace IDA_IO
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
             uint64_t i = static_cast<uint64_t>(fi.display_i);
-            double N = static_cast<double>(nt);
+            double N = static_cast<double>(nt_chosen);
 
             for (uint64_t j = 0; j < nj; j++) {
                 for (uint64_t k = 0; k < nk; k++) {
                     // ------------------------------------------------------------------------------------------------
                     // Compute time mean
                     double A = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        A += fi.p_data_float[index4D] / static_cast<float>(nt);
+                        A += static_cast<double>(fi.p_data_float[index4D]) / static_cast<double>(nt_chosen);
                     }
 
                     // ------------------------------------------------------------------------------------------------
                     // Calculate sum of cubed deviations
                     double B = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double diff = fi.p_data_float[index4D] - A;
                         B += diff * diff * diff;   // For Skewness
@@ -1576,7 +1588,7 @@ namespace IDA_IO
                     // ------------------------------------------------------------------------------------------------
                     // Compute variance using Welford's method
                     double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double x = static_cast<double>(fi.p_data_float[index4D]);
                         double oldM = M;
