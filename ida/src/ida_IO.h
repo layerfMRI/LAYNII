@@ -96,6 +96,8 @@ namespace IDA_IO
         GLuint      textureIDi;             // OpenGL needs this
         float       data_min;               // Minimum data value
         float       data_max;               // Maximum data value
+        float       slider_contrast_min;    // Contrast slider minimum value
+        float       slider_contrast_max;    // Contrast slider maximum value
         float       display_min;            // Minimum displayed value
         float       display_max;            // Maximum displayed value
         float       display_scale;          // Scaling factor for zooming in or out
@@ -1318,6 +1320,127 @@ namespace IDA_IO
         }
 
         // ============================================================================================================
+        // tSNR (time signal to noise ratio)
+        // ============================================================================================================
+        void loadSliceK_float_tSNR(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t k = static_cast<uint64_t>(fi.display_k);
+            double N = static_cast<double>(nt);
+
+            for (uint64_t i = 0; i < ni; ++i) {
+                for (uint64_t j = 0; j < nj; ++j) {
+                    // ------------------------------------------------------------------------------------------------
+                    // Compute time mean
+                    double A = 0.0;
+                    for (uint64_t t = 0; t < nt; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        A += fi.p_data_float[index4D] / static_cast<float>(nt);
+                    }
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Compute variance using Welford's method
+                    double M = 0.0, S = 0.0;
+                    for (uint64_t t = 0; t < nt; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double x = static_cast<double>(fi.p_data_float[index4D]);
+                        double oldM = M;
+                        M = M + (x - M) / (static_cast<double>(t+1));
+                        S = S + (x - M) * (x - oldM);
+                    }
+                    double variance = S / (N - 1);
+                    double SD = std::sqrt(variance);
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Compute tSNR
+                    uint64_t index2D = i + j*ni;
+                    fi.p_sliceK_float_QA[index2D] = static_cast<float>(A / SD);
+                }
+            }
+        }
+
+        void loadSliceJ_float_tSNR(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t j = static_cast<uint64_t>(fi.display_j);
+            double N = static_cast<double>(nt);
+
+            for (uint64_t i = 0; i < ni; i++) {
+                for (uint64_t k = 0; k < nk; k++) {
+                    // ------------------------------------------------------------------------------------------------
+                    // Compute time mean
+                    double A = 0.0;
+                    for (uint64_t t = 0; t < nt; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        A += fi.p_data_float[index4D] / static_cast<float>(nt);
+                    }
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Compute variance using Welford's method
+                    double M = 0.0, S = 0.0;
+                    for (uint64_t t = 0; t < nt; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double x = static_cast<double>(fi.p_data_float[index4D]);
+                        double oldM = M;
+                        M = M + (x - M) / (static_cast<double>(t+1));
+                        S = S + (x - M) * (x - oldM);
+                    }
+                    double variance = S / (N - 1);
+                    double SD = std::sqrt(variance);
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Compute tSNR
+                    uint64_t index2D = i + k*ni;
+                    fi.p_sliceJ_float_QA[index2D] = static_cast<float>(A / SD);
+                }
+            }
+        }
+
+        void loadSliceI_float_tSNR(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t i = static_cast<uint64_t>(fi.display_i);
+            double N = static_cast<double>(nt);
+
+            for (uint64_t j = 0; j < nj; j++) {
+                for (uint64_t k = 0; k < nk; k++) {
+                    // ------------------------------------------------------------------------------------------------
+                    // Compute time mean
+                    double A = 0.0;
+                    for (uint64_t t = 0; t < nt; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        A += fi.p_data_float[index4D] / static_cast<float>(nt);
+                    }
+
+                    // Compute variance using Welford's method
+                    double M = 0.0, S = 0.0;
+                    for (uint64_t t = 0; t < nt; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double x = static_cast<double>(fi.p_data_float[index4D]);
+                        double oldM = M;
+                        M = M + (x - M) / (static_cast<double>(t+1));
+                        S = S + (x - M) * (x - oldM);
+                    }
+                    double variance = S / (N - 1);
+                    double SD = std::sqrt(variance);
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Compute tSNR
+                    uint64_t index2D = j + k*nj;
+                    fi.p_sliceI_float_QA[index2D] = static_cast<float>(A / SD);
+                }
+            }
+        }
+
+        // ============================================================================================================
         // Procedure to type cast float into uint8 while clipping the range of uint8 display
         // ============================================================================================================
         // NOTE: I have decided to keep the functions separate because this might be more useful for covering 2D cases.
@@ -1575,6 +1698,8 @@ namespace IDA_IO
             fi.data_min = min_val;
             fi.display_max = max_val;
             fi.display_min = min_val;
+            fi.slider_contrast_max = max_val;
+            fi.slider_contrast_min = min_val;
             std::cout << "  Min: " << min_val << " | Max: " << max_val << std::endl;
         }
 

@@ -166,6 +166,8 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
                     ImGui::Text("tMean = %.3f", value_QA);
                 } else if ( fi.tc_QA_type == 2 ) {
                     ImGui::Text("tSD   = %.3f", value_QA);
+                } else if ( fi.tc_QA_type == 3 ) {
+                    ImGui::Text("tSNR  = %.3f", value_QA);
                 }
             }
 

@@ -12,7 +12,7 @@ namespace IDA
         // Variables
         // ============================================================================================================
         static char str_input[4096] = "Enter full path to a nifti file";
-        // static char str_input[4096] = "/Users/faruk/data/test-LAYNII_IDA/lo_BOLD_intemp.nii.gz";
+        // static char str_input[4096] = "/Users/faruk/data/temp-LayNii_IDA/lo_BOLD_intemp.nii.gz";
         // static char str_input[4096] = "/Users/faruk/Documents/test-LN3_IDA/test.nii.gz";
         // static char str_input[4096] = "/Users/faruk/data/data-alard/75um/sub-99_75um_crop.nii.gz";
 
@@ -772,7 +772,13 @@ namespace IDA
                     if ( fl.files[sf].tc_QA_type != 1 ) {
                         if ( ImGui::Button("tMean     ") ) {
 
-                            // Prepare data to hold tMean maps
+                            // Prepare contrasts
+                            fl.files[sf].display_min = fl.files[sf].data_min;
+                            fl.files[sf].display_max = fl.files[sf].data_max;
+                            fl.files[sf].slider_contrast_min = fl.files[sf].data_min;
+                            fl.files[sf].slider_contrast_max = fl.files[sf].data_max;
+
+                            // Prepare data to hold slice maps
                             free(fl.files[sf].p_sliceK_float_QA);
                             free(fl.files[sf].p_sliceJ_float_QA);
                             free(fl.files[sf].p_sliceI_float_QA);
@@ -780,7 +786,7 @@ namespace IDA
                             fl.files[sf].p_sliceJ_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
                             fl.files[sf].p_sliceI_float_QA = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
 
-                            // Enable real time time mean
+                            // Enable real-time time mean
                             fl.loadSliceK_float_tMean(fl.files[sf]);
                             fl.loadSliceJ_float_tMean(fl.files[sf]);
                             fl.loadSliceI_float_tMean(fl.files[sf]);
@@ -802,8 +808,8 @@ namespace IDA
                     } else {
                         ImGui::PushStyleColor(ImGuiCol_Button, color_active);
                         if ( ImGui::Button("tMean     ") ) {
-                            request_image_data_update = true;
                             fl.files[sf].tc_QA_type = 0;
+                            request_image_data_update = true;
                         }
                         ImGui::PopStyleColor();
                     }
@@ -815,7 +821,13 @@ namespace IDA
                     if ( fl.files[sf].tc_QA_type != 2 ) {
                         if ( ImGui::Button("tSD       ") ) {
 
-                            // Prepare data to hold tMean maps
+                            // Prepare contrasts
+                            fl.files[sf].display_min = fl.files[sf].data_min / 10;
+                            fl.files[sf].display_max = fl.files[sf].data_max / 10;
+                            fl.files[sf].slider_contrast_min = fl.files[sf].data_min / 10;
+                            fl.files[sf].slider_contrast_max = fl.files[sf].data_max / 10;
+
+                            // Prepare data to hold slice maps
                             free(fl.files[sf].p_sliceK_float_QA);
                             free(fl.files[sf].p_sliceJ_float_QA);
                             free(fl.files[sf].p_sliceI_float_QA);
@@ -823,7 +835,7 @@ namespace IDA
                             fl.files[sf].p_sliceJ_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
                             fl.files[sf].p_sliceI_float_QA = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
 
-                            // Enable real time time mean
+                            // Enable real-time standard deviation
                             fl.loadSliceK_float_tSD(fl.files[sf]);
                             fl.loadSliceJ_float_tSD(fl.files[sf]);
                             fl.loadSliceI_float_tSD(fl.files[sf]);
@@ -845,27 +857,74 @@ namespace IDA
                     } else {
                         ImGui::PushStyleColor(ImGuiCol_Button, color_active);
                         if ( ImGui::Button("tSD       ") ) {
+                            // Revert QA-specific contrasts
+                            fl.files[sf].display_min = fl.files[sf].data_min;
+                            fl.files[sf].display_max = fl.files[sf].data_max;
+                            fl.files[sf].slider_contrast_min = fl.files[sf].data_min;
+                            fl.files[sf].slider_contrast_max = fl.files[sf].data_max;
+
                             fl.files[sf].tc_QA_type = 0;
+                            request_image_data_update = true;
                         }
                         ImGui::PopStyleColor();
                     }
 
-                    // // ------------------------------------------------------------------------------------------------
-                    // // Temporal signal to noise ratio
-                    // // ------------------------------------------------------------------------------------------------
-                    // ImGui::SameLine();
+                    // ------------------------------------------------------------------------------------------------
+                    // Temporal signal to noise ratio
+                    // ------------------------------------------------------------------------------------------------
+                    ImGui::SameLine();
 
-                    // if ( fl.files[sf].tc_QA_type != 3 ) {
-                    //     if ( ImGui::Button("tSNR      ") ) {
-                    //         printf("WIP...\n");
-                    //         fl.files[sf].tc_QA_type = 2;
-                    //     }
-                    // } else {
-                    //     if ( ImGui::Button("tSNR WIP ") ) {
-                    //         printf("WIP...\n");
-                    //         fl.files[sf].tc_QA_type = 0;
-                    //     }
-                    // }
+                    if ( fl.files[sf].tc_QA_type != 3 ) {
+                        if ( ImGui::Button("tSNR      ") ) {
+
+                            // Set contrast and buttons
+                            fl.files[sf].display_min = 0;
+                            fl.files[sf].display_max = 50;
+                            fl.files[sf].slider_contrast_min = 0;
+                            fl.files[sf].slider_contrast_max = 100;
+
+                            // Prepare data to hold slice maps
+                            free(fl.files[sf].p_sliceK_float_QA);
+                            free(fl.files[sf].p_sliceJ_float_QA);
+                            free(fl.files[sf].p_sliceI_float_QA);
+                            fl.files[sf].p_sliceK_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
+                            fl.files[sf].p_sliceJ_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
+                            fl.files[sf].p_sliceI_float_QA = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
+
+                            // Enable real-time standard deviation
+                            fl.loadSliceK_float_tSNR(fl.files[sf]);
+                            fl.loadSliceJ_float_tSNR(fl.files[sf]);
+                            fl.loadSliceI_float_tSNR(fl.files[sf]);
+
+                            fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float_QA);
+                            fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float_QA);
+                            fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float_QA);
+
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j,
+                                                         fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k,
+                                                         fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k,
+                                                         fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
+
+                            fl.files[sf].tc_QA_type = 3;
+                            request_image_data_update = true;
+
+                        }
+                    } else {
+                        ImGui::PushStyleColor(ImGuiCol_Button, color_active);
+                        if ( ImGui::Button("tSNR      ") ) {
+                            // Revert QA-specific contrasts
+                            fl.files[sf].display_min = fl.files[sf].data_min;
+                            fl.files[sf].display_max = fl.files[sf].data_max;
+                            fl.files[sf].slider_contrast_min = fl.files[sf].data_min;
+                            fl.files[sf].slider_contrast_max = fl.files[sf].data_max;
+
+                            fl.files[sf].tc_QA_type = 0;
+                            request_image_data_update = true;
+                        }
+                        ImGui::PopStyleColor();
+                    }
 
                     // // ------------------------------------------------------------------------------------------------
                     // // Temporal skewness
@@ -923,7 +982,7 @@ namespace IDA
             ImGui::Separator();
             if ( ImGui::CollapsingHeader("CONTRAST CONTROLS", ImGuiTreeNodeFlags_DefaultOpen) ) {
 
-                if ( ImGui::SliderFloat("Display Min.", &fl.files[sf].display_min, fl.files[sf].data_min, fl.files[sf].data_max, "%.2f") ) 
+                if ( ImGui::SliderFloat("Display Min.", &fl.files[sf].display_min, fl.files[sf].slider_contrast_min, fl.files[sf].slider_contrast_max, "%.2f") ) 
                 {
                     if (fl.files[sf].display_min > fl.files[sf].display_max) {
                         fl.files[sf].display_min = fl.files[sf].display_max;
@@ -931,7 +990,7 @@ namespace IDA
                     request_image_update = true;
                 }
 
-                if ( ImGui::SliderFloat("Display Max.", &fl.files[sf].display_max, fl.files[sf].data_min, fl.files[sf].data_max, "%.2f") ) 
+                if ( ImGui::SliderFloat("Display Max.", &fl.files[sf].display_max, fl.files[sf].slider_contrast_min, fl.files[sf].slider_contrast_max, "%.2f") ) 
                 {
                     if (fl.files[sf].display_max < fl.files[sf].display_min) {
                         fl.files[sf].display_max = fl.files[sf].display_min;
