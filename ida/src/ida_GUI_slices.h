@@ -170,6 +170,8 @@ void RenderVoxelInspector(IDA_IO::FileInfo& fi, int slice_window, ImVec2 cursor_
                     ImGui::Text("tSNR  = %.3f", value_QA);
                 } else if ( fi.tc_QA_type == 4 ) {
                     ImGui::Text("tSkewness = %.3f", value_QA);
+                } else if ( fi.tc_QA_type == 5 ) {
+                    ImGui::Text("tKurtosis = %.3f", value_QA);
                 }
             }
 

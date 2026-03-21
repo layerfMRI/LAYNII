@@ -1344,7 +1344,7 @@ namespace IDA_IO
                     double A = 0.0;
                     for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        A += static_cast<double>(fi.p_data_float[index4D]) / static_cast<double>(nt_chosen);
+                        A += static_cast<double>(fi.p_data_float[index4D]) / N;
                     }
 
                     // ------------------------------------------------------------------------------------------------
@@ -1385,7 +1385,7 @@ namespace IDA_IO
                     double A = 0.0;
                     for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        A += static_cast<double>(fi.p_data_float[index4D]) / static_cast<double>(nt_chosen);
+                        A += static_cast<double>(fi.p_data_float[index4D]) / N;
                     }
 
                     // ------------------------------------------------------------------------------------------------
@@ -1426,7 +1426,7 @@ namespace IDA_IO
                     double A = 0.0;
                     for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        A += static_cast<double>(fi.p_data_float[index4D]) / static_cast<double>(nt_chosen);
+                        A += static_cast<double>(fi.p_data_float[index4D]) / N;
                     }
 
                     // ------------------------------------------------------------------------------------------------
@@ -1451,7 +1451,7 @@ namespace IDA_IO
         }
 
         // ============================================================================================================
-        // tVAR (time variance of z scored data)
+        // Temporal skewness
         // ============================================================================================================
         void loadSliceK_float_tSkewness(FileInfo& fi)
         {
@@ -1464,42 +1464,25 @@ namespace IDA_IO
 
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t j = 0; j < nj; ++j) {
-                    // ------------------------------------------------------------------------------------------------
                     // Compute time mean
-                    double A = 0.0;
+                    double mean = 0.0;
                     for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        A += static_cast<double>(fi.p_data_float[index4D]) / static_cast<double>(nt_chosen);
+                        mean += static_cast<double>(fi.p_data_float[index4D]) / N;
                     }
 
-                    // ------------------------------------------------------------------------------------------------
-                    // Calculate sum of cubed deviations
-                    double B = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
-                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        double diff = fi.p_data_float[index4D] - A;
-                        B += diff * diff * diff;   // For Skewness
-                    }
-
-                    // ------------------------------------------------------------------------------------------------
-                    // Compute variance using Welford's method
-                    double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
-                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        double x = static_cast<double>(fi.p_data_float[index4D]);
-                        double oldM = M;
-                        M = M + (x - M) / (static_cast<double>(t+1));
-                        S = S + (x - M) * (x - oldM);
-                    }
-                    // Compute standard deviation
-                    double variance = S / (N - 1);
-                    double SD = std::sqrt(variance);
-
-                    // ------------------------------------------------------------------------------------------------
                     // Compute skewness
+                    double sum1 = 0.0, sum2 = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double temp = static_cast<double>(fi.p_data_float[index4D]) - mean;
+                        sum1 += temp * temp * temp;
+                        sum2 += temp * temp;
+                    }
+                    double skew = (1 / N * sum1) / ( pow(1 / (N - 1) * sum2, 1.5) ); 
+
                     uint64_t index2D = i + j*ni;
-                    double SK = (B / N) / (SD * SD * SD);
-                    fi.p_sliceK_float_QA[index2D] = static_cast<float>(SK);
+                    fi.p_sliceK_float_QA[index2D] = static_cast<float>(skew);
                 }
             }
         }
@@ -1516,42 +1499,26 @@ namespace IDA_IO
 
             for (uint64_t i = 0; i < ni; i++) {
                 for (uint64_t k = 0; k < nk; k++) {
-                    // ------------------------------------------------------------------------------------------------
                     // Compute time mean
-                    double A = 0.0;
+                    double mean = 0.0;
                     for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        A += static_cast<double>(fi.p_data_float[index4D]) / static_cast<double>(nt_chosen);
+                        mean += static_cast<double>(fi.p_data_float[index4D]) / N;
                     }
 
-                    // ------------------------------------------------------------------------------------------------
-                    // Calculate sum of cubed deviations
-                    double B = 0.0;
+                    // Compute skewness
+                    double sum1 = 0.0, sum2 = 0.0;
                     for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        double diff = fi.p_data_float[index4D] - A;
-                        B += diff * diff * diff;   // For Skewness
+                        double temp = static_cast<double>(fi.p_data_float[index4D]) - mean;
+                        sum1 += temp * temp * temp;
+                        sum2 += temp * temp;
                     }
+                    double skew = (1 / N * sum1) / ( pow(1 / (N - 1) * sum2, 1.5) ); 
 
-                    // ------------------------------------------------------------------------------------------------
-                    // Compute variance using Welford's method
-                    double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
-                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        double x = static_cast<double>(fi.p_data_float[index4D]);
-                        double oldM = M;
-                        M = M + (x - M) / (static_cast<double>(t+1));
-                        S = S + (x - M) * (x - oldM);
-                    }
-                    // Compute standard deviation
-                    double variance = S / (N - 1);
-                    double SD = std::sqrt(variance);
-
-                    // ------------------------------------------------------------------------------------------------
                     // Compute skewness
                     uint64_t index2D = i + k*ni;
-                    double SK = (B / N) / (SD * SD * SD);
-                    fi.p_sliceJ_float_QA[index2D] = static_cast<float>(SK);
+                    fi.p_sliceJ_float_QA[index2D] = static_cast<float>(skew);
                 }
             }
         }
@@ -1568,42 +1535,133 @@ namespace IDA_IO
 
             for (uint64_t j = 0; j < nj; j++) {
                 for (uint64_t k = 0; k < nk; k++) {
-                    // ------------------------------------------------------------------------------------------------
                     // Compute time mean
-                    double A = 0.0;
+                    double mean = 0.0;
                     for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        A += static_cast<double>(fi.p_data_float[index4D]) / static_cast<double>(nt_chosen);
+                        mean += static_cast<double>(fi.p_data_float[index4D]) / N;
                     }
 
-                    // ------------------------------------------------------------------------------------------------
-                    // Calculate sum of cubed deviations
-                    double B = 0.0;
+                    // Compute skewness
+                    double sum1 = 0.0, sum2 = 0.0;
                     for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        double diff = fi.p_data_float[index4D] - A;
-                        B += diff * diff * diff;   // For Skewness
+                        double temp = static_cast<double>(fi.p_data_float[index4D]) - mean;
+                        sum1 += temp * temp * temp;
+                        sum2 += temp * temp;
                     }
+                    double skew = (1 / N * sum1) / ( pow(1 / (N - 1) * sum2, 1.5) ); 
 
-                    // ------------------------------------------------------------------------------------------------
-                    // Compute variance using Welford's method
-                    double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
-                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        double x = static_cast<double>(fi.p_data_float[index4D]);
-                        double oldM = M;
-                        M = M + (x - M) / (static_cast<double>(t+1));
-                        S = S + (x - M) * (x - oldM);
-                    }
-                    // Compute standard deviation
-                    double variance = S / (N - 1);
-                    double SD = std::sqrt(variance);
-
-                    // ------------------------------------------------------------------------------------------------
                     // Compute skewness
                     uint64_t index2D = j + k*nj;
-                    double SK = (B / N) / (SD * SD * SD);
-                    fi.p_sliceI_float_QA[index2D] = static_cast<float>(SK);
+                    fi.p_sliceI_float_QA[index2D] = static_cast<float>(skew);
+                }
+            }
+        }
+
+        // ============================================================================================================
+        // Temporal kurtosis
+        // ============================================================================================================
+        void loadSliceK_float_tKurtosis(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t k = static_cast<uint64_t>(fi.display_k);
+            double N = static_cast<double>(nt_chosen);
+
+            for (uint64_t i = 0; i < ni; ++i) {
+                for (uint64_t j = 0; j < nj; ++j) {
+                    // Compute time mean
+                    double mean = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        mean += static_cast<double>(fi.p_data_float[index4D]) / N;
+                    }
+
+                    // Compute kurtosis
+                    double sum1 = 0.0, sum2 = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double temp = static_cast<double>(fi.p_data_float[index4D]) - mean;
+                        sum1 += (temp * temp * temp * temp) / N;
+                        sum2 += (temp * temp) / N;
+                    }
+                    double kurt = sum1 / (sum2 * sum2) - 3;
+
+                    uint64_t index2D = i + j*ni;
+                    fi.p_sliceK_float_QA[index2D] = static_cast<float>(kurt);
+                }
+            }
+        }
+
+        void loadSliceJ_float_tKurtosis(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t j = static_cast<uint64_t>(fi.display_j);
+            double N = static_cast<double>(nt_chosen);
+
+            for (uint64_t i = 0; i < ni; i++) {
+                for (uint64_t k = 0; k < nk; k++) {
+                    // Compute time mean
+                    double mean = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        mean += static_cast<double>(fi.p_data_float[index4D]) / N;
+                    }
+
+                    // Compute kurtosis
+                    double sum1 = 0.0, sum2 = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double temp = static_cast<double>(fi.p_data_float[index4D]) - mean;
+                        sum1 += (temp * temp * temp * temp) / N;
+                        sum2 += (temp * temp) / N;
+                    }
+                    double kurt = sum1 / (sum2 * sum2) - 3;
+
+                    uint64_t index2D = i + k*ni;
+                    fi.p_sliceJ_float_QA[index2D] = static_cast<float>(kurt);
+                }
+            }
+        }
+
+        void loadSliceI_float_tKurtosis(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t i = static_cast<uint64_t>(fi.display_i);
+            double N = static_cast<double>(nt_chosen);
+
+            for (uint64_t j = 0; j < nj; j++) {
+                for (uint64_t k = 0; k < nk; k++) {
+                    // Compute time mean
+                    double mean = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        mean += static_cast<double>(fi.p_data_float[index4D]) / N;
+                    }
+
+                    // Compute kurtosis
+                    double sum1 = 0.0, sum2 = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double temp = static_cast<double>(fi.p_data_float[index4D]) - mean;
+                        sum1 += (temp * temp * temp * temp) / N;
+                        sum2 += (temp * temp) / N;
+                    }
+                    double kurt = sum1 / (sum2 * sum2) - 3;
+
+                    uint64_t index2D = j + k*nj;
+                    fi.p_sliceI_float_QA[index2D] = static_cast<float>(kurt);
                 }
             }
         }

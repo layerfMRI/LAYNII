@@ -933,8 +933,8 @@ namespace IDA
                             // Set contrast and buttons
                             fl.files[sf].display_min = -1;
                             fl.files[sf].display_max = 1;
-                            fl.files[sf].slider_contrast_min = -1;
-                            fl.files[sf].slider_contrast_max = 1;
+                            fl.files[sf].slider_contrast_min = -3;
+                            fl.files[sf].slider_contrast_max = 3;
 
                             // Prepare data to hold slice maps
                             free(fl.files[sf].p_sliceK_float_QA);
@@ -976,20 +976,56 @@ namespace IDA
                         }
                     }
 
-                    // // ------------------------------------------------------------------------------------------------
-                    // // Temporal Kurtosis
-                    // // ------------------------------------------------------------------------------------------------
-                    // if ( fl.files[sf].tc_QA_type != 4 ) {
-                    //     if ( ImGui::Button("Kurtosis  ") ) {
-                    //         printf("WIP...\n");
-                    //         fl.files[sf].tc_QA_type = 2;
-                    //     }
-                    // } else {
-                    //     if ( ImGui::Button("Kurtosis  ") ) {
-                    //         printf("WIP...\n");
-                    //         fl.files[sf].tc_QA_type = 0;
-                    //     }
-                    // }
+                    // ------------------------------------------------------------------------------------------------
+                    // Temporal Kurtosis
+                    // ------------------------------------------------------------------------------------------------
+                    if ( fl.files[sf].tc_QA_type != 5 ) {
+                        if ( ImGui::Button("tKurtosis ") ) {
+                            // Set contrast and buttons
+                            fl.files[sf].display_min = -1;
+                            fl.files[sf].display_max = 1;
+                            fl.files[sf].slider_contrast_min = -3;
+                            fl.files[sf].slider_contrast_max = 3;
+
+                            // Prepare data to hold slice maps
+                            free(fl.files[sf].p_sliceK_float_QA);
+                            free(fl.files[sf].p_sliceJ_float_QA);
+                            free(fl.files[sf].p_sliceI_float_QA);
+                            fl.files[sf].p_sliceK_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_j * sizeof(float));
+                            fl.files[sf].p_sliceJ_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
+                            fl.files[sf].p_sliceI_float_QA = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
+
+                            // Enable real-time standard deviation
+                            fl.loadSliceK_float_tKurtosis(fl.files[sf]);
+                            fl.loadSliceJ_float_tKurtosis(fl.files[sf]);
+                            fl.loadSliceI_float_tKurtosis(fl.files[sf]);
+
+                            fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float_QA);
+                            fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float_QA);
+                            fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float_QA);
+
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_j,
+                                                         fl.files[sf].textureIDk, fl.files[sf].p_sliceK_uint8);
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_i, fl.files[sf].dim_k,
+                                                         fl.files[sf].textureIDj, fl.files[sf].p_sliceJ_uint8);
+                            fl.uploadTextureDataToOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k,
+                                                         fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
+
+                            fl.files[sf].tc_QA_type = 5;
+                            request_image_data_update = true;
+                        }
+                    } else {
+                        if ( ImGui::Button("Kurtosis  ") ) {
+                            // Revert QA-specific contrasts
+                            fl.files[sf].display_min = fl.files[sf].data_min;
+                            fl.files[sf].display_max = fl.files[sf].data_max;
+                            fl.files[sf].slider_contrast_min = fl.files[sf].data_min;
+                            fl.files[sf].slider_contrast_max = fl.files[sf].data_max;
+
+                            fl.files[sf].tc_QA_type = 0;
+                            request_image_data_update = true;
+                        }
+                    }
 
                     // // ------------------------------------------------------------------------------------------------
                     // // Temporal autocorrelation
@@ -1486,6 +1522,10 @@ namespace IDA
                         fl.loadSliceK_float_tSkewness(fl.files[sf]);
                         fl.loadSliceJ_float_tSkewness(fl.files[sf]);
                         fl.loadSliceI_float_tSkewness(fl.files[sf]);
+                    } else if ( fl.files[sf].tc_QA_type == 5 ) {  // tKurtosis
+                        fl.loadSliceK_float_tKurtosis(fl.files[sf]);
+                        fl.loadSliceJ_float_tKurtosis(fl.files[sf]);
+                        fl.loadSliceI_float_tKurtosis(fl.files[sf]);
                     }
                     request_image_update = true;
                 }
