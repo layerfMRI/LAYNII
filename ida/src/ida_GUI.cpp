@@ -30,7 +30,7 @@ namespace IDA
         static bool request_image_update      = false;
 
         static int sf = -1;  // Selected file
-        static int sf_prev;  // Previously selected file
+        static int sf_prev = -1;  // Previously selected file
 
         ImVec4 color_active = ImVec4(1.0f, 0.5f, 0.0f, 1.0f);
 
@@ -228,7 +228,7 @@ namespace IDA
 
                 // ----------------------------------------------------------------------------------------------------
                 // Set navigation parameters the same for same sized images
-                if ( nr_files > 1 ) {
+                if ( sf_prev > -1 && fl.files[sf_prev].loaded_data && fl.files[sf].loaded_data ) {
 
                     // I separately check for first 2 dims because it is more common to vary images along z only
                     // E.g. for patch flattened and slice projected images from LN2_PATCH_FLATTEN
@@ -292,7 +292,9 @@ namespace IDA
             ImGui::Checkbox("Show Full Header", &show_header_info);
         }
 
+        // ============================================================================================================
         // Display list of selectable file names
+        // ============================================================================================================
         for (int n = 0; n < nr_files; n++)
         {
             char buf[4096];
@@ -302,8 +304,44 @@ namespace IDA
             if ( is_selected )
                 ImGui::PushStyleColor(ImGuiCol_Text, color_active);
             if ( ImGui::Selectable(buf, is_selected) ) {
+                sf_prev = sf;
                 sf = n;
                 loaded_data = fl.files[sf].loaded_data;
+
+                // ----------------------------------------------------------------------------------------------------
+                // Set navigation parameters the same for same sized images
+                if ( fl.files[sf_prev].loaded_data && fl.files[sf].loaded_data ) {
+                    // I separately check for first 2 dims because it is more common to vary images along z only
+                    // E.g. for patch flattened and slice projected images from LN2_PATCH_FLATTEN
+                    if ( fl.files[sf].dim_k == fl.files[sf_prev].dim_k && fl.files[sf].dim_j == fl.files[sf_prev].dim_j) {
+                        fl.files[sf].display_k = fl.files[sf_prev].display_k;
+                        fl.files[sf].display_k_offset_x = fl.files[sf_prev].display_k_offset_x;
+                        fl.files[sf].display_k_offset_y = fl.files[sf_prev].display_k_offset_y;
+
+                        fl.files[sf].display_j = fl.files[sf_prev].display_j;
+                        fl.files[sf].display_j_offset_x = fl.files[sf_prev].display_j_offset_x;
+                        fl.files[sf].display_j_offset_y = fl.files[sf_prev].display_j_offset_y;
+
+                        fl.files[sf].display_scale = fl.files[sf_prev].display_scale;
+
+                        if ( fl.files[sf].dim_i == fl.files[sf_prev].dim_i ) {
+                            fl.files[sf].display_i = fl.files[sf_prev].display_i;
+                            fl.files[sf].display_i_offset_x = fl.files[sf_prev].display_i_offset_x;
+                            fl.files[sf].display_i_offset_y = fl.files[sf_prev].display_i_offset_y;
+                        }
+
+                        if ( fl.files[sf].dim_t > 1 && fl.files[sf_prev].display_t > 1) {  // Time series
+                            if ( fl.files[sf].dim_t == fl.files[sf_prev].dim_t ) {
+                                fl.files[sf].display_t = fl.files[sf_prev].display_t;
+                                fl.files[sf].voxel_k = fl.files[sf_prev].voxel_k;
+                                fl.files[sf].voxel_j = fl.files[sf_prev].voxel_j;
+                                fl.files[sf].voxel_i = fl.files[sf_prev].voxel_i;
+                                fl.files[sf].focus_voxel_index4D = fl.files[sf_prev].focus_voxel_index4D;
+                            }
+                        }
+                    }
+                    request_image_data_update = true;
+                }
             }
             if ( is_selected )
                 ImGui::PopStyleColor();
@@ -337,9 +375,11 @@ namespace IDA
                 if ( sf == nr_files ) {
                     sf = 0;
                 }
+                loaded_data = fl.files[sf].loaded_data;
+
                 // ----------------------------------------------------------------------------------------------------
                 // Set navigation parameters the same for same sized images
-                if ( nr_files > 1 ) {
+                if ( fl.files[sf_prev].loaded_data && fl.files[sf].loaded_data ) {
                     // I separately check for first 2 dims because it is more common to vary images along z only
                     // E.g. for patch flattened and slice projected images from LN2_PATCH_FLATTEN
                     if ( fl.files[sf].dim_k == fl.files[sf_prev].dim_k && fl.files[sf].dim_j == fl.files[sf_prev].dim_j) {
@@ -369,8 +409,8 @@ namespace IDA
                             }
                         }
                     }
+                    request_image_data_update = true;
                 }
-                request_image_data_update = true;
             }
             if ( ImGui::IsKeyPressed(ImGuiKey_LeftBracket, true) ) {
                 sf_prev = sf;  // To cover wrap around
@@ -378,9 +418,11 @@ namespace IDA
                 if ( sf == -1 ) {
                     sf = nr_files - 1;
                 }
+                loaded_data = fl.files[sf].loaded_data;
+
                 // ----------------------------------------------------------------------------------------------------
                 // Set navigation parameters the same for same sized images
-                if ( nr_files > 1 ) {
+                if ( fl.files[sf_prev].loaded_data && fl.files[sf].loaded_data ) {
 
                     // I separately check for first 2 dims because it is more common to vary images along z only
                     // E.g. for patch flattened and slice projected images from LN2_PATCH_FLATTEN
@@ -411,8 +453,8 @@ namespace IDA
                             }
                         }
                     }
+                    request_image_data_update = true;
                 }
-                request_image_data_update = true;
             }
         }
 
