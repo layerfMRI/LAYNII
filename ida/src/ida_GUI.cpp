@@ -1169,7 +1169,7 @@ namespace IDA
                         }
                     } else {
                         ImGui::PushStyleColor(ImGuiCol_Button, color_active);
-                        if ( ImGui::Button("tKurtosis  ") ) {
+                        if ( ImGui::Button("tKurtosis ") ) {
                             // Revert QA-specific contrasts
                             fl.files[sf].display_min = fl.files[sf].data_min;
                             fl.files[sf].display_max = fl.files[sf].data_max;
