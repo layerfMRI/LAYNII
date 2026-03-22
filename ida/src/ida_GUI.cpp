@@ -66,8 +66,8 @@ namespace IDA
             ImGui::Text("Correlations controls");
             ImGui::Text("  Update reference : Ctrl + Right click on slice");
             ImGui::Text("  Freeze correlations : Left click on slice");
-            ImGui::Text("  Lag +1 : .");
-            ImGui::Text("  Lag -1 : ,");
+            // ImGui::Text("  Lag +1 : .");
+            // ImGui::Text("  Lag -1 : ,");
         }
         ImGui::End();
 
