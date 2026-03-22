@@ -30,6 +30,7 @@ namespace IDA
         static bool request_image_update      = false;
 
         static int sf = -1;  // Selected file
+        static int sf_prev;  // Previously selected file
 
         ImVec4 color_active = ImVec4(1.0f, 0.5f, 0.0f, 1.0f);
 
@@ -222,8 +223,45 @@ namespace IDA
             ImGui::SameLine();
             if (ImGui::Button("Load Data"))
             {
+                // Load data
                 fl.loadNiftiDataTest(fl.files[sf]);
 
+                // ----------------------------------------------------------------------------------------------------
+                // Set navigation parameters the same for same sized images
+                if ( nr_files > 1 ) {
+
+                    // I separately check for first 2 dims because it is more common to vary images along z only
+                    // E.g. for patch flattened and slice projected images from LN2_PATCH_FLATTEN
+                    if ( fl.files[sf].dim_k == fl.files[sf-1].dim_k && fl.files[sf].dim_j == fl.files[sf-1].dim_j) {
+                        fl.files[sf].display_k = fl.files[sf-1].display_k;
+                        fl.files[sf].display_k_offset_x = fl.files[sf-1].display_k_offset_x;
+                        fl.files[sf].display_k_offset_y = fl.files[sf-1].display_k_offset_y;
+
+                        fl.files[sf].display_j = fl.files[sf-1].display_j;
+                        fl.files[sf].display_j_offset_x = fl.files[sf-1].display_j_offset_x;
+                        fl.files[sf].display_j_offset_y = fl.files[sf-1].display_j_offset_y;
+
+                        fl.files[sf].display_scale = fl.files[sf-1].display_scale;
+
+                        if ( fl.files[sf].dim_i == fl.files[sf-1].dim_i ) {
+                            fl.files[sf].display_i = fl.files[sf-1].display_i;
+                            fl.files[sf].display_i_offset_x = fl.files[sf-1].display_i_offset_x;
+                            fl.files[sf].display_i_offset_y = fl.files[sf-1].display_i_offset_y;
+                        }
+
+                        if ( fl.files[sf].dim_t > 1 && fl.files[sf-1].display_t > 1) {  // Time series
+                            if ( fl.files[sf].dim_t == fl.files[sf-1].dim_t ) {
+                                fl.files[sf].display_t = fl.files[sf-1].display_t;
+                                fl.files[sf].voxel_k = fl.files[sf-1].voxel_k;
+                                fl.files[sf].voxel_j = fl.files[sf-1].voxel_j;
+                                fl.files[sf].voxel_i = fl.files[sf-1].voxel_i;
+                                fl.files[sf].focus_voxel_index4D = fl.files[sf-1].focus_voxel_index4D;
+                            }
+                        }
+                    }
+                }
+                // ----------------------------------------------------------------------------------------------------
+                // Load slices
                 fl.loadSliceK_float(fl.files[sf]);
                 fl.loadSliceJ_float(fl.files[sf]);
                 fl.loadSliceI_float(fl.files[sf]);
@@ -294,16 +332,87 @@ namespace IDA
         // --------------------------------------------------------------------------------------------------------
         if ( sf >= 0 ) {
             if ( ImGui::IsKeyPressed(ImGuiKey_RightBracket, true) ) {
+                sf_prev = sf;  // To cover wrap around
                 sf += 1;
                 if ( sf == nr_files ) {
                     sf = 0;
                 }
+                // ----------------------------------------------------------------------------------------------------
+                // Set navigation parameters the same for same sized images
+                if ( nr_files > 1 ) {
+                    // I separately check for first 2 dims because it is more common to vary images along z only
+                    // E.g. for patch flattened and slice projected images from LN2_PATCH_FLATTEN
+                    if ( fl.files[sf].dim_k == fl.files[sf_prev].dim_k && fl.files[sf].dim_j == fl.files[sf_prev].dim_j) {
+                        fl.files[sf].display_k = fl.files[sf_prev].display_k;
+                        fl.files[sf].display_k_offset_x = fl.files[sf_prev].display_k_offset_x;
+                        fl.files[sf].display_k_offset_y = fl.files[sf_prev].display_k_offset_y;
+
+                        fl.files[sf].display_j = fl.files[sf_prev].display_j;
+                        fl.files[sf].display_j_offset_x = fl.files[sf_prev].display_j_offset_x;
+                        fl.files[sf].display_j_offset_y = fl.files[sf_prev].display_j_offset_y;
+
+                        fl.files[sf].display_scale = fl.files[sf_prev].display_scale;
+
+                        if ( fl.files[sf].dim_i == fl.files[sf_prev].dim_i ) {
+                            fl.files[sf].display_i = fl.files[sf_prev].display_i;
+                            fl.files[sf].display_i_offset_x = fl.files[sf_prev].display_i_offset_x;
+                            fl.files[sf].display_i_offset_y = fl.files[sf_prev].display_i_offset_y;
+                        }
+
+                        if ( fl.files[sf].dim_t > 1 && fl.files[sf_prev].display_t > 1) {  // Time series
+                            if ( fl.files[sf].dim_t == fl.files[sf_prev].dim_t ) {
+                                fl.files[sf].display_t = fl.files[sf_prev].display_t;
+                                fl.files[sf].voxel_k = fl.files[sf_prev].voxel_k;
+                                fl.files[sf].voxel_j = fl.files[sf_prev].voxel_j;
+                                fl.files[sf].voxel_i = fl.files[sf_prev].voxel_i;
+                                fl.files[sf].focus_voxel_index4D = fl.files[sf_prev].focus_voxel_index4D;
+                            }
+                        }
+                    }
+                }
+                request_image_data_update = true;
             }
             if ( ImGui::IsKeyPressed(ImGuiKey_LeftBracket, true) ) {
+                sf_prev = sf;  // To cover wrap around
                 sf -= 1;
                 if ( sf == -1 ) {
                     sf = nr_files - 1;
                 }
+                // ----------------------------------------------------------------------------------------------------
+                // Set navigation parameters the same for same sized images
+                if ( nr_files > 1 ) {
+
+                    // I separately check for first 2 dims because it is more common to vary images along z only
+                    // E.g. for patch flattened and slice projected images from LN2_PATCH_FLATTEN
+                    if ( fl.files[sf].dim_k == fl.files[sf_prev].dim_k && fl.files[sf].dim_j == fl.files[sf_prev].dim_j) {
+                        fl.files[sf].display_k = fl.files[sf_prev].display_k;
+                        fl.files[sf].display_k_offset_x = fl.files[sf_prev].display_k_offset_x;
+                        fl.files[sf].display_k_offset_y = fl.files[sf_prev].display_k_offset_y;
+
+                        fl.files[sf].display_j = fl.files[sf_prev].display_j;
+                        fl.files[sf].display_j_offset_x = fl.files[sf_prev].display_j_offset_x;
+                        fl.files[sf].display_j_offset_y = fl.files[sf_prev].display_j_offset_y;
+
+                        fl.files[sf].display_scale = fl.files[sf_prev].display_scale;
+
+                        if ( fl.files[sf].dim_i == fl.files[sf_prev].dim_i ) {
+                            fl.files[sf].display_i = fl.files[sf_prev].display_i;
+                            fl.files[sf].display_i_offset_x = fl.files[sf_prev].display_i_offset_x;
+                            fl.files[sf].display_i_offset_y = fl.files[sf_prev].display_i_offset_y;
+                        }
+
+                        if ( fl.files[sf].dim_t > 1 && fl.files[sf_prev].display_t > 1) {  // Time series
+                            if ( fl.files[sf].dim_t == fl.files[sf_prev].dim_t ) {
+                                fl.files[sf].display_t = fl.files[sf_prev].display_t;
+                                fl.files[sf].voxel_k = fl.files[sf_prev].voxel_k;
+                                fl.files[sf].voxel_j = fl.files[sf_prev].voxel_j;
+                                fl.files[sf].voxel_i = fl.files[sf_prev].voxel_i;
+                                fl.files[sf].focus_voxel_index4D = fl.files[sf_prev].focus_voxel_index4D;
+                            }
+                        }
+                    }
+                }
+                request_image_data_update = true;
             }
         }
 
