@@ -962,6 +962,10 @@ namespace IDA
                         }
                         ImGui::PopStyleColor();
                     }
+                    ImGui::SetItemTooltip(
+                        "tMean: Voxel-wise temporal average.\n"
+                        "If this image is blurry, it indicates motion."
+                    );
                     
                     // ------------------------------------------------------------------------------------------------
                     // Temporal standard deviation
@@ -1017,6 +1021,11 @@ namespace IDA
                         }
                         ImGui::PopStyleColor();
                     }
+                    ImGui::SetItemTooltip(
+                        "tSD: Voxel-wise temporal standard deviation.\n"
+                        "High values at edges often indicate motion.\n"
+                        "High values can also indicate task-related activity."
+                    );
 
                     // ------------------------------------------------------------------------------------------------
                     // Temporal signal to noise ratio
@@ -1074,6 +1083,11 @@ namespace IDA
                         }
                         ImGui::PopStyleColor();
                     }
+                    ImGui::SetItemTooltip(
+                        "tSNR: Voxel-wise temporal signal-to-noise ratio.\n"
+                        "In general, higher values indicate better quality.\n"
+                        "Low values can also indicate strong task-related activity."
+                    );
 
                     // ------------------------------------------------------------------------------------------------
                     // Temporal Skewness
@@ -1082,8 +1096,8 @@ namespace IDA
                     if ( fl.files[sf].tc_QA_type != 4 ) {
                         if ( ImGui::Button("tSkewness ") ) {
                             // Set contrast and buttons
-                            fl.files[sf].display_min = -1;
-                            fl.files[sf].display_max = 1;
+                            fl.files[sf].display_min = -0.5;
+                            fl.files[sf].display_max = 0.5;
                             fl.files[sf].slider_contrast_min = -3;
                             fl.files[sf].slider_contrast_max = 3;
 
@@ -1128,6 +1142,11 @@ namespace IDA
                         }
                         ImGui::PopStyleColor();
                     }
+                    ImGui::SetItemTooltip(
+                        "tSkewness: Voxel-wise temporal skewness.\n"
+                        "Closer to zero values often indicate better quality.\n"
+                        "Extreme values can also indicate strong task-related signals."
+                    );
 
                     // ------------------------------------------------------------------------------------------------
                     // Temporal Kurtosis
@@ -1181,6 +1200,11 @@ namespace IDA
                         }
                         ImGui::PopStyleColor();
                     }
+                    ImGui::SetItemTooltip(
+                        "tKurtosis: Voxel-wise temporal kurtosis.\n"
+                        "Negative values typically indicate the presence of artifacts.\n"
+                        "Extreme values can also indicate strong task-related signals."
+                    );
 
                     // ------------------------------------------------------------------------------------------------
                     // Temporal autocorrelation
@@ -1235,6 +1259,12 @@ namespace IDA
                         }
                         ImGui::PopStyleColor();
                     }
+                    ImGui::SetItemTooltip(
+                        "tAutoCorr: Voxel-wise temporal auto-correlation.\n"
+                        "Measures how well a signal point predicts the next\n"
+                        "High values often indicate low-frequency artifacts.\n"
+                        "High values can also indicate strong task-related signals."
+                    );
                 }
             }
 
