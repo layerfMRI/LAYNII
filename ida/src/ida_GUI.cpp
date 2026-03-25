@@ -934,11 +934,11 @@ namespace IDA
 
             if ( fl.files[sf].dim_t > 1 ) {
                 // ====================================================================================================
-                // QUALITY ASSURANCE CONTROLS
+                // QUALITY ASSURANCE / QUALITY CONTROL
                 // ====================================================================================================
                 ImGui::Spacing();
                 ImGui::Separator();
-                if ( ImGui::CollapsingHeader("QUALITY ASSURANCE CONTROLS", ImGuiTreeNodeFlags_DefaultOpen) ) {
+                if ( ImGui::CollapsingHeader("QUALITY CONTROLS", ImGuiTreeNodeFlags_DefaultOpen) ) {
 
                     // ------------------------------------------------------------------------------------------------
                     // Temporal mean
@@ -977,6 +977,13 @@ namespace IDA
                                                          fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
 
                             fl.files[sf].tc_QA_type = 1;
+
+                            // Overlap mode compatibility
+                            if ( fl.files[sf].visualization_mode == 1 ) {
+                                fl.files[sf].overlay_min = fl.files[sf].display_min[idxQA];
+                                fl.files[sf].overlay_max = fl.files[sf].display_max[idxQA];
+                            }
+
                             request_image_data_update = true;
                         }
                     } else {
@@ -1033,6 +1040,13 @@ namespace IDA
                                                          fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
 
                             fl.files[sf].tc_QA_type = 2;
+
+                            // Overlap mode compatibility
+                            if ( fl.files[sf].visualization_mode == 1 ) {
+                                fl.files[sf].overlay_min = fl.files[sf].display_min[idxQA];
+                                fl.files[sf].overlay_max = fl.files[sf].display_max[idxQA];
+                            }
+
                             request_image_data_update = true;
                         }
                     } else {
@@ -1073,7 +1087,7 @@ namespace IDA
                             fl.files[sf].p_sliceJ_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
                             fl.files[sf].p_sliceI_float_QA = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
 
-                            // Enable real-time standard deviation
+                            // Enable real-time tSNR
                             fl.loadSliceK_float_tSNR(fl.files[sf]);
                             fl.loadSliceJ_float_tSNR(fl.files[sf]);
                             fl.loadSliceI_float_tSNR(fl.files[sf]);
@@ -1090,8 +1104,14 @@ namespace IDA
                                                          fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
 
                             fl.files[sf].tc_QA_type = 3;
-                            request_image_data_update = true;
 
+                            // Overlap mode compatibility
+                            if ( fl.files[sf].visualization_mode == 1 ) {
+                                fl.files[sf].overlay_min = fl.files[sf].display_min[idxQA];
+                                fl.files[sf].overlay_max = fl.files[sf].display_max[idxQA];
+                            }
+
+                            request_image_data_update = true;
                         }
                     } else {
                         ImGui::PushStyleColor(ImGuiCol_Button, color_active);
@@ -1129,7 +1149,7 @@ namespace IDA
                             fl.files[sf].p_sliceJ_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
                             fl.files[sf].p_sliceI_float_QA = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
 
-                            // Enable real-time standard deviation
+                            // Enable real-time skewness
                             fl.loadSliceK_float_tSkewness(fl.files[sf]);
                             fl.loadSliceJ_float_tSkewness(fl.files[sf]);
                             fl.loadSliceI_float_tSkewness(fl.files[sf]);
@@ -1146,6 +1166,13 @@ namespace IDA
                                                          fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
 
                             fl.files[sf].tc_QA_type = 4;
+
+                            // Overlap mode compatibility
+                            if ( fl.files[sf].visualization_mode == 1 ) {
+                                fl.files[sf].overlay_min = fl.files[sf].display_min[idxQA];
+                                fl.files[sf].overlay_max = fl.files[sf].display_max[idxQA];
+                            }
+
                             request_image_data_update = true;
                         }
                     } else {
@@ -1183,7 +1210,7 @@ namespace IDA
                             fl.files[sf].p_sliceJ_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
                             fl.files[sf].p_sliceI_float_QA = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
 
-                            // Enable real-time standard deviation
+                            // Enable real-time kurtosis
                             fl.loadSliceK_float_tKurtosis(fl.files[sf]);
                             fl.loadSliceJ_float_tKurtosis(fl.files[sf]);
                             fl.loadSliceI_float_tKurtosis(fl.files[sf]);
@@ -1200,6 +1227,13 @@ namespace IDA
                                                          fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
 
                             fl.files[sf].tc_QA_type = 5;
+
+                            // Overlap mode compatibility
+                            if ( fl.files[sf].visualization_mode == 1 ) {
+                                fl.files[sf].overlay_min = fl.files[sf].display_min[idxQA];
+                                fl.files[sf].overlay_max = fl.files[sf].display_max[idxQA];
+                            }
+
                             request_image_data_update = true;
                         }
                     } else {
@@ -1238,7 +1272,7 @@ namespace IDA
                             fl.files[sf].p_sliceJ_float_QA = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
                             fl.files[sf].p_sliceI_float_QA = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
 
-                            // Enable real-time standard deviation
+                            // Enable real-time auto-correlation
                             fl.loadSliceK_float_tAutoCorr(fl.files[sf]);
                             fl.loadSliceJ_float_tAutoCorr(fl.files[sf]);
                             fl.loadSliceI_float_tAutoCorr(fl.files[sf]);
@@ -1311,11 +1345,20 @@ namespace IDA
 
                 if ( fl.files[sf].visualization_mode != 1 ) {
                     if (ImGui::Button("Enable Overlay")) {
+                        fl.files[sf].overlay_min = fl.files[sf].display_min[idxQA];
+                        fl.files[sf].overlay_max = fl.files[sf].display_max[idxQA];
+
                         fl.prepareRBGSlices(fl.files[sf]);
 
-                        fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float);
-                        fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float);
-                        fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float);
+                        if ( fl.files[sf].tc_QA_type == 0 ) {  // Direct data
+                            fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float);
+                            fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float);
+                            fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float);
+                        } else {  // QA data
+                            fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float_QA);
+                            fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float_QA);
+                            fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float_QA);
+                        }
 
                         fl.loadSliceK_RGB_uint8(fl.files[sf]);
                         fl.loadSliceJ_RGB_uint8(fl.files[sf]);
@@ -1341,7 +1384,7 @@ namespace IDA
                     ImGui::BeginDisabled(true);
                 }
 
-                if ( ImGui::SliderFloat("Mask Min.", &fl.files[sf].overlay_min, fl.files[sf].data_min, fl.files[sf].data_max, "%.2f") ) 
+                if ( ImGui::SliderFloat("Mask Min.", &fl.files[sf].overlay_min, fl.files[sf].slider_contrast_min, fl.files[sf].slider_contrast_max, "%.2f") ) 
                 {
                     if (fl.files[sf].overlay_min > fl.files[sf].overlay_max) {
                         fl.files[sf].overlay_min = fl.files[sf].overlay_max;
@@ -1349,7 +1392,7 @@ namespace IDA
                     request_image_update = true;
                 }
 
-                if ( ImGui::SliderFloat("Mask Max.", &fl.files[sf].overlay_max, fl.files[sf].data_min, fl.files[sf].data_max, "%.2f") ) 
+                if ( ImGui::SliderFloat("Mask Max.", &fl.files[sf].overlay_max, fl.files[sf].slider_contrast_min, fl.files[sf].slider_contrast_max, "%.2f") ) 
                 {
                     if (fl.files[sf].overlay_max < fl.files[sf].overlay_min) {
                         fl.files[sf].overlay_max = fl.files[sf].overlay_min;
@@ -1538,7 +1581,7 @@ namespace IDA
                             fl.files[sf].p_sliceJ_float_corr = (float*)malloc(fl.files[sf].dim_i*fl.files[sf].dim_k * sizeof(float));
                             fl.files[sf].p_sliceI_float_corr = (float*)malloc(fl.files[sf].dim_j*fl.files[sf].dim_k * sizeof(float));
 
-                            // Prepare corelations images
+                            // Prepare correlation images
                             fl.loadSliceK_Correlations_uint8(fl.files[sf]);
                             fl.loadSliceJ_Correlations_uint8(fl.files[sf]);
                             fl.loadSliceI_Correlations_uint8(fl.files[sf]);
@@ -1730,43 +1773,44 @@ namespace IDA
         // ============================================================================================================
         if (loaded_data) {
 
+            // Updates data in slices
+            if ( request_image_data_update ) {
+                if ( fl.files[sf].tc_QA_type == 0 ) {  // Direct data
+                    fl.loadSliceK_float(fl.files[sf]);
+                    fl.loadSliceJ_float(fl.files[sf]);
+                    fl.loadSliceI_float(fl.files[sf]);
+                } else if ( fl.files[sf].tc_QA_type == 1 ) {  // tMean
+                    fl.loadSliceK_float_tMean(fl.files[sf]);
+                    fl.loadSliceJ_float_tMean(fl.files[sf]);
+                    fl.loadSliceI_float_tMean(fl.files[sf]);
+                } else if ( fl.files[sf].tc_QA_type == 2 ) {  // tSD
+                    fl.loadSliceK_float_tSD(fl.files[sf]);
+                    fl.loadSliceJ_float_tSD(fl.files[sf]);
+                    fl.loadSliceI_float_tSD(fl.files[sf]);
+                } else if ( fl.files[sf].tc_QA_type == 3 ) {  // tSNR
+                    fl.loadSliceK_float_tSNR(fl.files[sf]);
+                    fl.loadSliceJ_float_tSNR(fl.files[sf]);
+                    fl.loadSliceI_float_tSNR(fl.files[sf]);
+                } else if ( fl.files[sf].tc_QA_type == 4 ) {  // tSkewness
+                    fl.loadSliceK_float_tSkewness(fl.files[sf]);
+                    fl.loadSliceJ_float_tSkewness(fl.files[sf]);
+                    fl.loadSliceI_float_tSkewness(fl.files[sf]);
+                } else if ( fl.files[sf].tc_QA_type == 5 ) {  // tKurtosis
+                    fl.loadSliceK_float_tKurtosis(fl.files[sf]);
+                    fl.loadSliceJ_float_tKurtosis(fl.files[sf]);
+                    fl.loadSliceI_float_tKurtosis(fl.files[sf]);
+                } else if ( fl.files[sf].tc_QA_type == 6 ) {  // tAutoCorr
+                    fl.loadSliceK_float_tAutoCorr(fl.files[sf]);
+                    fl.loadSliceJ_float_tAutoCorr(fl.files[sf]);
+                    fl.loadSliceI_float_tAutoCorr(fl.files[sf]);
+                }
+                request_image_update = true;
+            }
+
             // --------------------------------------------------------------------------------------------------------
             // Grayscale mode
             // --------------------------------------------------------------------------------------------------------
             if ( fl.files[sf].visualization_mode == 0 ) {
-                if ( request_image_data_update ) {
-                    if ( fl.files[sf].tc_QA_type == 0 ) {  // Direct data
-                        fl.loadSliceK_float(fl.files[sf]);
-                        fl.loadSliceJ_float(fl.files[sf]);
-                        fl.loadSliceI_float(fl.files[sf]);
-                    } else if ( fl.files[sf].tc_QA_type == 1 ) {  // tMean
-                        fl.loadSliceK_float_tMean(fl.files[sf]);
-                        fl.loadSliceJ_float_tMean(fl.files[sf]);
-                        fl.loadSliceI_float_tMean(fl.files[sf]);
-                    } else if ( fl.files[sf].tc_QA_type == 2 ) {  // tSD
-                        fl.loadSliceK_float_tSD(fl.files[sf]);
-                        fl.loadSliceJ_float_tSD(fl.files[sf]);
-                        fl.loadSliceI_float_tSD(fl.files[sf]);
-                    } else if ( fl.files[sf].tc_QA_type == 3 ) {  // tSNR
-                        fl.loadSliceK_float_tSNR(fl.files[sf]);
-                        fl.loadSliceJ_float_tSNR(fl.files[sf]);
-                        fl.loadSliceI_float_tSNR(fl.files[sf]);
-                    } else if ( fl.files[sf].tc_QA_type == 4 ) {  // tSkewness
-                        fl.loadSliceK_float_tSkewness(fl.files[sf]);
-                        fl.loadSliceJ_float_tSkewness(fl.files[sf]);
-                        fl.loadSliceI_float_tSkewness(fl.files[sf]);
-                    } else if ( fl.files[sf].tc_QA_type == 5 ) {  // tKurtosis
-                        fl.loadSliceK_float_tKurtosis(fl.files[sf]);
-                        fl.loadSliceJ_float_tKurtosis(fl.files[sf]);
-                        fl.loadSliceI_float_tKurtosis(fl.files[sf]);
-                    } else if ( fl.files[sf].tc_QA_type == 6 ) {  // tAutoCorr
-                        fl.loadSliceK_float_tAutoCorr(fl.files[sf]);
-                        fl.loadSliceJ_float_tAutoCorr(fl.files[sf]);
-                        fl.loadSliceI_float_tAutoCorr(fl.files[sf]);
-                    }
-                    request_image_update = true;
-                }
-                
                 if ( request_image_update ) {
                     if ( fl.files[sf].tc_QA_type == 0 ) {  // Direct data
                         fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float);
@@ -1794,46 +1838,46 @@ namespace IDA
             // --------------------------------------------------------------------------------------------------------
             // Threshold mask mode
             // --------------------------------------------------------------------------------------------------------
-            } else if ( fl.files[sf].visualization_mode == 1 ) {
-                if ( request_image_data_update ) {
-                    fl.loadSliceK_float(fl.files[sf]);
-                    fl.loadSliceJ_float(fl.files[sf]);
-                    fl.loadSliceI_float(fl.files[sf]);
-                    request_image_update = true;
-                }
-                
+            } else if ( fl.files[sf].visualization_mode == 1 ) {                
                 if ( request_image_update ) {
-                    fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float);
+                    if ( fl.files[sf].tc_QA_type == 0 ) {  // Direct data
+                        fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float);
+                        fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float);
+                        fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float);
+                    } else if ( fl.files[sf].tc_QA_type != 0 ) {  // QA mode
+                        fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float_QA);
+                        fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float_QA);
+                        fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float_QA);
+                    }
+
                     fl.loadSliceK_RGB_uint8(fl.files[sf]);
+                    fl.loadSliceJ_RGB_uint8(fl.files[sf]);
+                    fl.loadSliceI_RGB_uint8(fl.files[sf]);
+
                     fl.updateTextureDataInOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_j, 
                                                      fl.files[sf].textureIDk_RGB, fl.files[sf].p_sliceK_RGB_uint8);
-                    fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float);
-                    fl.loadSliceJ_RGB_uint8(fl.files[sf]);
                     fl.updateTextureDataInOpenGL_RGB(fl.files[sf].dim_i, fl.files[sf].dim_k, 
                                                      fl.files[sf].textureIDj_RGB, fl.files[sf].p_sliceJ_RGB_uint8);
-                    fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float);
-                    fl.loadSliceI_RGB_uint8(fl.files[sf]);
                     fl.updateTextureDataInOpenGL_RGB(fl.files[sf].dim_j, fl.files[sf].dim_k, 
                                                      fl.files[sf].textureIDi_RGB, fl.files[sf].p_sliceI_RGB_uint8);
                 }
 
             // --------------------------------------------------------------------------------------------------------
-            // Voxel correlations mode
+            // Real time voxel-wise correlations mode
             // --------------------------------------------------------------------------------------------------------
             } else if ( fl.files[sf].visualization_mode == 3 ) {
-                if ( request_image_data_update ) {
-                    fl.loadSliceK_float(fl.files[sf]);
-                    fl.loadSliceJ_float(fl.files[sf]);
-                    fl.loadSliceI_float(fl.files[sf]);
-                    request_image_update = true;
-                }
-
                 if ( request_image_update ) {
                     fl.computeCorrelationsForSlices_float(fl.files[sf]);
 
-                    fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float);
-                    fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float);
-                    fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float);
+                    if ( fl.files[sf].tc_QA_type == 0 ) {  // Direct data
+                        fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float);
+                        fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float);
+                        fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float);
+                    } else if ( fl.files[sf].tc_QA_type != 0 ) {  // QA mode
+                        fl.loadSliceK_uint8(fl.files[sf], fl.files[sf].p_sliceK_float_QA);
+                        fl.loadSliceJ_uint8(fl.files[sf], fl.files[sf].p_sliceJ_float_QA);
+                        fl.loadSliceI_uint8(fl.files[sf], fl.files[sf].p_sliceI_float_QA);
+                    }
 
                     fl.loadSliceK_Correlations_uint8(fl.files[sf]);
                     fl.loadSliceJ_Correlations_uint8(fl.files[sf]);

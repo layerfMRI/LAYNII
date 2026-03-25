@@ -1859,7 +1859,15 @@ namespace IDA_IO
         void loadSliceK_RGB_uint8(FileInfo& fi)
         {
             for (uint64_t i = 0; i < fi.dim_i*fi.dim_j; i++) {
-                if ( fi.p_sliceK_float[i] >= fi.overlay_min && fi.p_sliceK_float[i] <= fi.overlay_max) {
+
+                auto& temp = fi.p_sliceK_float[i];
+                if ( fi.tc_QA_type == 0) {
+                    temp = fi.p_sliceK_float[i];
+                } else {
+                    temp = fi.p_sliceK_float_QA[i];
+                }
+
+                if ( temp >= fi.overlay_min && temp <= fi.overlay_max) {
                     // Bimodal Highlight Blend
                     if (fi.p_sliceK_uint8[i] <= 122) {
                         fi.p_sliceK_RGB_uint8[i*3]   = 255 - fi.p_sliceK_uint8[i];
@@ -1882,7 +1890,15 @@ namespace IDA_IO
         void loadSliceJ_RGB_uint8(FileInfo& fi)
         {
             for (uint64_t i = 0; i < fi.dim_i*fi.dim_k; i++) {
-                if ( fi.p_sliceJ_float[i] >= fi.overlay_min && fi.p_sliceJ_float[i] <= fi.overlay_max) {
+
+                auto& temp = fi.p_sliceJ_float[i];
+                if ( fi.tc_QA_type == 0) {
+                    temp = fi.p_sliceJ_float[i];
+                } else {
+                    temp = fi.p_sliceJ_float_QA[i];
+                }
+
+                if ( temp >= fi.overlay_min && temp <= fi.overlay_max) {
                     // Bimodal Highlight Blend
                     if (fi.p_sliceJ_uint8[i] <= 122) {
                         fi.p_sliceJ_RGB_uint8[i*3]   = 255 - fi.p_sliceJ_uint8[i];
@@ -1905,7 +1921,15 @@ namespace IDA_IO
         void loadSliceI_RGB_uint8(FileInfo& fi)
         {
             for (uint64_t i = 0; i < fi.dim_j*fi.dim_k; i++) {
-                if ( fi.p_sliceI_float[i] >= fi.overlay_min && fi.p_sliceI_float[i] <= fi.overlay_max) {
+
+                auto& temp = fi.p_sliceI_float[i];
+                if ( fi.tc_QA_type == 0) {
+                    temp = fi.p_sliceI_float[i];
+                } else {
+                    temp = fi.p_sliceI_float_QA[i];
+                }
+
+                if ( temp >= fi.overlay_min && temp <= fi.overlay_max) {
                     // Bimodal Highlight Blend
                     if (fi.p_sliceI_uint8[i] <= 122) {
                         fi.p_sliceI_RGB_uint8[i*3]   = 255 - fi.p_sliceI_uint8[i];
