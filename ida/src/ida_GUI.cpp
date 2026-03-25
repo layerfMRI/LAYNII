@@ -32,6 +32,8 @@ namespace IDA
         static int sf = -1;  // Selected file
         static int sf_prev = -1;  // Previously selected file
 
+        auto& idxQA = fl.files[sf].tc_QA_type;  // Short hand
+
         ImVec4 color_active = ImVec4(1.0f, 0.5f, 0.0f, 1.0f);
 
         int nr_files = fl.files.size();
@@ -260,8 +262,10 @@ namespace IDA
                         }
                     }
                 }
+
                 // ----------------------------------------------------------------------------------------------------
                 // Load slices
+                // ----------------------------------------------------------------------------------------------------
                 fl.loadSliceK_float(fl.files[sf]);
                 fl.loadSliceJ_float(fl.files[sf]);
                 fl.loadSliceI_float(fl.files[sf]);
@@ -277,8 +281,8 @@ namespace IDA
                 fl.uploadTextureDataToOpenGL(fl.files[sf].dim_j, fl.files[sf].dim_k,
                                              fl.files[sf].textureIDi, fl.files[sf].p_sliceI_uint8);
 
-                fl.files[sf].overlay_min = fl.files[sf].display_min;
-                fl.files[sf].overlay_max = fl.files[sf].display_max;
+                fl.files[sf].overlay_min = fl.files[sf].display_min[0];
+                fl.files[sf].overlay_max = fl.files[sf].display_max[0];
 
                 fl.files[sf].tc_refer_voxel_i = fl.files[sf].dim_i / 2;
                 fl.files[sf].tc_refer_voxel_j = fl.files[sf].dim_j / 2;
@@ -286,6 +290,27 @@ namespace IDA
 
                 fl.files[sf].loaded_data = true;
                 loaded_data = fl.files[sf].loaded_data;
+
+                // ----------------------------------------------------------------------------------------------------
+                // Set display defaults
+                // ----------------------------------------------------------------------------------------------------
+                fl.files[sf].display_min[0] = fl.files[sf].data_min;
+                fl.files[sf].display_max[0] = fl.files[sf].data_max;
+
+                if ( fl.files[sf].dim_t > 1 ) {
+                    fl.files[sf].display_min[1] = fl.files[sf].data_min;
+                    fl.files[sf].display_max[1] = fl.files[sf].data_max;
+                    fl.files[sf].display_min[2] = fl.files[sf].data_min / 10;
+                    fl.files[sf].display_max[2] = fl.files[sf].data_max / 10;
+                    fl.files[sf].display_min[3] = 0;
+                    fl.files[sf].display_max[3] = 50;
+                    fl.files[sf].display_min[4] = -0.5;
+                    fl.files[sf].display_max[4] =  0.5;
+                    fl.files[sf].display_min[5] = -1;
+                    fl.files[sf].display_max[5] =  1;
+                    fl.files[sf].display_min[6] = -1;
+                    fl.files[sf].display_max[6] =  1;
+                }
             }
 
             ImGui::SameLine();
@@ -922,8 +947,8 @@ namespace IDA
                         if ( ImGui::Button("tMean     ") ) {
 
                             // Prepare contrasts
-                            fl.files[sf].display_min = fl.files[sf].data_min;
-                            fl.files[sf].display_max = fl.files[sf].data_max;
+                            fl.files[sf].display_min[1] = fl.files[sf].display_min[0];
+                            fl.files[sf].display_max[1] = fl.files[sf].display_max[0];
                             fl.files[sf].slider_contrast_min = fl.files[sf].data_min;
                             fl.files[sf].slider_contrast_max = fl.files[sf].data_max;
 
@@ -957,6 +982,11 @@ namespace IDA
                     } else {
                         ImGui::PushStyleColor(ImGuiCol_Button, color_active);
                         if ( ImGui::Button("tMean     ") ) {
+                            fl.files[sf].display_min[0] = fl.files[sf].display_min[1];
+                            fl.files[sf].display_max[0] = fl.files[sf].display_max[1];
+                            fl.files[sf].slider_contrast_min = fl.files[sf].data_min;
+                            fl.files[sf].slider_contrast_max = fl.files[sf].data_max;
+
                             fl.files[sf].tc_QA_type = 0;
                             request_image_data_update = true;
                         }
@@ -975,8 +1005,6 @@ namespace IDA
                         if ( ImGui::Button("tSD       ") ) {
 
                             // Prepare contrasts
-                            fl.files[sf].display_min = fl.files[sf].data_min / 10;
-                            fl.files[sf].display_max = fl.files[sf].data_max / 10;
                             fl.files[sf].slider_contrast_min = fl.files[sf].data_min / 10;
                             fl.files[sf].slider_contrast_max = fl.files[sf].data_max / 10;
 
@@ -1011,8 +1039,6 @@ namespace IDA
                         ImGui::PushStyleColor(ImGuiCol_Button, color_active);
                         if ( ImGui::Button("tSD       ") ) {
                             // Revert QA-specific contrasts
-                            fl.files[sf].display_min = fl.files[sf].data_min;
-                            fl.files[sf].display_max = fl.files[sf].data_max;
                             fl.files[sf].slider_contrast_min = fl.files[sf].data_min;
                             fl.files[sf].slider_contrast_max = fl.files[sf].data_max;
 
@@ -1036,8 +1062,6 @@ namespace IDA
                         if ( ImGui::Button("tSNR      ") ) {
 
                             // Set contrast and buttons
-                            fl.files[sf].display_min = 0;
-                            fl.files[sf].display_max = 50;
                             fl.files[sf].slider_contrast_min = 0;
                             fl.files[sf].slider_contrast_max = 200;
 
@@ -1073,8 +1097,6 @@ namespace IDA
                         ImGui::PushStyleColor(ImGuiCol_Button, color_active);
                         if ( ImGui::Button("tSNR      ") ) {
                             // Revert QA-specific contrasts
-                            fl.files[sf].display_min = fl.files[sf].data_min;
-                            fl.files[sf].display_max = fl.files[sf].data_max;
                             fl.files[sf].slider_contrast_min = fl.files[sf].data_min;
                             fl.files[sf].slider_contrast_max = fl.files[sf].data_max;
 
@@ -1096,8 +1118,6 @@ namespace IDA
                     if ( fl.files[sf].tc_QA_type != 4 ) {
                         if ( ImGui::Button("tSkewness ") ) {
                             // Set contrast and buttons
-                            fl.files[sf].display_min = -0.5;
-                            fl.files[sf].display_max = 0.5;
                             fl.files[sf].slider_contrast_min = -3;
                             fl.files[sf].slider_contrast_max = 3;
 
@@ -1132,8 +1152,6 @@ namespace IDA
                         ImGui::PushStyleColor(ImGuiCol_Button, color_active);
                         if ( ImGui::Button("tSkewness ") ) {
                             // Revert QA-specific contrasts
-                            fl.files[sf].display_min = fl.files[sf].data_min;
-                            fl.files[sf].display_max = fl.files[sf].data_max;
                             fl.files[sf].slider_contrast_min = fl.files[sf].data_min;
                             fl.files[sf].slider_contrast_max = fl.files[sf].data_max;
 
@@ -1154,8 +1172,6 @@ namespace IDA
                     if ( fl.files[sf].tc_QA_type != 5 ) {
                         if ( ImGui::Button("tKurtosis ") ) {
                             // Set contrast and buttons
-                            fl.files[sf].display_min = -1;
-                            fl.files[sf].display_max = 1;
                             fl.files[sf].slider_contrast_min = -3;
                             fl.files[sf].slider_contrast_max = 3;
 
@@ -1190,8 +1206,6 @@ namespace IDA
                         ImGui::PushStyleColor(ImGuiCol_Button, color_active);
                         if ( ImGui::Button("tKurtosis ") ) {
                             // Revert QA-specific contrasts
-                            fl.files[sf].display_min = fl.files[sf].data_min;
-                            fl.files[sf].display_max = fl.files[sf].data_max;
                             fl.files[sf].slider_contrast_min = fl.files[sf].data_min;
                             fl.files[sf].slider_contrast_max = fl.files[sf].data_max;
 
@@ -1213,8 +1227,6 @@ namespace IDA
                     if ( fl.files[sf].tc_QA_type != 6 ) {
                         if ( ImGui::Button("tAutoCorr ") ) {
                             // Set contrast and buttons
-                            fl.files[sf].display_min = -1;
-                            fl.files[sf].display_max = 1;
                             fl.files[sf].slider_contrast_min = -1;
                             fl.files[sf].slider_contrast_max = 1;
 
@@ -1249,8 +1261,6 @@ namespace IDA
                         ImGui::PushStyleColor(ImGuiCol_Button, color_active);
                         if ( ImGui::Button("tAutoCorr ") ) {
                             // Revert QA-specific contrasts
-                            fl.files[sf].display_min = fl.files[sf].data_min;
-                            fl.files[sf].display_max = fl.files[sf].data_max;
                             fl.files[sf].slider_contrast_min = fl.files[sf].data_min;
                             fl.files[sf].slider_contrast_max = fl.files[sf].data_max;
 
@@ -1275,18 +1285,18 @@ namespace IDA
             ImGui::Separator();
             if ( ImGui::CollapsingHeader("CONTRAST CONTROLS", ImGuiTreeNodeFlags_DefaultOpen) ) {
 
-                if ( ImGui::SliderFloat("Display Min.", &fl.files[sf].display_min, fl.files[sf].slider_contrast_min, fl.files[sf].slider_contrast_max, "%.2f") ) 
+                if ( ImGui::SliderFloat("Display Min.", &fl.files[sf].display_min[idxQA], fl.files[sf].slider_contrast_min, fl.files[sf].slider_contrast_max, "%.2f") ) 
                 {
-                    if (fl.files[sf].display_min > fl.files[sf].display_max) {
-                        fl.files[sf].display_min = fl.files[sf].display_max;
+                    if (fl.files[sf].display_min[idxQA] > fl.files[sf].display_max[idxQA]) {
+                        fl.files[sf].display_min[idxQA] = fl.files[sf].display_max[idxQA];
                     }
                     request_image_update = true;
                 }
 
-                if ( ImGui::SliderFloat("Display Max.", &fl.files[sf].display_max, fl.files[sf].slider_contrast_min, fl.files[sf].slider_contrast_max, "%.2f") ) 
+                if ( ImGui::SliderFloat("Display Max.", &fl.files[sf].display_max[idxQA], fl.files[sf].slider_contrast_min, fl.files[sf].slider_contrast_max, "%.2f") ) 
                 {
-                    if (fl.files[sf].display_max < fl.files[sf].display_min) {
-                        fl.files[sf].display_max = fl.files[sf].display_min;
+                    if (fl.files[sf].display_max[idxQA] < fl.files[sf].display_min[idxQA]) {
+                        fl.files[sf].display_max[idxQA] = fl.files[sf].display_min[idxQA];
                     }
                     request_image_update = true;
                 }

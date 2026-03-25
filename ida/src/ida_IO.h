@@ -98,8 +98,8 @@ namespace IDA_IO
         float       data_max;               // Maximum data value
         float       slider_contrast_min;    // Contrast slider minimum value
         float       slider_contrast_max;    // Contrast slider maximum value
-        float       display_min;            // Minimum displayed value
-        float       display_max;            // Maximum displayed value
+        float       display_min[8];         // Minimum displayed value
+        float       display_max[8];         // Maximum displayed value
         float       display_scale;          // Scaling factor for zooming in or out
         float       display_k_offset_x;     // Offset displayed image area
         float       display_k_offset_y;     // Offset displayed image area
@@ -149,7 +149,7 @@ namespace IDA_IO
         float*      p_sliceJ_float_corr;    // Holds correlation data
         float*      p_sliceI_float_corr;    // Holds correlation data
         // Correlation related ----------------------------------------------------------------------------------------
-        uint8_t     tc_QA_type;             // Quality assurance metrics (1: tMean, 2:tSNR, 3:Skew, 4:Kurtosis)
+        uint8_t     tc_QA_type;             // Quality assurance types 
         float*      p_sliceK_float_QA;      // Holds quality assurance data
         float*      p_sliceJ_float_QA;      // Holds quality assurance data
         float*      p_sliceI_float_QA;      // Holds quality assurance data
@@ -1796,8 +1796,8 @@ namespace IDA_IO
         void loadSliceK_uint8(FileInfo& fi, float* p_float)
         {
             int nr_pixels = fi.dim_i * fi.dim_j;
-            float thr_min = fi.display_min;
-            float thr_max = fi.display_max;
+            float thr_min = fi.display_min[fi.tc_QA_type];
+            float thr_max = fi.display_max[fi.tc_QA_type];
             for (int i = 0; i < nr_pixels; i++) {
                 if (p_float[i] > thr_max) {
                     fi.p_sliceK_uint8[i] = 255;
@@ -1812,8 +1812,8 @@ namespace IDA_IO
         void loadSliceJ_uint8(FileInfo& fi, float* p_float)
         {
             int nr_pixels = fi.dim_i * fi.dim_k;
-            float thr_min = fi.display_min;
-            float thr_max = fi.display_max;
+            float thr_min = fi.display_min[fi.tc_QA_type];
+            float thr_max = fi.display_max[fi.tc_QA_type];
             for (int i = 0; i < nr_pixels; i++) {
                 if (p_float[i] > thr_max) {
                     fi.p_sliceJ_uint8[i] = 255;
@@ -1828,8 +1828,8 @@ namespace IDA_IO
         void loadSliceI_uint8(FileInfo& fi, float* p_float)
         {
             int nr_pixels = fi.dim_j * fi.dim_k;
-            float thr_min = fi.display_min;
-            float thr_max = fi.display_max;
+            float thr_min = fi.display_min[fi.tc_QA_type];
+            float thr_max = fi.display_max[fi.tc_QA_type];
             for (int i = 0; i < nr_pixels; i++) {
                 if (p_float[i] > thr_max) {
                     fi.p_sliceI_uint8[i] = 255;
@@ -2044,8 +2044,8 @@ namespace IDA_IO
             }
             fi.data_max = max_val;
             fi.data_min = min_val;
-            fi.display_max = max_val;
-            fi.display_min = min_val;
+            fi.display_max[0] = max_val;
+            fi.display_min[0] = min_val;
             fi.slider_contrast_max = max_val;
             fi.slider_contrast_min = min_val;
             std::cout << "  Min: " << min_val << " | Max: " << max_val << std::endl;
