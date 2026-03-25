@@ -11,8 +11,8 @@ namespace IDA
         // ============================================================================================================
         // Variables
         // ============================================================================================================
-        // static char str_input[4096] = "Enter full path to a nifti file";
-        static char str_input[4096] = "/Users/faruk/data/temp-LayNii_IDA/lo_BOLD_intemp.nii.gz";
+        static char str_input[4096] = "Enter full path to a nifti file";
+        // static char str_input[4096] = "/Users/faruk/data/temp-LayNii_IDA/lo_BOLD_intemp.nii.gz";
 
         static bool loaded_data          = false;
         static bool show_header_info     = false;
@@ -81,7 +81,7 @@ namespace IDA
 
         ImVec4 bg_color = ImGui::GetStyleColorVec4(ImGuiCol_WindowBg); // Push style colors to match background       
         ImGui::PushStyleColor(ImGuiCol_Button, bg_color);  // Override only the idle button background color
-        if (ImGui::Button("LayNii IDA [PreAlpha-2]")) {
+        if (ImGui::Button("LayNii IDA [v0.2.0]")) {
             ImGui::OpenPopup("LayNii IDA (Integrated Discovery Application)");
         }
         ImGui::PopStyleColor();
