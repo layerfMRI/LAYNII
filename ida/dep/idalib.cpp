@@ -8,7 +8,7 @@
 void ida_log_welcome(const char* program_name) {
     // Print the main program name, version number, and sub-program name
     std::printf("========================\n");
-    std::printf("LayNii IDA    v0.0.0    \n");
+    std::printf("LayNii IDA    v0.2.0    \n");
     std::printf("========================\n");
     std::printf("%s\n", program_name);
     std::printf("\n");

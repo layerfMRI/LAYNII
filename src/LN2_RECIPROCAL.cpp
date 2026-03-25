@@ -113,23 +113,29 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     cout << "\n  Clipping small values..." << endl;
     for (uint64_t i = 0; i != nxyzt; ++i) {
-        if (*(nii_input_data + i) < THR_MIN) {
-            *(nii_input_data + i) = THR_MIN;
+        if (*(nii_input_data + i) != 0 ) {
+            if (*(nii_input_data + i) < THR_MIN) {
+                *(nii_input_data + i) = THR_MIN;
+            }
         }
     }
 
     // ========================================================================
     cout << "\n  Computing reciprocals..." << endl;
     for (uint64_t i = 0; i != nxyzt; ++i) {
-        *(nii_input_data + i) = 1.0 / *(nii_input_data + i);
+        if (*(nii_input_data + i) != 0 ) {
+            *(nii_input_data + i) = 1.0 / *(nii_input_data + i);
+        }
     }
 
     // ========================================================================
     if ( mode_thr_max ) {
         cout << "\n  Clipping large values..." << endl;
         for (uint64_t i = 0; i != nxyzt; ++i) {
-            if (*(nii_input_data + i) > THR_MAX) {
-                *(nii_input_data + i) = THR_MAX;
+            if (*(nii_input_data + i) != 0 ) {
+                if (*(nii_input_data + i) > THR_MAX) {
+                    *(nii_input_data + i) = THR_MAX;
+                }
             }
         }
     }

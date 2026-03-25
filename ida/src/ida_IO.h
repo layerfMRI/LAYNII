@@ -96,8 +96,10 @@ namespace IDA_IO
         GLuint      textureIDi;             // OpenGL needs this
         float       data_min;               // Minimum data value
         float       data_max;               // Maximum data value
-        float       display_min;            // Minimum displayed value
-        float       display_max;            // Maximum displayed value
+        float       slider_contrast_min;    // Contrast slider minimum value
+        float       slider_contrast_max;    // Contrast slider maximum value
+        float       display_min[8];         // Minimum displayed value
+        float       display_max[8];         // Maximum displayed value
         float       display_scale;          // Scaling factor for zooming in or out
         float       display_k_offset_x;     // Offset displayed image area
         float       display_k_offset_y;     // Offset displayed image area
@@ -147,7 +149,7 @@ namespace IDA_IO
         float*      p_sliceJ_float_corr;    // Holds correlation data
         float*      p_sliceI_float_corr;    // Holds correlation data
         // Correlation related ----------------------------------------------------------------------------------------
-        uint8_t     tc_QA_type;             // Quality assurance metrics (1: tMean, 2:tSNR, 3:Skew, 4:Kurtosis)
+        uint8_t     tc_QA_type;             // Quality assurance types 
         float*      p_sliceK_float_QA;      // Holds quality assurance data
         float*      p_sliceJ_float_QA;      // Holds quality assurance data
         float*      p_sliceI_float_QA;      // Holds quality assurance data
@@ -1178,6 +1180,7 @@ namespace IDA_IO
             uint64_t ni = static_cast<uint64_t>(fi.dim_i);
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
             uint64_t k = static_cast<uint64_t>(fi.display_k);
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t j = 0; j < nj; ++j) {
@@ -1185,9 +1188,9 @@ namespace IDA_IO
                     fi.p_sliceK_float_QA[index2D] = 0;
 
                     // Compute time mean
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        fi.p_sliceK_float_QA[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
+                        fi.p_sliceK_float_QA[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt_chosen);
                     }
                 }
             }
@@ -1199,14 +1202,15 @@ namespace IDA_IO
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
             uint64_t j = static_cast<uint64_t>(fi.display_j);
             for (uint64_t i = 0; i < ni; i++) {
                 for (uint64_t k = 0; k < nk; k++) {
                     uint64_t index2D = i + k*ni;
                     fi.p_sliceJ_float_QA[index2D] = 0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        fi.p_sliceJ_float_QA[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
+                        fi.p_sliceJ_float_QA[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt_chosen);
                     }
                 }
             }
@@ -1218,14 +1222,15 @@ namespace IDA_IO
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
             uint64_t i = static_cast<uint64_t>(fi.display_i);
             for (uint64_t j = 0; j < nj; j++) {
                 for (uint64_t k = 0; k < nk; k++) {
                     uint64_t index2D = j + k*nj;
                     fi.p_sliceI_float_QA[index2D] = 0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
-                        fi.p_sliceI_float_QA[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt);
+                        fi.p_sliceI_float_QA[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt_chosen);
                     }
                 }
             }
@@ -1239,14 +1244,15 @@ namespace IDA_IO
             uint64_t ni = static_cast<uint64_t>(fi.dim_i);
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
             uint64_t k = static_cast<uint64_t>(fi.display_k);
-            double N = static_cast<double>(nt);
+            double N = static_cast<double>(nt_chosen);
 
             for (uint64_t i = 0; i < ni; ++i) {
                 for (uint64_t j = 0; j < nj; ++j) {
                     // Compute variance using Welford's method
                     double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double x = static_cast<double>(fi.p_data_float[index4D]);
                         double oldM = M;
@@ -1267,14 +1273,15 @@ namespace IDA_IO
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
             uint64_t j = static_cast<uint64_t>(fi.display_j);
-            double N = static_cast<double>(nt);
+            double N = static_cast<double>(nt_chosen);
 
             for (uint64_t i = 0; i < ni; i++) {
                 for (uint64_t k = 0; k < nk; k++) {
                     // Compute variance using Welford's method
                     double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double x = static_cast<double>(fi.p_data_float[index4D]);
                         double oldM = M;
@@ -1295,14 +1302,15 @@ namespace IDA_IO
             uint64_t nj = static_cast<uint64_t>(fi.dim_j);
             uint64_t nk = static_cast<uint64_t>(fi.dim_k);
             uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
             uint64_t i = static_cast<uint64_t>(fi.display_i);
-            double N = static_cast<double>(nt);
+            double N = static_cast<double>(nt_chosen);
 
             for (uint64_t j = 0; j < nj; j++) {
                 for (uint64_t k = 0; k < nk; k++) {
                     // Compute variance using Welford's method
                     double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt; ++t) {
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double x = static_cast<double>(fi.p_data_float[index4D]);
                         double oldM = M;
@@ -1318,6 +1326,469 @@ namespace IDA_IO
         }
 
         // ============================================================================================================
+        // tSNR (time signal to noise ratio)
+        // ============================================================================================================
+        void loadSliceK_float_tSNR(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t k = static_cast<uint64_t>(fi.display_k);
+            double N = static_cast<double>(nt_chosen);
+
+            for (uint64_t i = 0; i < ni; ++i) {
+                for (uint64_t j = 0; j < nj; ++j) {
+                    // ------------------------------------------------------------------------------------------------
+                    // Compute time mean
+                    double A = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        A += static_cast<double>(fi.p_data_float[index4D]) / N;
+                    }
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Compute variance using Welford's method
+                    double M = 0.0, S = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double x = static_cast<double>(fi.p_data_float[index4D]);
+                        double oldM = M;
+                        M = M + (x - M) / (static_cast<double>(t+1));
+                        S = S + (x - M) * (x - oldM);
+                    }
+                    double variance = S / (N - 1);
+                    double SD = std::sqrt(variance);
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Compute tSNR
+                    uint64_t index2D = i + j*ni;
+                    fi.p_sliceK_float_QA[index2D] = static_cast<float>(A / SD);
+                }
+            }
+        }
+
+        void loadSliceJ_float_tSNR(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t j = static_cast<uint64_t>(fi.display_j);
+            double N = static_cast<double>(nt_chosen);
+
+            for (uint64_t i = 0; i < ni; i++) {
+                for (uint64_t k = 0; k < nk; k++) {
+                    // ------------------------------------------------------------------------------------------------
+                    // Compute time mean
+                    double A = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        A += static_cast<double>(fi.p_data_float[index4D]) / N;
+                    }
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Compute variance using Welford's method
+                    double M = 0.0, S = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double x = static_cast<double>(fi.p_data_float[index4D]);
+                        double oldM = M;
+                        M = M + (x - M) / (static_cast<double>(t+1));
+                        S = S + (x - M) * (x - oldM);
+                    }
+                    double variance = S / (N - 1);
+                    double SD = std::sqrt(variance);
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Compute tSNR
+                    uint64_t index2D = i + k*ni;
+                    fi.p_sliceJ_float_QA[index2D] = static_cast<float>(A / SD);
+                }
+            }
+        }
+
+        void loadSliceI_float_tSNR(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t i = static_cast<uint64_t>(fi.display_i);
+            double N = static_cast<double>(nt_chosen);
+
+            for (uint64_t j = 0; j < nj; j++) {
+                for (uint64_t k = 0; k < nk; k++) {
+                    // ------------------------------------------------------------------------------------------------
+                    // Compute time mean
+                    double A = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        A += static_cast<double>(fi.p_data_float[index4D]) / N;
+                    }
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Compute variance using Welford's method
+                    double M = 0.0, S = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double x = static_cast<double>(fi.p_data_float[index4D]);
+                        double oldM = M;
+                        M = M + (x - M) / (static_cast<double>(t+1));
+                        S = S + (x - M) * (x - oldM);
+                    }
+                    double variance = S / (N - 1);
+                    double SD = std::sqrt(variance);
+
+                    // ------------------------------------------------------------------------------------------------
+                    // Compute tSNR
+                    uint64_t index2D = j + k*nj;
+                    fi.p_sliceI_float_QA[index2D] = static_cast<float>(A / SD);
+                }
+            }
+        }
+
+        // ============================================================================================================
+        // Temporal skewness
+        // ============================================================================================================
+        void loadSliceK_float_tSkewness(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t k = static_cast<uint64_t>(fi.display_k);
+            double N = static_cast<double>(nt_chosen);
+
+            for (uint64_t i = 0; i < ni; ++i) {
+                for (uint64_t j = 0; j < nj; ++j) {
+                    // Compute time mean
+                    double mean = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        mean += static_cast<double>(fi.p_data_float[index4D]) / N;
+                    }
+
+                    // Compute skewness
+                    double sum1 = 0.0, sum2 = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double temp = static_cast<double>(fi.p_data_float[index4D]) - mean;
+                        sum1 += temp * temp * temp;
+                        sum2 += temp * temp;
+                    }
+                    double skew = (1 / N * sum1) / ( pow(1 / (N - 1) * sum2, 1.5) ); 
+
+                    uint64_t index2D = i + j*ni;
+                    fi.p_sliceK_float_QA[index2D] = static_cast<float>(skew);
+                }
+            }
+        }
+
+        void loadSliceJ_float_tSkewness(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t j = static_cast<uint64_t>(fi.display_j);
+            double N = static_cast<double>(nt_chosen);
+
+            for (uint64_t i = 0; i < ni; i++) {
+                for (uint64_t k = 0; k < nk; k++) {
+                    // Compute time mean
+                    double mean = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        mean += static_cast<double>(fi.p_data_float[index4D]) / N;
+                    }
+
+                    // Compute skewness
+                    double sum1 = 0.0, sum2 = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double temp = static_cast<double>(fi.p_data_float[index4D]) - mean;
+                        sum1 += temp * temp * temp;
+                        sum2 += temp * temp;
+                    }
+                    double skew = (1 / N * sum1) / ( pow(1 / (N - 1) * sum2, 1.5) ); 
+
+                    // Compute skewness
+                    uint64_t index2D = i + k*ni;
+                    fi.p_sliceJ_float_QA[index2D] = static_cast<float>(skew);
+                }
+            }
+        }
+
+        void loadSliceI_float_tSkewness(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t i = static_cast<uint64_t>(fi.display_i);
+            double N = static_cast<double>(nt_chosen);
+
+            for (uint64_t j = 0; j < nj; j++) {
+                for (uint64_t k = 0; k < nk; k++) {
+                    // Compute time mean
+                    double mean = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        mean += static_cast<double>(fi.p_data_float[index4D]) / N;
+                    }
+
+                    // Compute skewness
+                    double sum1 = 0.0, sum2 = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double temp = static_cast<double>(fi.p_data_float[index4D]) - mean;
+                        sum1 += temp * temp * temp;
+                        sum2 += temp * temp;
+                    }
+                    double skew = (1 / N * sum1) / ( pow(1 / (N - 1) * sum2, 1.5) ); 
+
+                    // Compute skewness
+                    uint64_t index2D = j + k*nj;
+                    fi.p_sliceI_float_QA[index2D] = static_cast<float>(skew);
+                }
+            }
+        }
+
+        // ============================================================================================================
+        // Temporal kurtosis
+        // ============================================================================================================
+        void loadSliceK_float_tKurtosis(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t k = static_cast<uint64_t>(fi.display_k);
+            double N = static_cast<double>(nt_chosen);
+
+            for (uint64_t i = 0; i < ni; ++i) {
+                for (uint64_t j = 0; j < nj; ++j) {
+                    // Compute time mean
+                    double mean = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        mean += static_cast<double>(fi.p_data_float[index4D]) / N;
+                    }
+
+                    // Compute kurtosis
+                    double sum1 = 0.0, sum2 = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double temp = static_cast<double>(fi.p_data_float[index4D]) - mean;
+                        sum1 += (temp * temp * temp * temp) / N;
+                        sum2 += (temp * temp) / N;
+                    }
+                    double kurt = sum1 / (sum2 * sum2) - 3;
+
+                    uint64_t index2D = i + j*ni;
+                    fi.p_sliceK_float_QA[index2D] = static_cast<float>(kurt);
+                }
+            }
+        }
+
+        void loadSliceJ_float_tKurtosis(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t j = static_cast<uint64_t>(fi.display_j);
+            double N = static_cast<double>(nt_chosen);
+
+            for (uint64_t i = 0; i < ni; i++) {
+                for (uint64_t k = 0; k < nk; k++) {
+                    // Compute time mean
+                    double mean = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        mean += static_cast<double>(fi.p_data_float[index4D]) / N;
+                    }
+
+                    // Compute kurtosis
+                    double sum1 = 0.0, sum2 = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double temp = static_cast<double>(fi.p_data_float[index4D]) - mean;
+                        sum1 += (temp * temp * temp * temp) / N;
+                        sum2 += (temp * temp) / N;
+                    }
+                    double kurt = sum1 / (sum2 * sum2) - 3;
+
+                    uint64_t index2D = i + k*ni;
+                    fi.p_sliceJ_float_QA[index2D] = static_cast<float>(kurt);
+                }
+            }
+        }
+
+        void loadSliceI_float_tKurtosis(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t i = static_cast<uint64_t>(fi.display_i);
+            double N = static_cast<double>(nt_chosen);
+
+            for (uint64_t j = 0; j < nj; j++) {
+                for (uint64_t k = 0; k < nk; k++) {
+                    // Compute time mean
+                    double mean = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        mean += static_cast<double>(fi.p_data_float[index4D]) / N;
+                    }
+
+                    // Compute kurtosis
+                    double sum1 = 0.0, sum2 = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double temp = static_cast<double>(fi.p_data_float[index4D]) - mean;
+                        sum1 += (temp * temp * temp * temp) / N;
+                        sum2 += (temp * temp) / N;
+                    }
+                    double kurt = sum1 / (sum2 * sum2) - 3;
+
+                    uint64_t index2D = j + k*nj;
+                    fi.p_sliceI_float_QA[index2D] = static_cast<float>(kurt);
+                }
+            }
+        }
+
+        // ============================================================================================================
+        // Temporal autocorrelation
+        // ============================================================================================================
+        void loadSliceK_float_tAutoCorr(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t k = static_cast<uint64_t>(fi.display_k);
+            double N = static_cast<double>(nt_chosen);
+
+            for (uint64_t i = 0; i < ni; ++i) {
+                for (uint64_t j = 0; j < nj; ++j) {
+                    // Compute time mean
+                    double mean = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        mean += static_cast<double>(fi.p_data_float[index4D]) / N;
+                    }
+
+                    // Compute autocorrelation
+                    double sum1 = 0.0, sum2 = 0.0;
+                    for (uint64_t t = 1; t < nt_chosen; ++t) {
+                        uint64_t index4D_a = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        uint64_t index4D_b = ida_sub2ind_4D_Tmajor(t-1, i, j, k, nt, ni, nj);
+                        double temp1 = static_cast<double>(fi.p_data_float[index4D_a]);
+                        double temp2 = static_cast<double>(fi.p_data_float[index4D_b]);
+                        sum1 += (temp1 - mean) * (temp2 - mean);
+                    }
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double temp = static_cast<double>(fi.p_data_float[index4D]);
+                        sum2 += (temp - mean) * (temp - mean);
+                    }
+
+                    uint64_t index2D = i + j*ni;
+                    fi.p_sliceK_float_QA[index2D] = static_cast<float>(sum1 / sum2);
+                }
+            }
+        }
+
+        void loadSliceJ_float_tAutoCorr(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t j = static_cast<uint64_t>(fi.display_j);
+            double N = static_cast<double>(nt_chosen);
+
+            for (uint64_t i = 0; i < ni; i++) {
+                for (uint64_t k = 0; k < nk; k++) {
+                    // Compute time mean
+                    double mean = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        mean += static_cast<double>(fi.p_data_float[index4D]) / N;
+                    }
+
+                    // Compute autocorrelation
+                    double sum1 = 0.0, sum2 = 0.0;
+                    for (uint64_t t = 1; t < nt_chosen; ++t) {
+                        uint64_t index4D_a = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        uint64_t index4D_b = ida_sub2ind_4D_Tmajor(t-1, i, j, k, nt, ni, nj);
+                        double temp1 = static_cast<double>(fi.p_data_float[index4D_a]);
+                        double temp2 = static_cast<double>(fi.p_data_float[index4D_b]);
+                        sum1 += (temp1 - mean) * (temp2 - mean);
+                    }
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double temp = static_cast<double>(fi.p_data_float[index4D]);
+                        sum2 += (temp - mean) * (temp - mean);
+                    }
+
+                    uint64_t index2D = i + k*ni;
+                    fi.p_sliceJ_float_QA[index2D] = static_cast<float>(sum1 / sum2);
+                }
+            }
+        }
+
+        void loadSliceI_float_tAutoCorr(FileInfo& fi)
+        {
+            uint64_t ni = static_cast<uint64_t>(fi.dim_i);
+            uint64_t nj = static_cast<uint64_t>(fi.dim_j);
+            uint64_t nk = static_cast<uint64_t>(fi.dim_k);
+            uint64_t nt = static_cast<uint64_t>(fi.dim_t);
+            uint64_t nt_chosen = static_cast<uint64_t>(fi.tc_offset) - fi.tc_onset;
+            uint64_t i = static_cast<uint64_t>(fi.display_i);
+            double N = static_cast<double>(nt_chosen);
+
+            for (uint64_t j = 0; j < nj; j++) {
+                for (uint64_t k = 0; k < nk; k++) {
+                    // Compute time mean
+                    double mean = 0.0;
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        mean += static_cast<double>(fi.p_data_float[index4D]) / N;
+                    }
+
+                    // Compute autocorrelation
+                    double sum1 = 0.0, sum2 = 0.0;
+                    for (uint64_t t = 1; t < nt_chosen; ++t) {
+                        uint64_t index4D_a = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        uint64_t index4D_b = ida_sub2ind_4D_Tmajor(t-1, i, j, k, nt, ni, nj);
+                        double temp1 = static_cast<double>(fi.p_data_float[index4D_a]);
+                        double temp2 = static_cast<double>(fi.p_data_float[index4D_b]);
+                        sum1 += (temp1 - mean) * (temp2 - mean);
+                    }
+                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                        uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
+                        double temp = static_cast<double>(fi.p_data_float[index4D]);
+                        sum2 += (temp - mean) * (temp - mean);
+                    }
+
+                    uint64_t index2D = j + k*nj;
+                    fi.p_sliceI_float_QA[index2D] = static_cast<float>(sum1 / sum2);
+                }
+            }
+        }
+
+        // ============================================================================================================
         // Procedure to type cast float into uint8 while clipping the range of uint8 display
         // ============================================================================================================
         // NOTE: I have decided to keep the functions separate because this might be more useful for covering 2D cases.
@@ -1325,8 +1796,8 @@ namespace IDA_IO
         void loadSliceK_uint8(FileInfo& fi, float* p_float)
         {
             int nr_pixels = fi.dim_i * fi.dim_j;
-            float thr_min = fi.display_min;
-            float thr_max = fi.display_max;
+            float thr_min = fi.display_min[fi.tc_QA_type];
+            float thr_max = fi.display_max[fi.tc_QA_type];
             for (int i = 0; i < nr_pixels; i++) {
                 if (p_float[i] > thr_max) {
                     fi.p_sliceK_uint8[i] = 255;
@@ -1341,8 +1812,8 @@ namespace IDA_IO
         void loadSliceJ_uint8(FileInfo& fi, float* p_float)
         {
             int nr_pixels = fi.dim_i * fi.dim_k;
-            float thr_min = fi.display_min;
-            float thr_max = fi.display_max;
+            float thr_min = fi.display_min[fi.tc_QA_type];
+            float thr_max = fi.display_max[fi.tc_QA_type];
             for (int i = 0; i < nr_pixels; i++) {
                 if (p_float[i] > thr_max) {
                     fi.p_sliceJ_uint8[i] = 255;
@@ -1357,8 +1828,8 @@ namespace IDA_IO
         void loadSliceI_uint8(FileInfo& fi, float* p_float)
         {
             int nr_pixels = fi.dim_j * fi.dim_k;
-            float thr_min = fi.display_min;
-            float thr_max = fi.display_max;
+            float thr_min = fi.display_min[fi.tc_QA_type];
+            float thr_max = fi.display_max[fi.tc_QA_type];
             for (int i = 0; i < nr_pixels; i++) {
                 if (p_float[i] > thr_max) {
                     fi.p_sliceI_uint8[i] = 255;
@@ -1573,8 +2044,10 @@ namespace IDA_IO
             }
             fi.data_max = max_val;
             fi.data_min = min_val;
-            fi.display_max = max_val;
-            fi.display_min = min_val;
+            fi.display_max[0] = max_val;
+            fi.display_min[0] = min_val;
+            fi.slider_contrast_max = max_val;
+            fi.slider_contrast_min = min_val;
             std::cout << "  Min: " << min_val << " | Max: " << max_val << std::endl;
         }
 

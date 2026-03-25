@@ -84,7 +84,7 @@ int main(int argc, char * argv[]) {
 
     // ========================================================================
     // Fix data type issues
-    nifti_image* nii = copy_nifti_as_float32(nii_input);
+    nifti_image* nii = copy_nifti_as_float32_with_scl_slope_and_scl_inter(nii_input);
     float* nii_data = static_cast<float*>(nii->data);
 
     // Allocate new nifti
