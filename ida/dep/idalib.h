@@ -3,6 +3,8 @@
 #include <limits>
 #include <cmath>
 #include <tuple>
+#include <cstdint>
+
 
 // ============================================================================
 // Command-line log messages
