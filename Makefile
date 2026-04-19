@@ -318,6 +318,9 @@ LN2_REGRESS_OUT:
 LN3_LAYERS:
 	$(CC) $(CFLAGS) -o LN3_LAYERS src/LN3_LAYERS.cpp $(LIBRARIES) $(LFLAGS)
 
+LN2_CIRCSHIFT:
+	$(CC) $(CFLAGS) -o LN2_CIRCSHIFT src/LN2_CIRCSHIFT.cpp $(LIBRARIES) $(LFLAGS)
+
 # =============================================================================
 
 clean:
