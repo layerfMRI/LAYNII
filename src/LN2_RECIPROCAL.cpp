@@ -14,9 +14,10 @@ int show_help(void) {
     "    -input   : Nifti image that will be used to compute reciprocals.\n"
     "               This can be a 4D nifti.\n"
     "    -thr_min : Clip smaller values to this value. Default is '1.0'.\n"
-    "    -thr_max : (Optional) Clip bigger values to this value. Default is '2000'.\n"
+    "    -thr_max : (Optional) Clip bigger values to this value. Done after\n"
+    "               taking the reciprocal.Default is '2000'.\n"
     "    -scale   : Multiply the reciprocal with this value. Default is '1000000'.\n"
-    "               Set this to `1` if you dont want any scaling."
+    "               Set this to `1` if you dont want any scaling.\n"
     "    -output  : (Optional) Output basename for all outputs.\n"
     "\n"
  "\n");
