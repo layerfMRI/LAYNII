@@ -25,6 +25,7 @@ int show_help(void) {
     "              timing correction, but for 3D-EPI. This way the trigger timing is\n"
     "              directly aligned with the k-space center. Here we use a third order\n"
     "              interpolation across time to minimize temporal blurring.\n"
+    "              This is also called tshift. \n"
     "    -lpass  : Estimates slow changes of the fuzzy ripples across time. A Gaussian\n"
     "              sliding window is used to estimate the fuzzy ripples. Specify the value\n"
     "              of the Gaussian size in units of TR (float precision). Make sure to use\n"
