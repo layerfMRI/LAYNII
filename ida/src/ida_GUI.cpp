@@ -81,7 +81,7 @@ namespace IDA
 
         ImVec4 bg_color = ImGui::GetStyleColorVec4(ImGuiCol_WindowBg); // Push style colors to match background       
         ImGui::PushStyleColor(ImGuiCol_Button, bg_color);  // Override only the idle button background color
-        if (ImGui::Button("LayNii IDA [v0.2.0]")) {
+        if (ImGui::Button("LayNii IDA [v0.2.1]")) {
             ImGui::OpenPopup("LayNii IDA (Integrated Discovery Application)");
         }
         ImGui::PopStyleColor();
@@ -183,6 +183,13 @@ namespace IDA
             // Open a file dialog or get the file path in some way
             std::string filePath = str_input;
 
+            // Strip leading and trailing quotes
+            if (!filePath.empty() && (filePath.front() == '"' || filePath.front() == '\'')) {
+                filePath.erase(0, 1);
+            }
+            if (!filePath.empty() && (filePath.back() == '"' || filePath.back() == '\'')) {
+                filePath.pop_back();
+            }
             // Check whether the file exists
             std::ifstream file(filePath);
             if (file.good()) {
