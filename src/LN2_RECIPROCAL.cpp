@@ -18,6 +18,7 @@ int show_help(void) {
     "               taking the reciprocal.Default is '2000'.\n"
     "    -scale   : Multiply the reciprocal with this value. Default is '1000000'.\n"
     "               Set this to `1` if you dont want any scaling.\n"
+    "    -add     : (Optional) Add the this value before reciprocal. Default is '0'.\n"
     "    -output  : (Optional) Output basename for all outputs.\n"
     "\n"
  "\n");
@@ -28,7 +29,7 @@ int main(int argc, char*  argv[]) {
     nifti_image *nii1 = NULL;
     char *fin1 = NULL, *fin2 = NULL, *fout = NULL;
     int ac;
-    float THR_MIN = 1.0, THR_MAX = 2000, SCL = 1000000;
+    float THR_MIN = 1.0, THR_MAX = 2000, SCL = 1000000, ADD=0;
     bool mode_thr_max = false, mode_scl = false;
 
     // Process user options
@@ -62,6 +63,12 @@ int main(int argc, char*  argv[]) {
             }
             mode_scl = true;
             SCL = atof(argv[ac]);    
+        } else if (!strcmp(argv[ac], "-add")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -add\n");
+                return 1;
+            }
+            ADD = atof(argv[ac]);    
         } else if (!strcmp(argv[ac], "-output")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -output\n");
@@ -110,6 +117,14 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     nifti_image* nii_input = copy_nifti_as_float32_with_scl_slope_and_scl_inter(nii1);
     float* nii_input_data = static_cast<float*>(nii_input->data);
+
+    // ========================================================================
+    if (ADD != 0) {
+        cout << "\n  Adding..." << endl;
+        for (uint64_t i = 0; i != nxyzt; ++i) {
+            *(nii_input_data + i) += ADD;
+        }        
+    }
 
     // ========================================================================
     cout << "\n  Clipping small values..." << endl;
