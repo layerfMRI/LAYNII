@@ -55,9 +55,9 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             THR_MAX = atof(argv[ac]);    
-        } else if (!strcmp(argv[ac], "-scl")) {
+        } else if (!strcmp(argv[ac], "-scale")) {
             if (++ac >= argc) {
-                fprintf(stderr, "** missing argument for -scl\n");
+                fprintf(stderr, "** missing argument for -scale\n");
                 return 1;
             }
             mode_scl = true;
