@@ -55,6 +55,7 @@ int main(int argc, char*  argv[]) {
                 fprintf(stderr, "** missing argument for -thr_max\n");
                 return 1;
             }
+            mode_thr_max = true;
             THR_MAX = atof(argv[ac]);    
         } else if (!strcmp(argv[ac], "-scale")) {
             if (++ac >= argc) {
@@ -129,7 +130,7 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     cout << "\n  Clipping small values..." << endl;
     for (uint64_t i = 0; i != nxyzt; ++i) {
-        if (*(nii_input_data + i) != 0 ) {
+        if (*(nii_input_data + i) != 0 ) {  // Avoid exact zeros
             if (*(nii_input_data + i) < THR_MIN) {
                 *(nii_input_data + i) = THR_MIN;
             }
@@ -145,21 +146,19 @@ int main(int argc, char*  argv[]) {
     }
 
     // ========================================================================
-    if ( mode_thr_max ) {
-        cout << "\n  Clipping large values..." << endl;
-        for (uint64_t i = 0; i != nxyzt; ++i) {
-            if (*(nii_input_data + i) != 0 ) {
-                if (*(nii_input_data + i) > THR_MAX) {
-                    *(nii_input_data + i) = THR_MAX;
-                }
-            }
-        }
-    }
-
-    // ========================================================================
     cout << "\n  Scaling values..." << endl;
     for (uint64_t i = 0; i != nxyzt; ++i) {
         *(nii_input_data + i) *= SCL;
+    }
+
+    // ========================================================================
+    if ( mode_thr_max ) {
+        cout << "\n  Clipping large values..." << endl;
+        for (uint64_t i = 0; i != nxyzt; ++i) {
+            if (*(nii_input_data + i) > THR_MAX) {
+                *(nii_input_data + i) = THR_MAX;
+            }
+        }
     }
 
     // ========================================================================
