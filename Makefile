@@ -77,6 +77,7 @@ LAYNII2		= 	LN2_LAYERS \
 				LN2_ZSCORE \
 				LN2_RECIPROCAL \
 				LN2_SNAPCAST \
+				LN2_COPY_GEOMETRY \
 				
 DERIVATIVES	=	LN2_GRADIENTS \
 				LN2_GRAMAG \
@@ -320,6 +321,9 @@ LN3_LAYERS:
 
 LN2_CIRCSHIFT:
 	$(CC) $(CFLAGS) -o LN2_CIRCSHIFT src/LN2_CIRCSHIFT.cpp $(LIBRARIES) $(LFLAGS)
+
+LN2_COPY_GEOMETRY:
+	$(CC) $(CFLAGS) -o LN2_COPY_GEOMETRY src/LN2_COPY_GEOMETRY.cpp $(LIBRARIES) $(LFLAGS)
 
 # =============================================================================
 
