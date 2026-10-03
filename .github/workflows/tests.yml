@@ -1,0 +1,147 @@
+name: tests
+
+on:
+  pull_request:
+    # labeled/unlabeled so that adding the `output-change` label re-runs the
+    # regression check
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  push:
+    branches: [master, devel]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PYTEST_ADDOPTS: --color=yes
+
+jobs:
+
+  # Build all programs and run the full test suite on several platforms
+  test:
+    name: test (${{ matrix.os }}, ${{ matrix.compiler }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            compiler: g++
+          - os: ubuntu-latest
+            compiler: clang++
+          - os: macos-latest
+            compiler: clang++
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: pip
+        cache-dependency-path: tests/requirements.txt
+    - name: Install zlib
+      if: runner.os == 'Linux'
+      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev
+    - name: Install Python test dependencies
+      run: python -m pip install -r tests/requirements.txt
+    - name: Build
+      run: make -j4 all wip CC=${{ matrix.compiler }}
+    - name: Run tests
+      run: >
+        python -m pytest tests -n auto --durations=15
+        --junitxml=test-results.xml
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ matrix.os }}-${{ matrix.compiler }}
+        path: test-results.xml
+
+  # Same tests with AddressSanitizer and UndefinedBehaviorSanitizer to catch
+  # out-of-bounds accesses that optimized builds often survive by luck
+  sanitizers:
+    runs-on: ubuntu-latest
+    env:
+      LAYNII_SANITIZED: 1
+      LAYNII_TEST_TIMEOUT: 1800
+      # LayNii programs do not free memory before exiting
+      ASAN_OPTIONS: detect_leaks=0
+      UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: pip
+        cache-dependency-path: tests/requirements.txt
+    - name: Install zlib
+      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev
+    - name: Install Python test dependencies
+      run: python -m pip install -r tests/requirements.txt
+    - name: Build with sanitizers
+      run: >
+        make -j4 all wip CC=clang++
+        EXTRA_CFLAGS="-O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined"
+        EXTRA_LFLAGS="-fsanitize=address,undefined"
+    - name: Run tests
+      run: >
+        python -m pytest tests -n auto --durations=15
+        --junitxml=test-results.xml
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-sanitizers
+        path: test-results.xml
+
+  # Compare all outputs of the pull request against the base branch.
+  # Fails when outputs change, unless the PR has the `output-change` label.
+  regression:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Set paths
+      run: echo "BASE_DIR=$RUNNER_TEMP/base" >> "$GITHUB_ENV"
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: pip
+        cache-dependency-path: tests/requirements.txt
+    - name: Install zlib
+      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev
+    - name: Install Python test dependencies
+      run: python -m pip install -r tests/requirements.txt
+    - name: Build pull request
+      run: make -j4 all wip
+    - name: Build base branch (${{ github.event.pull_request.base.ref }})
+      run: |
+        git worktree add "$BASE_DIR" "${{ github.event.pull_request.base.sha }}"
+        make -C "$BASE_DIR" -j4 all
+        # Work in progress programs may not exist (or build) on the base branch
+        WIP=$(cd tests && python -c "import laynii_testing as t; print(*t.WIP_PROGRAMS)")
+        for program in $WIP; do
+          make -C "$BASE_DIR" "$program" || echo "::notice::$program could not be built on the base branch"
+        done
+    # Both runs use the test definitions of the pull request. Test failures
+    # are reported by the other jobs, here only the outputs matter.
+    - name: Run tests with base branch binaries
+      run: >
+        LAYNII_BIN="$BASE_DIR" LAYNII_SAVE_OUTPUTS="$RUNNER_TEMP/outputs-base"
+        python -m pytest tests/test_programs.py tests/test_correctness.py
+        -n auto -q -p no:cacheprovider || true
+    - name: Run tests with pull request binaries
+      run: >
+        LAYNII_SAVE_OUTPUTS="$RUNNER_TEMP/outputs-pr"
+        python -m pytest tests/test_programs.py tests/test_correctness.py
+        -n auto -q -p no:cacheprovider || true
+    - name: Compare outputs
+      run: >
+        python tests/compare_outputs.py
+        "$RUNNER_TEMP/outputs-base" "$RUNNER_TEMP/outputs-pr"
+        ${{ contains(github.event.pull_request.labels.*.name, 'output-change') && '--no-fail' || '' }}
