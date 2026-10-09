@@ -82,6 +82,7 @@ LAYNII2		= 	LN2_LAYERS \
 				LN2_RECIPROCAL \
 				LN2_SNAPCAST \
 				LN2_COPY_GEOMETRY \
+				LN2_DOWNSAMPLE \
 				
 DERIVATIVES	=	LN2_GRADIENTS \
 				LN2_GRAMAG \
@@ -342,6 +343,9 @@ LN2_COPY_GEOMETRY:
 
 LN3_NOLAD:
 	$(CC) $(CFLAGS) -o LN3_NOLAD src/LN3_NOLAD.cpp $(LIBRARIES) $(LFLAGS)
+
+LN2_DOWNSAMPLE:
+	$(CC) $(CFLAGS) -o LN2_DOWNSAMPLE src/LN2_DOWNSAMPLE.cpp $(LIBRARIES) $(LFLAGS)
 
 # =============================================================================
 
