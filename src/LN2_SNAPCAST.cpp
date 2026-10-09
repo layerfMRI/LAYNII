@@ -17,7 +17,7 @@ int show_help(void) {
     "    -type   : Projection type. Options are: 'mean', 'min', 'max'. Default is 'mean'.\n"
     "    -steps  : A positive integer. Determines the number of voxels for\n"
     "              ray penetration. Higher values give smoother results. Default is '5'.\n"
-    // "    -mask     : (Optional) 3D binary nifti file that will be used to mask the input.\n"
+    "    -mask   : (Optional) 3D binary nifti file that will be used to mask the input.\n"
     "    -output : (Optional) Output basename for all outputs.\n"
     "\n");
     return 0;
@@ -25,8 +25,8 @@ int show_help(void) {
 
 int main(int argc, char*  argv[]) {
 
-    nifti_image *nii1 = NULL;
-    char *fin1 = NULL, *fout = NULL;
+    nifti_image *nii1 = NULL, *nii2 = NULL;
+    char *fin1 = NULL, *fin2 = NULL, *fout = NULL;
     int ac;
     int64_t steps = 5, step_count_all = 0, step_count = 0;
     std::string projection_type = "mean";
@@ -43,6 +43,12 @@ int main(int argc, char*  argv[]) {
             }
             fin1 = argv[ac];
             fout = argv[ac];
+        } else if (!strcmp(argv[ac], "-mask")) {
+            if (++ac >= argc) {
+                fprintf(stderr, "** missing argument for -mask\n");
+                return 1;
+            }
+            fin2 = argv[ac];
         } else if (!strcmp(argv[ac], "-steps")) {
             if (++ac >= argc) {
                 fprintf(stderr, "** missing argument for -steps\n");
@@ -82,6 +88,15 @@ int main(int argc, char*  argv[]) {
         return 2;
     }
 
+    // Check optional nifti input
+    if (fin2 != nullptr) {
+        nii2 = nifti_image_read(fin2, 1);
+        if (!nii2) {
+            fprintf(stderr, "** failed to read NIfTI from '%s'\n", fin2);
+            return 2;
+        }
+    }
+
     log_welcome("LN2_SNAPCAST");
     // Check projection type input
     if (projection_type == "mean" || projection_type == "min" || projection_type == "max" ) {
@@ -91,6 +106,9 @@ int main(int argc, char*  argv[]) {
         return 1;          
     }
     log_nifti_descriptives(nii1);
+    if (nii2 != nullptr) {
+        log_nifti_descriptives(nii2);
+    }
 
     // Get dimensions of input
     const int64_t size_x = nii1->nx;
@@ -108,6 +126,22 @@ int main(int argc, char*  argv[]) {
     // Fix input datatype issues
     nifti_image* nii_input = copy_nifti_as_float32(nii1);
     float* nii_input_data = static_cast<float*>(nii_input->data);
+
+    if (nii2 != nullptr) {
+        std::cout << "  Optional mask is given. Zeroing masked input voxels." << std::endl;
+
+        nifti_image* nii_mask = copy_nifti_as_int16(nii2);
+        int16_t* nii_mask_data = static_cast<int16_t*>(nii_mask->data);
+        
+        // Zero voxels based on the mask
+        for (int64_t t = 0; t != size_time; ++t) {
+            for (int64_t i = 0; i != nr_voxels; ++i) {
+                if (*(nii_mask_data + i) == 0) {
+                    *(nii_input_data + nr_voxels*t + i) = 0;
+                }
+            }
+        }
+    }
 
     // ========================================================================
     // Compute the new dimensions of output
