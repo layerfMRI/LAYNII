@@ -95,3 +95,8 @@ output
 # Ignore this unless if you are intentionallyc hanging the default window placings
 /ida/src/imgui.ini
 
+
+# Test suite
+__pycache__/
+.pytest_cache/
+test-results.xml

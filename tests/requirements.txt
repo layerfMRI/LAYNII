@@ -1,0 +1,5 @@
+pytest>=7
+pytest-xdist>=3
+numpy>=1.21
+scipy>=1.7
+nibabel>=4

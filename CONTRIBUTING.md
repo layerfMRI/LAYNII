@@ -18,6 +18,8 @@ welcome.
 - Implement/fix your feature, comment your code.
 - Follow the code style of the project.
 - Add or change the documentation as needed.
+- Run the test suite (`make all wip && make tests`, see
+  [tests/README.md](tests/README.md)) and add a test case for new programs.
 - Push your branch to your fork on Github.
 - From your fork open a pull request in the correct branch. Target `devel`
   branch of the original Segmentator repository.

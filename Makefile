@@ -5,6 +5,10 @@ CC		= g++
 CFLAGS	= -std=c++11 -DHAVE_ZLIB
 CFLAGS 	+= -O3
 LFLAGS	= -lm -lz
+# Extra flags can be passed without overriding the defaults, e.g.
+# make EXTRA_CFLAGS="-g -fsanitize=address" EXTRA_LFLAGS="-fsanitize=address"
+CFLAGS	+= $(EXTRA_CFLAGS)
+LFLAGS	+= $(EXTRA_LFLAGS)
 # CFLAGS	= -std=c++11 -pedantic -DHAVE_ZLIB -lm -lz
 
 # =============================================================================
@@ -77,6 +81,7 @@ LAYNII2		= 	LN2_LAYERS \
 				LN2_ZSCORE \
 				LN2_RECIPROCAL \
 				LN2_SNAPCAST \
+				LN2_COPY_GEOMETRY \
 				
 DERIVATIVES	=	LN2_GRADIENTS \
 				LN2_GRAMAG \
@@ -87,10 +92,21 @@ DERIVATIVES	=	LN2_GRADIENTS \
 
 LAYNII 	= $(LAYNII2) $(HIGH_PRIORITY) $(LOW_PRIORITY) $(DERIVATIVES)
 
+WORK_IN_PROGRESS	=	LN2_UVD_LSTSQR \
+						LN2_PEAK_DETECT \
+						LN2_WINDOWED_COUNTER_2D \
+						LN2_SKELETONIZE \
+						LN2_REGRESS_OUT \
+						LN2_CIRCSHIFT \
+						LN3_LAYERS \
+						LN3_NOLAD \
+
 # =============================================================================
 all : $(LAYNII)
 
-.PHONY: all $(LAYNII2) $(HIGH_PRIORITY) $(LOW_PRIORITY)
+wip : $(WORK_IN_PROGRESS)
+
+.PHONY: all wip tests tests_legacy $(LAYNII2) $(HIGH_PRIORITY) $(LOW_PRIORITY) $(DERIVATIVES) $(WORK_IN_PROGRESS)
 
 # =============================================================================
 # LAYNII programs
@@ -321,12 +337,23 @@ LN3_LAYERS:
 LN2_CIRCSHIFT:
 	$(CC) $(CFLAGS) -o LN2_CIRCSHIFT src/LN2_CIRCSHIFT.cpp $(LIBRARIES) $(LFLAGS)
 
+LN2_COPY_GEOMETRY:
+	$(CC) $(CFLAGS) -o LN2_COPY_GEOMETRY src/LN2_COPY_GEOMETRY.cpp $(LIBRARIES) $(LFLAGS)
+
+LN3_NOLAD:
+	$(CC) $(CFLAGS) -o LN3_NOLAD src/LN3_NOLAD.cpp $(LIBRARIES) $(LFLAGS)
+
 # =============================================================================
 
 clean:
-	$(RM) obj/*.o $(LAYNII)
+	$(RM) obj/*.o $(LAYNII) $(WORK_IN_PROGRESS)
 
+# Full test suite (see tests/README.md). Requires: pip install -r tests/requirements.txt
 tests:
+	python3 -m pytest tests
+
+# Old smoke test script, only checks that programs execute
+tests_legacy:
 	cd test_data && bash ./tests.sh
 
 # =============================================================================
