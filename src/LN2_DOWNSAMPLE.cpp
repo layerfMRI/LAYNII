@@ -12,10 +12,11 @@ int show_help(void) {
     "    LN2_DOWNSAMPLE -input anat.nii.gz\n"
     "\n"
     "Options:\n"
-    "    -help   : Show this help.\n"
-    "    -input  : A 3D nifti image.\n"
-    "    -output : (Optional) Output basename for all outputs.\n"
-    "    -debug  : (Optional) Save extra intermediate outputs.\n"
+    "    -help    : Show this help.\n"
+    "    -input   : A 3D nifti image.\n"
+    "    -inplace : (Optional) Save downsampled image in the original resolution.\n"
+    "    -output  : (Optional) Output basename for all outputs.\n"
+    "    -debug   : (Optional) Save extra intermediate outputs.\n"
     "\n");
     return 0;
 }
@@ -24,6 +25,7 @@ int main(int argc, char*  argv[]) {
     nifti_image *nii1 = NULL;
     char *fin1 = NULL, *fout = NULL;
     int ac;
+    bool mode_inplace = false;
 
     // Process user options
     if (argc < 2) return show_help();
@@ -43,6 +45,8 @@ int main(int argc, char*  argv[]) {
                 return 1;
             }
             fout = argv[ac];
+        } else if (!strcmp(argv[ac], "-inplace")) {
+            mode_inplace = true;
         } else {
             fprintf(stderr, "** invalid option, '%s'\n", argv[ac]);
             return 1;
@@ -71,6 +75,10 @@ int main(int argc, char*  argv[]) {
     const uint64_t size_time = static_cast<uint64_t>(nii1->nt);
     const uint64_t nr_voxels = size_z * size_y * size_x;
 
+    const uint64_t end_x = size_x/2*2;
+    const uint64_t end_y = size_y/2*2;
+    const uint64_t end_z = size_z/2*2;
+
     const float dX = nii1->pixdim[1];
     const float dY = nii1->pixdim[2];
     const float dZ = nii1->pixdim[3];
@@ -91,35 +99,40 @@ int main(int argc, char*  argv[]) {
     nifti_image* nii_input = copy_nifti_as_float32_with_scl_slope_and_scl_inter(nii1);
     float* nii_input_data = static_cast<float*>(nii_input->data);
 
-    // Allocating new nifti for downsampled images
-    nifti_image* nii_out = nifti_copy_nim_info(nii1);
-    nii_out->datatype = NIFTI_TYPE_INT32;
-    // nii_out->dim[0] = 4;  // For proper 4D nifti
-    nii_out->dim[1] = out_size_x;
-    nii_out->dim[2] = out_size_y;
-    nii_out->dim[3] = out_size_z;
-    nii_out->dim[4] = size_time;
-    nii_out->pixdim[1] = out_dX;
-    nii_out->pixdim[2] = out_dY;
-    nii_out->pixdim[3] = out_dZ;
-    nifti_update_dims_from_array(nii_out);
-    nii_out->nvox = out_nr_voxels * size_time;
-    nii_out->nbyper = sizeof(int32_t);
-    nii_out->data = calloc(nii_out->nvox, nii_out->nbyper);
-    nii_out->scl_slope = 1;
-    int32_t* nii_out_data = static_cast<int32_t*>(nii_out->data);
+    // Prepare output
+    nifti_image* nii_out;
+    float* nii_out_data;
 
-    // ------------------------------------------------------------------------
-    // Shift affine translation terms by half voxel.
-    // ------------------------------------------------------------------------
-    // NOTE[Faruk]: This is needed to display the downsampled image without
-    // apperaing shifted when loaded as `additional image` in ITKSNAP.
-    nii_out->sto_xyz.m[0][3] += dX/2; // affine[0, 3]
-    nii_out->sto_xyz.m[1][3] += dY/2; // affine[1, 3]
-    nii_out->sto_xyz.m[2][3] += dZ/2; // affine[2, 3]
+    if (mode_inplace) {
+        nii_out = copy_nifti_as_float32(nii_input);
+        nii_out_data = static_cast<float*>(nii_out->data);
+    } else {
+        // Allocating new nifti for downsampled images
+        nii_out = nifti_copy_nim_info(nii_input);
+        nii_out->datatype = NIFTI_TYPE_INT32;
+        // nii_out->dim[0] = 4;  // For proper 4D nifti
+        nii_out->dim[1] = out_size_x;
+        nii_out->dim[2] = out_size_y;
+        nii_out->dim[3] = out_size_z;
+        nii_out->dim[4] = size_time;
+        nii_out->pixdim[1] = out_dX;
+        nii_out->pixdim[2] = out_dY;
+        nii_out->pixdim[3] = out_dZ;
+        nifti_update_dims_from_array(nii_out);
+        nii_out->nvox = out_nr_voxels * size_time;
+        nii_out->nbyper = sizeof(float);
+        nii_out->data = calloc(nii_out->nvox, nii_out->nbyper);
+        nii_out->scl_slope = 1;
+        nii_out_data = static_cast<float*>(nii_out->data);        
 
-    for (int i = 0; i != out_nr_voxels*size_time; ++i) {
-        *(nii_out_data + i) = 0;
+        // ------------------------------------------------------------------------
+        // Shift affine translation terms by half voxel.
+        // ------------------------------------------------------------------------
+        // NOTE[Faruk]: This is needed to display the downsampled image without
+        // apperaing shifted when loaded as `additional image` in ITKSNAP.
+        nii_out->sto_xyz.m[0][3] += dX/2.; // affine[0, 3]
+        nii_out->sto_xyz.m[1][3] += dY/2.; // affine[1, 3]
+        nii_out->sto_xyz.m[2][3] += dZ/2.; // affine[2, 3]
     }
 
     // ========================================================================
@@ -127,9 +140,9 @@ int main(int argc, char*  argv[]) {
     // ========================================================================
     cout << "  Downsampling..." << endl;
 
-    for (uint64_t iz = 0; iz != size_z-2; iz += 2) {
-        for (uint64_t iy = 0; iy != size_y-2; iy += 2) {
-            for (uint64_t ix = 0; ix != size_x-2; ix += 2) {
+    for (uint64_t iz = 0; iz != end_z; iz += 2) {
+        for (uint64_t iy = 0; iy != end_y; iy += 2) {
+            for (uint64_t ix = 0; ix != end_x; ix += 2) {
 
                 // Indices of neighboring voxels
                 uint64_t v1 = sub2ind_3D_64(ix  , iy  , iz  , size_x, size_y);
@@ -153,14 +166,31 @@ int main(int argc, char*  argv[]) {
 
                 // Average
                 uint64_t v_new = sub2ind_3D_64(ix/2, iy/2, iz/2, out_size_x, out_size_y);
-                *(nii_out_data + v_new) = (d1+d2+d3+d4+d5+d6+d7+d8) / 8;
+                float d_new = (d1+d2+d3+d4+d5+d6+d7+d8) / 8;
+
+                if (mode_inplace) {
+                    *(nii_out_data + v1) = d_new;
+                    *(nii_out_data + v2) = d_new;
+                    *(nii_out_data + v3) = d_new;
+                    *(nii_out_data + v4) = d_new;
+                    *(nii_out_data + v5) = d_new;
+                    *(nii_out_data + v6) = d_new;
+                    *(nii_out_data + v7) = d_new;
+                    *(nii_out_data + v8) = d_new;
+                } else {
+                    *(nii_out_data + v_new) = d_new;
+                }
             }
         }
     }
     cout << endl;
 
     cout << "  Saving output..." << endl;
-    save_output_nifti(fout, "downsampled-2X", nii_out, true);
+    if (mode_inplace) {
+        save_output_nifti(fout, "downsampled_inplace-2X", nii_out, true);        
+    } else {
+        save_output_nifti(fout, "downsampled-2X", nii_out, true);
+    }
 
     cout << "\n  Finished." << endl;
     return 0;
