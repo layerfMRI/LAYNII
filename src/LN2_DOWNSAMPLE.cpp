@@ -13,6 +13,7 @@ int show_help(void) {
     "    -help    : Show this help.\n"
     "    -input   : A 3D nifti image.\n"
     "    -factor  : Downsampling factor. Only positive integers are allowed.\n"
+    "               Default is 2.\n"
     "    -inplace : (Optional) Save downsampled image in the original resolution.\n"
     "    -output  : (Optional) Output basename for all outputs.\n"
     "    -debug   : (Optional) Save extra intermediate outputs.\n"
