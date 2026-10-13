@@ -139,6 +139,7 @@ int main(int argc, char*  argv[]) {
         nii_out->pixdim[3] = out_dZ;
         nifti_update_dims_from_array(nii_out);
         nii_out->nvox = out_nr_voxels * size_time;
+        nii_out->datatype = NIFTI_TYPE_FLOAT32;
         nii_out->nbyper = sizeof(float);
         nii_out->data = calloc(nii_out->nvox, nii_out->nbyper);
         nii_out->scl_slope = 1;
