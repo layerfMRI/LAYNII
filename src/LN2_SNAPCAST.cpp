@@ -127,18 +127,20 @@ int main(int argc, char*  argv[]) {
     nifti_image* nii_input = copy_nifti_as_float32(nii1);
     float* nii_input_data = static_cast<float*>(nii_input->data);
 
-    if (nii2 != nullptr) {
-        std::cout << "  Optional mask is given. Zeroing masked input voxels." << std::endl;
+    nifti_image* nii_mask;
+    int16_t* nii_mask_data;
 
-        nifti_image* nii_mask = copy_nifti_as_int16(nii2);
-        int16_t* nii_mask_data = static_cast<int16_t*>(nii_mask->data);
-        
-        // Zero voxels based on the mask
-        for (int64_t t = 0; t != size_time; ++t) {
-            for (int64_t i = 0; i != nr_voxels; ++i) {
-                if (*(nii_mask_data + i) == 0) {
-                    *(nii_input_data + nr_voxels*t + i) = 0;
-                }
+    if (nii2 != nullptr) {
+        std::cout << "  Optional mask is given. Loading it..." << std::endl;
+
+        nii_mask = copy_nifti_as_int16(nii2);
+        nii_mask_data = static_cast<int16_t*>(nii_mask->data);
+    } else {  // Binarize input when no mask is given
+        nii_mask = copy_nifti_as_int16(nii1);
+        nii_mask_data = static_cast<int16_t*>(nii_mask->data);
+        for (int64_t i = 0; i != nr_voxels*size_time; ++i) {
+            if (*(nii_input_data + i) != 0) {
+                *(nii_mask_data + i) = 1;
             }
         }
     }
@@ -196,7 +198,7 @@ int main(int argc, char*  argv[]) {
                     // Loop across a ray
                     for (int64_t x = 0; x != size_x; ++x) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
-                        if ( *(nii_input_data + i) != 0 ) {
+                        if ( *(nii_mask_data + i) != 0 ) {
                             step_count += 1;
                             if ( step_count == steps || step_count_all == size_x ) {
                                 break;
@@ -211,7 +213,7 @@ int main(int argc, char*  argv[]) {
                     // Loop across a ray in reverse
                     for (int64_t x = size_x-1; x >= 0; --x) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
-                        if ( *(nii_input_data + i) != 0 ) {
+                        if ( *(nii_mask_data + i) != 0 ) {
                             step_count += 1;
                             if ( step_count == steps || step_count_all == size_x ) {
                                 break;
@@ -233,7 +235,7 @@ int main(int argc, char*  argv[]) {
                     // Loop across a ray
                     for (int64_t y = 0; y != size_y; ++y) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
-                        if ( *(nii_input_data + i) != 0 ) {
+                        if ( *(nii_mask_data + i) != 0 ) {
                             step_count += 1;
                             if ( step_count == steps || step_count_all == size_y ) {
                                 break;
@@ -248,7 +250,7 @@ int main(int argc, char*  argv[]) {
                     // Loop across a ray in reverse
                     for (int64_t y = size_y-1; y >= 0; --y) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
-                        if ( *(nii_input_data + i) != 0 ) {
+                        if ( *(nii_mask_data + i) != 0 ) {
                             step_count += 1;
                             if ( step_count == steps || step_count_all == size_y ) {
                                 break;
@@ -270,7 +272,7 @@ int main(int argc, char*  argv[]) {
                     // Loop across a ray
                     for (int64_t z = 0; z != size_z; ++z) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
-                        if ( *(nii_input_data + i) != 0 ) {
+                        if ( *(nii_mask_data + i) != 0 ) {
                             step_count += 1;
                             if ( step_count == steps || step_count_all == size_z ) {
                                 break;
@@ -285,7 +287,7 @@ int main(int argc, char*  argv[]) {
                     // Loop across a ray in reverse
                     for (int64_t z = size_z-1; z >= 0; --z) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
-                        if ( *(nii_input_data + i) != 0 ) {
+                        if ( *(nii_mask_data + i) != 0 ) {
                             step_count += 1;
                             if ( step_count == steps || step_count_all == size_z ) {
                                 break;
@@ -316,7 +318,7 @@ int main(int argc, char*  argv[]) {
                     // Loop across a ray
                     for (int64_t x = 0; x != size_x; ++x) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
-                        if ( *(nii_input_data + i) != 0 ) {
+                        if ( *(nii_mask_data + i) != 0 ) {
                             step_count += 1;
                             int64_t k = sub2ind_4D_64(y + offset_y, z + offset_z, 0, t, size_max, size_max, 6);
                             if ( step_count == 1 ) {
@@ -336,7 +338,7 @@ int main(int argc, char*  argv[]) {
                     // Loop across a ray in reverse
                     for (int64_t x = size_x-1; x >= 0; --x) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
-                        if ( *(nii_input_data + i) != 0 ) {
+                        if ( *(nii_mask_data + i) != 0 ) {
                             step_count += 1;
                             int64_t k = sub2ind_4D_64(y + offset_y, z + offset_z, 1, t, size_max, size_max, 6);
                             if ( step_count == 1 ) {
@@ -363,7 +365,7 @@ int main(int argc, char*  argv[]) {
                     // Loop across a ray
                     for (int64_t y = 0; y != size_y; ++y) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
-                        if ( *(nii_input_data + i) != 0 ) {
+                        if ( *(nii_mask_data + i) != 0 ) {
                             step_count += 1;
                             int64_t k = sub2ind_4D_64(x + offset_x, z + offset_z, 2, t, size_max, size_max, 6);
                             if ( step_count == 1 ) {
@@ -383,7 +385,7 @@ int main(int argc, char*  argv[]) {
                     // Loop across a ray in reverse
                     for (int64_t y = size_y-1; y >= 0; --y) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
-                        if ( *(nii_input_data + i) != 0 ) {
+                        if ( *(nii_mask_data + i) != 0 ) {
                             step_count += 1;
                             int64_t k = sub2ind_4D_64(x + offset_x, z + offset_z, 3, t, size_max, size_max, 6);
                             if ( step_count == 1 ) {
@@ -410,7 +412,7 @@ int main(int argc, char*  argv[]) {
                     // Loop across a ray
                     for (int64_t z = 0; z != size_z; ++z) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
-                        if ( *(nii_input_data + i) != 0 ) {
+                        if ( *(nii_mask_data + i) != 0 ) {
                             step_count += 1;
                             int64_t k = sub2ind_4D_64(x + offset_x, y + offset_y, 4, t, size_max, size_max, 6);
                             if ( step_count == 1 ) {
@@ -430,7 +432,7 @@ int main(int argc, char*  argv[]) {
                     // Loop across a ray in reverse
                     for (int64_t z = size_z-1; z >= 0; --z) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
-                        if ( *(nii_input_data + i) != 0 ) {
+                        if ( *(nii_mask_data + i) != 0 ) {
                             step_count += 1;
                             int64_t k = sub2ind_4D_64(x + offset_x, y + offset_y, 5, t, size_max, size_max, 6);
                             if ( step_count == 1 ) {
@@ -466,7 +468,7 @@ int main(int argc, char*  argv[]) {
                     // Loop across a ray
                     for (int64_t x = 0; x != size_x; ++x) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
-                        if ( *(nii_input_data + i) != 0 ) {
+                        if ( *(nii_mask_data + i) != 0 ) {
                             step_count += 1;
                             int64_t k = sub2ind_4D_64(y + offset_y, z + offset_z, 0, t, size_max, size_max, 6);
                             if ( step_count == 1 ) {
@@ -486,7 +488,7 @@ int main(int argc, char*  argv[]) {
                     // Loop across a ray in reverse
                     for (int64_t x = size_x-1; x >= 0; --x) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
-                        if ( *(nii_input_data + i) != 0 ) {
+                        if ( *(nii_mask_data + i) != 0 ) {
                             step_count += 1;
                             int64_t k = sub2ind_4D_64(y + offset_y, z + offset_z, 1, t, size_max, size_max, 6);
                             if ( step_count == 1 ) {
@@ -513,7 +515,7 @@ int main(int argc, char*  argv[]) {
                     // Loop across a ray
                     for (int64_t y = 0; y != size_y; ++y) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
-                        if ( *(nii_input_data + i) != 0 ) {
+                        if ( *(nii_mask_data + i) != 0 ) {
                             step_count += 1;
                             int64_t k = sub2ind_4D_64(x + offset_x, z + offset_z, 2, t, size_max, size_max, 6);
                             if ( step_count == 1 ) {
@@ -533,7 +535,7 @@ int main(int argc, char*  argv[]) {
                     // Loop across a ray in reverse
                     for (int64_t y = size_y-1; y >= 0; --y) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
-                        if ( *(nii_input_data + i) != 0 ) {
+                        if ( *(nii_mask_data + i) != 0 ) {
                             step_count += 1;
                             int64_t k = sub2ind_4D_64(x + offset_x, z + offset_z, 3, t, size_max, size_max, 6);
                             if ( step_count == 1 ) {
@@ -560,7 +562,7 @@ int main(int argc, char*  argv[]) {
                     // Loop across a ray
                     for (int64_t z = 0; z != size_z; ++z) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
-                        if ( *(nii_input_data + i) != 0 ) {
+                        if ( *(nii_mask_data + i) != 0 ) {
                             step_count += 1;
                             int64_t k = sub2ind_4D_64(x + offset_x, y + offset_y, 4, t, size_max, size_max, 6);
                             if ( step_count == 1 ) {
@@ -580,7 +582,7 @@ int main(int argc, char*  argv[]) {
                     // Loop across a ray in reverse
                     for (int64_t z = size_z-1; z >= 0; --z) {
                         int64_t i = sub2ind_4D_64(x, y, z, t, size_x, size_y, size_z);
-                        if ( *(nii_input_data + i) != 0 ) {
+                        if ( *(nii_mask_data + i) != 0 ) {
                             step_count += 1;
                             int64_t k = sub2ind_4D_64(x + offset_x, y + offset_y, 5, t, size_max, size_max, 6);
                             if ( step_count == 1 ) {
