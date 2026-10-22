@@ -1188,7 +1188,7 @@ namespace IDA_IO
                     fi.p_sliceK_float_QA[index2D] = 0;
 
                     // Compute time mean
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         fi.p_sliceK_float_QA[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt_chosen);
                     }
@@ -1208,7 +1208,7 @@ namespace IDA_IO
                 for (uint64_t k = 0; k < nk; k++) {
                     uint64_t index2D = i + k*ni;
                     fi.p_sliceJ_float_QA[index2D] = 0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         fi.p_sliceJ_float_QA[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt_chosen);
                     }
@@ -1228,7 +1228,7 @@ namespace IDA_IO
                 for (uint64_t k = 0; k < nk; k++) {
                     uint64_t index2D = j + k*nj;
                     fi.p_sliceI_float_QA[index2D] = 0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         fi.p_sliceI_float_QA[index2D] += fi.p_data_float[index4D] / static_cast<float>(nt_chosen);
                     }
@@ -1252,7 +1252,7 @@ namespace IDA_IO
                 for (uint64_t j = 0; j < nj; ++j) {
                     // Compute variance using Welford's method
                     double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double x = static_cast<double>(fi.p_data_float[index4D]);
                         double oldM = M;
@@ -1281,7 +1281,7 @@ namespace IDA_IO
                 for (uint64_t k = 0; k < nk; k++) {
                     // Compute variance using Welford's method
                     double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double x = static_cast<double>(fi.p_data_float[index4D]);
                         double oldM = M;
@@ -1310,7 +1310,7 @@ namespace IDA_IO
                 for (uint64_t k = 0; k < nk; k++) {
                     // Compute variance using Welford's method
                     double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double x = static_cast<double>(fi.p_data_float[index4D]);
                         double oldM = M;
@@ -1342,7 +1342,7 @@ namespace IDA_IO
                     // ------------------------------------------------------------------------------------------------
                     // Compute time mean
                     double A = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         A += static_cast<double>(fi.p_data_float[index4D]) / N;
                     }
@@ -1350,7 +1350,7 @@ namespace IDA_IO
                     // ------------------------------------------------------------------------------------------------
                     // Compute variance using Welford's method
                     double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double x = static_cast<double>(fi.p_data_float[index4D]);
                         double oldM = M;
@@ -1383,7 +1383,7 @@ namespace IDA_IO
                     // ------------------------------------------------------------------------------------------------
                     // Compute time mean
                     double A = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         A += static_cast<double>(fi.p_data_float[index4D]) / N;
                     }
@@ -1391,7 +1391,7 @@ namespace IDA_IO
                     // ------------------------------------------------------------------------------------------------
                     // Compute variance using Welford's method
                     double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double x = static_cast<double>(fi.p_data_float[index4D]);
                         double oldM = M;
@@ -1424,7 +1424,7 @@ namespace IDA_IO
                     // ------------------------------------------------------------------------------------------------
                     // Compute time mean
                     double A = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         A += static_cast<double>(fi.p_data_float[index4D]) / N;
                     }
@@ -1432,7 +1432,7 @@ namespace IDA_IO
                     // ------------------------------------------------------------------------------------------------
                     // Compute variance using Welford's method
                     double M = 0.0, S = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double x = static_cast<double>(fi.p_data_float[index4D]);
                         double oldM = M;
@@ -1466,14 +1466,14 @@ namespace IDA_IO
                 for (uint64_t j = 0; j < nj; ++j) {
                     // Compute time mean
                     double mean = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         mean += static_cast<double>(fi.p_data_float[index4D]) / N;
                     }
 
                     // Compute skewness
                     double sum1 = 0.0, sum2 = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double temp = static_cast<double>(fi.p_data_float[index4D]) - mean;
                         sum1 += temp * temp * temp;
@@ -1501,14 +1501,14 @@ namespace IDA_IO
                 for (uint64_t k = 0; k < nk; k++) {
                     // Compute time mean
                     double mean = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         mean += static_cast<double>(fi.p_data_float[index4D]) / N;
                     }
 
                     // Compute skewness
                     double sum1 = 0.0, sum2 = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double temp = static_cast<double>(fi.p_data_float[index4D]) - mean;
                         sum1 += temp * temp * temp;
@@ -1537,14 +1537,14 @@ namespace IDA_IO
                 for (uint64_t k = 0; k < nk; k++) {
                     // Compute time mean
                     double mean = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         mean += static_cast<double>(fi.p_data_float[index4D]) / N;
                     }
 
                     // Compute skewness
                     double sum1 = 0.0, sum2 = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double temp = static_cast<double>(fi.p_data_float[index4D]) - mean;
                         sum1 += temp * temp * temp;
@@ -1575,14 +1575,14 @@ namespace IDA_IO
                 for (uint64_t j = 0; j < nj; ++j) {
                     // Compute time mean
                     double mean = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         mean += static_cast<double>(fi.p_data_float[index4D]) / N;
                     }
 
                     // Compute kurtosis
                     double sum1 = 0.0, sum2 = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double temp = static_cast<double>(fi.p_data_float[index4D]) - mean;
                         sum1 += (temp * temp * temp * temp) / N;
@@ -1610,14 +1610,14 @@ namespace IDA_IO
                 for (uint64_t k = 0; k < nk; k++) {
                     // Compute time mean
                     double mean = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         mean += static_cast<double>(fi.p_data_float[index4D]) / N;
                     }
 
                     // Compute kurtosis
                     double sum1 = 0.0, sum2 = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double temp = static_cast<double>(fi.p_data_float[index4D]) - mean;
                         sum1 += (temp * temp * temp * temp) / N;
@@ -1645,14 +1645,14 @@ namespace IDA_IO
                 for (uint64_t k = 0; k < nk; k++) {
                     // Compute time mean
                     double mean = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         mean += static_cast<double>(fi.p_data_float[index4D]) / N;
                     }
 
                     // Compute kurtosis
                     double sum1 = 0.0, sum2 = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double temp = static_cast<double>(fi.p_data_float[index4D]) - mean;
                         sum1 += (temp * temp * temp * temp) / N;
@@ -1682,7 +1682,7 @@ namespace IDA_IO
                 for (uint64_t j = 0; j < nj; ++j) {
                     // Compute time mean
                     double mean = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         mean += static_cast<double>(fi.p_data_float[index4D]) / N;
                     }
@@ -1696,7 +1696,7 @@ namespace IDA_IO
                         double temp2 = static_cast<double>(fi.p_data_float[index4D_b]);
                         sum1 += (temp1 - mean) * (temp2 - mean);
                     }
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double temp = static_cast<double>(fi.p_data_float[index4D]);
                         sum2 += (temp - mean) * (temp - mean);
@@ -1722,7 +1722,7 @@ namespace IDA_IO
                 for (uint64_t k = 0; k < nk; k++) {
                     // Compute time mean
                     double mean = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         mean += static_cast<double>(fi.p_data_float[index4D]) / N;
                     }
@@ -1736,7 +1736,7 @@ namespace IDA_IO
                         double temp2 = static_cast<double>(fi.p_data_float[index4D_b]);
                         sum1 += (temp1 - mean) * (temp2 - mean);
                     }
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double temp = static_cast<double>(fi.p_data_float[index4D]);
                         sum2 += (temp - mean) * (temp - mean);
@@ -1762,7 +1762,7 @@ namespace IDA_IO
                 for (uint64_t k = 0; k < nk; k++) {
                     // Compute time mean
                     double mean = 0.0;
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         mean += static_cast<double>(fi.p_data_float[index4D]) / N;
                     }
@@ -1776,7 +1776,7 @@ namespace IDA_IO
                         double temp2 = static_cast<double>(fi.p_data_float[index4D_b]);
                         sum1 += (temp1 - mean) * (temp2 - mean);
                     }
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t, i, j, k, nt, ni, nj);
                         double temp = static_cast<double>(fi.p_data_float[index4D]);
                         sum2 += (temp - mean) * (temp - mean);
@@ -2092,7 +2092,7 @@ namespace IDA_IO
 
             // Prepare x array (selected voxel's data)
             if ( fi.tc_model_accordion ) {
-                for (uint64_t t = 0; t < nt_chosen; ++t) {
+                for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                     if ( fi.tc_lock == false ) {
                         x_arr[t] = fi.p_tc_focus_float[t + fi.tc_onset];
                     } else {
@@ -2100,7 +2100,7 @@ namespace IDA_IO
                     }
                 }
             } else {
-                for (uint64_t t = 0; t < nt_chosen; ++t) {
+                for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                     if ( fi.tc_lock == false ) {
                         x_arr[t] = fi.p_tc_focus_float[t + fi.tc_onset];
                     } else {
@@ -2111,7 +2111,7 @@ namespace IDA_IO
 
             // Pre compute reference time series terms
             double sum_X = 0, sum_X2 = 0;
-            for (uint64_t t = 0; t < nt_chosen; ++t) {
+            for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                 sum_X += x_arr[t];
                 sum_X2 += x_arr[t]*x_arr[t];
             }
@@ -2126,7 +2126,7 @@ namespace IDA_IO
                 for (uint64_t j = 0; j < nj; ++j) {
 
                     // Prepare y array
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t + fi.tc_onset, i, j, k, nt, ni, nj);
                         *(y_arr + t)= fi.p_data_float[index4D];
                     }
@@ -2155,7 +2155,7 @@ namespace IDA_IO
                 for (uint64_t k = 0; k < nk; ++k) {
 
                     // Prepare y array
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t + fi.tc_onset, i, j, k, nt, ni, nj);
                         *(y_arr + t)= fi.p_data_float[index4D];
                     }
@@ -2184,7 +2184,7 @@ namespace IDA_IO
                 for (uint64_t k = 0; k < nk; ++k) {
 
                     // Prepare y array
-                    for (uint64_t t = 0; t < nt_chosen; ++t) {
+                    for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                         uint64_t index4D = ida_sub2ind_4D_Tmajor(t + fi.tc_onset, i, j, k, nt, ni, nj);
                         *(y_arr + t)= fi.p_data_float[index4D];
                     }
@@ -2224,7 +2224,7 @@ namespace IDA_IO
 
             // Prepare x array (selected voxel's data)
             if ( fi.tc_model_accordion ) {
-                for (uint64_t t = 0; t < nt_chosen; ++t) {
+                for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                     if ( fi.tc_lock == false ) {
                         x_arr[t] = fi.p_tc_focus_float[t + fi.tc_onset];
                     } else {
@@ -2232,7 +2232,7 @@ namespace IDA_IO
                     }
                 }
             } else {
-                for (uint64_t t = 0; t < nt_chosen; ++t) {
+                for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                     if ( fi.tc_lock == false ) {
                         x_arr[t] = fi.p_tc_focus_float[t + fi.tc_onset];
                     } else {
@@ -2243,7 +2243,7 @@ namespace IDA_IO
 
             // Pre compute reference time series terms
             double sum_X = 0, sum_X2 = 0;
-            for (uint64_t t = 0; t < nt_chosen; ++t) {
+            for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                 sum_X += x_arr[t];
                 sum_X2 += x_arr[t]*x_arr[t];
             }
@@ -2258,7 +2258,7 @@ namespace IDA_IO
                 std::tie(ix, iy, iz, it) = ida_ind2sub_4D_Tmajor(i, ni, nj, nk);
 
                 // Prepare y array
-                for (uint64_t t = 0; t < nt_chosen; ++t) {
+                for (uint64_t t = fi.tc_onset; t < fi.tc_offset; ++t) {
                     uint64_t index4D = ida_sub2ind_4D_Tmajor(t + fi.tc_onset, ix, iy, iz, nt, ni, nj);
                     *(y_arr + t) = fi.p_data_float[index4D];
                 }
