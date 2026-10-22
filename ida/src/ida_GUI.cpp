@@ -81,7 +81,7 @@ namespace IDA
 
         ImVec4 bg_color = ImGui::GetStyleColorVec4(ImGuiCol_WindowBg); // Push style colors to match background       
         ImGui::PushStyleColor(ImGuiCol_Button, bg_color);  // Override only the idle button background color
-        if (ImGui::Button("LayNii IDA [v0.2.1]")) {
+        if (ImGui::Button("LayNii IDA [v0.2.2]")) {
             ImGui::OpenPopup("LayNii IDA (Integrated Discovery Application)");
         }
         ImGui::PopStyleColor();
